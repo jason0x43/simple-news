@@ -1,4 +1,4 @@
-import { datetime, React, useCallback, useMemo, useState } from "./deps.ts";
+import { datetime, React, useCallback } from "./deps.ts";
 import { Article as ArticleType } from "../types.ts";
 
 function pluralize(str: string, val: number): string {
@@ -33,39 +33,6 @@ export interface ArticleProps {
 const Article: React.FC<ArticleProps> = (props) => {
   const { article, selectArticle, selectedArticle } = props;
 
-  const content = useMemo(() => {
-    let text = article.content ?? article.summary;
-    if (text) {
-      text = text.replace(/&lt;/g, "<");
-      text = text.replace(/&gt;/g, ">");
-      text = text.replace(/&amp;/g, "&");
-    }
-
-    const link = article.link;
-    if (link) {
-      // @ts-ignore: no document in Deno
-      const div = document.createElement("div");
-      div.innerHTML = text;
-      const imgs = div.querySelectorAll("img");
-      imgs.forEach(
-        (
-          img: {
-            src: string;
-            getAttribute: (name: string) => string;
-            setAttribute: (name: string, value: string) => void;
-          },
-        ) => {
-          const src = img.getAttribute("src");
-          const newSrc = `${new URL(src, link)}`;
-          img.src = newSrc;
-        },
-      );
-      return div.innerHTML;
-    }
-
-    return text;
-  }, [article]);
-
   const handleSelect = useCallback(() => {
     selectArticle(article.id);
   }, [article, selectedArticle]);
@@ -79,7 +46,7 @@ const Article: React.FC<ArticleProps> = (props) => {
       {selectedArticle === article.id && (
         <div
           className="Article-content"
-          dangerouslySetInnerHTML={{ __html: content ?? "" }}
+          dangerouslySetInnerHTML={{ __html: article.content ?? "" }}
         />
       )}
     </div>

@@ -1,4 +1,4 @@
-import { log, parseXml } from "../deps.ts";
+import { log, parseXml } from "./deps.ts";
 import {
   addFeed,
   getFeed,

@@ -1,4 +1,4 @@
-import { Application, log, path } from "../deps.ts";
+import { Application, log, path } from "./deps.ts";
 import { createRouter } from "./routes.tsx";
 
 const __filename = new URL(import.meta.url).pathname;

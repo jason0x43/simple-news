@@ -1,4 +1,4 @@
-import { DB, log } from "../../deps.ts";
+import { DB, log } from "../deps.ts";
 import { addUser, getUserByEmail } from "./users.ts";
 import { getDb, createDb, closeDb, query } from './db.ts';
 

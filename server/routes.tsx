@@ -1,4 +1,4 @@
-import { path, React, ReactDOMServer, Router, send } from "../deps.ts";
+import { path, React, ReactDOMServer, Router, send } from "./deps.ts";
 import { getArticles, getUserByEmail } from "./database/mod.ts";
 import { User } from "../types.ts";
 import App from "../client/App.tsx";
@@ -9,7 +9,8 @@ const __dirname = path.dirname(new URL(import.meta.url).pathname);
 export function createRouter(bundle: { path: string; text: string }) {
   // Render the base HTML
   const render = (user: User) =>
-    `<html lang="en">
+    `<!DOCTYPE html>
+    <html lang="en">
       <head>
         <title>Simple News</title>
         <link rel="stylesheet" href="/styles.css">

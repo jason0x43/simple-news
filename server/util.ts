@@ -1,6 +1,6 @@
-import { color } from '../deps.ts';
+import { color } from './deps.ts';
 
-export function printTable(rows: object[]) {
+export function printTable(rows: Record<string, unknown>[]) {
   if (rows.length === 0) {
     return;
   }

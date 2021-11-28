@@ -1,4 +1,4 @@
-import { log } from "../../deps.ts";
+import { log } from "../deps.ts";
 import { query } from "./db.ts";
 import { Feed } from "../../types.ts";
 
