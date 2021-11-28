@@ -1,0 +1,110 @@
+body,
+html {
+  padding: 0;
+  margin: 0;
+}
+
+.App {
+  --gap: 8px;
+  font-family: sans-serif;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.App-content {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  height: 100%;
+  overflow: hidden;
+}
+
+.App-content > * {
+  max-height: 100%;
+  overflow: auto;
+}
+
+.App-sidebar {
+  background: #ded;
+}
+
+.Header {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: center;
+  border-bottom: solid 1px #ddd;
+  padding: 8px 16px;
+}
+
+.Header h1 {
+  margin: 0;
+  padding: 0;
+  font-size: 24px;
+  justify-self: start;
+}
+
+.Header > :nth-child(2) {
+  justify-self: center;
+}
+
+.Header > :nth-child(3) {
+  justify-self: right;
+}
+
+.Feeds {
+  list-style-type: none;
+  padding: 16px;
+  margin: 0;
+}
+
+.Feeds-group {
+  padding: 0.25rem 0;
+}
+
+.Feeds ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.Feeds-feed {
+  padding: 0.25rem 1rem;
+}
+
+.Feeds-group,
+.Feeds-feed {
+  cursor: pointer;
+}
+
+.Feeds-group:hover,
+.Feeds-feed:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.Articles {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+}
+
+.Article {
+  border-bottom: solid 1px #ddd;
+}
+
+.Article-heading {
+  padding: 8px 16px;
+  display: flex;
+  justify-content: space-between;
+  line-height: 1.25rem;
+}
+
+.Article-age {
+  flex-shrink: 0;
+  margin-left: 2rem;
+  color: #999;
+}
+
+.Article-content {
+  padding: 16px;
+}
