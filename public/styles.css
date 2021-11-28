@@ -106,5 +106,14 @@ html {
 }
 
 .Article-content {
-  padding: 16px;
+  padding: 16px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.Article-content img {
+  max-width: 100%;
+  height: auto;
+  margin: 1rem 0;
 }

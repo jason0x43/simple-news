@@ -86,12 +86,13 @@ export function getArticles(opts?: GetArticlesOpts): Article[] {
       WHERE id NOT IN
       (SELECT article_id
        FROM user_articles
-       WHERE user_id = (:userId) AND feed_id = (:feedId) AND read = 1)`,
+       WHERE user_id = (:userId) AND feed_id = (:feedId) AND read = 1)
+      ORDER BY published ASC`,
       { ...opts },
     );
   } else if (opts?.feedId !== undefined) {
     rows = query<ArticleRow>(
-      "SELECT * FROM articles WHERE feed_id = (:feedId)",
+      "SELECT * FROM articles WHERE feed_id = (:feedId) ORDER BY published ASC",
       { ...opts },
     );
   } else if (opts?.userId !== undefined) {
@@ -100,11 +101,12 @@ export function getArticles(opts?: GetArticlesOpts): Article[] {
       WHERE id NOT IN
       (SELECT article_id
        FROM user_articles
-       WHERE user_id = (:userId) AND read = 1)`,
+       WHERE user_id = (:userId) AND read = 1)
+      ORDER BY published ASC`,
       { ...opts },
     );
   } else {
-    rows = query<ArticleRow>("SELECT * FROM articles");
+    rows = query<ArticleRow>("SELECT * FROM articles ORDER BY published ASC");
   }
 
   if (rows.length === 0) {

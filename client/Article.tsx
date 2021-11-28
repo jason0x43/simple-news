@@ -40,12 +40,35 @@ const Article: React.FC<ArticleProps> = (props) => {
       text = text.replace(/&gt;/g, ">");
       text = text.replace(/&amp;/g, "&");
     }
+
+    const link = article.link;
+    if (link) {
+      // @ts-ignore: no document in Deno
+      const div = document.createElement("div");
+      div.innerHTML = text;
+      const imgs = div.querySelectorAll("img");
+      imgs.forEach(
+        (
+          img: {
+            src: string;
+            getAttribute: (name: string) => string;
+            setAttribute: (name: string, value: string) => void;
+          },
+        ) => {
+          const src = img.getAttribute("src");
+          const newSrc = `${new URL(src, link)}`;
+          img.src = newSrc;
+        },
+      );
+      return div.innerHTML;
+    }
+
     return text;
   }, [article]);
 
   const handleSelect = useCallback(() => {
     selectArticle(article.id);
-  }, [article]);
+  }, [article, selectedArticle]);
 
   return (
     <div className="Article">
@@ -56,7 +79,7 @@ const Article: React.FC<ArticleProps> = (props) => {
       {selectedArticle === article.id && (
         <div
           className="Article-content"
-          dangerouslySetInnerHTML={{ __html: content ?? '' }}
+          dangerouslySetInnerHTML={{ __html: content ?? "" }}
         />
       )}
     </div>

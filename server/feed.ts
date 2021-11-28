@@ -1,4 +1,4 @@
-import { log, parseFeed } from "../deps.ts";
+import { log, parseFeed, FeedEntry } from "../deps.ts";
 import {
   addArticle,
   getFeedByUrl,
@@ -40,9 +40,9 @@ async function downloadFeed(url: string) {
           articleId: entry.id,
           feedId: feed.id,
           title: entry.title?.value ?? "Untitled",
-          link: entry.links[0].href,
+          link: entry.links[0]?.href,
           published: getEntryPublishDate(entry),
-          content: `${entry.content}`,
+          content: getEntryContent(entry),
           summary: entry.description?.value,
         });
       }
@@ -67,6 +67,20 @@ function getEntryPublishDate(
         return Number(new Date(val));
       }
     }
+  }
+  return undefined;
+}
+
+type FeedEntryEncoded = FeedEntry & {
+  'content:encoded'?: FeedEntry['content']
+}
+
+function getEntryContent(entry: FeedEntryEncoded): string | undefined {
+  if (entry.content?.value) {
+    return entry.content.value;
+  }
+  if (entry["content:encoded"]?.value) {
+    return entry["content:encoded"].value;
   }
   return undefined;
 }
