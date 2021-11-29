@@ -16,7 +16,11 @@ async function downloadFeed(url: string) {
       return;
     }
 
-    const response = await fetch(url);
+    const aborter = new AbortController();
+    const abortTimer = setTimeout(() => aborter.abort(), 10000);
+    const response = await fetch(url, { signal: aborter.signal });
+    clearTimeout(abortTimer);
+
     if (response.status !== 200) {
       log.warning(`Error downloading feed for ${url}: ${response.status}`);
       return;
@@ -77,10 +81,11 @@ type FeedEntryEncoded = FeedEntry & {
 function getEntryContent(entry: FeedEntryEncoded): string | undefined {
   let text: string | undefined;
 
-  if (entry.content?.value) {
-    text = entry.content.value;
-  } else if (entry["content:encoded"]?.value) {
-    text = entry["content:encoded"].value;
+  for (const key of ['content', 'content:encoded', 'description'] as const) {
+    if (entry[key]?.value) {
+      text = entry[key]!.value;
+      break;
+    }
   }
 
   if (text) {
