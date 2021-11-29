@@ -1,5 +1,6 @@
 import { datetime, React, useCallback } from "./deps.ts";
 import { Article as ArticleType } from "../types.ts";
+import { className } from './util.ts';
 
 function pluralize(str: string, val: number): string {
   return `${str}${val === 1 ? "" : "s"}`;
@@ -37,8 +38,12 @@ const Article: React.FC<ArticleProps> = (props) => {
     selectArticle(article.id);
   }, [article, selectedArticle]);
 
+  const cls = className('Article', {
+    'Article-selected': selectedArticle === article.id
+  });
+
   return (
-    <div className="Article">
+    <div className={cls}>
       <div className="Article-heading" onClick={handleSelect}>
         <div className="Article-title">{article.title}</div>
         <div className="Article-age">{getAge(article.published)}</div>
