@@ -6,7 +6,6 @@ export interface Article {
   link: string | undefined;
   published: number | undefined;
   content: string | undefined;
-  summary: string | undefined;
 }
 
 export interface Feed {

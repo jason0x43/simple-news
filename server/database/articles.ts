@@ -14,7 +14,7 @@ type ArticleRow = [
 ];
 
 function rowToArticle(row: ArticleRow): Article {
-  const [id, feedId, articleId, title, link, published, content, summary] = row;
+  const [id, feedId, articleId, title, link, published, content] = row;
   return {
     id,
     feedId,
@@ -23,7 +23,6 @@ function rowToArticle(row: ArticleRow): Article {
     link,
     published,
     content,
-    summary,
   };
 }
 
@@ -31,9 +30,9 @@ export function addArticle(article: Omit<Article, "id">): Article {
   log.debug(`Adding article ${article.articleId}`);
   const rows = query<ArticleRow>(
     `INSERT INTO articles (
-      feed_id, article_id, title, link, published, content, summary
+      feed_id, article_id, title, link, published, content
     )
-    VALUES (:feedId, :articleId, :title, :link, :published, :content, :summary)
+    VALUES (:feedId, :articleId, :title, :link, :published, :content)
     RETURNING *`,
     article,
   );

@@ -13,7 +13,7 @@ export function openDatabase(name = "data.db") {
   } catch {
     createDb(name);
     log.debug(`Foreign key support: ${getPragma("foreign_keys")}`);
-    migrateDatabase(3);
+    migrateDatabase(4);
     log.debug(`Database using v${getSchemaVersion()} schema`);
 
     if (!getUserByEmail("jason@jasoncheatham.com")) {
@@ -152,6 +152,17 @@ const migrations: Migration[] = [
 
     down: (db: DB) => {
       db.query("ALTER TABLE feeds DROP COLUMN disabled");
+    },
+  },
+
+  {
+    // remove summary column from articles
+    up: (db: DB) => {
+      db.query("ALTER TABLE articles DROP COLUMN summary");
+    },
+
+    down: (db: DB) => {
+      db.query("ALTER TABLE feeds ADD COLUMN summary TEXT");
     },
   },
 ];

@@ -43,7 +43,6 @@ async function downloadFeed(url: string) {
           link: entry.links[0]?.href,
           published: getEntryPublishDate(entry),
           content: getEntryContent(entry),
-          summary: entry.description?.value,
         });
       }
     }
