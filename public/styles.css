@@ -2,7 +2,6 @@ body,
 html {
   padding: 0;
   margin: 0;
-  overscroll-behavior-y: none;
 }
 
 .App {
@@ -27,17 +26,6 @@ html {
   color: var(--link);
 }
 
-@media (prefers-color-scheme: dark) {
-  .App {
-    --background: black;
-    --foreground: #ddd;
-    --highlight: #353;
-    --border: rgba(255, 255, 255, 0.2);
-    --selected: rgba(255, 2550, 255, 0.2);
-    --link: #77f;
-  }
-}
-
 .App-content {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -57,20 +45,6 @@ html {
   width: var(--default-width);
 }
 
-@media only screen and (max-width: 600px) {
-  .App-sidebar {
-    position: absolute;
-    left: calc(-1 * var(--default-width));
-    top: 0;
-    bottom: 0;
-    transition: left 0.25s ease-in-out;
-  }
-
-  .App-sidebar[data-active="true"] {
-    left: 0;
-  }
-}
-
 .Header {
   display: grid;
   grid-template-columns: 1fr 100px 1fr;
@@ -86,11 +60,17 @@ html {
   justify-self: start;
 }
 
-.Header > :nth-child(2) {
+.Header-buttons {
   justify-self: center;
+  display: flex;
+  flex-direction: row;
 }
 
-.Header > :nth-child(3) {
+.Header-show-feeds {
+  display: none;
+}
+
+.Header-user {
   justify-self: right;
 }
 
@@ -176,3 +156,33 @@ html {
 .Article-content .feedflare {
   display: none;
 }
+
+@media only screen and (max-width: 600px) {
+  .App-sidebar {
+    position: absolute;
+    left: calc(-1 * var(--default-width));
+    top: 0;
+    bottom: 0;
+    transition: left 0.25s ease-in-out;
+  }
+
+  .App-sidebar[data-active="true"] {
+    left: 0;
+  }
+
+  .Header-show-feeds {
+    display: initial;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .App {
+    --background: black;
+    --foreground: #ddd;
+    --highlight: #353;
+    --border: rgba(255, 255, 255, 0.2);
+    --selected: rgba(255, 2550, 255, 0.2);
+    --link: #77f;
+  }
+}
+

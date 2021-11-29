@@ -24,10 +24,11 @@ const Header: React.FC<HeaderProps> = (props) => {
 
   return (
     <header className="Header">
-      <h1>Simple News</h1>
-      <button onClick={onShowSidebar}>Feeds</button>
-      <button onClick={update} disabled={updating}>Refresh</button>
-      <div>{user?.name}</div>
+      <h1 onClick={onShowSidebar}>Simple News</h1>
+      <div className="Header-buttons">
+        <button onClick={update} disabled={updating}>Refresh</button>
+      </div>
+      <div className="Header-user">{user?.name}</div>
     </header>
   );
 };
