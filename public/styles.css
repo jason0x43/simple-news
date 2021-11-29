@@ -6,11 +6,35 @@ html {
 
 .App {
   --gap: 8px;
+  --background: white;
+  --selected: rgba(0, 0, 0, 0.2);
+  --foreground: black;
+  --border: rgba(0, 0, 0, 0.2);
+  --highlight: #ded;
+  --link: #00f;
+
   font-family: sans-serif;
   display: flex;
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.App a {
+  color: var(--link);
+}
+
+@media (prefers-color-scheme: dark) {
+  .App {
+    --background: black;
+    --foreground: #ddd;
+    --highlight: #353;
+    --border: rgba(255, 255, 255, 0.2);
+    --selected: rgba(255, 2550, 255, 0.2);
+    --link: #77f;
+  }
 }
 
 .App-content {
@@ -26,14 +50,14 @@ html {
 }
 
 .App-sidebar {
-  background: #ded;
+  background: var(--highlight);
 }
 
 .Header {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   align-items: center;
-  border-bottom: solid 1px #ddd;
+  border-bottom: solid 1px var(--border);
   padding: 8px 16px;
 }
 
@@ -89,14 +113,18 @@ html {
 }
 
 .Article {
-  border-bottom: solid 1px #ddd;
+  border-bottom: solid 1px var(--border);
 }
 
 .Article-heading {
   padding: 8px 16px;
   display: flex;
   justify-content: space-between;
-  line-height: 1.25rem;
+  line-height: 1.25em;
+}
+
+.Article-selected .Article-heading {
+  background: var(--selected);
 }
 
 .Article-age {
@@ -107,12 +135,25 @@ html {
 
 .Article-content {
   padding: 16px 32px;
-  display: flex;
-  flex-direction: column;
-  line-height: 1.35rem;
+  overflow: auto;
+}
+
+.Article-content h1 {
+  margin-top: 0;
+}
+
+.Article-content p,
+.Article-content li {
+  line-height: 1.3em;
+  margin: 1em 0;
 }
 
 .Article-content img {
   max-width: 100% !important;
+  height: auto !important;
   margin: 1rem 0;
+}
+
+.Article-content .feedflare {
+  display: none;
 }
