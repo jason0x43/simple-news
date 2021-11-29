@@ -2,7 +2,12 @@ import { React, useCallback, useState } from "./deps.ts";
 import { updateFeeds } from "./api.ts";
 import useUser from "./hooks/useUser.ts";
 
-const Header: React.FC = () => {
+export interface HeaderProps {
+  onShowSidebar?: () => void;
+}
+
+const Header: React.FC<HeaderProps> = (props) => {
+  const { onShowSidebar } = props;
   const { user } = useUser();
   const [updating, setUpdating] = useState(false);
 
@@ -20,6 +25,7 @@ const Header: React.FC = () => {
   return (
     <header className="Header">
       <h1>Simple News</h1>
+      <button onClick={onShowSidebar}>Feeds</button>
       <button onClick={update} disabled={updating}>Refresh</button>
       <div>{user?.name}</div>
     </header>

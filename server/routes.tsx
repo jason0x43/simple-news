@@ -13,6 +13,7 @@ export function createRouter(bundle: { path: string; text: string }) {
     <html lang="en">
       <head>
         <title>Simple News</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="/styles.css">
         ${
       user

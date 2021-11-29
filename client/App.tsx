@@ -16,6 +16,7 @@ const AppContent: React.FC<AppProps> = (props) => {
   const { fetchUser } = useUser();
   const { fetchArticles } = useArticles();
   const [feeds, setFeeds] = useState<number[]>();
+  const [sidebarActive, setSidebarActive] = useState(false);
 
   React.useEffect(() => {
     if (!props.user) {
@@ -26,13 +27,18 @@ const AppContent: React.FC<AppProps> = (props) => {
   const handleSelectFeeds = useCallback((feeds: number[]) => {
     fetchArticles(feeds);
     setFeeds(feeds);
+    setSidebarActive(false);
   }, []);
+
+  const handleShowSidebar = useCallback(() => {
+    setSidebarActive(!sidebarActive);
+  }, [sidebarActive]);
 
   return (
     <div className="App">
-      <Header />
+      <Header onShowSidebar={handleShowSidebar} />
       <div className="App-content">
-        <div className="App-sidebar">
+        <div className="App-sidebar" data-active={sidebarActive}>
           <Feeds selectedFeeds={feeds} onSelectFeeds={handleSelectFeeds} />
         </div>
         <div className="App-center">
