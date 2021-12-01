@@ -14,7 +14,7 @@ function getAge(timestamp: number | undefined): string {
   const date0 = new Date();
   const date1 = new Date(timestamp);
   const diff = datetime.difference(date0, date1, {
-    units: ["hours", "days", "weeks"],
+    units: ["minutes", "hours", "days", "weeks"],
   });
   if (diff.weeks) {
     return `${diff.weeks} ${pluralize("week", diff.weeks)}`;
@@ -22,7 +22,10 @@ function getAge(timestamp: number | undefined): string {
   if (diff.days) {
     return `${diff.days} ${pluralize("day", diff.days)}`;
   }
-  return `${diff.hours} ${pluralize("hour", diff.hours ?? 0)}`;
+  if (diff.hours) {
+    return `${diff.hours} ${pluralize("hour", diff.hours ?? 0)}`;
+  }
+  return `${diff.minutes} ${pluralize("minute", diff.minutes ?? 0)}`;
 }
 
 export interface ArticleProps {
