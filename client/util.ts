@@ -1,4 +1,4 @@
-export type ClassName = string | { [name: string]: boolean };
+export type ClassName = string | { [name: string]: boolean | undefined };
 
 export function className(...args: ClassName[]) {
   const names = new Set<string>();
