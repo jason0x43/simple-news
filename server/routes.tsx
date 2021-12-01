@@ -13,7 +13,7 @@ export function createRouter(bundle: { path: string; text: string }) {
     <html lang="en">
       <head>
         <title>Simple News</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-touch-fullscreen" content="yes">
         <link rel="stylesheet" href="/styles.css">

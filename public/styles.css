@@ -2,10 +2,24 @@ body,
 html {
   padding: 0;
   margin: 0;
+  height: 100vh;
+  background: black;
+}
+
+#root {
+  height: 100vh;
+}
+
+@supports (padding: max(0px)) {
+  .App {
+    padding-left: max(0vmin, env(safe-area-inset-left));
+    padding-right: max(0vmin, env(safe-area-inset-right));
+  }
 }
 
 .App {
   --gap: 8px;
+  --matte: #f7f7f7;
   --background: white;
   --selected: rgba(0, 0, 0, 0.2);
   --foreground: black;
@@ -16,9 +30,9 @@ html {
   font-family: sans-serif;
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
   overflow: hidden;
-  background: var(--background);
+  background: var(--matte);
   color: var(--foreground);
 }
 
@@ -36,6 +50,7 @@ html {
   height: 100%;
   overflow: hidden;
   position: relative;
+  background: var(--background);
 }
 
 .App-content > * {
@@ -157,18 +172,40 @@ html {
 }
 
 .Article-content {
-  padding: 16px 32px;
+  padding: 16px;
+  margin: 0 auto;
+  max-width: 800px;
   overflow: auto;
+  font-size: 18px;
+  font-family: Merriweather, serif;
+  font-weight: 300;
+  line-height: 1.5em;
 }
 
 .Article-content h1 {
   margin-top: 0;
 }
 
+.Article-content figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .Article-content p,
 .Article-content li {
-  line-height: 1.3em;
   margin: 1em 0;
+}
+
+.Article-content q {
+  font-style: italic;
+  color: #999;
+  margin: 0 64px;
+  display: block;
+}
+
+.Article-content blockquote {
+  font-style: italic;
 }
 
 .Article-content img {
@@ -190,7 +227,7 @@ html {
     transition: left 0.25s ease-in-out;
   }
 
-  .App-sidebar[data-active="true"] {
+  .App-sidebar[data-active='true'] {
     left: 0;
   }
 
@@ -201,6 +238,7 @@ html {
 
 @media (prefers-color-scheme: dark) {
   .App {
+    --matte: #222;
     --background: black;
     --foreground: #ddd;
     --highlight: #353;
@@ -209,4 +247,3 @@ html {
     --link: #77f;
   }
 }
-
