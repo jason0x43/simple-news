@@ -85,7 +85,9 @@ html {
 }
 
 .Feeds-group {
-  padding: 0.25rem 0;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
 }
 
 .Feeds ul {
@@ -94,12 +96,30 @@ html {
 }
 
 .Feeds-feed {
-  padding: 0.25rem 1rem;
+  padding: 0.25rem 1.25rem;
+}
+
+.Feeds-expander::before {
+  content: '○';
+  display: inline-block;
+  width: 1em;
 }
 
 .Feeds-group,
 .Feeds-feed {
   cursor: pointer;
+}
+
+.Feeds ul {
+  display: none;
+}
+
+.Feeds-expanded ul {
+  display: initial;
+}
+
+.Feeds-expanded .Feeds-expander::before {
+  content: '●';
 }
 
 .Feeds-group:hover,

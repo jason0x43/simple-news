@@ -1,4 +1,5 @@
-import { React } from "./deps.ts";
+import { React, useState } from "./deps.ts";
+import { className } from "./util.ts";
 import useUser from "./hooks/useUser.ts";
 
 export interface FeedsProps {
@@ -7,14 +8,33 @@ export interface FeedsProps {
 }
 
 const Feeds: React.FC<FeedsProps> = (props) => {
+  const [expanded, setExpanded] = useState<{ [title: string]: boolean }>({});
   const { onSelectFeeds } = props;
   const { user } = useUser();
 
   return (
     <ul className="Feeds">
       {user?.config?.feedGroups.map((group) => (
-        <li key={group.title}>
-          <div className="Feeds-group">{group.title}</div>
+        <li
+          key={group.title}
+          className={className({
+            "Feeds-expanded": expanded[group.title],
+          })}
+        >
+          <div
+            className="Feeds-group"
+            onClick={() => onSelectFeeds?.(group.feeds.map(({ id }) => id))}
+          >
+            <span
+              className="Feeds-expander"
+              onClick={() =>
+                setExpanded({
+                  ...expanded,
+                  [group.title]: !expanded[group.title],
+                })}
+            />
+            {group.title}
+          </div>
           <ul>
             {group.feeds.map((feed) => (
               <li
