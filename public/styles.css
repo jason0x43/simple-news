@@ -26,6 +26,10 @@ html {
   color: var(--link);
 }
 
+.App-header {
+  background: var(--background);
+}
+
 .App-content {
   display: grid;
   grid-template-columns: auto 1fr;

@@ -36,7 +36,9 @@ const AppContent: React.FC<AppProps> = (props) => {
 
   return (
     <div className="App">
-      <Header onShowSidebar={handleShowSidebar} />
+      <div className="App-header">
+        <Header onShowSidebar={handleShowSidebar} />
+      </div>
       <div className="App-content">
         <div className="App-sidebar" data-active={sidebarActive}>
           <Feeds selectedFeeds={feeds} onSelectFeeds={handleSelectFeeds} />
