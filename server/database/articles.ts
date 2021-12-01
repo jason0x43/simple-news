@@ -70,8 +70,8 @@ export function getLatestArticle(feedId: number): Article | undefined {
 }
 
 export interface GetArticlesOpts {
-  // feed to get articles for
-  feedId?: number;
+  // feeds to get articles for
+  feedIds?: number[];
   // only return articles that haven't been read by the given user
   userId?: number;
 }
@@ -79,30 +79,41 @@ export interface GetArticlesOpts {
 export function getArticles(opts?: GetArticlesOpts): Article[] {
   let rows: ArticleRow[];
 
-  if (opts?.feedId !== undefined && opts?.userId !== undefined) {
-    rows = query<ArticleRow>(
-      `SELECT * FROM articles
-      WHERE id NOT IN
-      (SELECT article_id
-       FROM user_articles
-       WHERE user_id = (:userId) AND feed_id = (:feedId) AND read = 1)
-      ORDER BY published ASC`,
-      { ...opts },
-    );
-  } else if (opts?.feedId !== undefined) {
-    rows = query<ArticleRow>(
-      "SELECT * FROM articles WHERE feed_id = (:feedId) ORDER BY published ASC",
-      { ...opts },
-    );
+  if (opts?.feedIds !== undefined) {
+    const feedParams: { [name: string]: string | number } = {};
+    for (let i = 0; i < opts.feedIds.length; i++) {
+      feedParams[`feedIds${i}`] = opts.feedIds[i];
+    }
+    const feedParamNames = Object.keys(feedParams).map((name) => `:${name}`);
+    const baseQuery = `SELECT * FROM articles
+        WHERE feed_id IN (${feedParamNames.join(",")})`;
+
+    if (opts?.userId !== undefined) {
+      rows = query<ArticleRow>(
+        baseQuery + `AND id NOT IN (
+          SELECT article_id
+          FROM user_articles
+          WHERE user_id = (:userId)
+          AND feed_id IN (${feedParamNames.join(",")})
+          AND read = 1
+        ) ORDER BY published ASC`,
+        { userId: opts.userId, ...feedParams },
+      );
+    } else {
+      rows = query<ArticleRow>(
+        baseQuery + "ORDER BY published ASC",
+        feedParams,
+      );
+    }
   } else if (opts?.userId !== undefined) {
     rows = query<ArticleRow>(
       `SELECT * FROM articles
-      WHERE id NOT IN
-      (SELECT article_id
-       FROM user_articles
-       WHERE user_id = (:userId) AND read = 1)
-      ORDER BY published ASC`,
-      { ...opts },
+      WHERE id NOT IN (
+        SELECT article_id
+        FROM user_articles
+        WHERE user_id = (:userId) AND read = 1
+      ) ORDER BY published ASC`,
+      { userId: opts.userId },
     );
   } else {
     rows = query<ArticleRow>("SELECT * FROM articles ORDER BY published ASC");

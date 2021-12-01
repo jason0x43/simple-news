@@ -52,11 +52,16 @@ export function createRouter(bundle: { path: string; text: string }) {
     ctx.response.body = bundle.text;
   });
 
-  router.get("/articles/:feedId?", (ctx) => {
-    const { feedId } = ctx.params;
-    const articles = feedId !== undefined
-      ? getArticles({ feedId: Number(feedId) })
-      : getArticles();
+  router.get("/articles", (ctx) => {
+    const params = ctx.request.url.searchParams;
+    let articles: unknown[];
+    if (params.has('feeds')) {
+      const feedIds = JSON.parse(params.get('feeds')!);
+      log.info(`getting feeds: ${JSON.stringify(feedIds)}`);
+      articles = getArticles({ feedIds })
+    } else {
+      articles = getArticles()
+    }
     ctx.response.type = "application/json";
     ctx.response.body = articles;
   });

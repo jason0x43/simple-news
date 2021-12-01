@@ -9,7 +9,9 @@ export async function getUser(): Promise<User> {
   return await response.json();
 }
 
-export async function getArticles(feedId: number): Promise<Article[]> {
-  const response = await fetch(`/articles/${feedId}`);
+export async function getArticles(feedIds: number[]): Promise<Article[]> {
+  const params = new URLSearchParams();
+  params.set('feeds', JSON.stringify(feedIds));
+  const response = await fetch(`/articles?${params}`);
   return await response.json();
 }

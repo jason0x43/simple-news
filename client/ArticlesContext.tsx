@@ -2,13 +2,9 @@ import { React, useCallback } from "./deps.ts";
 import { Article } from "../types.ts";
 import { getArticles } from "./api.ts";
 
-export interface ArticlesData {
-  [feed: number]: Article[];
-}
-
 const ArticlesContext = React.createContext<
   {
-    articles: ArticlesData | undefined;
+    articles: Article[] | undefined;
     fetchArticles: (feeds: number[]) => void;
   }
 >({ articles: undefined, fetchArticles: () => undefined });
@@ -16,24 +12,19 @@ const ArticlesContext = React.createContext<
 export default ArticlesContext;
 
 export interface ArticlesProviderProps {
-  articles?: ArticlesData;
+  articles?: Article[];
 }
 
 export const ArticlesProvider: React.FC<ArticlesProviderProps> = (props) => {
   const [articles, setArticles] = React.useState<
-    | ArticlesData
+    | Article[]
     | undefined
   >(props.articles);
 
   const fetchArticles = useCallback(async (feeds: number[]) => {
     try {
-      const feedArticles = await Promise.all(feeds.map(getArticles));
-      feeds.forEach((feed, i) => {
-        setArticles({
-          ...articles,
-          [feed]: feedArticles[i],
-        });
-      });
+      const newArticles = await getArticles(feeds);
+      setArticles(newArticles);
     } catch (error) {
       console.error(error);
     }
