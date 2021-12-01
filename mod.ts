@@ -8,7 +8,7 @@ import {
   setFeedDisabled,
   setFeedUrl,
 } from "./server/database/mod.ts";
-import { downloadFeeds } from "./server/feed.ts";
+import { downloadFeeds, formatArticles } from "./server/feed.ts";
 import { exportOpmlFile, importOpmlFile } from "./server/opml.ts";
 import { printTable } from "./server/util.ts";
 
@@ -126,6 +126,14 @@ const parser = yargs(Deno.args)
       const feed = getFeed(args.feedId);
       setFeedDisabled(feed.id, !feed.disabled);
       console.log(`Feed ${feed.id} is ${feed.disabled ? "en" : "dis"}abled`);
+    },
+  )
+  .command(
+    "reprocess",
+    "Reprocess the data in the database",
+    {},
+    () => {
+      formatArticles();
     },
   )
   .demandCommand(1, "");

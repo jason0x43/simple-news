@@ -126,6 +126,13 @@ export function getArticles(opts?: GetArticlesOpts): Article[] {
   return rows.map(rowToArticle);
 }
 
+export function setArticleContent(id: number, content: string) {
+  query("UPDATE articles SET content = (:content) WHERE id = (:id)", {
+    id,
+    content,
+  });
+}
+
 export function hasArticle(articleId: string): boolean {
   const rows = query<ArticleRow>(
     "SELECT id FROM articles WHERE article_id = (:articleId)",

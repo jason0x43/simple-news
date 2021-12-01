@@ -1,4 +1,4 @@
-import { path, React, ReactDOMServer, Router, send } from "./deps.ts";
+import { log, path, React, ReactDOMServer, Router, send } from "./deps.ts";
 import { getArticles, getUserByEmail } from "./database/mod.ts";
 import { User } from "../types.ts";
 import App from "../client/App.tsx";

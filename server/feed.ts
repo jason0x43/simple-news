@@ -1,9 +1,11 @@
 import { DOMParser, Element, FeedEntry, log, parseFeed } from "./deps.ts";
 import {
   addArticle,
+  getArticles,
   getFeedByUrl,
   getFeeds,
   hasArticle,
+  setArticleContent,
 } from "./database/mod.ts";
 
 async function downloadFeed(url: string) {
@@ -81,52 +83,75 @@ type FeedEntryEncoded = FeedEntry & {
 function getEntryContent(entry: FeedEntryEncoded): string | undefined {
   let text: string | undefined;
 
-  for (const key of ['content', 'content:encoded', 'description'] as const) {
+  for (const key of ["content", "content:encoded", "description"] as const) {
     if (entry[key]?.value) {
       text = entry[key]!.value;
       break;
     }
   }
 
+  const link = entry.links?.[0]?.href;
+
+  // cleanup text
   if (text) {
-    text = text.replace(/&lt;/g, "<");
-    text = text.replace(/&gt;/g, ">");
-    text = text.replace(/&amp;/g, "&");
-
-    const link = entry.links?.[0]?.href;
-    if (link) {
-      try {
-        const doc = new DOMParser().parseFromString(text, "text/html")!;
-
-        const imgs = doc.querySelectorAll("img");
-        imgs.forEach((img) => {
-          const imgElement = img as unknown as Element;
-          const src = imgElement.getAttribute("src")!;
-          const newSrc = `${new URL(src, link)}`;
-          imgElement.setAttribute('src', newSrc);
-        });
-
-        const anchors = doc.querySelectorAll("a");
-        anchors.forEach((a) => {
-          const aElement = a as unknown as Element;
-          const href = aElement.getAttribute("href")!;
-          const newSrc = `${new URL(href, link)}`;
-          aElement.setAttribute('src', newSrc);
-        });
-
-        text = doc.body.innerHTML;
-      } catch (error) {
-        log.warning(`Error updating links in article: ${error.message}`);
-      }
-    }
-
-    return text;
+    return formatArticle(text, link);
   }
 
   return undefined;
 }
 
+function formatArticle(text: string, baseUrl?: string): string {
+  text = text.replace(/&lt;/g, "<");
+  text = text.replace(/&gt;/g, ">");
+  text = text.replace(/&amp;/g, "&");
+
+  const doc = new DOMParser().parseFromString(text, "text/html")!;
+
+  if (baseUrl) {
+    try {
+      const imgs = doc.querySelectorAll("img");
+      imgs.forEach((img) => {
+        const imgElement = img as unknown as Element;
+        const src = imgElement.getAttribute("src")!;
+        const newSrc = `${new URL(src, baseUrl)}`;
+        imgElement.setAttribute("src", newSrc);
+      });
+
+      const anchors = doc.querySelectorAll("a");
+      anchors.forEach((a) => {
+        const aElement = a as unknown as Element;
+        const href = aElement.getAttribute("href")!;
+        const newSrc = `${new URL(href, baseUrl)}`;
+        aElement.setAttribute("src", newSrc);
+      });
+    } catch (error) {
+      log.warning(`Error updating links in article: ${error.message}`);
+    }
+  }
+
+  const quotes = doc.querySelectorAll("q");
+  for (const quote of quotes) {
+    quote.textContent = quote.textContent.replace(/^\s*["“]/, "").replace(
+      /["”]\s*$/,
+      "",
+    );
+  }
+
+  return doc.body.innerHTML;
+}
+
 export async function downloadFeeds(urls: string[]) {
   const feedUrls = urls.length > 0 ? urls : getFeeds().map((feed) => feed.url);
   await Promise.allSettled(feedUrls.map(downloadFeed));
+}
+
+export function formatArticles() {
+  const articles = getArticles();
+  log.debug(`Formatting ${articles.length} articles...`);
+  for (const article of articles) {
+    if (article.content) {
+      setArticleContent(article.id, formatArticle(article.content));
+      log.debug(`Formatted ${article.id}`);
+    }
+  }
 }
