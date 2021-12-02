@@ -22,9 +22,10 @@ html {
   --matte: #f7f7f7;
   --background: white;
   --selected: rgba(0, 0, 0, 0.2);
-  --foreground: black;
+  --foreground: #666;
   --border: rgba(0, 0, 0, 0.2);
-  --highlight: #ded;
+  --highlight: #555;
+  --highlight-text: #eee;
   --link: #00f;
 
   font-family: sans-serif;
@@ -59,8 +60,9 @@ html {
 }
 
 .App-sidebar {
-  --default-width: 300px;
+  --default-width: 250px;
   background: var(--highlight);
+  color: var(--highlight-text);
   width: var(--default-width);
 }
 
@@ -105,6 +107,10 @@ html {
   align-items: center;
 }
 
+.Feeds-title {
+  flex-grow: 1;
+}
+
 .Feeds ul {
   list-style-type: none;
   padding: 0;
@@ -118,6 +124,7 @@ html {
   content: '○';
   display: inline-block;
   width: 1em;
+  flex-grow: 0;
 }
 
 .Feeds-group,
@@ -172,11 +179,11 @@ html {
 }
 
 .Article-content {
-  padding: 16px;
+  padding: 16px 32px;
   margin: 0 auto;
   max-width: 800px;
   overflow: auto;
-  font-size: 18px;
+  font-size: 16px;
   font-family: Merriweather, serif;
   font-weight: 300;
   line-height: 1.5em;
@@ -234,6 +241,10 @@ html {
   .Header-show-feeds {
     display: initial;
   }
+
+  .Article-content {
+    padding: 16px;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -241,7 +252,6 @@ html {
     --matte: #222;
     --background: black;
     --foreground: #ddd;
-    --highlight: #353;
     --border: rgba(255, 255, 255, 0.2);
     --selected: rgba(255, 2550, 255, 0.2);
     --link: #77f;
