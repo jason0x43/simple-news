@@ -21,19 +21,22 @@ const Feeds: React.FC<FeedsProps> = (props) => {
             'Feeds-expanded': expanded[group.title],
           })}
         >
-          <div
-            className="Feeds-group"
-            onClick={() => onSelectFeeds?.(group.feeds.map(({ id }) => id))}
-          >
+          <div className="Feeds-group">
             <span
               className="Feeds-expander"
               onClick={() =>
                 setExpanded({
                   ...expanded,
                   [group.title]: !expanded[group.title],
-                })}
+                })
+              }
             />
-            {group.title}
+            <span
+              className="Feeds-title"
+              onClick={() => onSelectFeeds?.(group.feeds.map(({ id }) => id))}
+            >
+              {group.title}
+            </span>
           </div>
           <ul>
             {group.feeds.map((feed) => (
