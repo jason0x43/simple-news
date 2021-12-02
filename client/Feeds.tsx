@@ -1,6 +1,6 @@
-import { React, useState } from "./deps.ts";
-import { className } from "./util.ts";
-import useUser from "./hooks/useUser.ts";
+import { React, useState } from './deps.ts';
+import { className } from './util.ts';
+import useUser from './hooks/useUser.ts';
 
 export interface FeedsProps {
   selectedFeeds?: number[];
@@ -18,7 +18,7 @@ const Feeds: React.FC<FeedsProps> = (props) => {
         <li
           key={group.title}
           className={className({
-            "Feeds-expanded": expanded[group.title],
+            'Feeds-expanded': expanded[group.title],
           })}
         >
           <div

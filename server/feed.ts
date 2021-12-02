@@ -110,20 +110,20 @@ function formatArticle(text: string, baseUrl?: string): string {
   if (baseUrl) {
     try {
       const imgs = doc.querySelectorAll("img");
-      imgs.forEach((img) => {
+      for (const img of imgs) {
         const imgElement = img as unknown as Element;
         const src = imgElement.getAttribute("src")!;
         const newSrc = `${new URL(src, baseUrl)}`;
         imgElement.setAttribute("src", newSrc);
-      });
+      }
 
       const anchors = doc.querySelectorAll("a");
-      anchors.forEach((a) => {
+      for (const a of anchors) {
         const aElement = a as unknown as Element;
         const href = aElement.getAttribute("href")!;
         const newSrc = `${new URL(href, baseUrl)}`;
         aElement.setAttribute("src", newSrc);
-      });
+      }
     } catch (error) {
       log.warning(`Error updating links in article: ${error.message}`);
     }

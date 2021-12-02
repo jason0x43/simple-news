@@ -60,8 +60,5 @@ export async function serve() {
 
   log.info(`Listening on port ${port}`);
 
-  await Promise.allSettled([
-    app.listen({ port }),
-    watchClient(),
-  ]);
+  await Promise.allSettled([app.listen({ port }), watchClient()]);
 }
