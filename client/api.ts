@@ -4,6 +4,10 @@ export async function updateFeeds() {
   await fetch("/update");
 }
 
+export async function reprocess() {
+  await fetch("/reprocess");
+}
+
 export async function getUser(): Promise<User> {
   const response = await fetch("/user");
   return await response.json();
