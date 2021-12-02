@@ -1,3 +1,7 @@
+/// <reference lib="dom" />
+/// <reference lib="dom.iterable" />
+/// <reference lib="dom.asynciterable" />
+
 export * as color from "https://deno.land/std@0.115.1/fmt/colors.ts";
 export { DB } from "https://deno.land/x/sqlite@v3.1.3/mod.ts";
 export {

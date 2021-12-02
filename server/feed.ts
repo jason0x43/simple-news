@@ -1,3 +1,5 @@
+/// <reference lib="dom" />
+
 import { DOMParser, Element, FeedEntry, log, parseFeed } from "./deps.ts";
 import {
   addArticle,

@@ -27,7 +27,13 @@ export async function serve() {
   // Build and cache the client code
   const { files, diagnostics } = await Deno.emit(
     path.join(clientDir, "mod.tsx"),
-    { bundle: "module" },
+    {
+      bundle: "module",
+      compilerOptions: {
+        target: "esnext",
+        lib: ["dom", "dom.iterable", "dom.asynciterable", "deno.ns"],
+      },
+    },
   );
 
   if (diagnostics.length > 0) {
