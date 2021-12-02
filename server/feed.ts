@@ -126,6 +126,17 @@ function formatArticle(text: string, baseUrl?: string): string {
         const newSrc = `${new URL(href, baseUrl)}`;
         aElement.setAttribute("src", newSrc);
       }
+
+      const listItems = doc.querySelectorAll('li');
+      for (const item of listItems) {
+        const eItem = item as unknown as HTMLElement;
+        if (eItem.previousElementSibling?.tagName === 'BR') {
+          eItem.previousElementSibling.remove();
+        }
+        if (eItem.nextElementSibling?.tagName === 'BR') {
+          eItem.nextElementSibling.remove();
+        }
+      }
     } catch (error) {
       log.warning(`Error updating links in article: ${error.message}`);
     }
