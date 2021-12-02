@@ -1,4 +1,4 @@
-import { datetime, React, useCallback } from "./deps.ts";
+import { datetime, React, forwardRef, useCallback } from "./deps.ts";
 import { Article as ArticleType } from "../types.ts";
 import { className } from './util.ts';
 
@@ -34,7 +34,7 @@ export interface ArticleProps {
   selectArticle: (id: number) => void;
 }
 
-const Article: React.FC<ArticleProps> = (props) => {
+const Article = forwardRef<HTMLDivElement, ArticleProps>((props, ref) => {
   const { article, selectArticle, selectedArticle } = props;
 
   const handleSelect = useCallback(() => {
@@ -46,7 +46,7 @@ const Article: React.FC<ArticleProps> = (props) => {
   });
 
   return (
-    <div className={cls}>
+    <div className={cls} ref={ref}>
       <div className="Article-heading" onClick={handleSelect}>
         <div className="Article-title">{article.title}</div>
         <div className="Article-age">{getAge(article.published)}</div>
@@ -59,6 +59,6 @@ const Article: React.FC<ArticleProps> = (props) => {
       )}
     </div>
   );
-};
+});
 
 export default Article;
