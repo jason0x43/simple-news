@@ -1,13 +1,8 @@
 import { React, useCallback, useState } from "./deps.ts";
 import useArticles from "./hooks/useArticles.ts";
-import { Article as ArticleType } from "../types.ts";
 import Article from "./Article.tsx";
 
-export interface ArticlesProps {
-  selectedFeeds?: number[];
-}
-
-const Articles: React.FC<ArticlesProps> = (props) => {
+const Articles: React.FC = () => {
   const [selectedArticle, setSelectedArticle] = useState<number>();
   const { articles } = useArticles();
 

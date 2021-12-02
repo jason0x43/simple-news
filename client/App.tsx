@@ -44,7 +44,7 @@ const AppContent: React.FC<AppProps> = (props) => {
           <Feeds selectedFeeds={feeds} onSelectFeeds={handleSelectFeeds} />
         </div>
         <div className="App-center">
-          <Articles selectedFeeds={feeds} />
+          <Articles />
         </div>
       </div>
     </div>
