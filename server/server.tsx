@@ -52,6 +52,12 @@ export async function serve() {
   app.use(router.routes());
   app.use(router.allowedMethods());
 
+  app.use(async (ctx) => {
+    await ctx.send({
+      root: path.join(__dirname, "..", "public"),
+    });
+  });
+
   log.info(`Listening on port ${port}`);
 
   await Promise.allSettled([
