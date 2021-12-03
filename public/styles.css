@@ -70,9 +70,9 @@ html {
   --gap: 8px;
   --matte: #f7f7f7;
   --background: white;
-  --selected: rgba(0, 0, 0, 0.2);
+  --selected: rgba(0, 0, 0, 0.1);
   --foreground: #666;
-  --border: rgba(0, 0, 0, 0.2);
+  --border: rgba(0, 0, 0, 0.05);
   --highlight: #555;
   --highlight-text: #eee;
   --link: #00f;
@@ -211,19 +211,34 @@ html {
 
 .Article-heading {
   padding: 8px 16px;
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 100px 1fr 80px;
   line-height: 1.25em;
   cursor: default;
+  gap: 1em;
 }
 
 .Article-selected .Article-heading {
   background: var(--selected);
 }
 
+.Article-feed {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 90%;
+  color: #999;
+}
+
+.Article-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .Article-age {
-  flex-shrink: 0;
-  margin-left: 2rem;
+  font-size: 90%;
+  text-align: right;
   color: #999;
 }
 
@@ -248,9 +263,25 @@ html {
   align-items: center;
 }
 
-.Article-content p,
+.Article-content p {
+  margin: 0.75em 0;
+}
+
 .Article-content li {
-  margin: 1em 0;
+  margin: 0.5em 0;
+}
+
+.Article-content table {
+  margin: 1em auto;
+}
+
+.Article-content table td {
+  padding: 0 0.5em;
+}
+
+.Article-content aside {
+  margin: 1.5em 0;
+  font-size: 125%;
 }
 
 .Article-content q {
@@ -264,7 +295,8 @@ html {
   font-style: italic;
 }
 
-.Article-content img {
+.Article-content > img,
+.Article-content > figure > img {
   max-width: 100% !important;
   height: auto !important;
   margin: 1rem 0;
@@ -272,6 +304,24 @@ html {
 
 .Article-content .feedflare {
   display: none;
+}
+
+/* from tor.com feeds */
+.Article-content .ebook-links {
+  display: flex;
+  flex-direction: row;
+  list-style-type: none;
+  padding: 0;
+  gap: 1rem;
+}
+.Article-content .ebook-links img,
+.Article-content .ebook-links li {
+  margin: 0;
+}
+.Article-content .squib .alignleft {
+  margin: 0;
+  margin-right: 1em;
+  float: left;
 }
 
 @media only screen and (max-width: 600px) {
