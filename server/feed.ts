@@ -127,13 +127,13 @@ function formatArticle(text: string, baseUrl?: string): string {
         aElement.setAttribute("src", newSrc);
       }
 
-      const listItems = doc.querySelectorAll('li');
+      const listItems = doc.querySelectorAll("li");
       for (const item of listItems) {
         const eItem = item as unknown as HTMLElement;
-        if (eItem.previousElementSibling?.tagName === 'BR') {
+        if (eItem.previousElementSibling?.tagName === "BR") {
           eItem.previousElementSibling.remove();
         }
-        if (eItem.nextElementSibling?.tagName === 'BR') {
+        if (eItem.nextElementSibling?.tagName === "BR") {
           eItem.nextElementSibling.remove();
         }
       }
@@ -153,8 +153,10 @@ function formatArticle(text: string, baseUrl?: string): string {
   return doc.body.innerHTML;
 }
 
-export async function downloadFeeds(urls: string[]) {
-  const feedUrls = urls.length > 0 ? urls : getFeeds().map((feed) => feed.url);
+export async function downloadFeeds(urls?: string[]) {
+  const feedUrls = urls && urls.length > 0
+    ? urls
+    : getFeeds().map((feed) => feed.url);
   await Promise.allSettled(feedUrls.map(downloadFeed));
 }
 
