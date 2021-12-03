@@ -1,3 +1,5 @@
+/// <reference lib="dom" />
+
 import { React, useEffect, useCallback, useRef, useState } from "./deps.ts";
 import useArticles from "./hooks/useArticles.ts";
 import Article from "./Article.tsx";
