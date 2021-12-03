@@ -1,11 +1,15 @@
 import { Application, log, path } from "./deps.ts";
 import { createRouter } from "./routes.tsx";
+import { downloadFeeds } from "./feed.ts";
 
 const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);
 
 // The path to the client files relative to the proect root
 const clientDir = path.join(__dirname, "..", "client");
+
+// Refresh interval in seconds
+const refreshInterval = 600;
 
 /**
  * Touch this file (to intiate a reload) if the client code changes.
@@ -64,7 +68,12 @@ export async function serve() {
     });
   });
 
-  log.info(`Listening on port ${port}`);
+  // Do an update every 10 minutes
+  setInterval(() => {
+    downloadFeeds();
+  }, refreshInterval * 1000);
+  log.info(`Downloading feeds every ${refreshInterval} seconds`);
 
+  log.info(`Listening on port ${port}`);
   await Promise.allSettled([app.listen({ port }), watchClient()]);
 }
