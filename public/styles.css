@@ -242,6 +242,11 @@ html {
   color: #999;
 }
 
+.Article-container {
+  display: flex;
+  flex-direction: column;
+}
+
 .Article-content {
   padding: 16px 32px;
   margin: 0 auto;
@@ -295,10 +300,12 @@ html {
   font-style: italic;
 }
 
-.Article-content > img,
-.Article-content > figure > img {
+.Article-content img {
   max-width: 100% !important;
   height: auto !important;
+}
+
+.Article-content > img {
   margin: 1rem 0;
 }
 
@@ -322,6 +329,13 @@ html {
   margin: 0;
   margin-right: 1em;
   float: left;
+}
+
+.Article-actual {
+  border: solid 1px var(--border);
+  border-radius: 12px;
+  margin: 1rem 32px;
+  height: 600px;
 }
 
 @media only screen and (max-width: 600px) {
