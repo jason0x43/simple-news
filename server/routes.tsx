@@ -88,26 +88,6 @@ export function createRouter(bundle: { path: string; text: string }) {
     ctx.response.body = { status: "OK" };
   });
 
-  router.get("/canload", async (ctx) => {
-    const params = ctx.request.url.searchParams;
-    const url = params.get('url');
-    const body: Record<string, unknown> = {};
-
-    if (url) {
-      const response = await fetch(url);
-      if (response.headers.get('X-Frame-Options') === 'SAMEORIGIN') {
-        body.canLoad = false;
-      } else {
-        body.canLoad = true;
-      }
-    } else {
-      body.canLoad = false;
-    }
-
-    ctx.response.type = "application/json";
-    ctx.response.body = body;
-  });
-
   router.get("/", (ctx) => {
     const user = getUserByEmail("jason@jasoncheatham.com");
     ctx.response.type = "text/html";

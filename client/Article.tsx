@@ -81,43 +81,18 @@ const Article = forwardRef<HTMLDivElement, ArticleProps>((props, ref) => {
       </div>
       {selectedArticle === article.id && (
         <div className="Article-container">
-          <div className="Article-content-header">
-            <button
-              onClick={() => setShowReal(!showReal)}
-              disabled={!canShowReal}
-            >
-              Inline
-            </button>
-            <button
-              onClick={() => {
-                window.open(article.link, "_blank");
-              }}
-            >
-              New tab
-            </button>
-          </div>
-          {showReal
-            ? (
-              <iframe
-                className="Article-actual"
-                src={article.link}
-                onLoad={(event) => {
-                  console.log(`loading ${article.link}`);
-                  const frame = event.target as HTMLIFrameElement;
-                  try {
-                    frame.contentDocument;
-                  } catch (error) {
-                    console.log(error);
-                  }
-                }}
-              />
-            )
-            : (
-              <div
-                className="Article-content"
-                dangerouslySetInnerHTML={{ __html: article.content ?? "" }}
-              />
-            )}
+          <h1
+            className="Article-content-header"
+            onClick={() => {
+              window.open(article.link, "_blank");
+            }}
+          >
+            {article.title}
+          </h1>
+          <div
+            className="Article-content"
+            dangerouslySetInnerHTML={{ __html: article.content ?? "" }}
+          />
         </div>
       )}
     </div>

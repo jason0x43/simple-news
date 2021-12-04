@@ -245,17 +245,25 @@ html {
 .Article-container {
   display: flex;
   flex-direction: column;
-}
-
-.Article-content {
   padding: 16px 32px;
   margin: 0 auto;
   max-width: 800px;
+}
+
+.Article-content-header {
+  cursor: pointer;
+}
+
+.Article-content {
   overflow: auto;
   font-size: 16px;
   font-family: Merriweather, serif;
   font-weight: 300;
   line-height: 1.5em;
+}
+
+.Article-content > :first-child {
+  margin-top: 0;
 }
 
 .Article-content h1 {
