@@ -2,7 +2,7 @@ import { log, path, React, ReactDOMServer, Router, send } from "./deps.ts";
 import { getArticles, getUserByEmail } from "./database/mod.ts";
 import { User } from "../types.ts";
 import App from "../client/App.tsx";
-import { downloadFeeds, formatArticles } from "./feed.ts";
+import { refreshFeeds, formatArticles } from "./feed.ts";
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
@@ -69,14 +69,14 @@ export function createRouter(bundle: { path: string; text: string }) {
     ctx.response.body = articles;
   });
 
-  router.get("/update/:feed?", async (ctx) => {
+  router.get("/refresh/:feed?", async (ctx) => {
     const { feed } = ctx.params;
     const feedUrls: string[] = [];
     if (feed) {
       feedUrls.push(feed);
     }
 
-    await downloadFeeds(feedUrls);
+    await refreshFeeds(feedUrls);
 
     ctx.response.type = "application/json";
     ctx.response.body = { status: "OK" };

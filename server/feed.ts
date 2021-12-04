@@ -153,7 +153,7 @@ function formatArticle(text: string, baseUrl?: string): string {
   return doc.body.innerHTML;
 }
 
-export async function downloadFeeds(urls?: string[]) {
+export async function refreshFeeds(urls?: string[]) {
   const feedUrls = urls && urls.length > 0
     ? urls
     : getFeeds().map((feed) => feed.url);

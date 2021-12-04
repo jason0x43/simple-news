@@ -1,7 +1,7 @@
 import { Article, User } from "../types.ts";
 
-export async function updateFeeds() {
-  await fetch("/update");
+export async function refreshFeeds() {
+  await fetch("/refresh");
 }
 
 export async function reprocess() {

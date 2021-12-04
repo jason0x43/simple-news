@@ -1,5 +1,5 @@
 import { React, useCallback, useState } from "./deps.ts";
-import { updateFeeds, reprocess } from "./api.ts";
+import { refreshFeeds, reprocess } from "./api.ts";
 import useUser from "./hooks/useUser.ts";
 
 export interface HeaderProps {
@@ -14,7 +14,7 @@ const Header: React.FC<HeaderProps> = (props) => {
   const update = useCallback(async () => {
     setBusy(true);
     try {
-      await updateFeeds();
+      await refreshFeeds();
     } catch (error) {
       console.warn(error);
     } finally {

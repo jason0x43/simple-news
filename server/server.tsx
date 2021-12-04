@@ -1,6 +1,6 @@
 import { Application, log, path } from "./deps.ts";
 import { createRouter } from "./routes.tsx";
-import { downloadFeeds } from "./feed.ts";
+import { refreshFeeds } from "./feed.ts";
 
 const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);
@@ -70,7 +70,7 @@ export async function serve() {
 
   // Do an update every 10 minutes
   setInterval(() => {
-    downloadFeeds();
+    refreshFeeds();
   }, refreshInterval * 1000);
   log.info(`Downloading feeds every ${refreshInterval} seconds`);
 

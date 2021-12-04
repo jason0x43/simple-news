@@ -12,7 +12,7 @@ import {
   setFeedDisabled,
   setFeedUrl,
 } from "./server/database/mod.ts";
-import { downloadFeeds, formatArticles } from "./server/feed.ts";
+import { refreshFeeds, formatArticles } from "./server/feed.ts";
 import { exportOpmlFile, importOpmlFile } from "./server/opml.ts";
 import { printTable } from "./server/util.ts";
 
@@ -47,13 +47,13 @@ const parser = yargs(Deno.args)
   .command("serve", "Start the RSS aggregator server", {}, async () => {
     await serve();
   })
-  .command("download [urls..]", "Download feeds", (yargs: Yargs) => {
+  .command("refresh [urls..]", "Refresh feeds", (yargs: Yargs) => {
     yargs.positional("urls", {
       describe: "One or more feed URLs",
       type: "string",
     });
   }, async (args: Arguments & { urls: string[] }) => {
-    await downloadFeeds(args.urls);
+    await refreshFeeds(args.urls);
   })
   .command(
     "import <email> <file>",
