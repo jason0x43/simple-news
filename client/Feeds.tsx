@@ -1,15 +1,23 @@
-import { React, useState } from './deps.ts';
-import { className } from './util.ts';
-import useUser from './hooks/useUser.ts';
+import { React, useState } from "./deps.ts";
+import { className } from "./util.ts";
+import useUser from "./hooks/useUser.ts";
+import { Feed } from "../types.ts";
 
 export interface FeedsProps {
   selectedFeeds?: number[];
   onSelectFeeds?: (feeds: number[]) => void;
 }
 
+function isSelected(feeds: Feed[], selected: number[] | undefined) {
+  if (!selected) {
+    return false;
+  }
+  return feeds.every((feed) => selected.includes(feed.id));
+}
+
 const Feeds: React.FC<FeedsProps> = (props) => {
   const [expanded, setExpanded] = useState<{ [title: string]: boolean }>({});
-  const { onSelectFeeds } = props;
+  const { onSelectFeeds, selectedFeeds } = props;
   const { user } = useUser();
 
   return (
@@ -18,18 +26,22 @@ const Feeds: React.FC<FeedsProps> = (props) => {
         <li
           key={group.title}
           className={className({
-            'Feeds-expanded': expanded[group.title],
+            "Feeds-expanded": expanded[group.title],
           })}
         >
-          <div className="Feeds-group">
+          <div
+            className={className(
+              "Feeds-group",
+              { "Feeds-selected": isSelected(group.feeds, selectedFeeds) },
+            )}
+          >
             <span
               className="Feeds-expander"
               onClick={() =>
                 setExpanded({
                   ...expanded,
                   [group.title]: !expanded[group.title],
-                })
-              }
+                })}
             />
             <span
               className="Feeds-title"
@@ -41,7 +53,9 @@ const Feeds: React.FC<FeedsProps> = (props) => {
           <ul>
             {group.feeds.map((feed) => (
               <li
-                className="Feeds-feed"
+                className={className("Feeds-feed", {
+                  "Feeds-selected": isSelected([feed], selectedFeeds),
+                })}
                 key={feed.id}
                 onClick={() => onSelectFeeds?.([feed.id])}
               >

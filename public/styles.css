@@ -156,6 +156,10 @@ html {
   align-items: center;
 }
 
+.Feeds-selected {
+  border-right: solid 4px var(--highlight-text);
+}
+
 .Feeds-title {
   flex-grow: 1;
 }
