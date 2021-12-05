@@ -1,4 +1,4 @@
-import { query } from './db.ts';
+import { query } from "./db.ts";
 
 export interface UserArticle {
   id: number;
@@ -16,7 +16,7 @@ function rowToUserArticle(row: UserArticleRow): UserArticle {
 }
 
 export function setArticleRead(
-  article: Omit<UserArticle, "id" | "read" | "saved">,
+  article: Pick<UserArticle, "userId" | "articleId">,
   read: boolean,
 ): UserArticle {
   const rows = query<UserArticleRow>(

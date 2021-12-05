@@ -1,7 +1,22 @@
-import { Article, User } from "../types.ts";
+import { Article, UpdateArticleRequest, User } from "../types.ts";
 
 export async function refreshFeeds() {
   await fetch("/refresh");
+}
+
+export async function setRead(articles: Article[], read = true) {
+  const body: UpdateArticleRequest = articles.map((article) => ({
+    articleId: article.id,
+    read,
+  }));
+
+  await fetch(`/articles`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
 }
 
 export async function reprocess() {

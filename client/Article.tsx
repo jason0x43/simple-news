@@ -4,6 +4,7 @@ import { datetime, forwardRef, React, useCallback } from "./deps.ts";
 import { Article as ArticleType } from "../types.ts";
 import { className } from "./util.ts";
 import useFeed from "./hooks/useFeed.ts";
+import { setRead } from "./api.ts";
 
 function pluralize(str: string, val: number): string {
   return `${str}${val === 1 ? "" : "s"}`;
@@ -41,8 +42,9 @@ const Article = forwardRef<HTMLDivElement, ArticleProps>((props, ref) => {
   const { article, selectArticle, selectedArticle } = props;
   const feed = useFeed(article.feedId);
 
-  const handleSelect = useCallback(() => {
+  const handleSelect = useCallback(async () => {
     selectArticle(article.id);
+    await setRead([article]);
   }, [article, selectedArticle]);
 
   const cls = className("Article", {

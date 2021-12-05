@@ -1,10 +1,8 @@
-import { log, path, React, ReactDOMServer, Router, send } from "./deps.ts";
-import { getArticles, getUserByEmail } from "./database/mod.ts";
-import { User } from "../types.ts";
+import { log, React, ReactDOMServer, Router } from "./deps.ts";
+import { getArticles, getUserByEmail, setArticleRead } from "./database/mod.ts";
+import { UpdateArticleRequest, User } from "../types.ts";
 import App from "../client/App.tsx";
-import { refreshFeeds, formatArticles } from "./feed.ts";
-
-const __dirname = path.dirname(new URL(import.meta.url).pathname);
+import { formatArticles, refreshFeeds } from "./feed.ts";
 
 export function createRouter(bundle: { path: string; text: string }) {
   // Render the base HTML
@@ -70,17 +68,28 @@ export function createRouter(bundle: { path: string; text: string }) {
     response.body = articles;
   });
 
-  router.get("/refresh/:feed?", async (ctx) => {
-    const { feed } = ctx.params;
-    const feedUrls: string[] = [];
-    if (feed) {
-      feedUrls.push(feed);
+  router.get("/refresh", async ({ response }) => {
+    await refreshFeeds();
+    response.type = "application/json";
+    response.body = { status: "OK" };
+  });
+
+  router.put("/articles", async ({ request, response }) => {
+    if (request.hasBody) {
+      const body = request.body();
+      const data = await body.value as UpdateArticleRequest;
+      const user = getUserByEmail("jason@jasoncheatham.com");
+      for (const entry of data) {
+        setArticleRead({
+          articleId: entry.articleId,
+          userId: user.id,
+        }, entry.read);
+        log.debug(`Set article ${entry.articleId} as read for ${user.id}`);
+      }
     }
 
-    await refreshFeeds(feedUrls);
-
-    ctx.response.type = "application/json";
-    ctx.response.body = { status: "OK" };
+    response.type = "application/json";
+    response.body = { status: "OK" };
   });
 
   router.get("/reprocess", ({ response }) => {

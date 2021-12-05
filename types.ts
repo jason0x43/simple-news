@@ -38,3 +38,5 @@ export interface User {
   /** User settings */
   config?: UserConfig;
 }
+
+export type UpdateArticleRequest = { articleId: number, read: boolean }[];
