@@ -1,13 +1,6 @@
 /// <reference lib="dom" />
 
-import {
-  datetime,
-  forwardRef,
-  React,
-  useCallback,
-  useEffect,
-  useState,
-} from "./deps.ts";
+import { datetime, forwardRef, React, useCallback } from "./deps.ts";
 import { Article as ArticleType } from "../types.ts";
 import { className } from "./util.ts";
 import useFeed from "./hooks/useFeed.ts";
@@ -47,26 +40,10 @@ export interface ArticleProps {
 const Article = forwardRef<HTMLDivElement, ArticleProps>((props, ref) => {
   const { article, selectArticle, selectedArticle } = props;
   const feed = useFeed(article.feedId);
-  const [canShowReal, setCanShowReal] = useState(false);
-  const [showReal, setShowReal] = useState(false);
 
   const handleSelect = useCallback(() => {
     selectArticle(article.id);
-    setShowReal(false);
   }, [article, selectedArticle]);
-
-  useEffect(() => {
-    const { link } = article;
-    if (link && selectedArticle === article.id) {
-      (async () => {
-        const params = new URLSearchParams();
-        params.set("url", link);
-        const response = await fetch(`/canload?${params}`);
-        const info = await response.json();
-        setCanShowReal(info.canLoad);
-      })();
-    }
-  }, [selectedArticle, article.link]);
 
   const cls = className("Article", {
     "Article-selected": selectedArticle === article.id,
