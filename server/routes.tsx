@@ -44,15 +44,15 @@ export function createRouter(bundle: { path: string; text: string }) {
 
   const router = new Router();
 
-  router.get("/user", (ctx) => {
+  router.get("/user", ({ response }) => {
     const user = getUserByEmail("jason@jasoncheatham.com");
-    ctx.response.type = "application/json";
-    ctx.response.body = user;
+    response.type = "application/json";
+    response.body = user;
   });
 
-  router.get(bundle.path, (ctx) => {
-    ctx.response.type = "application/javascript";
-    ctx.response.body = bundle.text;
+  router.get(bundle.path, ({ response }) => {
+    response.type = "application/javascript";
+    response.body = bundle.text;
   });
 
   router.get("/articles", ({ request, response }) => {
@@ -83,16 +83,16 @@ export function createRouter(bundle: { path: string; text: string }) {
     ctx.response.body = { status: "OK" };
   });
 
-  router.get("/reprocess", (ctx) => {
+  router.get("/reprocess", ({ response }) => {
     formatArticles();
-    ctx.response.type = "application/json";
-    ctx.response.body = { status: "OK" };
+    response.type = "application/json";
+    response.body = { status: "OK" };
   });
 
-  router.get("/", (ctx) => {
+  router.get("/", ({ response }) => {
     const user = getUserByEmail("jason@jasoncheatham.com");
-    ctx.response.type = "text/html";
-    ctx.response.body = render(user);
+    response.type = "text/html";
+    response.body = render(user);
   });
 
   return router;
