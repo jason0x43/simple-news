@@ -55,18 +55,19 @@ export function createRouter(bundle: { path: string; text: string }) {
     ctx.response.body = bundle.text;
   });
 
-  router.get("/articles", (ctx) => {
-    const params = ctx.request.url.searchParams;
+  router.get("/articles", ({ request, response }) => {
+    const params = request.url.searchParams;
     let articles: unknown[];
-    if (params.has('feeds')) {
-      const feedIds = JSON.parse(params.get('feeds')!);
-      log.info(`getting feeds: ${JSON.stringify(feedIds)}`);
-      articles = getArticles({ feedIds })
+    const feedIdsList = params.get('feeds');
+    if (feedIdsList) {
+      log.debug(`getting feeds: ${feedIdsList}`);
+      const feedIds = feedIdsList.split(',').map(Number);
+      articles = getArticles({ feedIds });
     } else {
-      articles = getArticles()
+      articles = getArticles();
     }
-    ctx.response.type = "application/json";
-    ctx.response.body = articles;
+    response.type = "application/json";
+    response.body = articles;
   });
 
   router.get("/refresh/:feed?", async (ctx) => {
