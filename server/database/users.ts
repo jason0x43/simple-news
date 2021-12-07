@@ -1,24 +1,25 @@
 import { log } from "../deps.ts";
-import { query } from './db.ts';
-import { getFeed } from './feeds.ts';
-import { User, UserConfig } from '../../types.ts';
+import { query } from "./db.ts";
+import { getFeed } from "./feeds.ts";
+import { User, UserConfig } from "../../types.ts";
 
 type UserRow = [number, string, string, string?];
 
-type DehydratedFeedGroup = Omit<UserConfig['feedGroups'][0], 'feeds'> & { feeds:
-  number[] };
+type DehydratedFeedGroup = Omit<UserConfig["feedGroups"][0], "feeds"> & {
+  feeds: number[];
+};
 
-type DehydratedConfig = Omit<UserConfig, 'feedGroups'> & {
+type DehydratedConfig = Omit<UserConfig, "feedGroups"> & {
   feedGroups: DehydratedFeedGroup[];
-}
+};
 
 function hydrateConfig(config: DehydratedConfig): UserConfig {
   return {
     ...config,
     feedGroups: config.feedGroups.map((group) => ({
       ...group,
-      feeds: group.feeds.map(getFeed)
-    }))
+      feeds: group.feeds.map(getFeed),
+    })),
   };
 }
 
@@ -27,8 +28,8 @@ function dehydrateConfig(config: UserConfig): DehydratedConfig {
     ...config,
     feedGroups: config.feedGroups.map((group) => ({
       ...group,
-      feeds: group.feeds.map(({ id }) => id)
-    }))
+      feeds: group.feeds.map(({ id }) => id),
+    })),
   };
 }
 
@@ -48,10 +49,21 @@ export function addUser(user: Omit<User, "id" | "config">): User {
   return rowToUser(rows[0]);
 }
 
+export function getUser(userId: number): User {
+  const rows = query<UserRow>(
+    "SELECT * FROM users WHERE id = (:userId)",
+    { userId },
+  );
+  if (!rows[0]) {
+    throw new Error(`No user with id ${userId}`);
+  }
+  return rowToUser(rows[0]);
+}
+
 export function getUserByEmail(email: string): User {
   const rows = query<UserRow>(
-    "SELECT * FROM users WHERE email = (?)",
-    [email],
+    "SELECT * FROM users WHERE email = (:email)",
+    { email },
   );
   if (!rows[0]) {
     throw new Error(`No user with email ${email}`);

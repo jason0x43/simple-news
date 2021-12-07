@@ -4,18 +4,20 @@ import { ArticlesProvider } from "./ArticlesContext.tsx";
 import Feeds from "./Feeds.tsx";
 import Articles from "./Articles.tsx";
 import Header from "./Header.tsx";
-import { User } from "../types.ts";
+import { Article, User } from "../types.ts";
 import useUser from "./hooks/useUser.ts";
 import useArticles from "./hooks/useArticles.ts";
 
 export interface AppProps {
   user?: User;
+  selectedFeeds?: number[];
+  articles?: Article[];
 }
 
 const AppContent: React.FC<AppProps> = (props) => {
   const { fetchUser } = useUser();
   const { fetchArticles } = useArticles();
-  const [feeds, setFeeds] = useState<number[]>();
+  const [feeds, setFeeds] = useState<number[] | undefined>(props.selectedFeeds);
   const [sidebarActive, setSidebarActive] = useState(false);
 
   React.useEffect(() => {
@@ -54,7 +56,7 @@ const AppContent: React.FC<AppProps> = (props) => {
 const App: React.FC<AppProps> = (props) => {
   return (
     <UserProvider user={props.user}>
-      <ArticlesProvider>
+      <ArticlesProvider articles={props.articles}>
         <AppContent {...props} />
       </ArticlesProvider>
     </UserProvider>

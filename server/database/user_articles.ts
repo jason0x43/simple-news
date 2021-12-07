@@ -1,5 +1,6 @@
 import { query } from "./db.ts";
 
+
 export interface UserArticle {
   id: number;
   userId: number;
@@ -15,8 +16,17 @@ function rowToUserArticle(row: UserArticleRow): UserArticle {
   return { id, userId, articleId, read, saved };
 }
 
+export function getReadArticleIds(userId: number): number[] {
+  const rows = query<number[]>(
+    'SELECT article_id FROM user_articles WHERE user_id = (:userId)',
+    { userId }
+  );
+  return rows.map((row) => row[0]);
+}
+
 export function setArticleRead(
-  article: Pick<UserArticle, "userId" | "articleId">,
+  userId: UserArticle['userId'],
+  articleId: UserArticle['articleId'],
   read: boolean,
 ): UserArticle {
   const rows = query<UserArticleRow>(
@@ -24,7 +34,7 @@ export function setArticleRead(
     VALUES (:userId, :articleId, :read)
     ON CONFLICT(user_id, article_id) DO UPDATE SET read = (:read)
     RETURNING *`,
-    { ...article, read },
+    { userId, articleId, read },
   );
   return rowToUserArticle(rows[0]);
 }

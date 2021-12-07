@@ -1,13 +1,35 @@
 import { log, React, ReactDOMServer, Router } from "./deps.ts";
-import { getArticles, getUserByEmail, setArticleRead } from "./database/mod.ts";
-import { UpdateArticleRequest, User } from "../types.ts";
+import {
+  getArticles,
+  getReadArticleIds,
+  getUser,
+  getUserByEmail,
+  setArticleRead,
+} from "./database/mod.ts";
+import { AppState, Article, UpdateArticleRequest, User } from "../types.ts";
 import App from "../client/App.tsx";
 import { formatArticles, refreshFeeds } from "./feed.ts";
 
+function toString(value: unknown): string {
+  return JSON.stringify(JSON.stringify(value ?? null));
+}
+
 export function createRouter(bundle: { path: string; text: string }) {
   // Render the base HTML
-  const render = (user: User) =>
-    `<!DOCTYPE html>
+  const render = (
+    user: User,
+    selectedFeeds?: number[],
+    articles?: Article[],
+  ) => {
+    const globalData = user
+      ? `globalThis.appProps = {
+        user: JSON.parse(${toString(user)}),
+        selectedFeeds: JSON.parse(${toString(selectedFeeds)}),
+        articles: JSON.parse(${toString(articles)})
+      };`
+      : "";
+
+    return `<!DOCTYPE html>
     <html lang="en">
       <head>
         <title>Simple News</title>
@@ -20,30 +42,24 @@ export function createRouter(bundle: { path: string; text: string }) {
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
         <link rel="manifest" href="/site.webmanifest">
 
-        <link rel="preconnect" href="https://fonts.googleapis.com"> 
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
-        <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="/styles.css">
-        ${
-      user
-        ? `<script>
-                globalThis.appProps = {
-                  user: JSON.parse(${JSON.stringify(JSON.stringify(user))})
-                };
-                </script>`
-        : ""
-    }
+        <script>${globalData}</script>
         <script type="module" src="${bundle.path}"></script>
       </head>
       <body>
-      <div id="root">${ReactDOMServer.renderToString(<App user={user} />)}</div>
+      <div id="root">${
+      ReactDOMServer.renderToString(
+        <App user={user} selectedFeeds={selectedFeeds} articles={articles} />,
+      )
+    }</div>
       </body>
     </html>`;
+  };
 
-  const router = new Router();
+  const router = new Router<AppState>();
 
-  router.get("/user", ({ response }) => {
-    const user = getUserByEmail("jason@jasoncheatham.com");
+  router.get("/user", ({ response, state }) => {
+    const user = getUser(state.userId);
     response.type = "application/json";
     response.body = user;
   });
@@ -53,25 +69,29 @@ export function createRouter(bundle: { path: string; text: string }) {
     response.body = bundle.text;
   });
 
-  router.get("/articles", ({ request, response }) => {
+  router.get("/articles", async ({ cookies, request, response, state }) => {
     const params = request.url.searchParams;
-    let articles: unknown[];
-    const feedIdsList = params.get('feeds');
+    let articles: Article[];
+
+    const feedIdsList = params.get("feeds");
     if (feedIdsList) {
       log.debug(`getting feeds: ${feedIdsList}`);
-      const feedIds = feedIdsList.split(',').map(Number);
+      const feedIds = feedIdsList.split(",").map(Number);
+      await cookies.set("selectedFeeds", feedIds.map(String).join(","));
       articles = getArticles({ feedIds });
     } else {
       articles = getArticles();
     }
+
+    const user = getUser(state.userId);
+    const readIds = getReadArticleIds(user.id);
+    articles = articles.map((article) => ({
+      ...article,
+      read: readIds.includes(article.id),
+    }));
+
     response.type = "application/json";
     response.body = articles;
-  });
-
-  router.get("/refresh", async ({ response }) => {
-    await refreshFeeds();
-    response.type = "application/json";
-    response.body = { status: "OK" };
   });
 
   router.put("/articles", async ({ request, response }) => {
@@ -80,14 +100,21 @@ export function createRouter(bundle: { path: string; text: string }) {
       const data = await body.value as UpdateArticleRequest;
       const user = getUserByEmail("jason@jasoncheatham.com");
       for (const entry of data) {
-        setArticleRead({
-          articleId: entry.articleId,
-          userId: user.id,
-        }, entry.read);
+        setArticleRead(
+          user.id,
+          entry.articleId,
+          entry.read,
+        );
         log.debug(`Set article ${entry.articleId} as read for ${user.id}`);
       }
     }
 
+    response.type = "application/json";
+    response.body = { status: "OK" };
+  });
+
+  router.get("/refresh", async ({ response }) => {
+    await refreshFeeds();
     response.type = "application/json";
     response.body = { status: "OK" };
   });
@@ -98,10 +125,26 @@ export function createRouter(bundle: { path: string; text: string }) {
     response.body = { status: "OK" };
   });
 
-  router.get("/", ({ response }) => {
-    const user = getUserByEmail("jason@jasoncheatham.com");
+  router.get("/", async ({ cookies, response, state }) => {
+    let user: User;
+    if (state.userId) {
+      user = getUser(state.userId);
+    } else {
+      user = getUserByEmail("jason@jasoncheatham.com");
+      state.userId = user.id;
+      await cookies.set("userId", `${user.id}`);
+    }
+
     response.type = "text/html";
-    response.body = render(user);
+
+    const selectedFeeds = await cookies.get("selectedFeeds");
+    if (selectedFeeds) {
+      const feedIds = selectedFeeds.split(",").map(Number);
+      const articles = getArticles({ feedIds, userId: state.userId });
+      response.body = render(user, feedIds, articles);
+    } else {
+      response.body = render(user);
+    }
   });
 
   return router;

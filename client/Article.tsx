@@ -1,7 +1,7 @@
 /// <reference lib="dom" />
 
-import { datetime, forwardRef, React, useCallback } from "./deps.ts";
-import { Article as ArticleType } from "../types.ts";
+import { datetime, forwardRef, React, useCallback, useMemo } from "./deps.ts";
+import { Article } from "../types.ts";
 import { className } from "./util.ts";
 import useFeed from "./hooks/useFeed.ts";
 import { setRead } from "./api.ts";
@@ -34,7 +34,7 @@ function getAge(timestamp: number | undefined): string {
 }
 
 export interface ArticleProps {
-  article: ArticleType;
+  article: Article;
   selectedArticle: number | undefined;
   selectArticle: (id: number) => void;
 }
@@ -45,11 +45,12 @@ const Article = forwardRef<HTMLDivElement, ArticleProps>((props, ref) => {
 
   const handleSelect = useCallback(async () => {
     selectArticle(article.id);
-    await setRead([article]);
+    await setRead([article.id]);
   }, [article, selectedArticle]);
 
   const cls = className("Article", {
     "Article-selected": selectedArticle === article.id,
+    "Article-read": article.read,
   });
 
   const content = useMemo(() => {
@@ -58,7 +59,10 @@ const Article = forwardRef<HTMLDivElement, ArticleProps>((props, ref) => {
 
   return (
     <div className={cls} ref={ref}>
-      <div className="Article-heading" onClick={handleSelect}>
+      <div
+        className="Article-heading"
+        onClick={handleSelect}
+      >
         <div className="Article-feed">{feed?.title}</div>
         <div className="Article-title">{article.title}</div>
         <div className="Article-age">{getAge(article.published)}</div>

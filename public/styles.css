@@ -222,6 +222,10 @@ html {
   gap: 1em;
 }
 
+.Article-read .Article-heading {
+  opacity: 0.5;
+}
+
 .Article-selected .Article-heading {
   background: var(--selected);
 }
@@ -351,8 +355,13 @@ html {
 }
 
 @media only screen and (max-width: 1200px) {
+  .App-content {
+    grid-template-columns: 1fr;
+  }
+
   .App-sidebar {
     position: absolute;
+    z-index: 2;
     left: calc(-1 * var(--default-width));
     top: 0;
     bottom: 0;
@@ -365,6 +374,10 @@ html {
 
   .Header-show-feeds {
     display: initial;
+  }
+
+  .Header h1 {
+    cursor: pointer;
   }
 
   .Article-content {

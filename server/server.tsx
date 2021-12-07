@@ -1,4 +1,5 @@
 import { Application, log, path } from "./deps.ts";
+import { AppState } from '../types.ts';
 import { createRouter } from "./routes.tsx";
 import { refreshFeeds } from "./feed.ts";
 
@@ -52,11 +53,19 @@ export async function serve() {
   });
 
   const port = 8083;
-  const app = new Application();
+  const app = new Application<AppState>();
 
   app.use(async (ctx, next) => {
-    await next();
     log.info(`${ctx.request.method} ${ctx.request.url.pathname}`);
+    await next();
+  });
+
+  app.use(async (ctx, next) => {
+    const userId = await ctx.cookies.get('userId');
+    if (userId) {
+      ctx.state.userId = Number(userId);
+    }
+    await next();
   });
 
   app.use(router.routes());

@@ -1,4 +1,9 @@
-export interface Article {
+export interface AppState {
+  userId: number;
+  selectedFeeds?: number[];
+}
+
+export interface DbArticle {
   id: number;
   feedId: number;
   articleId: string;
@@ -6,6 +11,10 @@ export interface Article {
   link: string | undefined;
   published: number | undefined;
   content: string | undefined;
+}
+
+export interface Article extends DbArticle {
+  read?: boolean;
 }
 
 export interface Feed {

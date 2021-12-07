@@ -1,6 +1,6 @@
 import { log } from "../deps.ts";
 import { query } from "./db.ts";
-import { Article } from "../../types.ts";
+import { DbArticle } from "../../types.ts";
 
 type ArticleRow = [
   number,
@@ -13,7 +13,7 @@ type ArticleRow = [
   string,
 ];
 
-function rowToArticle(row: ArticleRow): Article {
+function rowToArticle(row: ArticleRow): DbArticle {
   const [id, feedId, articleId, title, link, published, content] = row;
   return {
     id,
@@ -26,7 +26,7 @@ function rowToArticle(row: ArticleRow): Article {
   };
 }
 
-export function addArticle(article: Omit<Article, "id">): Article {
+export function addArticle(article: Omit<DbArticle, "id">): DbArticle {
   log.debug(`Adding article ${article.articleId}`);
   const rows = query<ArticleRow>(
     `INSERT INTO articles (
@@ -39,7 +39,7 @@ export function addArticle(article: Omit<Article, "id">): Article {
   return rowToArticle(rows[0]);
 }
 
-export function getArticle(articleId: string): Article {
+export function getArticle(articleId: string): DbArticle {
   const rows = query<ArticleRow>(
     "SELECT * FROM articles WHERE article_id = (:articleId)",
     { articleId },
@@ -58,7 +58,7 @@ export function getArticleCount(feedId: number): number {
   return rows[0][0];
 }
 
-export function getLatestArticle(feedId: number): Article | undefined {
+export function getLatestArticle(feedId: number): DbArticle | undefined {
   const rows = query<ArticleRow>(
     "SELECT * FROM articles WHERE feed_id = (:feedId) ORDER BY published DESC LIMIT 1",
     { feedId },
@@ -76,7 +76,7 @@ export interface GetArticlesOpts {
   userId?: number;
 }
 
-export function getArticles(opts?: GetArticlesOpts): Article[] {
+export function getArticles(opts?: GetArticlesOpts): DbArticle[] {
   let rows: ArticleRow[];
 
   if (opts?.feedIds !== undefined) {
