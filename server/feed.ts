@@ -9,6 +9,7 @@ import {
   hasArticle,
   setArticleContent,
 } from "./database/mod.ts";
+import { escapeHtml, unescapeHtml } from '../util.ts';
 
 async function downloadFeed(url: string) {
   let xml: string | undefined;
@@ -103,9 +104,7 @@ function getEntryContent(entry: FeedEntryEncoded): string | undefined {
 }
 
 function formatArticle(text: string, baseUrl?: string): string {
-  text = text.replace(/&lt;/g, "<");
-  text = text.replace(/&gt;/g, ">");
-  text = text.replace(/&amp;/g, "&");
+  text = unescapeHtml(text);
 
   const doc = new DOMParser().parseFromString(text, "text/html")!;
 
@@ -150,7 +149,7 @@ function formatArticle(text: string, baseUrl?: string): string {
     );
   }
 
-  return doc.body.innerHTML;
+  return escapeHtml(doc.body.innerHTML);
 }
 
 export async function refreshFeeds(urls?: string[]) {
@@ -163,10 +162,14 @@ export async function refreshFeeds(urls?: string[]) {
 export function formatArticles() {
   const articles = getArticles();
   log.debug(`Formatting ${articles.length} articles...`);
+  let count = 0;
   for (const article of articles) {
     if (article.content) {
       setArticleContent(article.id, formatArticle(article.content));
-      log.debug(`Formatted ${article.id}`);
+    }
+    count++;
+    if (count % 100 === 0) {
+      log.debug(`Formatted ${count} articles`);
     }
   }
 }

@@ -5,6 +5,7 @@ import { Article as ArticleType } from "../types.ts";
 import { className } from "./util.ts";
 import useFeed from "./hooks/useFeed.ts";
 import { setRead } from "./api.ts";
+import { unescapeHtml } from '../util.ts';
 
 function pluralize(str: string, val: number): string {
   return `${str}${val === 1 ? "" : "s"}`;
@@ -51,6 +52,10 @@ const Article = forwardRef<HTMLDivElement, ArticleProps>((props, ref) => {
     "Article-selected": selectedArticle === article.id,
   });
 
+  const content = useMemo(() => {
+    return unescapeHtml(article.content ?? '');
+  }, [article.content]);
+
   return (
     <div className={cls} ref={ref}>
       <div className="Article-heading" onClick={handleSelect}>
@@ -70,7 +75,7 @@ const Article = forwardRef<HTMLDivElement, ArticleProps>((props, ref) => {
           </h1>
           <div
             className="Article-content"
-            dangerouslySetInnerHTML={{ __html: article.content ?? "" }}
+            dangerouslySetInnerHTML={{ __html: content }}
           />
         </div>
       )}
