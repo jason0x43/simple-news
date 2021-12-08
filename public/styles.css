@@ -354,6 +354,30 @@ html {
   height: 600px;
 }
 
+.ContextMenu {
+  font-family: sans-serif;
+  position: absolute;
+  background: white;
+  border: solid 1px var(--border);
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.ContextMenu ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  min-width: 100px;
+}
+
+.ContextMenu li {
+  padding: 0.5rem;
+  cursor: pointer;
+}
+
+.ContextMenu li:hover {
+  background: #f7f7f7;
+}
+
 @media only screen and (max-width: 1200px) {
   .App-content {
     grid-template-columns: 1fr;

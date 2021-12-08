@@ -1,6 +1,7 @@
 import { React, useCallback, useState } from "./deps.ts";
 import { UserProvider } from "./UserContext.tsx";
 import { ArticlesProvider } from "./ArticlesContext.tsx";
+import { ContextMenuProvider } from "./ContextMenuContext.tsx";
 import Feeds from "./Feeds.tsx";
 import Articles from "./Articles.tsx";
 import Header from "./Header.tsx";
@@ -56,9 +57,11 @@ const AppContent: React.FC<AppProps> = (props) => {
 const App: React.FC<AppProps> = (props) => {
   return (
     <UserProvider user={props.user}>
-      <ArticlesProvider articles={props.articles}>
-        <AppContent {...props} />
-      </ArticlesProvider>
+      <ContextMenuProvider>
+        <ArticlesProvider articles={props.articles}>
+          <AppContent {...props} />
+        </ArticlesProvider>
+      </ContextMenuProvider>
     </UserProvider>
   );
 };
