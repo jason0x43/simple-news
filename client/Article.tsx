@@ -4,8 +4,8 @@ import { datetime, forwardRef, React, useCallback, useMemo } from "./deps.ts";
 import { Article } from "../types.ts";
 import { className } from "./util.ts";
 import useFeed from "./hooks/useFeed.ts";
-import { setRead } from "./api.ts";
-import { unescapeHtml } from '../util.ts';
+import useArticles from "./hooks/useArticles.ts";
+import { unescapeHtml } from "../util.ts";
 
 function pluralize(str: string, val: number): string {
   return `${str}${val === 1 ? "" : "s"}`;
@@ -41,20 +41,21 @@ export interface ArticleProps {
 
 const Article = forwardRef<HTMLDivElement, ArticleProps>((props, ref) => {
   const { article, selectArticle, selectedArticle } = props;
+  const { setArticlesRead } = useArticles();
   const feed = useFeed(article.feedId);
 
-  const handleSelect = useCallback(async () => {
+  const handleSelect = useCallback(() => {
     selectArticle(article.id);
-    await setRead([article.id]);
+    setArticlesRead([article.id]);
   }, [article, selectedArticle]);
 
   const cls = className("Article", {
     "Article-selected": selectedArticle === article.id,
-    "Article-read": article.read,
+    "Article-read": article.read && selectedArticle !== article.id,
   });
 
   const content = useMemo(() => {
-    return unescapeHtml(article.content ?? '');
+    return unescapeHtml(article.content ?? "");
   }, [article.content]);
 
   return (
