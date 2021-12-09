@@ -4,6 +4,7 @@ import { React, useCallback, useEffect, useRef, useState } from "./deps.ts";
 import useArticles from "./hooks/useArticles.ts";
 import Article from "./Article.tsx";
 import useContextMenu from "./hooks/useContextMenu.ts";
+import { className } from "./util.ts";
 
 function getIds(
   articles: { id: number; read?: boolean }[] | undefined,
@@ -32,7 +33,9 @@ const Articles: React.FC = () => {
   const [selectedArticle, setSelectedArticle] = useState<number>();
   const { articles, setArticlesRead } = useArticles();
   const selectedRef = useRef<HTMLDivElement>(null);
-  const { showContextMenu, hideContextMenu } = useContextMenu();
+  const { showContextMenu, hideContextMenu, contextMenuVisible } =
+    useContextMenu();
+  const [activeArticle, setActiveArticle] = useState<number>();
 
   const handleSelect = useCallback((selected: number) => {
     hideContextMenu();
@@ -69,8 +72,17 @@ const Articles: React.FC = () => {
         hideContextMenu();
       },
     });
+
+    setActiveArticle(articleId);
+
     event.preventDefault();
   }, [articles]);
+
+  useEffect(() => {
+    if (!contextMenuVisible) {
+      setActiveArticle(undefined);
+    }
+  }, [contextMenuVisible]);
 
   useEffect(() => {
     if (selectedRef.current && selectedArticle !== undefined) {
@@ -80,9 +92,13 @@ const Articles: React.FC = () => {
 
   return (
     <ul className="Articles">
-      {articles?.map((article) => (
+      {articles?.map((
+        article,
+      ) => (
         <li
-          className="Articles-article"
+          className={className("Articles-article", {
+            "Articles-active": article.id === activeArticle,
+          })}
           key={article.id}
           data-article-id={article.id}
           onContextMenu={handleRightClick}

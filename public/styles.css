@@ -209,6 +209,10 @@ html {
   width: 100%;
 }
 
+.Articles-active {
+  background: #f7f7f7;
+}
+
 .Article {
   border-bottom: solid 1px var(--border);
 }
