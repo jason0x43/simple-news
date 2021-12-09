@@ -1,6 +1,6 @@
 import { DB, log } from "../deps.ts";
 import { addUser, getUserByEmail } from "./users.ts";
-import { getDb, createDb, closeDb, query } from './db.ts';
+import { closeDb, createDb, getDb, query } from "./db.ts";
 
 export * from "./users.ts";
 export * from "./feeds.ts";

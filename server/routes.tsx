@@ -4,7 +4,7 @@ import {
   getReadArticleIds,
   getUser,
   getUserByEmail,
-  setArticleRead,
+  setArticlesRead,
 } from "./database/mod.ts";
 import { AppState, Article, UpdateArticleRequest, User } from "../types.ts";
 import App from "../client/App.tsx";
@@ -99,14 +99,7 @@ export function createRouter(bundle: { path: string; text: string }) {
       const body = request.body();
       const data = await body.value as UpdateArticleRequest;
       const user = getUserByEmail("jason@jasoncheatham.com");
-      for (const entry of data) {
-        setArticleRead(
-          user.id,
-          entry.articleId,
-          entry.read,
-        );
-        log.debug(`Set article ${entry.articleId} as read for ${user.id}`);
-      }
+      setArticlesRead(user.id, data);
     }
 
     response.type = "application/json";
