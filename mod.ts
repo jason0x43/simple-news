@@ -30,8 +30,6 @@ async function configureLogger(args: Arguments) {
   });
 }
 
-openDatabase();
-
 const parser = yargs(Deno.args)
   .strict()
   .version("0.1.0")
@@ -43,7 +41,10 @@ const parser = yargs(Deno.args)
   .option("h", {
     alias: "help",
   })
-  .middleware([configureLogger])
+  .middleware([
+    configureLogger,
+    () => openDatabase()
+  ])
   .command("serve", "Start the RSS aggregator server", {}, async () => {
     await serve();
   })
