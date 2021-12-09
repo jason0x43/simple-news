@@ -372,6 +372,7 @@ html {
 .ContextMenu li {
   padding: 0.5rem;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .ContextMenu li:hover {
