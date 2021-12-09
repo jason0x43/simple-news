@@ -27,7 +27,7 @@ export const ArticlesProvider: React.FC<ArticlesProviderProps> = (props) => {
   const fetchArticles = useCallback(async (feeds: number[]) => {
     try {
       const newArticles = await getArticles(feeds);
-      setArticles(newArticles);
+      setArticles(newArticles.filter(({ read }) => !read));
     } catch (error) {
       console.error(error);
     }
