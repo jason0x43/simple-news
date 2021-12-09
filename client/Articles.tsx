@@ -5,12 +5,32 @@ import useArticles from "./hooks/useArticles.ts";
 import Article from "./Article.tsx";
 import useContextMenu from "./hooks/useContextMenu.ts";
 
+function getIds(
+  articles: { id: number; read?: boolean }[] | undefined,
+  centerId: number,
+  aboveOrBelow:
+    | "above"
+    | "below",
+) {
+  if (!articles) {
+    return [];
+  }
+
+  const index = articles.findIndex(({ id }) => id === centerId);
+  if (index === -1) {
+    return [];
+  }
+
+  const cmp = aboveOrBelow === "above"
+    ? (a: number, b: number) => a < b
+    : (a: number, b: number) => a > b;
+
+  return articles.filter((_, i) => cmp(i, index)).map(({ id }) => id);
+}
+
 const Articles: React.FC = () => {
   const [selectedArticle, setSelectedArticle] = useState<number>();
-  const [contextPos, setContextPos] = useState<
-    { x: number; y: number } | undefined
-  >();
-  const { articles } = useArticles();
+  const { articles, setArticlesRead } = useArticles();
   const selectedRef = useRef<HTMLDivElement>(null);
   const { showContextMenu, hideContextMenu } = useContextMenu();
 
@@ -23,19 +43,34 @@ const Articles: React.FC = () => {
     }
   }, [selectedArticle]);
 
-  const handleContextSelect = useCallback((item: string) => {
-    console.log("selected", item);
-    hideContextMenu();
-  }, []);
-
   const handleRightClick = useCallback((event: React.MouseEvent) => {
+    const articleId = Number(
+      (event.currentTarget as Element).getAttribute("data-article-id"),
+    );
+
     showContextMenu({
-      items: ["One", "Two"],
+      items: [
+        "Mark above as read",
+        "Mark above as unread",
+        "Mark below as read",
+        "Mark below as unread",
+      ],
       position: { x: event.pageX, y: event.pageY },
-      onSelect: handleContextSelect,
+      onSelect: (item: string) => {
+        if (/above/.test(item)) {
+          const ids = getIds(articles, articleId, "above");
+          const markUnread = /unread/.test(item);
+          setArticlesRead(ids, !markUnread);
+        } else if (/below/.test(item)) {
+          const ids = getIds(articles, articleId, "below");
+          const markUnread = /unread/.test(item);
+          setArticlesRead(ids, !markUnread);
+        }
+        hideContextMenu();
+      },
     });
     event.preventDefault();
-  }, []);
+  }, [articles]);
 
   useEffect(() => {
     if (selectedRef.current && selectedArticle !== undefined) {
@@ -49,6 +84,7 @@ const Articles: React.FC = () => {
         <li
           className="Articles-article"
           key={article.id}
+          data-article-id={article.id}
           onContextMenu={handleRightClick}
         >
           <Article

@@ -10,13 +10,17 @@ export async function setRead(articleIds: number[], read = true) {
     read,
   }));
 
-  await fetch(`/articles`, {
-    method: "PUT",
+  const response = await fetch(`/articles`, {
+    method: "PATCH",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(body),
   });
+
+  if (response.status !== 204) {
+    throw new Error(`Error updating articles: ${response.status}`);
+  }
 }
 
 export async function reprocess() {

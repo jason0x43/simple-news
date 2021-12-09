@@ -94,7 +94,7 @@ export function createRouter(bundle: { path: string; text: string }) {
     response.body = articles;
   });
 
-  router.put("/articles", async ({ request, response }) => {
+  router.patch("/articles", async ({ request, response }) => {
     if (request.hasBody) {
       const body = request.body();
       const data = await body.value as UpdateArticleRequest;
@@ -110,7 +110,7 @@ export function createRouter(bundle: { path: string; text: string }) {
     }
 
     response.type = "application/json";
-    response.body = { status: "OK" };
+    response.status = 204;
   });
 
   router.get("/refresh", async ({ response }) => {
