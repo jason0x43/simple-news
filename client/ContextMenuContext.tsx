@@ -1,4 +1,4 @@
-import { React, useMemo, useLayoutEffect, useRef } from "./deps.ts";
+import { React, useMemo, useEffect, useRef } from "./deps.ts";
 import ContextMenu, { ContextMenuProps } from "./ContextMenu.tsx";
 
 const ContextMenuContext = React.createContext<{
@@ -24,7 +24,7 @@ export const ContextMenuProvider: React.FC = (props) => {
     contextMenuVisible: Boolean(cmProps)
   }), [cmProps]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!cmProps || !cmRef.current) {
       return;
     }
