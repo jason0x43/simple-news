@@ -203,14 +203,25 @@ html {
 }
 
 .Articles {
+  width: 100%;
+}
+
+.Articles-list {
   list-style-type: none;
   padding: 0;
   margin: 0;
-  width: 100%;
 }
 
 .Articles-active {
   background: #f7f7f7;
+}
+
+.Articles-controls,
+.Articles-empty {
+  padding: 3em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .Article {

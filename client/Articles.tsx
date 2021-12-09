@@ -91,27 +91,40 @@ const Articles: React.FC = () => {
   }, [selectedArticle, selectedRef.current]);
 
   return (
-    <ul className="Articles">
-      {articles?.map((
-        article,
-      ) => (
-        <li
-          className={className("Articles-article", {
-            "Articles-active": article.id === activeArticle,
-          })}
-          key={article.id}
-          data-article-id={article.id}
-          onContextMenu={handleRightClick}
-        >
-          <Article
-            ref={selectedArticle === article.id ? selectedRef : undefined}
-            article={article}
-            selectArticle={handleSelect}
-            selectedArticle={selectedArticle}
-          />
-        </li>
-      ))}
-    </ul>
+    <div className="Articles">
+      {articles?.length ?? 0 > 0
+        ? (
+          <>
+            <ul className="Articles-list">
+              {articles?.map((
+                article,
+              ) => (
+                <li
+                  className={className("Articles-article", {
+                    "Articles-active": article.id === activeArticle,
+                  })}
+                  key={article.id}
+                  data-article-id={article.id}
+                  onContextMenu={handleRightClick}
+                >
+                  <Article
+                    ref={selectedArticle === article.id
+                      ? selectedRef
+                      : undefined}
+                    article={article}
+                    selectArticle={handleSelect}
+                    selectedArticle={selectedArticle}
+                  />
+                </li>
+              ))}
+            </ul>
+            <div className="Articles-controls">
+              <button>Mark all read</button>
+            </div>
+          </>
+        )
+        : <h3 className="Articles-empty">Nothing to see here</h3>}
+    </div>
   );
 };
 
