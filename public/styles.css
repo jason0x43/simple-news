@@ -57,6 +57,16 @@ html {
 
 #root {
   height: 100vh;
+
+  --gap: 8px;
+  --matte: #f7f7f7;
+  --background: white;
+  --selected: rgba(0, 0, 0, 0.1);
+  --foreground: #666;
+  --border: rgba(0, 0, 0, 0.05);
+  --highlight: #555;
+  --highlight-text: #eee;
+  --link: #00f;
 }
 
 @supports (padding: max(0px)) {
@@ -67,16 +77,6 @@ html {
 }
 
 .App {
-  --gap: 8px;
-  --matte: #f7f7f7;
-  --background: white;
-  --selected: rgba(0, 0, 0, 0.1);
-  --foreground: #666;
-  --border: rgba(0, 0, 0, 0.05);
-  --highlight: #555;
-  --highlight-text: #eee;
-  --link: #00f;
-
   font-family: sans-serif;
   display: flex;
   flex-direction: column;
@@ -213,7 +213,7 @@ html {
 }
 
 .Articles-active {
-  background: #f7f7f7;
+  background: var(--matte);
 }
 
 .Articles-controls,
@@ -372,7 +372,8 @@ html {
 .ContextMenu {
   font-family: sans-serif;
   position: absolute;
-  background: white;
+  background: var(--background);
+  color: var(--foreground);
   border: solid 1px var(--border);
   box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
 }
@@ -391,7 +392,7 @@ html {
 }
 
 .ContextMenu li:hover {
-  background: #f7f7f7;
+  background: var(--matte);
 }
 
 @media only screen and (max-width: 1200px) {
@@ -426,7 +427,7 @@ html {
 }
 
 @media (prefers-color-scheme: dark) {
-  .App {
+  #root {
     --matte: #222;
     --background: black;
     --foreground: #ddd;
