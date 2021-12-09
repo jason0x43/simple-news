@@ -1,11 +1,11 @@
 /// <reference lib="dom" />
 
-import { datetime, forwardRef, React, useCallback, useMemo } from "./deps.ts";
-import { Article } from "../types.ts";
-import { className } from "./util.ts";
-import useFeed from "./hooks/useFeed.ts";
-import useArticles from "./hooks/useArticles.ts";
-import { unescapeHtml } from "../util.ts";
+import { datetime, forwardRef, React, useCallback, useMemo } from "../deps.ts";
+import { Article } from "../../types.ts";
+import { className } from "../util.ts";
+import useFeed from "../hooks/useFeed.ts";
+import useArticles from "../hooks/useArticles.ts";
+import { unescapeHtml } from "../../util.ts";
 
 function pluralize(str: string, val: number): string {
   return `${str}${val === 1 ? "" : "s"}`;

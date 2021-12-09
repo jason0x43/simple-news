@@ -1,6 +1,6 @@
-import { React, useCallback } from "./deps.ts";
-import { Article } from "../types.ts";
-import { getArticles, setRead } from "./api.ts";
+import { React, useCallback } from "../deps.ts";
+import { Article } from "../../types.ts";
+import { getArticles, setRead } from "../api.ts";
 
 const noop = () => undefined;
 

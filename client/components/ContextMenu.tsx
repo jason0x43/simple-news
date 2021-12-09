@@ -1,4 +1,4 @@
-import { forwardRef, React, useCallback, useState } from "./deps.ts";
+import { forwardRef, React, useCallback, useState } from "../deps.ts";
 
 export interface ContextMenuProps {
   items: string[];

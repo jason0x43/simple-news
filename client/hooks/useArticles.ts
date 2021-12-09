@@ -1,5 +1,5 @@
 import { useContext } from "../deps.ts";
-import ArticlesContext from "../ArticlesContext.tsx";
+import ArticlesContext from "../contexts/ArticlesContext.tsx";
 
 export default function useArticles() {
   return useContext(ArticlesContext);

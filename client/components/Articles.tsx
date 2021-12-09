@@ -1,10 +1,10 @@
 /// <reference lib="dom" />
 
-import { React, useCallback, useEffect, useRef, useState } from "./deps.ts";
-import useArticles from "./hooks/useArticles.ts";
+import { React, useCallback, useEffect, useRef, useState } from "../deps.ts";
+import useArticles from "../hooks/useArticles.ts";
 import Article from "./Article.tsx";
-import useContextMenu from "./hooks/useContextMenu.ts";
-import { className } from "./util.ts";
+import useContextMenu from "../hooks/useContextMenu.ts";
+import { className } from "../util.ts";
 
 function getIds(
   articles: { id: number; read?: boolean }[] | undefined,

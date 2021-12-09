@@ -1,6 +1,6 @@
-import { React, useCallback, useState } from "./deps.ts";
-import { refreshFeeds, reprocess } from "./api.ts";
-import useUser from "./hooks/useUser.ts";
+import { React, useCallback, useState } from "../deps.ts";
+import { refreshFeeds, reprocess } from "../api.ts";
+import useUser from "../hooks/useUser.ts";
 
 export interface HeaderProps {
   onShowSidebar?: () => void;

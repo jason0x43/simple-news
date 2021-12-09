@@ -1,10 +1,10 @@
 import { React, useCallback, useState } from "./deps.ts";
-import { UserProvider } from "./UserContext.tsx";
-import { ArticlesProvider } from "./ArticlesContext.tsx";
-import { ContextMenuProvider } from "./ContextMenuContext.tsx";
-import Feeds from "./Feeds.tsx";
-import Articles from "./Articles.tsx";
-import Header from "./Header.tsx";
+import { UserProvider } from "./contexts/UserContext.tsx";
+import { ArticlesProvider } from "./contexts/ArticlesContext.tsx";
+import { ContextMenuProvider } from "./contexts/ContextMenuContext.tsx";
+import Feeds from "./components/Feeds.tsx";
+import Articles from "./components/Articles.tsx";
+import Header from "./components/Header.tsx";
 import { Article, User } from "../types.ts";
 import useUser from "./hooks/useUser.ts";
 import useArticles from "./hooks/useArticles.ts";

@@ -1,5 +1,7 @@
-import { React, useMemo, useEffect, useRef } from "./deps.ts";
-import ContextMenu, { ContextMenuProps } from "./ContextMenu.tsx";
+/// <reference lib="dom" />
+
+import { React, useMemo, useEffect, useRef } from "../deps.ts";
+import ContextMenu, { ContextMenuProps } from "../components/ContextMenu.tsx";
 
 const ContextMenuContext = React.createContext<{
   showContextMenu: (props: ContextMenuProps) => void;

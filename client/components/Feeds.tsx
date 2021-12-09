@@ -1,7 +1,7 @@
-import { React, useState } from "./deps.ts";
-import { className } from "./util.ts";
-import useUser from "./hooks/useUser.ts";
-import { Feed } from "../types.ts";
+import { React, useState } from "../deps.ts";
+import { className } from "../util.ts";
+import useUser from "../hooks/useUser.ts";
+import { Feed } from "../../types.ts";
 
 export interface FeedsProps {
   selectedFeeds?: number[];

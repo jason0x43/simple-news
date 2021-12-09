@@ -1,6 +1,6 @@
-import { React } from "./deps.ts";
-import { getUser } from './api.ts';
-import { User } from '../types.ts';
+import { React } from "../deps.ts";
+import { getUser } from '../api.ts';
+import { User } from '../../types.ts';
 
 const UserContext = React.createContext<
   { user: User | undefined; fetchUser: () => void }
