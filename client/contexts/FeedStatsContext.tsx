@@ -1,4 +1,4 @@
-import { React, useCallback } from "../deps.ts";
+import { React, useCallback, useContext } from "../deps.ts";
 import { FeedStats } from "../../types.ts";
 import { getFeedStats } from "../api.ts";
 
@@ -38,3 +38,6 @@ export const FeedStatsProvider: React.FC<FeedStatsProviderProps> = (props) => {
   );
 };
 
+export function useFeedStats() {
+  return useContext(FeedStatsContext);
+}

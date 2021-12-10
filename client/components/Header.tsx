@@ -1,6 +1,6 @@
 import { React, useCallback, useState } from "../deps.ts";
 import { refreshFeeds, reprocess } from "../api.ts";
-import useUser from "../hooks/useUser.ts";
+import { useUser } from "../contexts/mod.tsx";
 import Button from "./Button.tsx";
 
 export interface HeaderProps {

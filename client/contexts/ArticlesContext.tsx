@@ -1,7 +1,7 @@
-import { React, useCallback } from "../deps.ts";
+import { React, useCallback, useContext } from "../deps.ts";
 import { Article } from "../../types.ts";
 import { getArticles, setRead } from "../api.ts";
-import useFeedStats from '../hooks/useFeedStats.ts';
+import { useFeedStats } from "./FeedStatsContext.tsx";
 
 const noop = () => undefined;
 
@@ -76,3 +76,7 @@ export const ArticlesProvider: React.FC<ArticlesProviderProps> = (props) => {
     </ArticlesContext.Provider>
   );
 };
+
+export function useArticles() {
+  return useContext(ArticlesContext);
+}

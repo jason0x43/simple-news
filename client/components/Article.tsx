@@ -1,10 +1,9 @@
 /// <reference lib="dom" />
 
 import { datetime, forwardRef, React, useCallback, useMemo } from "../deps.ts";
-import { Article } from "../../types.ts";
+import { Article, User } from "../../types.ts";
 import { className } from "../util.ts";
-import useFeed from "../hooks/useFeed.ts";
-import useArticles from "../hooks/useArticles.ts";
+import { useArticles, useUser } from "../contexts/mod.tsx";
 import { unescapeHtml } from "../../util.ts";
 
 function pluralize(str: string, val: number): string {
@@ -33,6 +32,21 @@ function getAge(timestamp: number | undefined): string {
   return `${diff.minutes} ${pluralize("minute", diff.minutes ?? 0)}`;
 }
 
+function getFeed(feedId: number, user: User | undefined) {
+  const feedGroups = user?.config?.feedGroups;
+  if (feedGroups) {
+    for (const group of feedGroups) {
+      for (const feed of group.feeds) {
+        if (feed.id === feedId) {
+          return feed;
+        }
+      }
+    }
+  }
+
+  return undefined;
+}
+
 export interface ArticleProps {
   article: Article;
   selectedArticle: number | undefined;
@@ -42,7 +56,8 @@ export interface ArticleProps {
 const Article = forwardRef<HTMLDivElement, ArticleProps>((props, ref) => {
   const { article, selectArticle, selectedArticle } = props;
   const { setArticlesRead } = useArticles();
-  const feed = useFeed(article.feedId);
+  const { user } = useUser();
+  const feed = getFeed(article.feedId, user);
 
   const handleSelect = useCallback(() => {
     selectArticle(article.id);

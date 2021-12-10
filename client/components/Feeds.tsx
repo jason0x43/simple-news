@@ -1,7 +1,6 @@
 import { React, useEffect, useMemo, useState } from "../deps.ts";
 import { className } from "../util.ts";
-import useUser from "../hooks/useUser.ts";
-import useFeedStats from "../hooks/useFeedStats.ts";
+import { useFeedStats, useUser } from "../contexts/mod.tsx";
 import { Feed, FeedStats, UserConfig } from "../../types.ts";
 
 export interface FeedsProps {

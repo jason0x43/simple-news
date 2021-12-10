@@ -1,4 +1,4 @@
-import { React } from "../deps.ts";
+import { React, useContext } from "../deps.ts";
 import { getUser } from '../api.ts';
 import { User } from '../../types.ts';
 
@@ -30,3 +30,7 @@ export const UserProvider: React.FC<UserProviderProps> = (props) => {
     </UserContext.Provider>
   );
 };
+
+export function useUser() {
+  return useContext(UserContext);
+}

@@ -1,6 +1,6 @@
 /// <reference lib="dom" />
 
-import { React, useMemo, useEffect, useRef } from "../deps.ts";
+import { React, useContext, useEffect, useMemo, useRef } from "../deps.ts";
 import ContextMenu, { ContextMenuProps } from "../components/ContextMenu.tsx";
 
 const ContextMenuContext = React.createContext<{
@@ -18,12 +18,12 @@ export default ContextMenuContext;
 export const ContextMenuProvider: React.FC = (props) => {
   const [cmProps, setCmProps] = React.useState<ContextMenuProps | undefined>();
   const cmRef = useRef<HTMLDivElement>(null);
-  const cmPos = useRef<{ x: number, y: number } | undefined>();
+  const cmPos = useRef<{ x: number; y: number } | undefined>();
 
   const providerProps = useMemo(() => ({
     showContextMenu: setCmProps,
     hideContextMenu: () => setCmProps(undefined),
-    contextMenuVisible: Boolean(cmProps)
+    contextMenuVisible: Boolean(cmProps),
   }), [cmProps]);
 
   useEffect(() => {
@@ -36,14 +36,14 @@ export const ContextMenuProvider: React.FC = (props) => {
         setCmProps(undefined);
       }
     };
-    document.body.addEventListener('click', clickListener);
+    document.body.addEventListener("click", clickListener);
 
     const escListener = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         setCmProps(undefined);
       }
     };
-    document.body.addEventListener('keydown', escListener);
+    document.body.addEventListener("keydown", escListener);
 
     const { position } = cmProps;
     if (position.x !== cmPos.current?.x || position.y !== cmPos.current?.y) {
@@ -59,12 +59,12 @@ export const ContextMenuProvider: React.FC = (props) => {
       cmPos.current = { x: cmRect.x, y: cmRect.y };
       setCmProps({
         ...cmProps,
-        position: { ...cmPos.current }
+        position: { ...cmPos.current },
       });
     }
 
     return () => {
-      document.body.removeEventListener('click', clickListener);
+      document.body.removeEventListener("click", clickListener);
     };
   }, [cmProps]);
 
@@ -75,3 +75,7 @@ export const ContextMenuProvider: React.FC = (props) => {
     </ContextMenuContext.Provider>
   );
 };
+
+export function useContextMenu() {
+  return useContext(ContextMenuContext);
+}
