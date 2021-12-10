@@ -33,10 +33,10 @@ const Feeds: React.FC<FeedsProps> = (props) => {
   const { user } = useUser();
 
   useEffect(() => {
-    if (user) {
+    if (user && !feedStats) {
       fetchFeedStats();
     }
-  }, [user]);
+  }, [feedStats, user]);
 
   return (
     <ul className="Feeds">

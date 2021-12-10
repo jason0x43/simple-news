@@ -7,7 +7,13 @@ import {
   getUserByEmail,
   setArticlesRead,
 } from "./database/mod.ts";
-import { AppState, Article, UpdateArticleRequest, User } from "../types.ts";
+import {
+  AppState,
+  Article,
+  FeedStats,
+  UpdateArticleRequest,
+  User,
+} from "../types.ts";
 import App from "../client/App.tsx";
 import { formatArticles, refreshFeeds } from "./feed.ts";
 
@@ -21,12 +27,14 @@ export function createRouter(bundle: { path: string; text: string }) {
     user: User,
     selectedFeeds?: number[],
     articles?: Article[],
+    feedStats?: FeedStats,
   ) => {
     const globalData = user
       ? `globalThis.appProps = {
         user: JSON.parse(${toString(user)}),
         selectedFeeds: JSON.parse(${toString(selectedFeeds)}),
-        articles: JSON.parse(${toString(articles)})
+        articles: JSON.parse(${toString(articles)}),
+        feedStats: JSON.parse(${toString(feedStats)}),
       };`
       : "";
 
@@ -50,7 +58,12 @@ export function createRouter(bundle: { path: string; text: string }) {
       <body>
       <div id="root">${
       ReactDOMServer.renderToString(
-        <App user={user} selectedFeeds={selectedFeeds} articles={articles} />,
+        <App
+          user={user}
+          selectedFeeds={selectedFeeds}
+          articles={articles}
+          feedStats={feedStats}
+        />,
       )
     }</div>
       </body>
@@ -129,7 +142,7 @@ export function createRouter(bundle: { path: string; text: string }) {
         feedIds = user.config?.feedGroups.reduce<number[]>((allIds, group) => {
           return [
             ...allIds,
-            ...group.feeds.map(({ id }) => id)
+            ...group.feeds.map(({ id }) => id),
           ];
         }, []);
       }
@@ -161,7 +174,8 @@ export function createRouter(bundle: { path: string; text: string }) {
     if (selectedFeeds) {
       const feedIds = selectedFeeds.split(",").map(Number);
       const articles = getArticles({ feedIds, userId: state.userId });
-      response.body = render(user, feedIds, articles);
+      const feedStats = getFeedStats({ userId: state.userId });
+      response.body = render(user, feedIds, articles, feedStats);
     } else {
       response.body = render(user);
     }
