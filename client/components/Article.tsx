@@ -85,14 +85,13 @@ const Article = forwardRef<HTMLDivElement, ArticleProps>((props, ref) => {
       </div>
       {selectedArticle === article.id && (
         <div className="Article-container">
-          <h1
+          <a
             className="Article-content-header"
-            onClick={() => {
-              window.open(article.link, "_blank");
-            }}
+            href={article.link}
+            target={"_blank"}
           >
             {article.title}
-          </h1>
+          </a>
           <div
             className="Article-content"
             dangerouslySetInnerHTML={{ __html: content }}

@@ -280,7 +280,13 @@ html {
 }
 
 .Article-content-header {
-  cursor: pointer;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 200%;
+}
+
+a.Article-content-header {
+  color: var(--foreground);
 }
 
 .Article-content {
@@ -449,6 +455,10 @@ html {
 
   .Header h1 {
     cursor: pointer;
+  }
+
+  .Article-content-header {
+    padding: 0 16px;
   }
 
   .Article-content {
