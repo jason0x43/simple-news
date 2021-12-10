@@ -1,10 +1,9 @@
 import { React, ReactDOM } from "./deps.ts";
-import App, { AppProps } from "./components/App.tsx";
-
-type GlobaThisType = typeof globalThis & { appProps?: AppProps };
+import App from "./components/App.tsx";
+import "../global.ts";
 
 ReactDOM.hydrate(
-  <App {...(globalThis as GlobaThisType).appProps} />,
+  <App {...globalThis.__PRELOADED_STATE__} />,
   // @ts-ignore: document is undefined in deno
   document.getElementById("root"),
 );

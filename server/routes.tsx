@@ -7,36 +7,23 @@ import {
   getUserByEmail,
   setArticlesRead,
 } from "./database/mod.ts";
-import {
-  AppState,
-  Article,
-  FeedStats,
-  UpdateArticleRequest,
-  User,
-} from "../types.ts";
-import App from "../client/components/App.tsx";
+import { AppState, Article, UpdateArticleRequest, User } from "../types.ts";
+import App, { AppProps } from "../client/components/App.tsx";
 import { formatArticles, refreshFeeds } from "./feed.ts";
 
 function toString(value: unknown): string {
-  return JSON.stringify(JSON.stringify(value ?? null));
+  return JSON.stringify(value ?? null).replace(/</g, "\\u003c");
 }
 
 export function createRouter(bundle: { path: string; text: string }) {
   // Render the base HTML
-  const render = (
-    user: User,
-    selectedFeeds?: number[],
-    articles?: Article[],
-    feedStats?: FeedStats,
-  ) => {
-    const globalData = user
-      ? `globalThis.appProps = {
-        user: JSON.parse(${toString(user)}),
-        selectedFeeds: JSON.parse(${toString(selectedFeeds)}),
-        articles: JSON.parse(${toString(articles)}),
-        feedStats: JSON.parse(${toString(feedStats)}),
-      };`
-      : "";
+  const render = (initialState: AppProps) => {
+    const preloadedState = `globalThis.__PRELOADED_STATE__ = ${
+      toString(initialState)
+    };`;
+    const renderedApp = ReactDOMServer.renderToString(
+      <App {...initialState} />,
+    );
 
     return `<!DOCTYPE html>
     <html lang="en">
@@ -52,20 +39,11 @@ export function createRouter(bundle: { path: string; text: string }) {
         <link rel="manifest" href="/site.webmanifest">
 
         <link rel="stylesheet" href="/styles.css">
-        <script>${globalData}</script>
+        <script>${preloadedState}</script>
         <script type="module" src="${bundle.path}"></script>
       </head>
       <body>
-      <div id="root">${
-      ReactDOMServer.renderToString(
-        <App
-          user={user}
-          selectedFeeds={selectedFeeds}
-          articles={articles}
-          feedStats={feedStats}
-        />,
-      )
-    }</div>
+        <div id="root">${renderedApp}</div>
       </body>
     </html>`;
   };
@@ -170,14 +148,17 @@ export function createRouter(bundle: { path: string; text: string }) {
 
     response.type = "text/html";
 
-    const selectedFeeds = await cookies.get("selectedFeeds");
-    if (selectedFeeds) {
-      const feedIds = selectedFeeds.split(",").map(Number);
-      const articles = getArticles({ feedIds, userId: state.userId });
+    const selectedFeedsStr = await cookies.get("selectedFeeds");
+    if (selectedFeedsStr) {
+      const selectedFeeds = selectedFeedsStr.split(",").map(Number);
+      const articles = getArticles({
+        feedIds: selectedFeeds,
+        userId: state.userId,
+      });
       const feedStats = getFeedStats({ userId: state.userId });
-      response.body = render(user, feedIds, articles, feedStats);
+      response.body = render({ user, selectedFeeds, articles, feedStats });
     } else {
-      response.body = render(user);
+      response.body = render({ user });
     }
   });
 
