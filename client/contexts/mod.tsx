@@ -15,18 +15,18 @@ export interface ContextProps {
 export const ContextContainer: React.FC<ContextProps> = (props) => {
   return (
     <UserProvider user={props.user}>
-      <ContextMenuProvider>
-        <FeedStatsProvider feedStats={props.feedStats}>
-          <ArticlesProvider articles={props.articles}>
+      <FeedStatsProvider feedStats={props.feedStats}>
+        <ArticlesProvider articles={props.articles}>
+          <ContextMenuProvider>
             {props.children}
-          </ArticlesProvider>
-        </FeedStatsProvider>
-      </ContextMenuProvider>
+          </ContextMenuProvider>
+        </ArticlesProvider>
+      </FeedStatsProvider>
     </UserProvider>
   );
 };
 
-export { useFeedStats } from './FeedStatsContext.tsx';
-export { useUser } from './UserContext.tsx';
-export { useArticles } from './ArticlesContext.tsx';
-export { useContextMenu } from './ContextMenuContext.tsx';
+export { useFeedStats } from "./FeedStatsContext.tsx";
+export { useUser } from "./UserContext.tsx";
+export { useArticles } from "./ArticlesContext.tsx";
+export { useContextMenu } from "./ContextMenuContext.tsx";
