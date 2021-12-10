@@ -1,6 +1,7 @@
 import { log, React, ReactDOMServer, Router } from "./deps.ts";
 import {
   getArticles,
+  getFeedStats,
   getReadArticleIds,
   getUser,
   getUserByEmail,
@@ -101,21 +102,47 @@ export function createRouter(bundle: { path: string; text: string }) {
       const user = getUserByEmail("jason@jasoncheatham.com");
       setArticlesRead(user.id, data);
     }
-
-    response.type = "application/json";
     response.status = 204;
   });
 
   router.get("/refresh", async ({ response }) => {
     await refreshFeeds();
-    response.type = "application/json";
-    response.body = { status: "OK" };
+    response.status = 204;
   });
 
   router.get("/reprocess", ({ response }) => {
     formatArticles();
+    response.status = 204;
+  });
+
+  router.get("/feedstats", ({ request, response, state }) => {
+    const params = request.url.searchParams;
+    const feedIdsList = params.get("feeds");
+    const { userId } = state;
+    let feedIds: number[] | undefined;
+
+    if (feedIdsList) {
+      feedIds = feedIdsList.split(",").map(Number);
+    } else {
+      const user = getUser(userId);
+      if (user.config) {
+        feedIds = user.config?.feedGroups.reduce<number[]>((allIds, group) => {
+          return [
+            ...allIds,
+            ...group.feeds.map(({ id }) => id)
+          ];
+        }, []);
+      }
+    }
+
     response.type = "application/json";
-    response.body = { status: "OK" };
+
+    if (feedIds) {
+      const stats = getFeedStats({ userId, feedIds });
+      response.body = stats;
+    } else {
+      response.body = {};
+    }
   });
 
   router.get("/", async ({ cookies, response, state }) => {

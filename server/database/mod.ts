@@ -2,10 +2,23 @@ import { DB, log } from "../deps.ts";
 import { addUser, getUserByEmail } from "./users.ts";
 import { closeDb, createDb, getDb, query } from "./db.ts";
 
-export * from "./users.ts";
-export * from "./feeds.ts";
-export * from "./articles.ts";
-export * from "./user_articles.ts";
+export { getUser, getUserByEmail, updateUserConfig } from "./users.ts";
+export {
+  addFeed,
+  getFeed,
+  getFeedByUrl,
+  getFeeds,
+  setFeedDisabled,
+  setFeedUrl,
+} from "./feeds.ts";
+export {
+  addArticle,
+  getArticleCount,
+  hasArticle,
+  setArticleContent,
+} from "./articles.ts";
+export { getReadArticleIds, setArticlesRead } from "./user_articles.ts";
+export * from "./queries.ts";
 
 export function openDatabase(name = "data.db") {
   try {

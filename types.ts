@@ -27,6 +27,13 @@ export interface Feed {
   disabled: boolean;
 }
 
+export interface FeedStats {
+  [feedId: number]: {
+    total: number;
+    read: number
+  }
+}
+
 export interface UserConfig {
   /** User feeds organized by group */
   feedGroups: {

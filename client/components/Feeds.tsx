@@ -1,7 +1,8 @@
-import { React, useState } from "../deps.ts";
+import { React, useEffect, useMemo, useState } from "../deps.ts";
 import { className } from "../util.ts";
 import useUser from "../hooks/useUser.ts";
-import { Feed } from "../../types.ts";
+import useFeedStats from "../hooks/useFeedStats.ts";
+import { Feed, FeedStats, UserConfig } from "../../types.ts";
 
 export interface FeedsProps {
   selectedFeeds?: number[];
@@ -15,10 +16,27 @@ function isSelected(feeds: Feed[], selected: number[] | undefined) {
   return feeds.every((feed) => selected.includes(feed.id));
 }
 
+function getGroupUnread(
+  feeds: UserConfig["feedGroups"][0]["feeds"],
+  feedStats: FeedStats,
+) {
+  return feeds.reduce((acc, feed) => {
+    const stats = feedStats[feed.id];
+    return acc + (stats.total - stats.read);
+  }, 0);
+}
+
 const Feeds: React.FC<FeedsProps> = (props) => {
   const [expanded, setExpanded] = useState<{ [title: string]: boolean }>({});
+  const { feedStats, fetchFeedStats } = useFeedStats();
   const { onSelectFeeds, selectedFeeds } = props;
   const { user } = useUser();
+
+  useEffect(() => {
+    if (user) {
+      fetchFeedStats();
+    }
+  }, [user]);
 
   return (
     <ul className="Feeds">
@@ -49,9 +67,16 @@ const Feeds: React.FC<FeedsProps> = (props) => {
             >
               {group.title}
             </span>
+            {feedStats && (
+              <span className="Feeds-unread">
+                {getGroupUnread(group.feeds, feedStats)}
+              </span>
+            )}
           </div>
           <ul>
-            {group.feeds.map((feed) => (
+            {group.feeds.filter((feed) =>
+              !feedStats || getGroupUnread([feed], feedStats) > 0
+            ).map((feed) => (
               <li
                 className={className("Feeds-feed", {
                   "Feeds-selected": isSelected([feed], selectedFeeds),
@@ -59,7 +84,11 @@ const Feeds: React.FC<FeedsProps> = (props) => {
                 key={feed.id}
                 onClick={() => onSelectFeeds?.([feed.id])}
               >
-                {feed.title}
+                <div className="Feeds-title">{feed.title}</div>
+                <div className="Feeds-unread">
+                  {(feedStats?.[feed.id].total ?? 0) -
+                    (feedStats?.[feed.id].read ?? 0)}
+                </div>
               </li>
             ))}
           </ul>

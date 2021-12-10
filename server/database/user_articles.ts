@@ -9,13 +9,6 @@ export interface UserArticle {
   saved: boolean;
 }
 
-type UserArticleRow = [number, number, number, boolean, boolean];
-
-function rowToUserArticle(row: UserArticleRow): UserArticle {
-  const [id, userId, articleId, read, saved] = row;
-  return { id, userId, articleId, read, saved };
-}
-
 export function getReadArticleIds(userId: number): number[] {
   const rows = query<number[]>(
     "SELECT article_id FROM user_articles WHERE user_id = (:userId)",

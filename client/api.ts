@@ -1,4 +1,4 @@
-import { Article, UpdateArticleRequest, User } from "../types.ts";
+import { Article, FeedStats, UpdateArticleRequest, User } from "../types.ts";
 
 export async function refreshFeeds() {
   await fetch("/refresh");
@@ -39,5 +39,16 @@ export async function getArticles(
   params.set("feeds", feedIds.map(String).join(","));
   params.set("status", "unread");
   const response = await fetch(`/articles?${params}`);
+  return await response.json();
+}
+
+export async function getFeedStats(
+  feedIds?: number[],
+): Promise<FeedStats> {
+  const params = new URLSearchParams();
+  if (feedIds) {
+    params.set("feeds", feedIds.map(String).join(","));
+  }
+  const response = await fetch(`/feedstats?${params}`);
   return await response.json();
 }

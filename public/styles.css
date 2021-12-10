@@ -152,12 +152,13 @@ html {
 
 .Feeds-group {
   padding: 0.25rem;
+  padding-right: 0.5rem;
   display: flex;
   align-items: center;
 }
 
 .Feeds-selected {
-  border-right: solid 4px var(--highlight-text);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .Feeds-title {
@@ -170,7 +171,9 @@ html {
 }
 
 .Feeds-feed {
-  padding: 0.25rem 1.25rem;
+  padding: 0.25rem 0.5rem 0.25rem 1.25rem;
+  display: flex;
+  flex-direction: row;
 }
 
 .Feeds-expander::before {

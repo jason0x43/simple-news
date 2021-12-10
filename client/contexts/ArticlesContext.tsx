@@ -1,6 +1,7 @@
 import { React, useCallback } from "../deps.ts";
 import { Article } from "../../types.ts";
 import { getArticles, setRead } from "../api.ts";
+import useFeedStats from '../hooks/useFeedStats.ts';
 
 const noop = () => undefined;
 
@@ -23,6 +24,7 @@ export const ArticlesProvider: React.FC<ArticlesProviderProps> = (props) => {
     | Article[]
     | undefined
   >(props.articles);
+  const { fetchFeedStats } = useFeedStats();
 
   const fetchArticles = useCallback(async (feeds: number[]) => {
     try {
@@ -57,6 +59,8 @@ export const ArticlesProvider: React.FC<ArticlesProviderProps> = (props) => {
           }
           return article;
         }));
+
+        fetchFeedStats();
       } catch (error) {
         console.error(error);
       }

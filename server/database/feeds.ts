@@ -49,6 +49,11 @@ export function getFeeds(): Feed[] {
   return rows.map(rowToFeed);
 }
 
+export function getFeedIds(): number[] {
+  const rows = query<[number]>("SELECT id FROM feeds");
+  return rows.map((row) => row[0]);
+}
+
 export function setFeedUrl(id: number, url: string) {
   query("UPDATE feeds SET url = (:url) WHERE id = (:id)", { id, url });
 }
