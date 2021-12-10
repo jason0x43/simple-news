@@ -1,9 +1,16 @@
 /// <reference lib="dom" />
 
-import { datetime, forwardRef, React, useCallback, useMemo } from "../deps.ts";
+import {
+  datetime,
+  forwardRef,
+  React,
+  useCallback,
+  useMemo,
+  useState,
+} from "../deps.ts";
 import { Article, User } from "../../types.ts";
 import { className } from "../util.ts";
-import { useArticles, useUser } from "../contexts/mod.tsx";
+import { useArticles, useContextMenu, useUser } from "../contexts/mod.tsx";
 import { unescapeHtml } from "../../util.ts";
 
 function pluralize(str: string, val: number): string {
@@ -47,6 +54,19 @@ function getFeed(feedId: number, user: User | undefined) {
   return undefined;
 }
 
+function getOlderIds(
+  articles: Article[] | undefined,
+  olderThan: number,
+) {
+  if (!articles) {
+    return [];
+  }
+
+  return articles.filter(({ published }) => published < olderThan).map((
+    { id },
+  ) => id);
+}
+
 export interface ArticleProps {
   article: Article;
   selectedArticle: number | undefined;
@@ -55,9 +75,11 @@ export interface ArticleProps {
 
 const Article = forwardRef<HTMLDivElement, ArticleProps>((props, ref) => {
   const { article, selectArticle, selectedArticle } = props;
-  const { setArticlesRead } = useArticles();
+  const { articles, setArticlesRead } = useArticles();
+  const { showContextMenu, hideContextMenu } = useContextMenu();
   const { user } = useUser();
   const feed = getFeed(article.feedId, user);
+  const [isActive, setIsActive] = useState(false);
 
   const handleSelect = useCallback(() => {
     selectArticle(article.id);
@@ -67,11 +89,40 @@ const Article = forwardRef<HTMLDivElement, ArticleProps>((props, ref) => {
   const cls = className("Article", {
     "Article-selected": selectedArticle === article.id,
     "Article-read": article.read && selectedArticle !== article.id,
+    "Article-active": isActive,
   });
 
   const content = useMemo(() => {
     return unescapeHtml(article.content ?? "");
   }, [article.content]);
+
+  const handleMenuClick = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      showContextMenu({
+        anchor: event.currentTarget,
+
+        items: [
+          "Mark as read",
+          "Mark as unread",
+          "Mark older as read",
+          "Mark older as unread",
+        ],
+
+        onSelect: (item: string) => {
+          const ids = /older/.test(item)
+            ? getOlderIds(articles, article.published)
+            : [article.id];
+          setArticlesRead(ids, !/unread/.test(item));
+        },
+
+        onClose: () => setIsActive(false),
+      });
+
+      setIsActive(true);
+      event.stopPropagation();
+    },
+    [articles, setArticlesRead, hideContextMenu],
+  );
 
   return (
     <div className={cls} ref={ref}>
@@ -82,6 +133,7 @@ const Article = forwardRef<HTMLDivElement, ArticleProps>((props, ref) => {
         <div className="Article-feed">{feed?.title}</div>
         <div className="Article-title">{article.title}</div>
         <div className="Article-age">{getAge(article.published)}</div>
+        <div className="Article-menu" onClick={handleMenuClick}>{"\u22ef"}</div>
       </div>
       {selectedArticle === article.id && (
         <div className="Article-container">

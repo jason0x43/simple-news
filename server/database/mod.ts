@@ -26,7 +26,7 @@ export function openDatabase(name = "data.db") {
   } catch {
     createDb(name);
     log.debug(`Foreign key support: ${getPragma("foreign_keys")}`);
-    migrateDatabase(4);
+    migrateDatabase(5);
     log.debug(`Database using v${getSchemaVersion()} schema`);
 
     if (!getUserByEmail("jason@jasoncheatham.com")) {
@@ -61,18 +61,14 @@ export function migrateDatabase(targetVersion: number) {
 
   while (version < targetVersion) {
     const migration = migrations[version++];
-    db.query("BEGIN TRANSACTION");
     migration.up(db);
-    db.query("COMMIT");
     setSchemaVersion(version);
     log.debug(`Migrated db to schema v${version}`);
   }
 
   while (version > targetVersion) {
     const migration = migrations[--version];
-    db.query("BEGIN TRANSACTION");
     migration.down(db);
-    db.query("COMMIT");
     setSchemaVersion(version);
     log.debug(`Migrated db to schema v${version}`);
   }
@@ -88,6 +84,8 @@ const migrations: Migration[] = [
   {
     // initial database structure
     up: (db: DB) => {
+      db.query("BEGIN TRANSACTION");
+
       db.query("PRAGMA foreign_keys = ON");
 
       db.query(`
@@ -118,7 +116,6 @@ const migrations: Migration[] = [
           link TEXT,
           published NUMBER,
           content TEXT,
-          summary TEXT,
           UNIQUE (feed_id, article_id),
           FOREIGN KEY(feed_id) REFERENCES feeds(id)
         )
@@ -136,13 +133,17 @@ const migrations: Migration[] = [
           FOREIGN KEY(article_id) REFERENCES articles(id)
         )
       `);
+
+      db.query("COMMIT");
     },
 
     down: (db: DB) => {
+      db.query("BEGIN TRANSACTION");
       db.query(`DROP TABLE user_articles`);
       db.query(`DROP TABLE articles`);
       db.query(`DROP TABLE feeds`);
       db.query(`DROP TABLE users`);
+      db.query("COMMIT");
     },
   },
 
@@ -176,6 +177,55 @@ const migrations: Migration[] = [
 
     down: (db: DB) => {
       db.query("ALTER TABLE feeds ADD COLUMN summary TEXT");
+    },
+  },
+
+  {
+    // ensure all articles have a published date
+    up: (db: DB) => {
+      db.query("PRAGMA foreign_keys = OFF");
+      db.query("BEGIN TRANSACTION");
+      db.query(
+        `CREATE TABLE new_articles (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          feed_id INTEGER NOT NULL,
+          article_id TEXT NOT NULL,
+          title TEXT,
+          link TEXT,
+          published NUMBER NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          content TEXT,
+          UNIQUE (feed_id, article_id),
+          FOREIGN KEY(feed_id) REFERENCES feeds(id)
+        )`,
+      );
+      db.query("INSERT INTO new_articles SELECT * FROM articles");
+      db.query("DROP TABLE articles");
+      db.query("ALTER TABLE new_articles RENAME TO articles");
+      db.query("COMMIT");
+      db.query("PRAGMA foreign_keys = ON");
+    },
+
+    down: (db: DB) => {
+      db.query("PRAGMA foreign_keys = OFF");
+      db.query("BEGIN TRANSACTION");
+      db.query(
+        `CREATE TABLE old_articles (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          feed_id INTEGER NOT NULL,
+          article_id TEXT NOT NULL,
+          title TEXT,
+          link TEXT,
+          published NUMBER,
+          content TEXT,
+          UNIQUE (feed_id, article_id),
+          FOREIGN KEY(feed_id) REFERENCES feeds(id)
+        )`,
+      );
+      db.query("INSERT INTO old_articles SELECT * FROM articles");
+      db.query("DROP TABLE articles");
+      db.query("ALTER TABLE old_articles RENAME TO articles");
+      db.query("COMMIT");
+      db.query("PRAGMA foreign_keys = ON");
     },
   },
 ];

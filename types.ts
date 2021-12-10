@@ -9,7 +9,7 @@ export interface DbArticle {
   articleId: string;
   title: string;
   link: string | undefined;
-  published: number | undefined;
+  published: number;
   content: string | undefined;
 }
 

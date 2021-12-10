@@ -217,10 +217,6 @@ html {
   margin: 0;
 }
 
-.Articles-active {
-  background: var(--matte);
-}
-
 .Articles-controls,
 .Articles-empty {
   padding: 3em;
@@ -236,11 +232,15 @@ html {
 .Article-heading {
   padding: 8px 16px;
   display: grid;
-  grid-template-columns: 100px 1fr 80px;
+  grid-template-columns: 100px 1fr 80px 15px;
   line-height: 1.25em;
   cursor: default;
   gap: 1em;
   user-select: none;
+}
+
+.Article-active .Article-heading {
+  background: var(--matte);
 }
 
 .Article-read .Article-heading {
@@ -388,6 +388,11 @@ a.Article-content-header {
   color: var(--foreground);
   border: solid 1px var(--border);
   box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+  visibility: hidden;
+}
+
+.ContextMenu-visible {
+  visibility: visible;
 }
 
 .ContextMenu ul {

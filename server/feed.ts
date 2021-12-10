@@ -64,7 +64,7 @@ async function downloadFeed(url: string) {
 
 function getEntryPublishDate(
   entry: { published?: Date | string; updated?: Date | string },
-): number | undefined {
+): number {
   for (const prop of ["published", "updated"] as const) {
     const val = entry[prop];
     if (val) {
@@ -76,7 +76,7 @@ function getEntryPublishDate(
       }
     }
   }
-  return undefined;
+  return Date.now();
 }
 
 type FeedEntryEncoded = FeedEntry & {
