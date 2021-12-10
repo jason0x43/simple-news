@@ -1,5 +1,5 @@
 import { React, ReactDOM } from "./deps.ts";
-import App, { AppProps } from "./App.tsx";
+import App, { AppProps } from "./components/App.tsx";
 
 type GlobaThisType = typeof globalThis & { appProps?: AppProps };
 

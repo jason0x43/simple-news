@@ -1,14 +1,14 @@
-import { React, useCallback, useState } from "./deps.ts";
-import { UserProvider } from "./contexts/UserContext.tsx";
-import { ArticlesProvider } from "./contexts/ArticlesContext.tsx";
-import { FeedStatsProvider } from "./contexts/FeedStatsContext.tsx";
-import { ContextMenuProvider } from "./contexts/ContextMenuContext.tsx";
-import Feeds from "./components/Feeds.tsx";
-import Articles from "./components/Articles.tsx";
-import Header from "./components/Header.tsx";
-import { Article, FeedStats, User } from "../types.ts";
-import useUser from "./hooks/useUser.ts";
-import useArticles from "./hooks/useArticles.ts";
+import { React, useCallback, useState } from "../deps.ts";
+import { UserProvider } from "../contexts/UserContext.tsx";
+import { ArticlesProvider } from "../contexts/ArticlesContext.tsx";
+import { FeedStatsProvider } from "../contexts/FeedStatsContext.tsx";
+import { ContextMenuProvider } from "../contexts/ContextMenuContext.tsx";
+import Feeds from "../components/Feeds.tsx";
+import Articles from "../components/Articles.tsx";
+import Header from "../components/Header.tsx";
+import { Article, FeedStats, User } from "../../types.ts";
+import useUser from "../hooks/useUser.ts";
+import useArticles from "../hooks/useArticles.ts";
 
 export interface AppProps {
   user?: User;

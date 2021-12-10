@@ -14,7 +14,7 @@ import {
   UpdateArticleRequest,
   User,
 } from "../types.ts";
-import App from "../client/App.tsx";
+import App from "../client/components/App.tsx";
 import { formatArticles, refreshFeeds } from "./feed.ts";
 
 function toString(value: unknown): string {
