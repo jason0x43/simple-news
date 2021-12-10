@@ -232,11 +232,10 @@ html {
 
 .Article-heading {
   display: grid;
-  grid-template-columns: 100px 1fr 80px auto;
+  grid-template-columns: 15% 1fr 80px auto;
   align-items: center;
   line-height: 1.25em;
   cursor: default;
-  gap: 1em;
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
