@@ -1,6 +1,7 @@
 import { React, useCallback, useState } from "../deps.ts";
 import { refreshFeeds, reprocess } from "../api.ts";
 import useUser from "../hooks/useUser.ts";
+import Button from "./Button.tsx";
 
 export interface HeaderProps {
   onShowSidebar?: () => void;
@@ -37,8 +38,13 @@ const Header: React.FC<HeaderProps> = (props) => {
     <header className="Header">
       <h1 onClick={onShowSidebar}>Simple News</h1>
       <div className="Header-buttons">
-        <button onClick={update} disabled={busy}>Refresh</button>
-        <button onClick={repro} disabled={busy}>Reprocess</button>
+        <Button label="Refresh" onClick={update} disabled={busy} size="small" />
+        <Button
+          label="Reprocess"
+          onClick={repro}
+          disabled={busy}
+          size="small"
+        />
       </div>
       <div className="Header-user">{user?.name}</div>
     </header>

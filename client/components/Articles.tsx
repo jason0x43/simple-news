@@ -3,6 +3,7 @@
 import { React, useCallback, useEffect, useRef, useState } from "../deps.ts";
 import useArticles from "../hooks/useArticles.ts";
 import Article from "./Article.tsx";
+import Button from "./Button.tsx";
 import useContextMenu from "../hooks/useContextMenu.ts";
 import { className } from "../util.ts";
 
@@ -119,7 +120,7 @@ const Articles: React.FC = () => {
               ))}
             </ul>
             <div className="Articles-controls">
-              <button>Mark all read</button>
+              <Button label="Mark all read" size="large" />
             </div>
           </>
         )

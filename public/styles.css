@@ -60,6 +60,7 @@ html {
 
   --gap: 8px;
   --matte: #f7f7f7;
+  --hover-matte: #f0f0f0;
   --background: white;
   --selected: rgba(0, 0, 0, 0.1);
   --foreground: #666;
@@ -134,6 +135,7 @@ html {
   justify-self: center;
   display: flex;
   flex-direction: row;
+  gap: 0.5rem;
 }
 
 .Header-show-feeds {
@@ -398,6 +400,29 @@ html {
   background: var(--matte);
 }
 
+.Button {
+  background: var(--matte);
+  color: var(--foreground);
+  font-size: 14px;
+  padding: 0.75em 1em;
+  border: solid 1px var(--border);
+}
+
+.Button:hover {
+  background: var(--hover-matte);
+}
+
+.Button-large {
+  padding: 0.75em 1em;
+  font-size: 18px;
+}
+
+.Button-small {
+  padding: 0.25em 0.5em;
+  font-size: 12px;
+}
+
+
 @media only screen and (max-width: 1200px) {
   .App-content {
     grid-template-columns: 1fr;
@@ -432,6 +457,7 @@ html {
 @media (prefers-color-scheme: dark) {
   #root {
     --matte: #222;
+    --hover-matte: #444;
     --background: black;
     --foreground: #ddd;
     --border: rgba(255, 255, 255, 0.2);
