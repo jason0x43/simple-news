@@ -98,30 +98,35 @@ const Article = forwardRef<HTMLDivElement, ArticleProps>((props, ref) => {
 
   const handleMenuClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
-      showContextMenu({
-        anchor: event.currentTarget,
+      if (isActive) {
+        hideContextMenu();
+      } else {
+        showContextMenu({
+          anchor: event.currentTarget,
 
-        items: [
-          "Mark as read",
-          "Mark as unread",
-          "Mark older as read",
-          "Mark older as unread",
-        ],
+          items: [
+            "Mark as read",
+            "Mark as unread",
+            "Mark older as read",
+            "Mark older as unread",
+          ],
 
-        onSelect: (item: string) => {
-          const ids = /older/.test(item)
-            ? getOlderIds(articles, article.published)
-            : [article.id];
-          setArticlesRead(ids, !/unread/.test(item));
-        },
+          onSelect: (item: string) => {
+            const ids = /older/.test(item)
+              ? getOlderIds(articles, article.published)
+              : [article.id];
+            setArticlesRead(ids, !/unread/.test(item));
+          },
 
-        onClose: () => setIsActive(false),
-      });
+          onClose: () => setIsActive(false),
+        });
 
-      setIsActive(true);
+        setIsActive(true);
+      }
+
       event.stopPropagation();
     },
-    [articles, setArticlesRead, hideContextMenu],
+    [articles, isActive, setArticlesRead, hideContextMenu],
   );
 
   return (

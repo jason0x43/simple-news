@@ -121,7 +121,6 @@ html {
   grid-template-columns: 1fr 100px 1fr;
   align-items: center;
   border-bottom: solid 1px var(--border);
-  padding: 8px 16px;
 }
 
 .Header h1 {
@@ -129,6 +128,7 @@ html {
   padding: 0;
   font-size: 20px;
   justify-self: start;
+  padding: 8px 16px;
 }
 
 .Header-buttons {
@@ -144,6 +144,7 @@ html {
 
 .Header-user {
   justify-self: right;
+  padding: 8px 16px;
 }
 
 .Feeds {
@@ -230,13 +231,15 @@ html {
 }
 
 .Article-heading {
-  padding: 8px 16px;
   display: grid;
-  grid-template-columns: 100px 1fr 80px 15px;
+  grid-template-columns: 100px 1fr 80px auto;
+  align-items: center;
   line-height: 1.25em;
   cursor: default;
   gap: 1em;
   user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
 }
 
 .Article-active .Article-heading {
@@ -257,6 +260,7 @@ html {
   text-overflow: ellipsis;
   font-size: 90%;
   color: #999;
+  padding: 8px 16px;
 }
 
 .Article-title {
@@ -269,6 +273,14 @@ html {
   font-size: 90%;
   text-align: right;
   color: #999;
+}
+
+.Article-menu {
+  padding: 8px 16px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
 }
 
 .Article-container {
@@ -419,6 +431,8 @@ a.Article-content-header {
   padding: 0.75em 1em;
   border: solid 1px var(--border);
   user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
 }
 
 .Button:hover {
