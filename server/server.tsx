@@ -34,6 +34,7 @@ export async function serve() {
     path.join(clientDir, "mod.tsx"),
     {
       bundle: "module",
+      check: false,
       compilerOptions: {
         target: "esnext",
         lib: ["dom", "dom.iterable", "dom.asynciterable", "deno.ns"],
@@ -42,9 +43,7 @@ export async function serve() {
   );
 
   if (diagnostics.length > 0) {
-    for (const diag of diagnostics) {
-      log.warning(diag.messageText);
-    }
+    log.warning(Deno.formatDiagnostics(diagnostics));
   }
 
   const router = createRouter({
