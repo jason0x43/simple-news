@@ -40,7 +40,9 @@ const Feeds: React.FC<FeedsProps> = (props) => {
 
   return (
     <ul className="Feeds">
-      {user?.config?.feedGroups.map((group) => (
+      {user?.config?.feedGroups.filter((group) =>
+        !feedStats || getGroupUnread(group.feeds, feedStats) > 0
+      ).map((group) => (
         <li
           key={group.title}
           className={className({
