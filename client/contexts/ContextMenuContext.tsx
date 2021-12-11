@@ -21,7 +21,7 @@ export const ContextMenuProvider: React.FC = (props) => {
     setCmProps(newProps);
   };
 
-  const providerProps = useMemo(() => ({
+  const value = useMemo(() => ({
     showContextMenu: (newProps: ContextMenuProps) => updateCmProps(newProps),
     hideContextMenu: () => updateCmProps(),
   }), [cmProps]);
@@ -29,7 +29,7 @@ export const ContextMenuProvider: React.FC = (props) => {
   const handleClose = useCallback(() => updateCmProps(), [cmProps]);
 
   return (
-    <ContextMenuContext.Provider value={providerProps}>
+    <ContextMenuContext.Provider value={value}>
       {props.children}
       {cmProps && <ContextMenu {...cmProps} onClose={handleClose} />}
     </ContextMenuContext.Provider>

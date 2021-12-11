@@ -1,4 +1,4 @@
-import { React, useCallback, useContext } from "../deps.ts";
+import { React, useContext, useMemo } from "../deps.ts";
 import { FeedStats } from "../../types.ts";
 import { getFeedStats } from "../api.ts";
 
@@ -23,16 +23,20 @@ export const FeedStatsProvider: React.FC<FeedStatsProviderProps> = (props) => {
     | undefined
   >(props.feedStats);
 
-  const fetchFeedStats = useCallback(async (feedIds?: number[]) => {
-    try {
-      setFeedStats(await getFeedStats(feedIds));
-    } catch (error) {
-      console.error(error);
-    }
-  }, []);
+  const value = useMemo(() => ({
+    feedStats,
+
+    fetchFeedStats: (async (feedIds?: number[]) => {
+      try {
+        setFeedStats(await getFeedStats(feedIds));
+      } catch (error) {
+        console.error(error);
+      }
+    })
+  }), [feedStats]);
 
   return (
-    <FeedStatsContext.Provider value={{ feedStats, fetchFeedStats }}>
+    <FeedStatsContext.Provider value={value}>
       {props.children}
     </FeedStatsContext.Provider>
   );

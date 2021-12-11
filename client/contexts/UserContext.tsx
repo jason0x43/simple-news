@@ -1,6 +1,6 @@
-import { React, useContext } from "../deps.ts";
-import { getUser } from '../api.ts';
-import { User } from '../../types.ts';
+import { React, useContext, useMemo } from "../deps.ts";
+import { getUser } from "../api.ts";
+import { User } from "../../types.ts";
 
 const UserContext = React.createContext<
   { user: User | undefined; fetchUser: () => void }
@@ -15,17 +15,21 @@ export interface UserProviderProps {
 export const UserProvider: React.FC<UserProviderProps> = (props) => {
   const [user, setUser] = React.useState<User | undefined>(props.user);
 
-  const fetchUser = async () => {
-    try {
-      const user = await getUser();
-      setUser(user);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  const value = useMemo(() => ({
+    user,
+
+    fetchUser: async () => {
+      try {
+        const user = await getUser();
+        setUser(user);
+      } catch (error) {
+        console.error(error);
+      }
+    },
+  }), [user]);
 
   return (
-    <UserContext.Provider value={{ user, fetchUser }}>
+    <UserContext.Provider value={value}>
       {props.children}
     </UserContext.Provider>
   );

@@ -1,4 +1,4 @@
-import { React, useCallback, useContext } from "../deps.ts";
+import { React, useContext, useMemo } from "../deps.ts";
 import { Article } from "../../types.ts";
 import { getArticles, setRead } from "../api.ts";
 import { useFeedStats } from "./FeedStatsContext.tsx";
@@ -26,17 +26,19 @@ export const ArticlesProvider: React.FC<ArticlesProviderProps> = (props) => {
   >(props.articles);
   const { fetchFeedStats } = useFeedStats();
 
-  const fetchArticles = useCallback(async (feeds: number[]) => {
-    try {
-      const newArticles = await getArticles(feeds);
-      setArticles(newArticles.filter(({ read }) => !read));
-    } catch (error) {
-      console.error(error);
-    }
-  }, [articles]);
+  const value = useMemo(() => ({
+    articles,
 
-  const setArticlesRead = useCallback(
-    async (articleIds: number[], newRead = true) => {
+    fetchArticles: async (feeds: number[]) => {
+      try {
+        const newArticles = await getArticles(feeds);
+        setArticles(newArticles.filter(({ read }) => !read));
+      } catch (error) {
+        console.error(error);
+      }
+    },
+
+    setArticlesRead: async (articleIds: number[], newRead = true) => {
       try {
         const matchingArticles = articleIds.map((aid) =>
           articles?.find(({ id }) => id === aid)
@@ -65,13 +67,10 @@ export const ArticlesProvider: React.FC<ArticlesProviderProps> = (props) => {
         console.error(error);
       }
     },
-    [articles],
-  );
+  }), [articles]);
 
   return (
-    <ArticlesContext.Provider
-      value={{ articles, fetchArticles, setArticlesRead }}
-    >
+    <ArticlesContext.Provider value={value}>
       {props.children}
     </ArticlesContext.Provider>
   );
