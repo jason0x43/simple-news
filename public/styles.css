@@ -153,19 +153,8 @@ html {
   margin: 0;
 }
 
-.Feeds-group {
-  padding: 0.25rem;
-  padding-right: 0.5rem;
-  display: flex;
-  align-items: center;
-}
-
 .Feeds-selected {
   background: rgba(255, 255, 255, 0.1);
-}
-
-.Feeds-title {
-  flex-grow: 1;
 }
 
 .Feeds ul {
@@ -179,11 +168,23 @@ html {
   flex-direction: row;
 }
 
+.Feeds-group {
+  display: flex;
+  align-items: center;
+}
+
+.Feeds-group > * {
+  padding: 0.25rem;
+}
+
 .Feeds-expander::before {
   content: '○';
   display: inline-block;
-  width: 1em;
   flex-grow: 0;
+}
+
+.Feeds-title {
+  flex-grow: 1;
 }
 
 .Feeds-group,
@@ -319,7 +320,7 @@ html {
 .Article-content-header {
   text-decoration: none;
   font-weight: bold;
-  font-size: 200%;
+  font-size: 150%;
 }
 
 a.Article-content-header {
@@ -328,7 +329,7 @@ a.Article-content-header {
 
 .Article-content {
   overflow: auto;
-  font-size: 16px;
+  font-size: 18px;
   font-family: Merriweather, serif;
   font-weight: 300;
   line-height: 1.5em;
@@ -511,6 +512,15 @@ a.Article-content-header {
 }
 
 @media only screen and (max-width: 600px) {
+  .App blockquote {
+    margin-left: 20px;
+    margin-right: 20px;
+  }
+
+  .Article-container {
+    padding: 16px 8px;
+  }
+
   .Article-title {
     white-space: normal;
     padding: 0.5rem 0;
