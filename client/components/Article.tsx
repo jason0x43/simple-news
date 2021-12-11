@@ -135,16 +135,23 @@ const Article = forwardRef<HTMLDivElement, ArticleProps>((props, ref) => {
         className="Article-heading"
         onClick={handleSelect}
       >
-        <div className="Article-feed">
+        <div
+          className={className("Article-feed", {
+            "Article-icon": Boolean(feed?.icon),
+          })}
+        >
           {feed?.icon
             ? (
               <img
-                className="Article-icon"
                 src={feed.icon}
                 title={feed?.title}
               />
             )
-            : feed?.title}
+            : (
+              <div className="Article-monogram" title={feed?.title}>
+                {feed?.title[0]}
+              </div>
+            )}
         </div>
         <div className="Article-title">{article.title}</div>
         <div className="Article-age">{getAge(article.published)}</div>
