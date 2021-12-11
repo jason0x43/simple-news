@@ -118,7 +118,7 @@ html {
 
 .Header {
   display: grid;
-  grid-template-columns: 1fr 100px 1fr;
+  grid-template-columns: min-content 1fr min-content;
   align-items: center;
   border-bottom: solid 1px var(--border);
 }
@@ -129,6 +129,7 @@ html {
   font-size: 20px;
   justify-self: start;
   padding: 8px 16px;
+  white-space: nowrap;
 }
 
 .Header-buttons {
