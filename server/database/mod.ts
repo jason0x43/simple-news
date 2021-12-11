@@ -19,7 +19,7 @@ export {
   hasArticle,
   setArticleContent,
 } from "./articles.ts";
-export { getReadArticleIds, setArticlesRead } from "./user_articles.ts";
+export { getReadArticleIds, updateArticleFlags } from "./user_articles.ts";
 export * from "./queries.ts";
 
 export function openDatabase(name = "data.db") {

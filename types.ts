@@ -31,8 +31,8 @@ export interface Feed {
 export interface FeedStats {
   [feedId: number]: {
     total: number;
-    read: number
-  }
+    read: number;
+  };
 }
 
 export interface UserConfig {
@@ -56,4 +56,8 @@ export interface User {
   config?: UserConfig;
 }
 
-export type UpdateArticleRequest = { articleId: number, read: boolean }[];
+export type UpdateArticleRequest = {
+  articleId: number;
+  read?: boolean;
+  saved?: boolean;
+}[];

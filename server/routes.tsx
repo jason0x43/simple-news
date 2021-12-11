@@ -5,7 +5,7 @@ import {
   getReadArticleIds,
   getUser,
   getUserByEmail,
-  setArticlesRead,
+  updateArticleFlags,
 } from "./database/mod.ts";
 import { AppState, Article, UpdateArticleRequest, User } from "../types.ts";
 import App, { AppProps } from "../client/components/App.tsx";
@@ -91,7 +91,7 @@ export function createRouter(bundle: { path: string; text: string }) {
       const body = request.body();
       const data = await body.value as UpdateArticleRequest;
       const user = getUserByEmail("jason@jasoncheatham.com");
-      setArticlesRead(user.id, data);
+      updateArticleFlags(user.id, data);
     }
     response.status = 204;
   });

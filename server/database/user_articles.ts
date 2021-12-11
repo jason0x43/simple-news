@@ -1,4 +1,4 @@
-import { getDb, query } from "./db.ts";
+import { getDb, inTransaction, query } from "./db.ts";
 import { log } from "../deps.ts";
 
 export interface UserArticle {
@@ -17,41 +17,38 @@ export function getReadArticleIds(userId: number): number[] {
   return rows.map((row) => row[0]);
 }
 
-export function setArticlesRead(
+function updateFlags<Flag extends "read" | "saved">(
+  flagName: Flag,
   userId: number,
-  patches: { articleId: number; read: boolean }[],
-): void {
-  query("BEGIN TRANSACTION");
+  patches: ({ articleId: number } & { [F in Flag]?: boolean })[],
+) {
+  const flagPatches = patches.filter((patch) => patch[flagName] !== undefined)
+    .map((patch) => ({
+      articleId: patch.articleId,
+      [flagName]: patch[flagName],
+    }));
 
-  const statement = getDb().prepareQuery(
-    `INSERT INTO user_articles (user_id, article_id, read)
-    VALUES (:userId, :articleId, :read)
-    ON CONFLICT(user_id, article_id) DO UPDATE SET read = (:read)`
+  const flagStatement = getDb().prepareQuery(
+    `INSERT INTO user_articles (user_id, article_id, ${flagName})
+    VALUES (:userId, :articleId, :${flagName})
+    ON CONFLICT(user_id, article_id)
+    DO UPDATE SET ${flagName} = (:${flagName})`,
   );
 
-  for (const patch of patches) {
-    statement.execute({ userId, ...patch });
-    log.debug(`Set article ${patch.articleId}.read to ${patch.read}`);
+  for (const patch of flagPatches) {
+    flagStatement.execute({ userId, ...patch });
+    log.debug(
+      `Set article ${patch.articleId}.${flagName} to ${patch[flagName]}`,
+    );
   }
-
-  query("END TRANSACTION");
 }
 
-export function setArticlesSaved(
+export function updateArticleFlags(
   userId: number,
-  patches: { articleId: number; saved: boolean }[],
-) {
-  query("BEGIN TRANSACTION");
-
-  const statement = getDb().prepareQuery(
-    `INSERT INTO user_articles (user_id, article_id, saved)
-    VALUES (:userId, :articleId, :saved)
-    ON CONFLICT(user_id, article_id) DO UPDATE SET saved = (:saved)`
-  );
-
-  for (const patch of patches) {
-    statement.execute({ userId, ...patch });
-  }
-
-  query("END TRANSACTION");
+  patches: { articleId: number; read?: boolean; saved?: boolean }[],
+): void {
+  inTransaction(() => {
+    updateFlags("read", userId, patches);
+    updateFlags("saved", userId, patches);
+  });
 }
