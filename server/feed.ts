@@ -19,6 +19,7 @@ import {
   setFeedIcon,
 } from "./database/mod.ts";
 import { escapeHtml, unescapeHtml } from "../util.ts";
+import { DbArticle } from "../types.ts";
 
 async function getIcon(feed: ParsedFeed): Promise<string | null> {
   if (feed.icon) {
@@ -97,18 +98,24 @@ async function downloadFeed(url: string) {
       log.debug(`Set icon for ${feed.id} to ${icon}`);
     }
 
+    const articles: Omit<DbArticle, "id">[] = [];
+
+    for (const entry of parsedFeed.entries) {
+      if (!hasArticle(entry.id)) {
+        articles.push({
+          articleId: entry.id,
+          feedId: feed.id,
+          title: entry.title?.value ?? "Untitled",
+          link: getEntryLink(entry),
+          published: getEntryPublishDate(entry),
+          content: await getEntryContent(entry),
+        });
+      }
+    }
+
     inTransaction(() => {
-      for (const entry of parsedFeed.entries) {
-        if (!hasArticle(entry.id)) {
-          addArticle({
-            articleId: entry.id,
-            feedId: feed.id,
-            title: entry.title?.value ?? "Untitled",
-            link: entry.links[0]?.href,
-            published: getEntryPublishDate(entry),
-            content: getEntryContent(entry),
-          });
-        }
+      for (const article of articles) {
+        addArticle(article);
       }
     });
 
@@ -139,7 +146,25 @@ type FeedEntryEncoded = FeedEntry & {
   "content:encoded"?: FeedEntry["content"];
 };
 
-function getEntryContent(entry: FeedEntryEncoded): string | undefined {
+function getEntryLink(entry: FeedEntryEncoded): string | undefined {
+  return entry.links[0]?.href;
+}
+
+async function getEntryContent(
+  entry: FeedEntryEncoded,
+): Promise<string | undefined> {
+  const link = getEntryLink(entry);
+
+  // Explosm feeds have no content and simply link to a comic -- grab the comic
+  if (link && /explosm/.test(link)) {
+    const response = await fetch(link);
+    const html = await response.text();
+    const doc = new DOMParser().parseFromString(html, "text/html")!;
+    const comic = doc.querySelector("#main-comic");
+    const comicHtml = comic?.outerHTML;
+    return comicHtml ? escapeHtml(comicHtml) : comicHtml;
+  }
+
   let text: string | undefined;
 
   for (const key of ["content", "content:encoded", "description"] as const) {
@@ -148,8 +173,6 @@ function getEntryContent(entry: FeedEntryEncoded): string | undefined {
       break;
     }
   }
-
-  const link = entry.links?.[0]?.href;
 
   // cleanup text
   if (text) {
