@@ -25,6 +25,7 @@ export interface Feed {
   lastUpdate: number;
   htmlUrl: string;
   disabled: boolean;
+  icon: string | null;
 }
 
 export interface FeedStats {

@@ -2,15 +2,24 @@ import { log } from "../deps.ts";
 import { query } from "./db.ts";
 import { Feed } from "../../types.ts";
 
-type FeedRow = [number, string, string, string, number, string, boolean];
+type FeedRow = [
+  number,
+  string,
+  string,
+  string,
+  number,
+  string,
+  boolean,
+  string,
+];
 
 function rowToFeed(row: FeedRow): Feed {
-  const [id, url, title, type, lastUpdate, htmlUrl, disabled] = row;
-  return { id, url, title, type, lastUpdate, htmlUrl, disabled };
+  const [id, url, title, type, lastUpdate, htmlUrl, disabled, icon] = row;
+  return { id, url, title, type, lastUpdate, htmlUrl, disabled, icon };
 }
 
 export function addFeed(
-  feed: Omit<Feed, "id" | "lastUpdate" | "disabled">,
+  feed: Omit<Feed, "id" | "lastUpdate" | "disabled" | "icon">,
 ): Feed {
   log.debug(`Adding feed ${JSON.stringify(feed)}`);
   const rows = query<FeedRow>(
@@ -70,4 +79,8 @@ export function setFeedUpdated(id: number, time?: number) {
     time: time ?? Date.now(),
     id,
   });
+}
+
+export function setFeedIcon(id: number, icon: string | null) {
+  query("UPDATE feeds SET icon = (:icon) WHERE id = (:id)", { icon, id });
 }

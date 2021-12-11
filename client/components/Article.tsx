@@ -8,7 +8,7 @@ import {
   useMemo,
   useState,
 } from "../deps.ts";
-import { Article, User } from "../../types.ts";
+import { Article, Feed, User } from "../../types.ts";
 import { className } from "../util.ts";
 import { useArticles, useContextMenu, useUser } from "../contexts/mod.tsx";
 import { unescapeHtml } from "../../util.ts";
@@ -39,7 +39,7 @@ function getAge(timestamp: number | undefined): string {
   return `${diff.minutes} ${pluralize("minute", diff.minutes ?? 0)}`;
 }
 
-function getFeed(feedId: number, user: User | undefined) {
+function getFeed(feedId: number, user: User | undefined): Feed | undefined {
   const feedGroups = user?.config?.feedGroups;
   if (feedGroups) {
     for (const group of feedGroups) {
@@ -135,7 +135,17 @@ const Article = forwardRef<HTMLDivElement, ArticleProps>((props, ref) => {
         className="Article-heading"
         onClick={handleSelect}
       >
-        <div className="Article-feed">{feed?.title}</div>
+        <div className="Article-feed">
+          {feed?.icon
+            ? (
+              <img
+                className="Article-icon"
+                src={feed.icon}
+                title={feed?.title}
+              />
+            )
+            : feed?.title}
+        </div>
         <div className="Article-title">{article.title}</div>
         <div className="Article-age">{getAge(article.published)}</div>
         <div className="Article-menu" onClick={handleMenuClick}>{"\u22ef"}</div>

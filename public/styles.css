@@ -232,7 +232,7 @@ html {
 
 .Article-heading {
   display: grid;
-  grid-template-columns: 15% 1fr 80px auto;
+  grid-template-columns: max-content 1fr 80px auto;
   align-items: center;
   line-height: 1.25em;
   cursor: default;
@@ -249,6 +249,11 @@ html {
   opacity: 0.5;
 }
 
+.Article-icon {
+  max-width: 16px;
+  max-height: 16px;
+}
+
 .Article-selected .Article-heading {
   background: var(--selected);
 }
@@ -260,6 +265,9 @@ html {
   font-size: 90%;
   color: #999;
   padding: 8px 16px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
 }
 
 .Article-title {

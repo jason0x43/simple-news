@@ -1,7 +1,8 @@
 import { DB, log } from "../deps.ts";
 import { addUser, getUserByEmail } from "./users.ts";
-import { closeDb, createDb, getDb, query } from "./db.ts";
+import { closeDb, createDb, getDb, inTransaction, query } from "./db.ts";
 
+export { inTransaction };
 export { getUser, getUserByEmail, updateUserConfig } from "./users.ts";
 export {
   addFeed,
@@ -9,6 +10,7 @@ export {
   getFeedByUrl,
   getFeeds,
   setFeedDisabled,
+  setFeedIcon,
   setFeedUrl,
 } from "./feeds.ts";
 export {
@@ -26,7 +28,7 @@ export function openDatabase(name = "data.db") {
   } catch {
     createDb(name);
     log.debug(`Foreign key support: ${getPragma("foreign_keys")}`);
-    migrateDatabase(5);
+    migrateDatabase(6);
     log.debug(`Database using v${getSchemaVersion()} schema`);
 
     if (!getUserByEmail("jason@jasoncheatham.com")) {
@@ -83,7 +85,7 @@ interface Migration {
 const migrations: Migration[] = [
   {
     // initial database structure
-    up: (db: DB) => {
+    up: (db) => {
       db.query("BEGIN TRANSACTION");
 
       db.query("PRAGMA foreign_keys = ON");
@@ -137,7 +139,7 @@ const migrations: Migration[] = [
       db.query("COMMIT");
     },
 
-    down: (db: DB) => {
+    down: (db) => {
       db.query("BEGIN TRANSACTION");
       db.query(`DROP TABLE user_articles`);
       db.query(`DROP TABLE articles`);
@@ -149,40 +151,40 @@ const migrations: Migration[] = [
 
   {
     // add htmlUrl to to feeds
-    up: (db: DB) => {
+    up: (db) => {
       db.query("ALTER TABLE feeds ADD COLUMN htmlUrl TEXT");
     },
 
-    down: (db: DB) => {
+    down: (db) => {
       db.query("ALTER TABLE feeds DROP COLUMN htmlUrl");
     },
   },
 
   {
     // allow feeds to be disabled
-    up: (db: DB) => {
+    up: (db) => {
       db.query("ALTER TABLE feeds ADD COLUMN disabled BOOLEAN");
     },
 
-    down: (db: DB) => {
+    down: (db) => {
       db.query("ALTER TABLE feeds DROP COLUMN disabled");
     },
   },
 
   {
     // remove summary column from articles
-    up: (db: DB) => {
+    up: (db) => {
       db.query("ALTER TABLE articles DROP COLUMN summary");
     },
 
-    down: (db: DB) => {
+    down: (db) => {
       db.query("ALTER TABLE feeds ADD COLUMN summary TEXT");
     },
   },
 
   {
     // ensure all articles have a published date
-    up: (db: DB) => {
+    up: (db) => {
       db.query("PRAGMA foreign_keys = OFF");
       db.query("BEGIN TRANSACTION");
       db.query(
@@ -205,7 +207,7 @@ const migrations: Migration[] = [
       db.query("PRAGMA foreign_keys = ON");
     },
 
-    down: (db: DB) => {
+    down: (db) => {
       db.query("PRAGMA foreign_keys = OFF");
       db.query("BEGIN TRANSACTION");
       db.query(
@@ -228,4 +230,15 @@ const migrations: Migration[] = [
       db.query("PRAGMA foreign_keys = ON");
     },
   },
+
+  {
+    // add icon to feed
+    up: (db) => {
+      db.query("ALTER TABLE feeds ADD COLUMN icon TEXT");
+    },
+
+    down: (db) => {
+      db.query("ALTER TABLE feeds DROP COLUMN icon");
+    }
+  }
 ];
