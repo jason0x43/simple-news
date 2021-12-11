@@ -28,15 +28,15 @@ function getAge(timestamp: number | undefined): string {
     units: ["minutes", "hours", "days", "weeks"],
   });
   if (diff.weeks) {
-    return `${diff.weeks} ${pluralize("week", diff.weeks)}`;
+    return `${diff.weeks} w`;
   }
   if (diff.days) {
-    return `${diff.days} ${pluralize("day", diff.days)}`;
+    return `${diff.days} d`;
   }
   if (diff.hours) {
-    return `${diff.hours} ${pluralize("hour", diff.hours ?? 0)}`;
+    return `${diff.hours} h`;
   }
-  return `${diff.minutes} ${pluralize("minute", diff.minutes ?? 0)}`;
+  return `${diff.minutes} m`;
 }
 
 function getFeed(feedId: number, user: User | undefined): Feed | undefined {

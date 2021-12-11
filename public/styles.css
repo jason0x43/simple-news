@@ -295,7 +295,7 @@ html {
 .Article-age {
   font-size: 90%;
   text-align: right;
-  width: 4em;
+  width: 2.5em;
   color: #999;
   white-space: nowrap;
 }
@@ -507,6 +507,13 @@ a.Article-content-header {
 
   .Article-content {
     padding: 16px;
+  }
+}
+
+@media only screen and (max-width: 600px) {
+  .Article-title {
+    white-space: normal;
+    padding: 0.5rem 0;
   }
 }
 
