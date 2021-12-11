@@ -40,7 +40,7 @@ export function createRouter(bundle: { path: string; text: string }) {
 
         <link rel="stylesheet" href="/styles.css">
         <script>${preloadedState}</script>
-        <script type="module" src="${bundle.path}"></script>
+        <script type="module" async src="${bundle.path}"></script>
       </head>
       <body>
         <div id="root">${renderedApp}</div>
