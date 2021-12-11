@@ -476,8 +476,7 @@ a.Article-content-header {
   font-size: 12px;
 }
 
-
-@media only screen and (max-width: 1200px) {
+@media only screen and (max-width: 800px) {
   .App-content {
     grid-template-columns: 1fr;
   }
@@ -510,9 +509,7 @@ a.Article-content-header {
   .Article-content {
     padding: 16px;
   }
-}
 
-@media only screen and (max-width: 600px) {
   .App blockquote {
     margin-left: 20px;
     margin-right: 20px;
