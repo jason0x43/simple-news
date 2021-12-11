@@ -232,7 +232,7 @@ html {
 
 .Article-heading {
   display: grid;
-  grid-template-columns: max-content 1fr 80px auto;
+  grid-template-columns: max-content 1fr min-content auto;
   align-items: center;
   line-height: 1.25em;
   cursor: default;
@@ -295,7 +295,9 @@ html {
 .Article-age {
   font-size: 90%;
   text-align: right;
+  width: 4em;
   color: #999;
+  white-space: nowrap;
 }
 
 .Article-menu {
