@@ -7,7 +7,7 @@ import Button from "./Button.tsx";
 
 const Articles: React.FC = () => {
   const [selectedArticle, setSelectedArticle] = useState<number>();
-  const { articles } = useArticles();
+  const { articles, setArticlesRead } = useArticles();
   const selectedRef = useRef<HTMLDivElement>(null);
   const { hideContextMenu } = useContextMenu();
 
@@ -19,6 +19,12 @@ const Articles: React.FC = () => {
       setSelectedArticle(selected);
     }
   }, [selectedArticle]);
+
+  const handleMarkAll = useCallback(() => {
+    if (articles) {
+      setArticlesRead(articles.map(({ id }) => id));
+    }
+  }, [articles]);
 
   useEffect(() => {
     if (selectedRef.current && selectedArticle !== undefined) {
@@ -52,7 +58,11 @@ const Articles: React.FC = () => {
               ))}
             </ul>
             <div className="Articles-controls">
-              <Button label="Mark all read" size="large" />
+              <Button
+                onClick={handleMarkAll}
+                label="Mark all read"
+                size="large"
+              />
             </div>
           </>
         )
