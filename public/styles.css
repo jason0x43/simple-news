@@ -322,6 +322,7 @@ html {
   text-decoration: none;
   font-weight: bold;
   font-size: 150%;
+  margin-bottom: 1rem;
 }
 
 a.Article-content-header {
