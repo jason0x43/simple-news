@@ -5,6 +5,7 @@ import {
   forwardRef,
   React,
   useCallback,
+  useEffect,
   useMemo,
   useState,
 } from "../deps.ts";
@@ -12,10 +13,6 @@ import { Article, Feed, User } from "../../types.ts";
 import { className } from "../util.ts";
 import { useArticles, useContextMenu, useUser } from "../contexts/mod.tsx";
 import { unescapeHtml } from "../../util.ts";
-
-function pluralize(str: string, val: number): string {
-  return `${str}${val === 1 ? "" : "s"}`;
-}
 
 function getAge(timestamp: number | undefined): string {
   if (timestamp === undefined) {
@@ -81,9 +78,14 @@ const Article = forwardRef<HTMLDivElement, ArticleProps>((props, ref) => {
   const feed = getFeed(article.feedId, user);
   const [isActive, setIsActive] = useState(false);
 
+  useEffect(() => {
+    if (selectedArticle === article.id) {
+      setArticlesRead([article.id]);
+    }
+  }, [selectedArticle]);
+
   const handleSelect = useCallback(() => {
     selectArticle(article.id);
-    setArticlesRead([article.id]);
   }, [article, selectedArticle]);
 
   const cls = className("Article", {
