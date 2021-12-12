@@ -69,6 +69,7 @@ html {
   --highlight: #555;
   --highlight-text: #eee;
   --link: #00f;
+  --border-radius: 4px;
 }
 
 @supports (padding: max(0px)) {
@@ -188,12 +189,30 @@ html {
 
 .Feeds {
   list-style-type: none;
-  padding: 16px;
+  padding: 1rem;
   margin: 0;
+  --hpad: 0.5rem;
+  --vpad: 0.25rem;
+  --expander-width: 1rem;
 }
 
 .Feeds-selected {
   background: rgba(255, 255, 255, 0.1);
+}
+
+.Feeds-group,
+.Feeds-feed {
+  border-radius: var(--border-radius);
+}
+
+.Feeds-expanded .Feeds-group.Feeds-selected {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.Feeds-expanded .Feeds-feed.Feeds-selected:first-child {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
 }
 
 .Feeds ul {
@@ -213,19 +232,19 @@ html {
 
 .Feeds-group > *,
 .Feeds-feed > * {
-  padding: 0.25rem;
+  padding: var(--vpad) var(--hpad);
 }
 
 .Feeds-feed {
   /* padding is size of expander + expander padding */
-  padding-left: calc(1rem + 0.5rem);
+  padding-left: calc(var(--expander-width) + 2 * var(--hpad));
 }
 
 .Feeds-expander::before {
   content: '▷';
   display: inline-block;
   flex-grow: 0;
-  width: 1rem;
+  width: var(--expander-width);
 }
 
 .Feeds-title {
@@ -321,7 +340,7 @@ html {
 .Article-monogram {
   border: solid 1px var(--border);
   background: var(--matte);
-  border-radius: 4px;
+  border-radius: var(--border-radius);
   width: 16px;
   height: 16px;
   display: flex;
@@ -459,13 +478,6 @@ a.Article-content-header {
   margin: 0;
   margin-right: 1em;
   float: left;
-}
-
-.Article-actual {
-  border: solid 1px var(--border);
-  border-radius: 12px;
-  margin: 1rem 32px;
-  height: 600px;
 }
 
 .ContextMenu {
