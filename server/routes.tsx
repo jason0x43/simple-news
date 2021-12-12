@@ -1,8 +1,8 @@
 import { log, React, ReactDOMServer, Router } from "./deps.ts";
 import {
   getArticles,
+  getFeeds,
   getFeedStats,
-  getReadArticleIds,
   getUser,
   getUserByEmail,
   updateArticleFlags,
@@ -99,6 +99,36 @@ export function createRouter(bundle: { path: string; text: string }) {
   router.get("/reprocess", ({ response }) => {
     formatArticles();
     response.status = 204;
+  });
+
+  router.get("/feeds", ({ request, response, state }) => {
+    const params = request.url.searchParams;
+    const feedIdsList = params.get("feeds");
+    const { userId } = state;
+    let feedIds: number[] | undefined;
+
+    if (feedIdsList) {
+      feedIds = feedIdsList.split(",").map(Number);
+    } else {
+      const user = getUser(userId);
+      if (user.config) {
+        feedIds = user.config?.feedGroups.reduce<number[]>((allIds, group) => {
+          return [
+            ...allIds,
+            ...group.feeds.map(({ id }) => id),
+          ];
+        }, []);
+      }
+    }
+
+    response.type = "application/json";
+
+    if (feedIds) {
+      const stats = getFeeds(feedIds);
+      response.body = stats;
+    } else {
+      response.body = {};
+    }
   });
 
   router.get("/feedstats", ({ request, response, state }) => {

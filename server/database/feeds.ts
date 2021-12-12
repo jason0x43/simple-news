@@ -1,6 +1,7 @@
 import { log } from "../deps.ts";
 import { query } from "./db.ts";
 import { Feed } from "../../types.ts";
+import { parameterize } from "./util.ts";
 
 type FeedRow = [
   number,
@@ -42,6 +43,25 @@ export function getFeed(id: number): Feed {
   return rowToFeed(rows[0]);
 }
 
+export function getFeeds(feedIds?: number[]): Feed[] {
+  let rows: FeedRow[];
+
+  if (feedIds) {
+    const { names: feedParamNames, values: feedParams } = parameterize(
+      "feedIds",
+      feedIds,
+    );
+    rows = query<FeedRow>(
+      `SELECT * FROM feeds WHERE id IN (${feedParamNames.join(",")})`,
+      feedParams,
+    );
+  } else {
+    rows = query<FeedRow>("SELECT * FROM feeds");
+  }
+
+  return rows.map(rowToFeed);
+}
+
 export function getFeedByUrl(feedUrl: string): Feed {
   const rows = query<FeedRow>(
     "SELECT * FROM feeds WHERE url = (:url)",
@@ -51,11 +71,6 @@ export function getFeedByUrl(feedUrl: string): Feed {
     throw new Error(`No feed with URL ${feedUrl}`);
   }
   return rowToFeed(rows[0]);
-}
-
-export function getFeeds(): Feed[] {
-  const rows = query<FeedRow>("SELECT * FROM feeds");
-  return rows.map(rowToFeed);
 }
 
 export function getFeedIds(): number[] {

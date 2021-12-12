@@ -3,6 +3,7 @@ import { getDb, query } from "./db.ts";
 import { Article, DbArticle, FeedStats } from "../../types.ts";
 import { DbArticleRow, rowToDbArticle } from "./articles.ts";
 import { getFeedIds } from "./feeds.ts";
+import { parameterize } from "./util.ts";
 
 export type ArticleRow = [...DbArticleRow, boolean, boolean];
 
@@ -33,11 +34,10 @@ export function getArticles(opts?: GetArticlesOpts): Article[] {
   let rows: ArticleRow[];
 
   if (opts?.feedIds !== undefined) {
-    const feedParams: { [name: string]: string | number } = {};
-    for (let i = 0; i < opts.feedIds.length; i++) {
-      feedParams[`feedIds${i}`] = opts.feedIds[i];
-    }
-    const feedParamNames = Object.keys(feedParams).map((name) => `:${name}`);
+    const { names: feedParamNames, values: feedParams } = parameterize(
+      "feedIds",
+      opts.feedIds,
+    );
 
     if (opts?.userId !== undefined) {
       // The query uses 'IS NOT TRUE' when checking user_articles.read because
