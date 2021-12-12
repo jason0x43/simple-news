@@ -9,6 +9,7 @@ import {
 import { Article } from "../../types.ts";
 import { getArticles, setRead } from "../api.ts";
 import { useFeedStats } from "./FeedStatsContext.tsx";
+import { useFeeds } from "./FeedsContext.tsx";
 import { Settings, useSettings } from "./SettingsContext.tsx";
 
 const noop = () => undefined;
@@ -53,6 +54,7 @@ function filterArticles(
 export const ArticlesProvider: React.FC<ArticlesProviderProps> = (props) => {
   const { settings } = useSettings();
   const { fetchFeedStats } = useFeedStats();
+  const { selectedFeeds } = useFeeds();
   // keep fetched articles in a ref -- these will be used as the source if the
   // article filter changes
   const fetchedArticles = useRef<Article[] | undefined>(props.articles);
@@ -68,6 +70,31 @@ export const ArticlesProvider: React.FC<ArticlesProviderProps> = (props) => {
       setDisplayArticles(filterArticles(fetchedArticles.current, settings));
     }
   }, [settings]);
+
+  // automatically fetch articles every few minutes
+  useEffect(() => {
+    let canceled = false;
+
+    const interval = setInterval(async () => {
+      const articles = await getArticles(selectedFeeds);
+      if (canceled) {
+        return;
+      }
+
+      fetchedArticles.current = articles;
+      setDisplayArticles({
+        ...displayArticles,
+        articles: articles.filter((article) =>
+          displayArticles.articles?.find((da) => da.id === article.id)
+        ),
+      });
+    }, 600000);
+
+    return () => {
+      canceled = true;
+      clearInterval(interval);
+    };
+  }, [displayArticles, selectedFeeds]);
 
   // memoize the provided value; recompute it if the display articles or the
   // settings change
@@ -113,12 +140,12 @@ export const ArticlesProvider: React.FC<ArticlesProviderProps> = (props) => {
         // user just opened
         setDisplayArticles(
           {
+            ...displayArticles,
             articles: displayArticles.articles?.map((article) =>
               articlesToUpdate.includes(article)
                 ? { ...article, read: newRead }
                 : article
             ),
-            filter: displayArticles.filter,
           },
         );
 
