@@ -79,7 +79,8 @@ html {
 }
 
 .App {
-  font-family: sans-serif;
+  font-family: -apple-system, 'Helvetica Neue', Helvetica, sans-serif;
+  font-size: 14px;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -521,7 +522,7 @@ a.Article-content-header {
   opacity: 1;
 }
 
-@media only screen and (max-width: 800px) {
+@media only screen and (max-width: 1000px) {
   .App-content {
     grid-template-columns: 1fr;
   }
