@@ -26,7 +26,12 @@ export const query: InstanceType<typeof DB>["query"] = (...args) => {
 export function inTransaction<T>(callback: (db: DB) => T): T {
   const db = getDb();
   db.query("BEGIN TRANSACTION");
-  const val = callback(db);
-  db.query("COMMIT");
-  return val;
+  try {
+    const val = callback(db);
+    db.query("COMMIT");
+    return val;
+  } catch (error) {
+    db.query("ROLLBACK");
+    throw error;
+  }
 }
