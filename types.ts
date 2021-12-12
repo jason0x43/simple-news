@@ -15,6 +15,7 @@ export interface DbArticle {
 
 export interface Article extends DbArticle {
   read?: boolean;
+  saved?: boolean;
 }
 
 export interface Feed {

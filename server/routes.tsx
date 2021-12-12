@@ -63,24 +63,19 @@ export function createRouter(bundle: { path: string; text: string }) {
 
   router.get("/articles", async ({ cookies, request, response, state }) => {
     const params = request.url.searchParams;
+    const feedIdsList = params.get("feeds");
+    const { userId } = state;
+
     let articles: Article[];
 
-    const feedIdsList = params.get("feeds");
     if (feedIdsList) {
       log.debug(`getting feeds: ${feedIdsList}`);
       const feedIds = feedIdsList.split(",").map(Number);
       await cookies.set("selectedFeeds", feedIds.map(String).join(","));
-      articles = getArticles({ feedIds });
+      articles = getArticles({ userId, feedIds });
     } else {
-      articles = getArticles();
+      articles = getArticles({ userId });
     }
-
-    const user = getUser(state.userId);
-    const readIds = getReadArticleIds(user.id);
-    articles = articles.map((article) => ({
-      ...article,
-      read: readIds.includes(article.id),
-    }));
 
     response.type = "application/json";
     response.body = articles;
@@ -138,6 +133,7 @@ export function createRouter(bundle: { path: string; text: string }) {
 
   router.get("/", async ({ cookies, response, state }) => {
     let user: User;
+
     if (state.userId) {
       user = getUser(state.userId);
     } else {
@@ -150,12 +146,13 @@ export function createRouter(bundle: { path: string; text: string }) {
 
     const selectedFeedsStr = await cookies.get("selectedFeeds");
     if (selectedFeedsStr) {
+      const { userId } = state;
       const selectedFeeds = selectedFeedsStr.split(",").map(Number);
       const articles = getArticles({
         feedIds: selectedFeeds,
-        userId: state.userId,
+        userId,
       });
-      const feedStats = getFeedStats({ userId: state.userId });
+      const feedStats = getFeedStats({ userId });
       response.body = render({ user, selectedFeeds, articles, feedStats });
     } else {
       response.body = render({ user });

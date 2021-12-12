@@ -1,19 +1,18 @@
 import { log } from "../deps.ts";
 import { query } from "./db.ts";
-import { DbArticle } from "../../types.ts";
+import { Article, DbArticle } from "../../types.ts";
 
-export type ArticleRow = [
+export type DbArticleRow = [
   number,
   number,
   string,
   string,
   string,
   number,
-  string,
   string,
 ];
 
-export function rowToArticle(row: ArticleRow): DbArticle {
+export function rowToDbArticle(row: DbArticleRow): DbArticle {
   const [id, feedId, articleId, title, link, published, content] = row;
   return {
     id,
@@ -28,7 +27,7 @@ export function rowToArticle(row: ArticleRow): DbArticle {
 
 export function addArticle(article: Omit<DbArticle, "id">): DbArticle {
   log.debug(`Adding article ${article.articleId}`);
-  const rows = query<ArticleRow>(
+  const rows = query<DbArticleRow>(
     `INSERT INTO articles (
       feed_id, article_id, title, link, published, content
     )
@@ -36,18 +35,18 @@ export function addArticle(article: Omit<DbArticle, "id">): DbArticle {
     RETURNING *`,
     article,
   );
-  return rowToArticle(rows[0]);
+  return rowToDbArticle(rows[0]);
 }
 
 export function getArticle(articleId: string): DbArticle {
-  const rows = query<ArticleRow>(
+  const rows = query<DbArticleRow>(
     "SELECT * FROM articles WHERE article_id = (:articleId)",
     { articleId },
   );
   if (!rows[0]) {
     throw new Error(`No article with articleId ${articleId}`);
   }
-  return rowToArticle(rows[0]);
+  return rowToDbArticle(rows[0]);
 }
 
 export function getArticleCount(feedId: number): number {
@@ -59,14 +58,14 @@ export function getArticleCount(feedId: number): number {
 }
 
 export function getLatestArticle(feedId: number): DbArticle | undefined {
-  const rows = query<ArticleRow>(
+  const rows = query<DbArticleRow>(
     "SELECT * FROM articles WHERE feed_id = (:feedId) ORDER BY published DESC LIMIT 1",
     { feedId },
   );
   if (rows.length === 0) {
     return undefined;
   }
-  return rowToArticle(rows[0]);
+  return rowToDbArticle(rows[0]);
 }
 
 export function setArticleContent(id: number, content: string) {
@@ -77,7 +76,7 @@ export function setArticleContent(id: number, content: string) {
 }
 
 export function hasArticle(articleId: string): boolean {
-  const rows = query<ArticleRow>(
+  const rows = query<DbArticleRow>(
     "SELECT id FROM articles WHERE article_id = (:articleId)",
     { articleId },
   );

@@ -61,6 +61,7 @@ html {
   --gap: 8px;
   --matte: #f7f7f7;
   --hover-matte: #f0f0f0;
+  --active-matte: #e0e0e0;
   --background: white;
   --selected: rgba(0, 0, 0, 0.1);
   --foreground: #666;
@@ -114,6 +115,19 @@ html {
   background: var(--highlight);
   color: var(--highlight-text);
   width: var(--default-width);
+  display: flex;
+  flex-direction: column;
+}
+
+.App-sidebar-feeds {
+  flex-grow: 1;
+}
+
+.App-sidebar-settings {
+  flex-grow: 0;
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
 }
 
 .Header {
@@ -467,14 +481,44 @@ a.Article-content-header {
   background: var(--hover-matte);
 }
 
+.Button:active {
+  background: var(--active-matte);
+}
+
 .Button-large {
   padding: 0.75em 1em;
   font-size: 18px;
 }
 
 .Button-small {
+  margin: 0.25em 0.5em;
   padding: 0.25em 0.5em;
   font-size: 12px;
+}
+
+.ButtonSelector {
+  display: flex;
+  gap: 1px;
+}
+
+.ButtonSelector .Button {
+  margin: 0;
+  border: none;
+  opacity: 0.75;
+}
+
+.ButtonSelector .Button:first-child {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+.ButtonSelector .Button:last-child {
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+.ButtonSelector .ButtonSelector-selected {
+  opacity: 1;
 }
 
 @media only screen and (max-width: 800px) {

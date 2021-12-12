@@ -37,7 +37,6 @@ export async function getArticles(
 ): Promise<Article[]> {
   const params = new URLSearchParams();
   params.set("feeds", feedIds.map(String).join(","));
-  params.set("status", "unread");
   const response = await fetch(`/articles?${params}`);
   return await response.json();
 }

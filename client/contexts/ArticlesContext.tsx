@@ -1,7 +1,15 @@
-import { React, useContext, useMemo } from "../deps.ts";
+import {
+  React,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "../deps.ts";
 import { Article } from "../../types.ts";
 import { getArticles, setRead } from "../api.ts";
 import { useFeedStats } from "./FeedStatsContext.tsx";
+import { Settings, useSettings } from "./SettingsContext.tsx";
 
 const noop = () => undefined;
 
@@ -19,20 +27,58 @@ export interface ArticlesProviderProps {
   articles?: Article[];
 }
 
-export const ArticlesProvider: React.FC<ArticlesProviderProps> = (props) => {
-  const [articles, setArticles] = React.useState<
-    | Article[]
-    | undefined
-  >(props.articles);
-  const { fetchFeedStats } = useFeedStats();
+function filterArticles(
+  articles: Article[] | undefined,
+  settings: Settings,
+) {
+  if (articles) {
+    if (settings.articleFilter === "unread") {
+      return {
+        articles: articles.filter(({ read }) => !read),
+        filter: "unread",
+      };
+    }
 
+    if (settings.articleFilter === "saved") {
+      return {
+        articles: articles.filter(({ saved }) => saved),
+        filter: "saved",
+      };
+    }
+  }
+
+  return { articles };
+}
+
+export const ArticlesProvider: React.FC<ArticlesProviderProps> = (props) => {
+  const { settings } = useSettings();
+  const { fetchFeedStats } = useFeedStats();
+  // keep fetched articles in a ref -- these will be used as the source if the
+  // article filter changes
+  const fetchedArticles = useRef<Article[] | undefined>(props.articles);
+  // display articles are a filtered set of fetchedArticles; keep track of what
+  // filter was used to prevent unnecessary re-renders
+  const [displayArticles, setDisplayArticles] = useState<
+    { articles: Article[] | undefined; filter?: string }
+  >(filterArticles(props.articles, settings));
+
+  // when settings change, recompute the display articles if necessary
+  useEffect(() => {
+    if (displayArticles.filter !== settings.articleFilter) {
+      setDisplayArticles(filterArticles(fetchedArticles.current, settings));
+    }
+  }, [settings]);
+
+  // memoize the provided value; recompute it if the display articles or the
+  // settings change
   const value = useMemo(() => ({
-    articles,
+    articles: displayArticles.articles,
 
     fetchArticles: async (feeds: number[]) => {
       try {
-        const newArticles = await getArticles(feeds);
-        setArticles(newArticles.filter(({ read }) => !read));
+        const articles = await getArticles(feeds);
+        fetchedArticles.current = articles;
+        setDisplayArticles(filterArticles(articles, settings));
       } catch (error) {
         console.error(error);
       }
@@ -41,7 +87,7 @@ export const ArticlesProvider: React.FC<ArticlesProviderProps> = (props) => {
     setArticlesRead: async (articleIds: number[], newRead = true) => {
       try {
         const matchingArticles = articleIds.map((aid) =>
-          articles?.find(({ id }) => id === aid)
+          fetchedArticles.current?.find(({ id }) => id === aid)
         ).filter((val) => Boolean(val)) as Article[];
 
         if (matchingArticles.length !== articleIds.length) {
@@ -55,19 +101,33 @@ export const ArticlesProvider: React.FC<ArticlesProviderProps> = (props) => {
 
         await setRead(idsToUpdate, newRead);
 
-        setArticles(articles?.map((article) => {
-          if (articlesToUpdate.includes(article)) {
-            return { ...article, read: newRead };
-          }
-          return article;
-        }));
+        // set the `read` flag in the currently fetched articles
+        fetchedArticles.current = fetchedArticles.current?.map((article) =>
+          articlesToUpdate.includes(article)
+            ? { ...article, read: newRead }
+            : article
+        );
+
+        // set the `read` flag in the displayed articles, but do not simply
+        // refilter the fetched articles; doing that will remove the article the
+        // user just opened
+        setDisplayArticles(
+          {
+            articles: displayArticles.articles?.map((article) =>
+              articlesToUpdate.includes(article)
+                ? { ...article, read: newRead }
+                : article
+            ),
+            filter: displayArticles.filter,
+          },
+        );
 
         fetchFeedStats();
       } catch (error) {
         console.error(error);
       }
     },
-  }), [articles]);
+  }), [displayArticles, settings]);
 
   return (
     <ArticlesContext.Provider value={value}>

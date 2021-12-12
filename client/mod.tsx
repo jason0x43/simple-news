@@ -7,3 +7,5 @@ ReactDOM.hydrate(
   // @ts-ignore: document is undefined in deno
   document.getElementById("root"),
 );
+
+delete globalThis.__PRELOADED_STATE__;

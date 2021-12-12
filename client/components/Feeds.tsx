@@ -1,12 +1,14 @@
-import { React, useEffect, useMemo, useState } from "../deps.ts";
+import { React, useCallback, useEffect, useState } from "../deps.ts";
 import { className } from "../util.ts";
-import { useFeedStats, useUser } from "../contexts/mod.tsx";
+import {
+  Settings,
+  useArticles,
+  useFeeds,
+  useFeedStats,
+  useSettings,
+  useUser,
+} from "../contexts/mod.tsx";
 import { Feed, FeedStats, UserConfig } from "../../types.ts";
-
-export interface FeedsProps {
-  selectedFeeds?: number[];
-  onSelectFeeds?: (feeds: number[]) => void;
-}
 
 function isSelected(feeds: Feed[], selected: number[] | undefined) {
   if (!selected) {
@@ -15,32 +17,35 @@ function isSelected(feeds: Feed[], selected: number[] | undefined) {
   return feeds.every((feed) => selected.includes(feed.id));
 }
 
-function getGroupUnread(
+const getArticleCount = (
   feeds: UserConfig["feedGroups"][0]["feeds"],
   feedStats: FeedStats,
-) {
-  return feeds.reduce((acc, feed) => {
+  settings: Settings,
+) =>
+  feeds.reduce((acc, feed) => {
     const stats = feedStats[feed.id];
-    return acc + (stats.total - stats.read);
+    return acc + (settings.articleFilter === "unread"
+      ? (stats.total - stats.read)
+      : stats.total);
   }, 0);
-}
 
-const Feeds: React.FC<FeedsProps> = (props) => {
+const Feeds: React.FC = () => {
   const [expanded, setExpanded] = useState<{ [title: string]: boolean }>({});
-  const { feedStats, fetchFeedStats } = useFeedStats();
-  const { onSelectFeeds, selectedFeeds } = props;
+  const { feedStats } = useFeedStats();
   const { user } = useUser();
+  const { selectedFeeds, setSelectedFeeds } = useFeeds();
+  const { fetchArticles } = useArticles();
+  const { settings } = useSettings();
 
-  useEffect(() => {
-    if (user && !feedStats) {
-      fetchFeedStats();
-    }
-  }, [feedStats, user]);
+  const selectFeeds = useCallback((feedIds: number[]) => {
+    setSelectedFeeds(feedIds);
+    fetchArticles(feedIds);
+  }, []);
 
   return (
     <ul className="Feeds">
       {user?.config?.feedGroups.filter((group) =>
-        !feedStats || getGroupUnread(group.feeds, feedStats) > 0
+        !feedStats || getArticleCount(group.feeds, feedStats, settings) > 0
       ).map((group) => (
         <li
           key={group.title}
@@ -64,26 +69,27 @@ const Feeds: React.FC<FeedsProps> = (props) => {
             />
             <span
               className="Feeds-title"
-              onClick={() => onSelectFeeds?.(group.feeds.map(({ id }) => id))}
+              onClick={() => selectFeeds(group.feeds.map(({ id }) => id))}
             >
               {group.title}
             </span>
             {feedStats && (
               <span className="Feeds-unread">
-                {getGroupUnread(group.feeds, feedStats)}
+                {getArticleCount(group.feeds, feedStats, settings)}
               </span>
             )}
           </div>
+
           <ul>
             {group.feeds.filter((feed) =>
-              !feedStats || getGroupUnread([feed], feedStats) > 0
+              !feedStats || getArticleCount([feed], feedStats, settings) > 0
             ).map((feed) => (
               <li
                 className={className("Feeds-feed", {
                   "Feeds-selected": isSelected([feed], selectedFeeds),
                 })}
                 key={feed.id}
-                onClick={() => onSelectFeeds?.([feed.id])}
+                onClick={() => selectFeeds([feed.id])}
               >
                 <div className="Feeds-title">{feed.title}</div>
                 <div className="Feeds-unread">

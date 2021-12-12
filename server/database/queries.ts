@@ -1,8 +1,26 @@
 import { log } from "../deps.ts";
 import { getDb, query } from "./db.ts";
-import { DbArticle, FeedStats } from "../../types.ts";
-import { ArticleRow, rowToArticle } from "./articles.ts";
+import { Article, DbArticle, FeedStats } from "../../types.ts";
+import { DbArticleRow, rowToDbArticle } from "./articles.ts";
 import { getFeedIds } from "./feeds.ts";
+
+export type ArticleRow = [...DbArticleRow, boolean, boolean];
+
+export function rowToArticle(row: ArticleRow): Article {
+  const [id, feedId, articleId, title, link, published, content, read, saved] =
+    row;
+  return {
+    id,
+    feedId,
+    articleId,
+    title,
+    link,
+    published,
+    content,
+    read,
+    saved,
+  };
+}
 
 export interface GetArticlesOpts {
   // feeds to get articles for
@@ -11,8 +29,7 @@ export interface GetArticlesOpts {
   userId?: number;
 }
 
-export function getArticles(opts?: GetArticlesOpts): DbArticle[] {
-  log.debug(`Getting articles with ${JSON.stringify(opts)}`);
+export function getArticles(opts?: GetArticlesOpts): Article[] {
   let rows: ArticleRow[];
 
   if (opts?.feedIds !== undefined) {
@@ -27,13 +44,12 @@ export function getArticles(opts?: GetArticlesOpts): DbArticle[] {
       // for cases where this is no user_articles entry for a given article_id,
       // user_articles.read will be NULL
       rows = query<ArticleRow>(
-        `SELECT *
+        `SELECT articles.*, user_articles.read, user_articles.saved
         FROM articles
         LEFT JOIN user_articles
           ON articles.id = user_articles.article_id 
           AND user_articles.user_id = (:userId)
         WHERE articles.feed_id IN (${feedParamNames.join(",")})
-        AND user_articles.read IS NOT TRUE
         ORDER BY published ASC`,
         { userId: opts.userId, ...feedParams },
       );
@@ -48,12 +64,11 @@ export function getArticles(opts?: GetArticlesOpts): DbArticle[] {
     }
   } else if (opts?.userId !== undefined) {
     rows = query<ArticleRow>(
-      `SELECT *
+      `SELECT articles.*, user_articles.read, user_articles.saved
       FROM articles
       LEFT JOIN user_articles
         ON articles.id = user_articles.article_id 
         AND user_articles.user_id = (:userId)
-      WHERE user_articles.read IS NOT TRUE
       ORDER BY published ASC`,
       { userId: opts.userId },
     );

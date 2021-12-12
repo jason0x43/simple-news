@@ -1,29 +1,28 @@
-import { React, useCallback, useState } from "../deps.ts";
+import { React, useCallback, useEffect, useState } from "../deps.ts";
 import { ContextContainer, ContextProps } from "../contexts/mod.tsx";
-import Feeds from "../components/Feeds.tsx";
-import Articles from "../components/Articles.tsx";
-import Header from "../components/Header.tsx";
-import { useUser, useArticles } from "../contexts/mod.tsx";
+import Feeds from "./Feeds.tsx";
+import Articles from "./Articles.tsx";
+import Header from "./Header.tsx";
+import ButtonSelector from "./ButtonSelector.tsx";
+import { Settings, useFeeds, useSettings, useUser } from "../contexts/mod.tsx";
 
 export type AppProps = ContextProps;
 
 const AppContent: React.FC<AppProps> = (props) => {
   const { fetchUser } = useUser();
-  const { fetchArticles } = useArticles();
-  const [feeds, setFeeds] = useState<number[] | undefined>(props.selectedFeeds);
   const [sidebarActive, setSidebarActive] = useState(false);
+  const { settings, updateSettings } = useSettings();
+  const { selectedFeeds } = useFeeds();
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!props.user) {
       fetchUser();
     }
   }, []);
 
-  const handleSelectFeeds = useCallback((feeds: number[]) => {
-    fetchArticles(feeds);
-    setFeeds(feeds);
+  useEffect(() => {
     setSidebarActive(false);
-  }, []);
+  }, [selectedFeeds]);
 
   const handleShowSidebar = useCallback(() => {
     setSidebarActive(!sidebarActive);
@@ -36,7 +35,24 @@ const AppContent: React.FC<AppProps> = (props) => {
       </div>
       <div className="App-content">
         <div className="App-sidebar" data-active={sidebarActive}>
-          <Feeds selectedFeeds={feeds} onSelectFeeds={handleSelectFeeds} />
+          <div className="App-sidebar-feeds">
+            <Feeds />
+          </div>
+          <div className="App-sidebar-settings">
+            <ButtonSelector
+              options={[
+                { value: "unread", label: "Unread" },
+                { value: "all", label: "All" },
+                { value: "saved", label: "Saved" },
+              ]}
+              size="small"
+              selected={settings.articleFilter}
+              onSelect={(value) => {
+                const articleFilter = value as Settings["articleFilter"];
+                updateSettings({ articleFilter });
+              }}
+            />
+          </div>
         </div>
         <div className="App-center">
           <Articles />
@@ -46,12 +62,10 @@ const AppContent: React.FC<AppProps> = (props) => {
   );
 };
 
-const App: React.FC<AppProps> = (props) => {
-  return (
-    <ContextContainer {...props}>
-      <AppContent {...props} />
-    </ContextContainer>
-  );
-};
+const App: React.FC<AppProps> = (props) => (
+  <ContextContainer {...props}>
+    <AppContent {...props} />
+  </ContextContainer>
+);
 
 export default App;
