@@ -1,0 +1,3 @@
+#!/bin/sh
+
+deno run --no-check --allow-net --allow-env --allow-read --allow-write --allow-run --unstable mod.ts $@
