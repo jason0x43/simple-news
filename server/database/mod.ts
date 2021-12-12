@@ -86,11 +86,10 @@ const migrations: Migration[] = [
   {
     // initial database structure
     up: (db) => {
-      db.query("BEGIN TRANSACTION");
+      inTransaction(() => {
+        db.query("PRAGMA foreign_keys = ON");
 
-      db.query("PRAGMA foreign_keys = ON");
-
-      db.query(`
+        db.query(`
         CREATE TABLE users (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           email TEXT NOT NULL UNIQUE,
@@ -99,7 +98,7 @@ const migrations: Migration[] = [
         )
       `);
 
-      db.query(`
+        db.query(`
         CREATE TABLE feeds (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           url TEXT NOT NULL UNIQUE,
@@ -109,7 +108,7 @@ const migrations: Migration[] = [
         )
       `);
 
-      db.query(`
+        db.query(`
         CREATE TABLE articles (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           feed_id INTEGER NOT NULL,
@@ -123,7 +122,7 @@ const migrations: Migration[] = [
         )
       `);
 
-      db.query(`
+        db.query(`
         CREATE TABLE user_articles (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           user_id INTEGER NOT NULL,
@@ -135,17 +134,16 @@ const migrations: Migration[] = [
           FOREIGN KEY(article_id) REFERENCES articles(id)
         )
       `);
-
-      db.query("COMMIT");
+      });
     },
 
     down: (db) => {
-      db.query("BEGIN TRANSACTION");
-      db.query(`DROP TABLE user_articles`);
-      db.query(`DROP TABLE articles`);
-      db.query(`DROP TABLE feeds`);
-      db.query(`DROP TABLE users`);
-      db.query("COMMIT");
+      inTransaction(() => {
+        db.query(`DROP TABLE user_articles`);
+        db.query(`DROP TABLE articles`);
+        db.query(`DROP TABLE feeds`);
+        db.query(`DROP TABLE users`);
+      });
     },
   },
 
@@ -186,9 +184,9 @@ const migrations: Migration[] = [
     // ensure all articles have a published date
     up: (db) => {
       db.query("PRAGMA foreign_keys = OFF");
-      db.query("BEGIN TRANSACTION");
-      db.query(
-        `CREATE TABLE new_articles (
+      inTransaction(() => {
+        db.query(
+          `CREATE TABLE new_articles (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           feed_id INTEGER NOT NULL,
           article_id TEXT NOT NULL,
@@ -199,19 +197,19 @@ const migrations: Migration[] = [
           UNIQUE (feed_id, article_id),
           FOREIGN KEY(feed_id) REFERENCES feeds(id)
         )`,
-      );
-      db.query("INSERT INTO new_articles SELECT * FROM articles");
-      db.query("DROP TABLE articles");
-      db.query("ALTER TABLE new_articles RENAME TO articles");
-      db.query("COMMIT");
+        );
+        db.query("INSERT INTO new_articles SELECT * FROM articles");
+        db.query("DROP TABLE articles");
+        db.query("ALTER TABLE new_articles RENAME TO articles");
+      });
       db.query("PRAGMA foreign_keys = ON");
     },
 
     down: (db) => {
       db.query("PRAGMA foreign_keys = OFF");
-      db.query("BEGIN TRANSACTION");
-      db.query(
-        `CREATE TABLE old_articles (
+      inTransaction(() => {
+        db.query(
+          `CREATE TABLE old_articles (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           feed_id INTEGER NOT NULL,
           article_id TEXT NOT NULL,
@@ -222,11 +220,11 @@ const migrations: Migration[] = [
           UNIQUE (feed_id, article_id),
           FOREIGN KEY(feed_id) REFERENCES feeds(id)
         )`,
-      );
-      db.query("INSERT INTO old_articles SELECT * FROM articles");
-      db.query("DROP TABLE articles");
-      db.query("ALTER TABLE old_articles RENAME TO articles");
-      db.query("COMMIT");
+        );
+        db.query("INSERT INTO old_articles SELECT * FROM articles");
+        db.query("DROP TABLE articles");
+        db.query("ALTER TABLE old_articles RENAME TO articles");
+      });
       db.query("PRAGMA foreign_keys = ON");
     },
   },
@@ -239,6 +237,6 @@ const migrations: Migration[] = [
 
     down: (db) => {
       db.query("ALTER TABLE feeds DROP COLUMN icon");
-    }
-  }
+    },
+  },
 ];
