@@ -134,13 +134,7 @@ export function createRouter(bundle: { path: string; text: string }) {
     }
 
     response.type = "application/json";
-
-    if (feedIds) {
-      const stats = getFeeds(feedIds);
-      response.body = stats;
-    } else {
-      response.body = {};
-    }
+    response.body = feedIds ? getFeeds(feedIds) : {};
   });
 
   router.get("/feedstats", ({ request, response, state }) => {
@@ -164,13 +158,7 @@ export function createRouter(bundle: { path: string; text: string }) {
     }
 
     response.type = "application/json";
-
-    if (feedIds) {
-      const stats = getFeedStats({ userId, feedIds });
-      response.body = stats;
-    } else {
-      response.body = {};
-    }
+    response.body = feedIds ? getFeedStats({ userId, feedIds }) : {};
   });
 
   router.get("/", async ({ cookies, response, state }) => {

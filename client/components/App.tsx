@@ -5,7 +5,13 @@ import Articles from "./Articles.tsx";
 import Header from "./Header.tsx";
 import Button from "./Button.tsx";
 import ButtonSelector from "./ButtonSelector.tsx";
-import { Settings, useArticles, useFeeds, useFeedStats, useSettings, useUser } from "../contexts/mod.tsx";
+import {
+  Settings,
+  useArticles,
+  useFeeds,
+  useSettings,
+  useUser,
+} from "../contexts/mod.tsx";
 import { refreshFeeds } from "../api.ts";
 
 export type AppProps = ContextProps;
@@ -14,10 +20,9 @@ const AppContent: React.FC<AppProps> = (props) => {
   const { fetchUser } = useUser();
   const [sidebarActive, setSidebarActive] = useState(false);
   const { settings, updateSettings } = useSettings();
-  const { selectedFeeds } = useFeeds();
+  const { selectedFeeds, fetchFeedStats } = useFeeds();
   const [updating, setUpdating] = useState(false);
   const { fetchArticles } = useArticles();
-  const { fetchFeedStats } = useFeedStats();
 
   useEffect(() => {
     if (!props.user) {
@@ -37,7 +42,7 @@ const AppContent: React.FC<AppProps> = (props) => {
     try {
       setUpdating(true);
       await refreshFeeds();
-      fetchArticles(selectedFeeds);
+      fetchArticles();
       fetchFeedStats();
     } catch (error) {
       console.warn(`Error updating feeds: ${error.message}`);

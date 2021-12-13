@@ -1,27 +1,41 @@
-import { React, useContext, useMemo } from "../deps.ts";
-import { User } from "../../types.ts";
+import { React, useContext, useMemo, useState } from "../deps.ts";
+import { Feed, FeedStats, User } from "../../types.ts";
 import { useUser } from "./UserContext.tsx";
+import { getFeeds, getFeedStats } from "../api.ts";
 
 const FeedsContext = React.createContext<
   {
-    selectedFeeds: number[];
+    selectedFeeds: number[] | undefined;
     setSelectedFeeds: (feedIds: number[]) => void;
     feedsTitle: string | undefined;
+    fetchFeeds: () => void;
+    feeds: Feed[] | undefined;
+    feedStats: FeedStats | undefined;
+    fetchFeedStats: (feeds?: number[]) => void;
   }
 >({
-  selectedFeeds: [],
+  selectedFeeds: undefined,
   setSelectedFeeds: () => undefined,
   feedsTitle: undefined,
+  fetchFeeds: () => undefined,
+  feeds: undefined,
+  feedStats: undefined,
+  fetchFeedStats: () => undefined,
 });
 
 export default FeedsContext;
 
 export interface FeedsProviderProps {
   selectedFeeds?: number[] | undefined;
+  feedStats?: FeedStats;
+  feeds?: Feed[] | undefined;
 }
 
-function getFeedsTitle(selectedFeeds: number[], user: User | undefined) {
-  if (selectedFeeds.length === 0) {
+function getFeedsTitle(
+  selectedFeeds: number[] | undefined,
+  user: User | undefined,
+) {
+  if (!selectedFeeds || selectedFeeds.length === 0) {
     return undefined;
   }
   const feedGroups = user?.config?.feedGroups;
@@ -52,15 +66,34 @@ function getFeedsTitle(selectedFeeds: number[], user: User | undefined) {
 }
 
 export const FeedsProvider: React.FC<FeedsProviderProps> = (props) => {
-  const [selectedFeeds, setSelectedFeeds] = React.useState<number[]>(
-    props.selectedFeeds ?? [],
-  );
+  const [selectedFeeds, setSelectedFeeds] = React.useState(props.selectedFeeds);
+  const [feeds, setFeeds] = useState(props.feeds);
+  const [feedStats, setFeedStats] = useState(props.feedStats);
   const { user } = useUser();
 
   const value = useMemo(() => {
     const feedsTitle = getFeedsTitle(selectedFeeds, user);
-    return { selectedFeeds, setSelectedFeeds, feedsTitle };
-  }, [selectedFeeds, user?.config]);
+    return {
+      selectedFeeds,
+      setSelectedFeeds,
+      feedsTitle,
+      fetchFeeds: async () => {
+        const feeds = await getFeeds();
+        setFeeds(feeds);
+      },
+      feeds,
+
+      feedStats,
+
+      fetchFeedStats: (async (feedIds?: number[]) => {
+        try {
+          setFeedStats(await getFeedStats(feedIds));
+        } catch (error) {
+          console.error(error);
+        }
+      }),
+    };
+  }, [feeds, selectedFeeds, user?.config]);
 
   return (
     <FeedsContext.Provider value={value}>

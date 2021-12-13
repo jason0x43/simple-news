@@ -8,7 +8,6 @@ import {
 } from "../deps.ts";
 import { Article } from "../../types.ts";
 import { getArticles, setRead } from "../api.ts";
-import { useFeedStats } from "./FeedStatsContext.tsx";
 import { useFeeds } from "./FeedsContext.tsx";
 import { Settings, useSettings } from "./SettingsContext.tsx";
 
@@ -17,7 +16,7 @@ const noop = () => undefined;
 const ArticlesContext = React.createContext<
   {
     articles: Article[] | undefined;
-    fetchArticles: (feeds: number[]) => void;
+    fetchArticles: () => void;
     setArticlesRead: (ids: number[], read?: boolean) => void;
   }
 >({ articles: undefined, fetchArticles: noop, setArticlesRead: noop });
@@ -53,8 +52,7 @@ function filterArticles(
 
 export const ArticlesProvider: React.FC<ArticlesProviderProps> = (props) => {
   const { settings } = useSettings();
-  const { fetchFeedStats } = useFeedStats();
-  const { selectedFeeds } = useFeeds();
+  const { fetchFeedStats, selectedFeeds } = useFeeds();
   // keep fetched articles in a ref -- these will be used as the source if the
   // article filter changes
   const fetchedArticles = useRef<Article[] | undefined>(props.articles);
@@ -76,7 +74,13 @@ export const ArticlesProvider: React.FC<ArticlesProviderProps> = (props) => {
     let canceled = false;
 
     const interval = setInterval(async () => {
+      if (!selectedFeeds) {
+        return;
+      }
+
+      fetchFeedStats();
       const articles = await getArticles(selectedFeeds);
+
       if (canceled) {
         return;
       }
@@ -101,9 +105,13 @@ export const ArticlesProvider: React.FC<ArticlesProviderProps> = (props) => {
   const value = useMemo(() => ({
     articles: displayArticles.articles,
 
-    fetchArticles: async (feeds: number[]) => {
+    fetchArticles: async () => {
+      if (!selectedFeeds) {
+        return;
+      }
+
       try {
-        const articles = await getArticles(feeds);
+        const articles = await getArticles(selectedFeeds);
         fetchedArticles.current = articles;
         setDisplayArticles(filterArticles(articles, settings));
       } catch (error) {

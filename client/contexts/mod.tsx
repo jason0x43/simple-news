@@ -1,7 +1,6 @@
 import { React } from "../deps.ts";
 import { UserProvider } from "./UserContext.tsx";
 import { ArticlesProvider } from "./ArticlesContext.tsx";
-import { FeedStatsProvider } from "./FeedStatsContext.tsx";
 import { ContextMenuProvider } from "./ContextMenuContext.tsx";
 import { Settings, SettingsProvider } from "./SettingsContext.tsx";
 import { FeedsProvider } from "./FeedsContext.tsx";
@@ -18,21 +17,21 @@ export const ContextContainer: React.FC<ContextProps> = (props) => {
   return (
     <UserProvider user={props.user}>
       <SettingsProvider>
-        <FeedsProvider selectedFeeds={props.selectedFeeds}>
-          <FeedStatsProvider feedStats={props.feedStats}>
-            <ArticlesProvider articles={props.articles}>
-              <ContextMenuProvider>
-                {props.children}
-              </ContextMenuProvider>
-            </ArticlesProvider>
-          </FeedStatsProvider>
+        <FeedsProvider
+          feedStats={props.feedStats}
+          selectedFeeds={props.selectedFeeds}
+        >
+          <ArticlesProvider articles={props.articles}>
+            <ContextMenuProvider>
+              {props.children}
+            </ContextMenuProvider>
+          </ArticlesProvider>
         </FeedsProvider>
       </SettingsProvider>
     </UserProvider>
   );
 };
 
-export { useFeedStats } from "./FeedStatsContext.tsx";
 export { useUser } from "./UserContext.tsx";
 export { useArticles } from "./ArticlesContext.tsx";
 export { useContextMenu } from "./ContextMenuContext.tsx";

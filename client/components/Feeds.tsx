@@ -1,10 +1,9 @@
-import { React, useCallback, useEffect, useState } from "../deps.ts";
+import { React, useCallback, useState } from "../deps.ts";
 import { className } from "../util.ts";
 import {
   Settings,
   useArticles,
   useFeeds,
-  useFeedStats,
   useSettings,
   useUser,
 } from "../contexts/mod.tsx";
@@ -31,15 +30,14 @@ const getArticleCount = (
 
 const Feeds: React.FC = () => {
   const [expanded, setExpanded] = useState<{ [title: string]: boolean }>({});
-  const { feedStats } = useFeedStats();
   const { user } = useUser();
-  const { selectedFeeds, setSelectedFeeds } = useFeeds();
+  const { feedStats, selectedFeeds, setSelectedFeeds } = useFeeds();
   const { fetchArticles } = useArticles();
   const { settings } = useSettings();
 
   const selectFeeds = useCallback((feedIds: number[]) => {
     setSelectedFeeds(feedIds);
-    fetchArticles(feedIds);
+    fetchArticles();
   }, []);
 
   return (
