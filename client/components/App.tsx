@@ -44,7 +44,7 @@ const AppContent: React.FC<AppProps> = (props) => {
     } finally {
       setUpdating(false);
     }
-  }, []);
+  }, [fetchArticles, fetchFeedStats, refreshFeeds, selectedFeeds]);
 
   return (
     <div className="App">
