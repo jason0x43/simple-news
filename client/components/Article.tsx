@@ -155,7 +155,10 @@ const Article = forwardRef<HTMLDivElement, ArticleProps>((props, ref) => {
               </div>
             )}
         </div>
-        <div className="Article-title">{article.title}</div>
+        <div
+          className="Article-title"
+          dangerouslySetInnerHTML={{ __html: unescapeHtml(article.title) }}
+        />
         <div className="Article-age">{getAge(article.published)}</div>
         <div className="Article-menu" onClick={handleMenuClick}>{"\u22ef"}</div>
       </div>
