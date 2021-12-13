@@ -517,6 +517,7 @@ a.Article-content-header {
   font-size: 14px;
   padding: 0.75em 1em;
   border: solid 1px var(--border);
+  border-radius: var(--border-radius);
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -550,6 +551,7 @@ a.Article-content-header {
   margin: 0;
   border: none;
   opacity: 0.75;
+  border-radius: 0;
 }
 
 .ButtonSelector .Button:first-child {
