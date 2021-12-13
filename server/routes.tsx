@@ -1,4 +1,4 @@
-import { log, React, ReactDOMServer, Router } from "./deps.ts";
+import { log, path, React, ReactDOMServer, Router } from "./deps.ts";
 import {
   getArticles,
   getFeeds,
@@ -10,6 +10,9 @@ import {
 import { AppState, Article, UpdateArticleRequest, User } from "../types.ts";
 import App, { AppProps } from "../client/components/App.tsx";
 import { formatArticles, refreshFeeds } from "./feed.ts";
+
+const __filename = new URL(import.meta.url).pathname;
+const __dirname = path.dirname(__filename);
 
 function toString(value: unknown): string {
   return JSON.stringify(value ?? null).replace(/</g, "\\u003c");
@@ -24,6 +27,10 @@ export function createRouter(bundle: { path: string; text: string }) {
     const renderedApp = ReactDOMServer.renderToString(
       <App {...initialState} />,
     );
+
+    const logo = Deno.readTextFileSync(
+      path.join(__dirname, "..", "public", "favicon.svg"),
+    ).replace(/\bsvg\b/g, 'symbol');
 
     return `<!DOCTYPE html>
     <html lang="en">
@@ -43,6 +50,11 @@ export function createRouter(bundle: { path: string; text: string }) {
         <script type="module" async src="${bundle.path}"></script>
       </head>
       <body>
+        <svg style="display:none" version="2.0">
+          <defs>
+            ${logo}
+          </defs>
+        </svg>
         <div id="root">${renderedApp}</div>
       </body>
     </html>`;

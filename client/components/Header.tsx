@@ -13,7 +13,9 @@ const Header: React.FC<HeaderProps> = (props) => {
   return (
     <header className="Header">
       <div className="Header-left" onClick={onShowSidebar}>
-        <img src="favicon-192x192.png"/>
+        <svg width="22" height="22" version="2.0">
+          <use href="#sn-logo" />
+        </svg>
         <h1>Simple News</h1>
       </div>
       <div className="Header-center">
