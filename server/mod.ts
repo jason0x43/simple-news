@@ -54,6 +54,12 @@ export async function serve() {
   const port = 8083;
   const app = new Application<AppState>();
 
+  const appKey = Deno.env.get('SN_KEY');
+  if (appKey) {
+    app.keys = [appKey];
+    log.debug('Set app key');
+  }
+
   app.use(async (ctx, next) => {
     log.info(`${ctx.request.method} ${ctx.request.url.pathname}`);
     await next();

@@ -3,7 +3,7 @@
 /// <reference lib="deno.unstable" />
 
 import { Arguments, log, Yargs, yargs } from "./deps.ts";
-import { serve } from "./server/server.tsx";
+import { serve } from "./server/mod.ts";
 import {
   getArticleCount,
   getFeed,
