@@ -7,4 +7,4 @@ export { useCallback, useContext, useEffect, useMemo, useRef, useState };
 import ReactDOM from "https://esm.sh/react-dom@17?dev";
 export { ReactDOM };
 
-export * as datetime from "https://deno.land/std@0.115.1/datetime/mod.ts";
+export * as datetime from "https://deno.land/std@0.117.0/datetime/mod.ts";
