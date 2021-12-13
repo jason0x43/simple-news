@@ -32,3 +32,5 @@ export {
 } from "https://deno.land/x/deno_dom@v0.1.17-alpha/deno-dom-wasm.ts";
 
 export * as log from "https://deno.land/std@0.117.0/log/mod.ts";
+
+export * as bcrypt from 'https://deno.land/x/bcrypt@v0.2.4/mod.ts';

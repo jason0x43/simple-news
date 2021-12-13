@@ -1,9 +1,15 @@
 import { DB, log } from "../deps.ts";
-import { addUser, getUserByEmail } from "./users.ts";
 import { closeDb, createDb, getDb, inTransaction, query } from "./db.ts";
 
 export { inTransaction };
-export { getUser, getUserByEmail, updateUserConfig } from "./users.ts";
+export {
+  addUser,
+  getUser,
+  getUserByEmail,
+  isUserPassword,
+  updateUserConfig,
+  updateUserPassword,
+} from "./users.ts";
 export {
   addFeed,
   getFeed,
@@ -28,15 +34,8 @@ export function openDatabase(name = "data.db") {
   } catch {
     createDb(name);
     log.debug(`Foreign key support: ${getPragma("foreign_keys")}`);
-    migrateDatabase(6);
+    migrateDatabase(7);
     log.debug(`Database using v${getSchemaVersion()} schema`);
-
-    if (!getUserByEmail("jason@jasoncheatham.com")) {
-      addUser({
-        name: "Jason",
-        email: "jason@jasoncheatham.com",
-      });
-    }
   }
 }
 
@@ -237,6 +236,17 @@ const migrations: Migration[] = [
 
     down: (db) => {
       db.query("ALTER TABLE feeds DROP COLUMN icon");
+    },
+  },
+
+  {
+    // add password to user
+    up: (db) => {
+      db.query("ALTER TABLE users ADD COLUMN password TEXT");
+    },
+
+    down: (db) => {
+      db.query("ALTER TABLE users DROP COLUMN password");
     },
   },
 ];

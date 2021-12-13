@@ -5,16 +5,20 @@
 import { Arguments, log, Yargs, yargs } from "./deps.ts";
 import { serve } from "./server/mod.ts";
 import {
+  addUser,
   getArticleCount,
   getFeed,
   getFeeds,
+  getUserByEmail,
+  isUserPassword,
   openDatabase,
   setFeedDisabled,
   setFeedUrl,
+  updateUserPassword,
 } from "./server/database/mod.ts";
-import { refreshFeeds, formatArticles } from "./server/feed.ts";
+import { formatArticles, refreshFeeds } from "./server/feed.ts";
 import { exportOpmlFile, importOpmlFile } from "./server/opml.ts";
-import { printTable } from "./server/util.ts";
+import { printTable, promptSecret } from "./server/util.ts";
 
 async function configureLogger(args: Arguments) {
   await log.setup({
@@ -43,7 +47,7 @@ const parser = yargs(Deno.args)
   })
   .middleware([
     configureLogger,
-    () => openDatabase()
+    () => openDatabase(),
   ])
   .command("serve", "Start the RSS aggregator server", {}, async () => {
     await serve();
@@ -139,6 +143,70 @@ const parser = yargs(Deno.args)
     {},
     () => {
       formatArticles();
+    },
+  )
+  .command(
+    "adduser <email> <name>",
+    "Add a new user",
+    (yargs: Yargs) => {
+      yargs.positional("email", {
+        describe: "An email address for the new account",
+        type: "string",
+      });
+      yargs.positional("name", {
+        describe: "The user's name, or a username",
+        type: "string",
+      });
+    },
+    async (args: Arguments & { email: string; name: string }) => {
+      const password = await promptSecret("Password: ");
+      if (password) {
+        const user = addUser({ email: args.email, name: args.name }, password);
+        console.log(`Created user ${user.id}`);
+      } else {
+        console.log("Add cancelled");
+      }
+    },
+  )
+  .command(
+    "resetpw <email>",
+    "Reset a user password",
+    (yargs: Yargs) => {
+      yargs.positional("email", {
+        describe: "An existing account email address",
+        type: "string",
+      });
+    },
+    async (args: Arguments & { email: string }) => {
+      const user = getUserByEmail(args.email);
+      const password = await promptSecret("Password: ");
+      if (password) {
+        updateUserPassword(user.id, password);
+        console.log(`Updated password for user ${user.id}`);
+      } else {
+        console.log("Update cancelled");
+      }
+    },
+  )
+  .command(
+    "login <email>",
+    "Authenticate as a given user",
+    (yargs: Yargs) => {
+      yargs.positional("email", {
+        describe: "An existing account email address",
+        type: "string",
+      });
+    },
+    async (args: Arguments & { email: string }) => {
+      const user = getUserByEmail(args.email);
+      const password = await promptSecret("Password: ");
+      if (password) {
+        if (isUserPassword(user.id, password)) {
+          console.log("Login successful");
+        } else {
+          console.log("Invalid password");
+        }
+      }
     },
   )
   .demandCommand(1, "");
