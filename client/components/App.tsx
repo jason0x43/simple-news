@@ -3,8 +3,10 @@ import { ContextContainer, ContextProps } from "../contexts/mod.tsx";
 import Feeds from "./Feeds.tsx";
 import Articles from "./Articles.tsx";
 import Header from "./Header.tsx";
+import Button from "./Button.tsx";
 import ButtonSelector from "./ButtonSelector.tsx";
-import { Settings, useFeeds, useSettings, useUser } from "../contexts/mod.tsx";
+import { Settings, useArticles, useFeeds, useFeedStats, useSettings, useUser } from "../contexts/mod.tsx";
+import { refreshFeeds } from "../api.ts";
 
 export type AppProps = ContextProps;
 
@@ -13,6 +15,9 @@ const AppContent: React.FC<AppProps> = (props) => {
   const [sidebarActive, setSidebarActive] = useState(false);
   const { settings, updateSettings } = useSettings();
   const { selectedFeeds } = useFeeds();
+  const [updating, setUpdating] = useState(false);
+  const { fetchArticles } = useArticles();
+  const { fetchFeedStats } = useFeedStats();
 
   useEffect(() => {
     if (!props.user) {
@@ -28,6 +33,19 @@ const AppContent: React.FC<AppProps> = (props) => {
     setSidebarActive(!sidebarActive);
   }, [sidebarActive]);
 
+  const handleUpdateFeeds = useCallback(async () => {
+    try {
+      setUpdating(true);
+      await refreshFeeds();
+      fetchArticles(selectedFeeds);
+      fetchFeedStats();
+    } catch (error) {
+      console.warn(`Error updating feeds: ${error.message}`);
+    } finally {
+      setUpdating(false);
+    }
+  }, []);
+
   return (
     <div className="App">
       <div className="App-header">
@@ -37,6 +55,14 @@ const AppContent: React.FC<AppProps> = (props) => {
         <div className="App-sidebar" data-active={sidebarActive}>
           <div className="App-sidebar-feeds">
             <Feeds />
+          </div>
+          <div className="App-sidebar-controls">
+            <Button
+              size="small"
+              disabled={updating}
+              label="Update feeds"
+              onClick={handleUpdateFeeds}
+            />
           </div>
           <div className="App-sidebar-settings">
             <ButtonSelector
