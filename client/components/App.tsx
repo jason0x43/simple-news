@@ -41,8 +41,10 @@ const LoggedIn: React.FC = () => {
     try {
       setUpdating(true);
       await refreshFeeds();
-      fetchArticles();
       fetchFeedStats();
+      if (selectedFeeds) {
+        fetchArticles(selectedFeeds);
+      }
     } catch (error) {
       console.warn(`Error updating feeds: ${error.message}`);
     } finally {

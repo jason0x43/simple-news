@@ -37,7 +37,7 @@ const Feeds: React.FC = () => {
 
   const selectFeeds = useCallback((feedIds: number[]) => {
     setSelectedFeeds(feedIds);
-    fetchArticles();
+    fetchArticles(feedIds);
   }, []);
 
   return (

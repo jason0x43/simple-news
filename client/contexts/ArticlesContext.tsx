@@ -16,7 +16,7 @@ const noop = () => undefined;
 const ArticlesContext = React.createContext<
   {
     articles: Article[] | undefined;
-    fetchArticles: () => void;
+    fetchArticles: (feedIds: number[]) => void;
     setArticlesRead: (ids: number[], read?: boolean) => void;
   }
 >({ articles: undefined, fetchArticles: noop, setArticlesRead: noop });
@@ -105,13 +105,9 @@ export const ArticlesProvider: React.FC<ArticlesProviderProps> = (props) => {
   const value = useMemo(() => ({
     articles: displayArticles.articles,
 
-    fetchArticles: async () => {
-      if (!selectedFeeds) {
-        return;
-      }
-
+    fetchArticles: async (feedIds: number[]) => {
       try {
-        const articles = await getArticles(selectedFeeds);
+        const articles = await getArticles(feedIds);
         fetchedArticles.current = articles;
         setDisplayArticles(filterArticles(articles, settings));
       } catch (error) {
