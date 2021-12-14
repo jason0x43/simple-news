@@ -177,10 +177,11 @@ html {
 }
 
 .Header-center h2 {
-  font-size: 16px;
+  font-size: 14px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  margin: 0;
 }
 
 .Header-show-feeds {
@@ -520,7 +521,7 @@ a.Article-content-header {
   background: var(--matte);
   color: var(--foreground);
   font-size: 14px;
-  padding: 0.75em 1em;
+  padding: 0.5em 1em 0.7em 1em;
   border: solid 1px var(--border);
   border-radius: var(--border-radius);
   user-select: none;
