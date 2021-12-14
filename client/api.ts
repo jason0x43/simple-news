@@ -6,6 +6,25 @@ import {
   User,
 } from "../types.ts";
 
+export class ResponseError extends Error {
+  private _status: number;
+  private _body: unknown;
+
+  constructor(message: string, status: number, body: unknown) {
+    super(message);
+    this._status = status;
+    this._body = body;
+  }
+
+  get status() {
+    return this._status;
+  }
+
+  get body() {
+    return this._body;
+  }
+}
+
 export async function refreshFeeds() {
   await fetch("/refresh");
 }
@@ -35,6 +54,20 @@ export async function reprocess() {
 
 export async function getUser(): Promise<User> {
   const response = await fetch("/user");
+  return await response.json();
+}
+
+export async function login(email: string, password: string): Promise<User> {
+  const response = await fetch("/login", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+
+  if (response.status >= 400) {
+    const body = await response.json();
+    throw new ResponseError("Error logging in", response.status, body);
+  }
+
   return await response.json();
 }
 

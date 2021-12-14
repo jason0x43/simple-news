@@ -19,6 +19,7 @@ const Button: React.FC<ButtonProps> = (props) => {
       }, extraClass)}
       disabled={disabled}
       onClick={onClick}
+      type="button"
     >
       {label}
     </button>

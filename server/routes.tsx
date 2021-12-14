@@ -5,9 +5,16 @@ import {
   getFeedStats,
   getUser,
   getUserByEmail,
+  isUserPassword,
   updateArticleFlags,
 } from "./database/mod.ts";
-import { AppState, Article, UpdateArticleRequest, User } from "../types.ts";
+import {
+  AppState,
+  Article,
+  LoginRequest,
+  UpdateArticleRequest,
+  User,
+} from "../types.ts";
 import App, { AppProps } from "../client/components/App.tsx";
 import { formatArticles, refreshFeeds } from "./feed.ts";
 
@@ -17,6 +24,8 @@ const __dirname = path.dirname(__filename);
 function toString(value: unknown): string {
   return JSON.stringify(value ?? null).replace(/</g, "\\u003c");
 }
+
+const mode = Deno.env.get("SN_MODE") ?? "production";
 
 export function createRouter(bundle: { path: string; text: string }) {
   // Render the base HTML
@@ -30,7 +39,7 @@ export function createRouter(bundle: { path: string; text: string }) {
 
     const logo = Deno.readTextFileSync(
       path.join(__dirname, "..", "public", "favicon.svg"),
-    ).replace(/\bsvg\b/g, 'symbol');
+    ).replace(/\bsvg\b/g, "symbol");
 
     return `<!DOCTYPE html>
     <html lang="en">
@@ -161,31 +170,64 @@ export function createRouter(bundle: { path: string; text: string }) {
     response.body = feedIds ? getFeedStats({ userId, feedIds }) : {};
   });
 
-  router.get("/", async ({ cookies, response, state }) => {
-    let user: User;
-
+  router.get("/login", ({ response, state }) => {
     if (state.userId) {
-      user = getUser(state.userId);
+      response.redirect("/");
     } else {
-      user = getUserByEmail("jason@jasoncheatham.com");
-      state.userId = user.id;
-      await cookies.set("userId", `${user.id}`);
+      response.type = "text/html";
+      response.body = render({});
     }
+  });
+
+  router.post("/login", async ({ cookies, request, response, state }) => {
+    response.type = "application/json";
+
+    if (!request.hasBody) {
+      response.status = 404;
+      response.body = { error: "Missing or invalid credentials" };
+      return;
+    }
+
+    const body = request.body();
+    const text = await body.value;
+    const data = JSON.parse(text) as LoginRequest;
+    const user = getUserByEmail(data.email);
+    if (!isUserPassword(user.id, data.password)) {
+      response.status = 404;
+      response.body = { error: "Missing or invalid credentials" };
+    }
+
+    state.userId = user.id;
+    await cookies.set("userId", `${user.id}`, {
+      secure: mode !== "dev",
+      httpOnly: true,
+    });
+
+    response.body = user;
+  });
+
+  router.get("/", async ({ cookies, response, state }) => {
+    if (!state.userId) {
+      response.redirect("/login");
+      return;
+    }
+
+    const user = getUser(state.userId);
 
     response.type = "text/html";
 
     const selectedFeedsStr = await cookies.get("selectedFeeds");
-    if (selectedFeedsStr) {
-      const { userId } = state;
+    if (user && selectedFeedsStr) {
       const selectedFeeds = selectedFeedsStr.split(",").map(Number);
       const articles = getArticles({
         feedIds: selectedFeeds,
-        userId,
+        userId: user.id,
       });
-      const feedStats = getFeedStats({ userId });
+      const feedStats = getFeedStats({ userId: user.id });
       response.body = render({ user, selectedFeeds, articles, feedStats });
     } else {
-      response.body = render({ user });
+      const feedStats = getFeedStats({ userId: user.id });
+      response.body = render({ user, feedStats });
     }
   });
 

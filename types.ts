@@ -62,3 +62,8 @@ export type UpdateArticleRequest = {
   read?: boolean;
   saved?: boolean;
 }[];
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}

@@ -5,6 +5,7 @@ import Articles from "./Articles.tsx";
 import Header from "./Header.tsx";
 import Button from "./Button.tsx";
 import ButtonSelector from "./ButtonSelector.tsx";
+import Input from "./Input.tsx";
 import {
   Settings,
   useArticles,
@@ -14,10 +15,8 @@ import {
 } from "../contexts/mod.tsx";
 import { refreshFeeds } from "../api.ts";
 
-export type AppProps = ContextProps;
-
-const AppContent: React.FC<AppProps> = (props) => {
-  const { fetchUser } = useUser();
+const LoggedIn: React.FC = () => {
+  const { fetchUser, user } = useUser();
   const [sidebarActive, setSidebarActive] = useState(false);
   const { settings, updateSettings } = useSettings();
   const { selectedFeeds, fetchFeedStats } = useFeeds();
@@ -25,7 +24,7 @@ const AppContent: React.FC<AppProps> = (props) => {
   const { fetchArticles } = useArticles();
 
   useEffect(() => {
-    if (!props.user) {
+    if (!user) {
       fetchUser();
     }
   }, []);
@@ -52,7 +51,7 @@ const AppContent: React.FC<AppProps> = (props) => {
   }, [fetchArticles, fetchFeedStats, refreshFeeds, selectedFeeds]);
 
   return (
-    <div className="App">
+    <>
       <div className="App-header">
         <Header onShowSidebar={handleShowSidebar} />
       </div>
@@ -89,13 +88,44 @@ const AppContent: React.FC<AppProps> = (props) => {
           <Articles />
         </div>
       </div>
+    </>
+  );
+};
+
+const Login: React.FC = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const { login } = useUser();
+
+  return (
+    <form className="Login">
+      <Input placeholder="Email" value={email} onChange={setEmail} />
+      <Input
+        placeholder="Password"
+        type="password"
+        value={password}
+        onChange={setPassword}
+      />
+      <Button label="Login" onClick={() => login(email, password)} />
+    </form>
+  );
+};
+
+const AppContent: React.FC = () => {
+  const { user } = useUser();
+
+  return (
+    <div className="App">
+      {user ? <LoggedIn /> : <Login />}
     </div>
   );
 };
 
+export type AppProps = ContextProps;
+
 const App: React.FC<AppProps> = (props) => (
   <ContextContainer {...props}>
-    <AppContent {...props} />
+    <AppContent />
   </ContextContainer>
 );
 
