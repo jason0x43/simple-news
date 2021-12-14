@@ -217,16 +217,16 @@ export function createRouter(bundle: { path: string; text: string }) {
     response.type = "text/html";
 
     const selectedFeedsStr = await cookies.get("selectedFeeds");
+    const feedStats = getFeedStats({ userId: user.id });
+
     if (user && selectedFeedsStr) {
       const selectedFeeds = selectedFeedsStr.split(",").map(Number);
       const articles = getArticles({
         feedIds: selectedFeeds,
         userId: user.id,
       });
-      const feedStats = getFeedStats({ userId: user.id });
       response.body = render({ user, selectedFeeds, articles, feedStats });
     } else {
-      const feedStats = getFeedStats({ userId: user.id });
       response.body = render({ user, feedStats });
     }
   });

@@ -19,13 +19,17 @@ const LoggedIn: React.FC = () => {
   const { fetchUser, user } = useUser();
   const [sidebarActive, setSidebarActive] = useState(false);
   const { settings, updateSettings } = useSettings();
-  const { selectedFeeds, fetchFeedStats } = useFeeds();
+  const { feedStats, selectedFeeds, fetchFeedStats } = useFeeds();
   const [updating, setUpdating] = useState(false);
   const { fetchArticles } = useArticles();
 
   useEffect(() => {
     if (!user) {
       fetchUser();
+    }
+
+    if (!feedStats) {
+      fetchFeedStats();
     }
   }, []);
 

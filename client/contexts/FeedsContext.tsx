@@ -93,13 +93,15 @@ export const FeedsProvider: React.FC<FeedsProviderProps> = (props) => {
 
       fetchFeedStats: (async (feedIds?: number[]) => {
         try {
-          setFeedStats(await getFeedStats(feedIds));
+          const stats = await getFeedStats(feedIds);
+          console.log("loaded feed stats:", stats);
+          setFeedStats(stats);
         } catch (error) {
           console.error(error);
         }
       }),
     };
-  }, [feeds, selectedFeeds, user?.config]);
+  }, [feeds, feedStats, selectedFeeds]);
 
   return (
     <FeedsContext.Provider value={value}>
