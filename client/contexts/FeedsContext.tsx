@@ -1,6 +1,7 @@
 import { React, useContext, useMemo, useState } from "../deps.ts";
 import { Feed, FeedStats, User } from "../../types.ts";
 import { useUser } from "./UserContext.tsx";
+import { useArticles } from "./ArticlesContext.tsx";
 import { getFeeds, getFeedStats } from "../api.ts";
 
 const FeedsContext = React.createContext<
@@ -66,24 +67,29 @@ function getFeedsTitle(
 }
 
 export const FeedsProvider: React.FC<FeedsProviderProps> = (props) => {
-  const [selectedFeeds, setSelectedFeeds] = React.useState(props.selectedFeeds);
+  const [selectedFeeds, setSelectedFeeds] = useState(props.selectedFeeds);
   const [feeds, setFeeds] = useState(props.feeds);
   const [feedStats, setFeedStats] = useState(props.feedStats);
   const { user } = useUser();
+  const { fetchArticles } = useArticles();
 
   const value = useMemo(() => {
     const feedsTitle = getFeedsTitle(selectedFeeds, user);
     return {
-      selectedFeeds,
-      setSelectedFeeds,
+      feeds,
+      feedStats,
       feedsTitle,
+      selectedFeeds,
+
+      setSelectedFeeds: (feedIds: number[]) => {
+        setSelectedFeeds(feedIds);
+        fetchArticles(feedIds);
+      },
+
       fetchFeeds: async () => {
         const feeds = await getFeeds();
         setFeeds(feeds);
       },
-      feeds,
-
-      feedStats,
 
       fetchFeedStats: (async (feedIds?: number[]) => {
         try {
