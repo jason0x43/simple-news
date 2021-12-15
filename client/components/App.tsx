@@ -121,6 +121,7 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
     fetchArticles({ feedIds });
   }, []);
 
+  // Fetch articles for selected feeds every few minutes
   useEffect(() => {
     return cancellableEffect((signal) => {
       const interval = setInterval(() => {
@@ -136,7 +137,7 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
         clearInterval(interval);
       };
     });
-  }, [selectedFeeds]);
+  }, [fetchFeedStats, fetchArticles, selectedFeeds]);
 
   const handleShowSidebar = useCallback(() => {
     setSidebarActive(!sidebarActive);
