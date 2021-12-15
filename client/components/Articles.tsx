@@ -27,7 +27,6 @@ export interface ArticlesProps {
 const Articles: React.FC<ArticlesProps> = (props) => {
   const { articles, settings, setArticlesRead, selectedFeeds, user } = props;
   const [selectedArticle, setSelectedArticle] = useState<number>();
-  const selectedRef = useRef<HTMLDivElement>(null);
   const recentlyChanged = useRef<Set<number>>(new Set());
   const { hideContextMenu } = useContextMenu();
 
@@ -71,7 +70,7 @@ const Articles: React.FC<ArticlesProps> = (props) => {
     const article = articles.find(({ id }) => id === selectedArticle);
     if (article) {
       const olderIds = getOlderIds(articles, article?.published);
-      setRead(olderIds, true);
+      setRead(olderIds, read);
     }
   }, [articles, setArticlesRead]);
 
@@ -79,11 +78,9 @@ const Articles: React.FC<ArticlesProps> = (props) => {
     setRead([articleId], read);
   }, [setArticlesRead]);
 
-  useEffect(() => {
-    if (selectedRef.current && selectedArticle !== undefined) {
-      selectedRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [selectedRef.current]);
+  const setArticleRef = useCallback((node: HTMLDivElement | null) => {
+    node?.scrollIntoView({ behavior: "smooth" });
+  }, []);
 
   return (
     <div className="Articles">
@@ -104,7 +101,7 @@ const Articles: React.FC<ArticlesProps> = (props) => {
                 >
                   <Article
                     ref={selectedArticle === article.id
-                      ? selectedRef
+                      ? setArticleRef
                       : undefined}
                     article={article}
                     selectArticle={handleSelect}
