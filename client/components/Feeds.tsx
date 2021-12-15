@@ -1,13 +1,7 @@
-import { React, useCallback, useState } from "../deps.ts";
+import { React, useState } from "../deps.ts";
 import { className } from "../util.ts";
-import {
-  Settings,
-  useArticles,
-  useFeeds,
-  useSettings,
-  useUser,
-} from "../contexts/mod.tsx";
-import { Feed, FeedStats, UserConfig } from "../../types.ts";
+import { Feed, FeedStats, User, UserConfig } from "../../types.ts";
+import { Settings } from "../types.ts";
 
 function isSelected(feeds: Feed[], selected: number[] | undefined) {
   if (!selected) {
@@ -28,17 +22,17 @@ const getArticleCount = (
       : stats.total);
   }, 0);
 
-const Feeds: React.FC = () => {
-  const [expanded, setExpanded] = useState<{ [title: string]: boolean }>({});
-  const { user } = useUser();
-  const { feedStats, selectedFeeds, setSelectedFeeds } = useFeeds();
-  const { fetchArticles } = useArticles();
-  const { settings } = useSettings();
+export interface FeedsProps {
+  settings: Settings;
+  user: User;
+  feedStats: FeedStats | undefined;
+  selectedFeeds: number[];
+  onSelectFeeds: (feedIds: number[]) => void;
+}
 
-  const selectFeeds = useCallback((feedIds: number[]) => {
-    setSelectedFeeds(feedIds);
-    fetchArticles(feedIds);
-  }, []);
+const Feeds: React.FC<FeedsProps> = (props) => {
+  const { settings, user, feedStats, selectedFeeds, onSelectFeeds } = props;
+  const [expanded, setExpanded] = useState<{ [title: string]: boolean }>({});
 
   return (
     <ul className="Feeds">
@@ -67,7 +61,7 @@ const Feeds: React.FC = () => {
             />
             <span
               className="Feeds-title"
-              onClick={() => selectFeeds(group.feeds.map(({ id }) => id))}
+              onClick={() => onSelectFeeds(group.feeds.map(({ id }) => id))}
             >
               {group.title}
             </span>
@@ -87,7 +81,7 @@ const Feeds: React.FC = () => {
                   "Feeds-selected": isSelected([feed], selectedFeeds),
                 })}
                 key={feed.id}
-                onClick={() => selectFeeds([feed.id])}
+                onClick={() => onSelectFeeds([feed.id])}
               >
                 <div className="Feeds-title">{feed.title}</div>
                 <div className="Feeds-unread">

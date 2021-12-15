@@ -1,4 +1,13 @@
-import { React, useEffect, useMemo, useRef, useState } from "../deps.ts";
+/// <reference lib="dom" />
+
+import {
+  React,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "../deps.ts";
 import { className } from "../util.ts";
 
 export interface ContextMenuProps {
@@ -84,7 +93,7 @@ const ContextMenu: React.FC<ContextMenuProps> = (props) => {
             key={item}
             onClick={() => {
               closeMenu();
-              onSelect(item)
+              onSelect(item);
             }}
           >
             {item}
@@ -96,3 +105,42 @@ const ContextMenu: React.FC<ContextMenuProps> = (props) => {
 };
 
 export default ContextMenu;
+
+const ContextMenuContext = React.createContext<{
+  showContextMenu: (props: ContextMenuProps) => void;
+  hideContextMenu: () => void;
+}>({
+  showContextMenu: () => undefined,
+  hideContextMenu: () => undefined,
+});
+
+export const ContextMenuProvider: React.FC = (props) => {
+  const [cmProps, setCmProps] = useState<ContextMenuProps | undefined>();
+  const prevProps = useRef<ContextMenuProps | undefined>();
+
+  useEffect(() => {
+    prevProps.current?.onClose();
+    prevProps.current = cmProps;
+  }, [cmProps]);
+
+  const value = useMemo(() => ({
+    showContextMenu: setCmProps,
+    hideContextMenu: () => setCmProps(undefined),
+  }), []);
+
+  return (
+    <ContextMenuContext.Provider value={value}>
+      {props.children}
+      {cmProps && (
+        <ContextMenu
+          {...cmProps}
+          onClose={() => setCmProps(undefined)}
+        />
+      )}
+    </ContextMenuContext.Provider>
+  );
+};
+
+export function useContextMenu() {
+  return useContext(ContextMenuContext);
+}

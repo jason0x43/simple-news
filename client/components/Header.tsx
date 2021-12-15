@@ -1,14 +1,14 @@
 import { React } from "../deps.ts";
-import { useUser, useFeeds } from "../contexts/mod.tsx";
+import { User } from "../../types.ts";
 
 export interface HeaderProps {
-  onShowSidebar?: () => void;
+  user: User;
+  onShowSidebar: () => void;
+  title?: string;
 }
 
 const Header: React.FC<HeaderProps> = (props) => {
-  const { onShowSidebar } = props;
-  const { user } = useUser();
-  const { feedsTitle } = useFeeds();
+  const { user, onShowSidebar, title } = props;
 
   return (
     <header className="Header">
@@ -19,9 +19,9 @@ const Header: React.FC<HeaderProps> = (props) => {
         <h1>Simple News</h1>
       </div>
       <div className="Header-center">
-        <h2>{feedsTitle}</h2>
+        <h2>{title}</h2>
       </div>
-      <div className="Header-right">{user?.name}</div>
+      <div className="Header-right">{user.name}</div>
     </header>
   );
 };

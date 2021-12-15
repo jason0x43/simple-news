@@ -5,13 +5,12 @@ import {
   forwardRef,
   React,
   useCallback,
-  useEffect,
   useMemo,
   useState,
 } from "../deps.ts";
 import { Article, Feed, User } from "../../types.ts";
 import { className } from "../util.ts";
-import { useArticles, useContextMenu, useUser } from "../contexts/mod.tsx";
+import { useContextMenu } from "./ContextMenu.tsx";
 import { unescapeHtml } from "../../util.ts";
 
 function getAge(timestamp: number | undefined): string {
@@ -51,38 +50,27 @@ function getFeed(feedId: number, user: User | undefined): Feed | undefined {
   return undefined;
 }
 
-function getOlderIds(
-  articles: Article[] | undefined,
-  olderThan: number,
-) {
-  if (!articles) {
-    return [];
-  }
-
-  return articles.filter(({ published }) => published < olderThan).map((
-    { id },
-  ) => id);
-}
-
 export interface ArticleProps {
   article: Article;
+  user: User;
+  setOlderArticlesRead: (read: boolean) => void;
   selectedArticle: number | undefined;
   selectArticle: (id: number) => void;
+  setArticleRead: (articleId: number, read: boolean) => void;
 }
 
 const Article = forwardRef<HTMLDivElement, ArticleProps>((props, ref) => {
-  const { article, selectArticle, selectedArticle } = props;
-  const { articles, setArticlesRead } = useArticles();
+  const {
+    article,
+    setOlderArticlesRead,
+    selectArticle,
+    selectedArticle,
+    setArticleRead,
+    user,
+  } = props;
   const { showContextMenu, hideContextMenu } = useContextMenu();
-  const { user } = useUser();
-  const feed = getFeed(article.feedId, user);
   const [isActive, setIsActive] = useState(false);
-
-  useEffect(() => {
-    if (selectedArticle === article.id) {
-      setArticlesRead([article.id]);
-    }
-  }, [selectedArticle]);
+  const feed = getFeed(article.feedId, user);
 
   const handleSelect = useCallback(() => {
     selectArticle(article.id);
@@ -114,10 +102,11 @@ const Article = forwardRef<HTMLDivElement, ArticleProps>((props, ref) => {
           ],
 
           onSelect: (item: string) => {
-            const ids = /older/.test(item)
-              ? getOlderIds(articles, article.published)
-              : [article.id];
-            setArticlesRead(ids, !/unread/.test(item));
+            if (/older/.test(item)) {
+              setOlderArticlesRead(!/unread/.test(item));
+            } else {
+              setArticleRead(article.id, !/unread/.test(item));
+            }
           },
 
           onClose: () => setIsActive(false),
@@ -128,7 +117,7 @@ const Article = forwardRef<HTMLDivElement, ArticleProps>((props, ref) => {
 
       event.stopPropagation();
     },
-    [articles, isActive, setArticlesRead, hideContextMenu],
+    [article, isActive, setOlderArticlesRead, setArticleRead, hideContextMenu],
   );
 
   return (
