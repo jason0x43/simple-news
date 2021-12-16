@@ -14,7 +14,7 @@ export interface ContextMenuProps {
   items: string[];
   anchor: HTMLElement;
   onSelect: (item: string) => void;
-  onClose: () => void;
+  onClose?: () => void;
 }
 
 const defaultPos = { x: 0, y: 0 };
@@ -27,7 +27,7 @@ const ContextMenu: React.FC<ContextMenuProps> = (props) => {
 
   const closeMenu = () => {
     setVisible(false);
-    onClose();
+    onClose?.();
   };
 
   // if the anchor changes, hide and reposition the menu
@@ -109,24 +109,24 @@ export default ContextMenu;
 const ContextMenuContext = React.createContext<{
   showContextMenu: (props: ContextMenuProps) => void;
   hideContextMenu: () => void;
+  contextMenuVisible: boolean;
 }>({
   showContextMenu: () => undefined,
   hideContextMenu: () => undefined,
+  contextMenuVisible: false,
 });
 
 export const ContextMenuProvider: React.FC = (props) => {
   const [cmProps, setCmProps] = useState<ContextMenuProps | undefined>();
-  const prevProps = useRef<ContextMenuProps | undefined>();
-
-  useEffect(() => {
-    prevProps.current?.onClose();
-    prevProps.current = cmProps;
-  }, [cmProps]);
 
   const value = useMemo(() => ({
-    showContextMenu: setCmProps,
+    showContextMenu: (newCmProps: ContextMenuProps) => {
+      cmProps?.onClose?.();
+      setCmProps(newCmProps);
+    },
     hideContextMenu: () => setCmProps(undefined),
-  }), []);
+    contextMenuVisible: cmProps !== undefined,
+  }), [cmProps]);
 
   return (
     <ContextMenuContext.Provider value={value}>
@@ -134,7 +134,10 @@ export const ContextMenuProvider: React.FC = (props) => {
       {cmProps && (
         <ContextMenu
           {...cmProps}
-          onClose={() => setCmProps(undefined)}
+          onClose={() => {
+            cmProps?.onClose?.();
+            setCmProps(undefined);
+          }}
         />
       )}
     </ContextMenuContext.Provider>

@@ -287,9 +287,8 @@ html {
 }
 
 .Articles-list {
-  list-style-type: none;
-  padding: 0;
-  margin: 0;
+  width: 100%;
+  table-layout: fixed;
 }
 
 .Articles-controls,
@@ -300,26 +299,11 @@ html {
   justify-content: center;
 }
 
-.Article {
-  border-bottom: solid 1px var(--border);
-}
-
-.Article-heading {
-  display: grid;
-  grid-template-columns: max-content 1fr min-content auto;
-  align-items: center;
-  line-height: 1.25em;
-  cursor: default;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-}
-
-.Article-active .Article-heading {
+.Article-active {
   background: var(--matte);
 }
 
-.Article-read .Article-heading {
+.Article-read {
   opacity: 0.5;
 }
 
@@ -327,20 +311,15 @@ html {
   background: var(--selected);
 }
 
-.Article-feed {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 90%;
-  color: #999;
-  padding: 8px 16px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
+.Article-icon {
+  padding: 0.5em;
+  width: 16px;
 }
 
-.Article-icon {
-  width: 16px;
+.Article-icon img {
+  max-width: 16px;
+  max-height: 16px;
+  vertical-align: middle;
 }
 
 .Article-monogram {
@@ -355,58 +334,57 @@ html {
   font-size: 12px;
 }
 
-.Article-feed img {
-  max-width: 16px;
-  max-height: 16px;
-}
-
 .Article-title {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  padding: 0.25em 0.5em;
 }
 
 .Article-age {
   font-size: 90%;
   text-align: right;
-  width: 2.5em;
+  width: 2em;
   color: #999;
   white-space: nowrap;
+  padding: 0.5rem;
 }
 
 .Article-menu {
-  padding: 8px 16px;
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
+  width: 1.5em;
+  padding: 0.25em 0.5em;
 }
 
-.Article-container {
+.Article {
   display: flex;
   flex-direction: column;
-  padding: 16px 32px;
+  padding: 0 32px;
   margin: 0 auto;
   max-width: 800px;
 }
 
-.Article-content-header {
+.Article-header {
   text-decoration: none;
   font-weight: bold;
   font-size: 150%;
-  margin-bottom: 1rem;
+  margin: 2rem 0;
 }
 
-a.Article-content-header {
+a.Article-header {
   color: var(--foreground);
 }
 
 .Article-content {
   overflow: auto;
-  font-size: 18px;
+  font-size: 16px;
   font-family: Merriweather, serif;
   font-weight: 300;
   line-height: 1.5em;
+  padding-bottom: 1rem;
 }
 
 .Article-content > :first-child {

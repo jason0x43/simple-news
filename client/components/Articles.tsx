@@ -1,11 +1,20 @@
 /// <reference lib="dom" />
 
-import { React, useCallback, useEffect, useRef } from "../deps.ts";
+import {
+  datetime,
+  React,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "../deps.ts";
 import { useContextMenu } from "./ContextMenu.tsx";
-import Article from "./Article.tsx";
 import Button from "./Button.tsx";
-import { Article as ArticleType, User } from "../../types.ts";
+import Article from "./Article.tsx";
+import { Article as ArticleType, Feed, User } from "../../types.ts";
 import { Settings } from "../types.ts";
+import { className } from "../util.ts";
+import { unescapeHtml } from "../../util.ts";
 
 function getOlderIds(
   articles: ArticleType[],
@@ -26,6 +35,43 @@ export interface ArticlesProps {
   onSelectArticle: (articleId: number | undefined) => void;
 }
 
+function getAge(timestamp: number | undefined): string {
+  if (timestamp === undefined) {
+    return "?";
+  }
+
+  const date0 = new Date();
+  const date1 = new Date(timestamp);
+  const diff = datetime.difference(date0, date1, {
+    units: ["minutes", "hours", "days", "weeks"],
+  });
+  if (diff.weeks) {
+    return `${diff.weeks} w`;
+  }
+  if (diff.days) {
+    return `${diff.days} d`;
+  }
+  if (diff.hours) {
+    return `${diff.hours} h`;
+  }
+  return `${diff.minutes} m`;
+}
+
+function getFeed(feedId: number, user: User | undefined): Feed | undefined {
+  const feedGroups = user?.config?.feedGroups;
+  if (feedGroups) {
+    for (const group of feedGroups) {
+      for (const feed of group.feeds) {
+        if (feed.id === feedId) {
+          return feed;
+        }
+      }
+    }
+  }
+
+  return undefined;
+}
+
 const Articles: React.FC<ArticlesProps> = (props) => {
   const {
     articles,
@@ -36,95 +82,159 @@ const Articles: React.FC<ArticlesProps> = (props) => {
     selectedFeeds,
     user,
   } = props;
-  const recentlyChanged = useRef<Set<number>>(new Set());
-  const { hideContextMenu } = useContextMenu();
+  const updatedArticles = useRef<Set<number>>(new Set());
+  const { hideContextMenu, showContextMenu, contextMenuVisible } =
+    useContextMenu();
+  const [activeArticle, setActiveArticle] = useState<number | undefined>();
 
   useEffect(() => {
-    recentlyChanged.current.clear();
+    updatedArticles.current.clear();
   }, [selectedFeeds]);
+
+  useEffect(() => {
+    if (!contextMenuVisible) {
+      setActiveArticle(undefined);
+    }
+  }, [contextMenuVisible]);
 
   const setRead = (articleIds: number[], read: boolean) => {
     setArticlesRead(articleIds, read);
-    const op = read ? "add" : "delete";
     for (const id of articleIds) {
-      recentlyChanged.current[op](id);
+      updatedArticles.current.add(id);
     }
   };
-
-  const handleSelect = useCallback(
-    (selected: number) => {
-      hideContextMenu();
-      if (selected === selectedArticle) {
-        onSelectArticle(undefined);
-      } else {
-        onSelectArticle(selected);
-        setRead([selected], true);
-      }
-    },
-    [selectedArticle],
-  );
-
-  const handleMarkAll = useCallback(() => {
-    if (articles) {
-      const ids = articles.map(({ id }) => id);
-      setRead(ids, true);
-    }
-  }, [articles, setArticlesRead]);
-
-  const handleMarkOlder = useCallback((read: boolean) => {
-    if (!articles || selectedArticle === undefined) {
-      return;
-    }
-
-    const article = articles.find(({ id }) => id === selectedArticle);
-    if (article) {
-      const olderIds = getOlderIds(articles, article?.published);
-      setRead(olderIds, read);
-    }
-  }, [articles, setArticlesRead]);
-
-  const handleMarkArticle = useCallback((articleId: number, read: boolean) => {
-    setRead([articleId], read);
-  }, [setArticlesRead]);
 
   const setArticleRef = useCallback((node: HTMLDivElement | null) => {
     node?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
+  const handleMenuClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    const articleId = Number(event.currentTarget.getAttribute("data-id"));
+
+    if (articleId === activeArticle) {
+      hideContextMenu();
+    } else {
+      showContextMenu({
+        anchor: event.currentTarget,
+
+        items: [
+          "Mark as read",
+          "Mark as unread",
+          "Mark older as read",
+          "Mark older as unread",
+        ],
+
+        onSelect: (item: string) => {
+          const read = !/unread/.test(item);
+
+          if (/older/.test(item)) {
+            const article = articles.find(({ id }) => id === articleId)!;
+            if (article) {
+              const olderIds = getOlderIds(articles, article.published);
+              setRead(olderIds, read);
+            }
+          } else {
+            setRead([articleId], read);
+          }
+        },
+      });
+
+      setActiveArticle(articleId);
+    }
+
+    event.stopPropagation();
+  };
+
+  const filteredArticles = articles.filter((article) =>
+    settings.articleFilter === "all" ||
+    settings.articleFilter === "unread" && (!article.read ||
+        updatedArticles.current.has(article.id)) ||
+    settings.articleFilter === "saved" && article.saved
+  );
+
   return (
     <div className="Articles">
-      {articles.length > 0
+      {filteredArticles.length > 0
         ? (
           <>
-            <ul className="Articles-list">
-              {articles?.filter((article) =>
-                settings.articleFilter === "all" ||
-                settings.articleFilter === "unread" && (!article.read ||
-                    recentlyChanged.current.has(article.id)) ||
-                settings.articleFilter === "saved" && article.saved
-              ).map((article) => (
-                <li
-                  className="Articles-article"
-                  key={article.id}
-                  data-article-id={article.id}
-                >
-                  <Article
-                    ref={selectedArticle === article.id
-                      ? setArticleRef
-                      : undefined}
-                    article={article}
-                    selectArticle={handleSelect}
-                    selectedArticle={selectedArticle}
-                    setArticleRead={handleMarkArticle}
-                    setOlderArticlesRead={handleMarkOlder}
-                    user={user}
-                  />
-                </li>
-              ))}
-            </ul>
+            <table className="Articles-list">
+              <tbody>
+                {filteredArticles.map((article) => {
+                  const feed = getFeed(article.feedId, user);
+                  const isSelected = selectedArticle === article.id;
+                  const isActive = activeArticle === article.id;
+                  const isRead = article.read;
+
+                  return (
+                    <React.Fragment key={article.id}>
+                      <tr
+                        className={className({
+                          "Article-active": isActive,
+                          "Article-read": isRead,
+                        })}
+                        ref={isSelected ? setArticleRef : undefined}
+                      >
+                        <td className="Article-icon">
+                          {feed?.icon
+                            ? <img src={feed.icon} title={feed?.title} />
+                            : (
+                              <div
+                                className="Article-monogram"
+                                title={feed?.title}
+                              >
+                                {feed?.title[0]}
+                              </div>
+                            )}
+                        </td>
+                        <td
+                          onClick={() => {
+                            hideContextMenu();
+                            if (article.id === selectedArticle) {
+                              onSelectArticle(undefined);
+                            } else {
+                              onSelectArticle(article.id);
+                              setRead([article.id], true);
+                            }
+                          }}
+                        >
+                          <div
+                            className="Article-title"
+                            dangerouslySetInnerHTML={{
+                              __html: unescapeHtml(article.title),
+                            }}
+                          />
+                        </td>
+                        <td className="Article-age">
+                          {getAge(article.published)}
+                        </td>
+                        <td
+                          className="Article-menu"
+                          data-id={article.id}
+                          onClick={handleMenuClick}
+                        >
+                          {"\u22ef"}
+                        </td>
+                      </tr>
+                      {isSelected && (
+                        <tr>
+                          <td colSpan={4}>
+                            <Article article={article} />
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
             <div className="Articles-controls">
               <Button
-                onClick={handleMarkAll}
+                onClick={() => {
+                  const ids = articles?.map(({ id }) => id);
+                  if (ids) {
+                    setRead(ids, true);
+                  }
+                }}
                 label="Mark all read"
                 size="large"
               />
