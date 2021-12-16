@@ -11,19 +11,21 @@ const Article: React.FC<ArticleProps> = (props) => {
 
   return (
     <div className="Article">
-      <a
-        className="Article-header"
-        href={article.link}
-        target={"_blank"}
-      >
-        {article.title}
-      </a>
-      <div
-        className="Article-content"
-        dangerouslySetInnerHTML={{
-          __html: unescapeHtml(article.content ?? ""),
-        }}
-      />
+      <div className="Article-inner">
+        <a
+          className="Article-header"
+          href={article.link}
+          target={"_blank"}
+        >
+          {article.title}
+        </a>
+        <div
+          className="Article-content"
+          dangerouslySetInnerHTML={{
+            __html: unescapeHtml(article.content ?? ""),
+          }}
+        />
+      </div>
     </div>
   );
 };

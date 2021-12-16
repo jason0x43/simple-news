@@ -3,6 +3,7 @@ import { ContextMenuProvider } from "./ContextMenu.tsx";
 import Feeds from "./Feeds.tsx";
 import Articles from "./Articles.tsx";
 import Header from "./Header.tsx";
+import Article from "./Article.tsx";
 import Button from "./Button.tsx";
 import ButtonSelector from "./ButtonSelector.tsx";
 import Input from "./Input.tsx";
@@ -13,13 +14,14 @@ import {
   refreshFeeds,
   setRead,
 } from "../api.ts";
-import { Article, FeedStats, User } from "../../types.ts";
+import { Article as ArticleType, FeedStats, User } from "../../types.ts";
 import { Settings } from "../types.ts";
+import { className } from "../util.ts";
 
 interface LoggedInProps {
   user: User;
   feedStats?: FeedStats;
-  articles?: Article[];
+  articles?: ArticleType[];
   selectedFeeds?: number[];
 }
 
@@ -76,9 +78,11 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
     articleFilter: "unread",
   });
   const [sidebarActive, setSidebarActive] = useState(false);
-  const [selectedArticle, setSelectedArticle] = useState<number | undefined>();
+  const [selectedArticleId, setSelectedArticleId] = useState<
+    number | undefined
+  >();
   const [updating, setUpdating] = useState(false);
-  const [articles, setArticles] = useState<Article[]>(
+  const [articles, setArticles] = useState<ArticleType[]>(
     props.articles ?? [],
   );
   const [feedStats, setFeedStats] = useState<
@@ -88,6 +92,8 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
   const [selectedFeeds, setSelectedFeeds] = useState<number[]>(
     props.selectedFeeds ?? [],
   );
+
+  const selectedArticle = articles.find(({ id }) => id === selectedArticleId);
 
   const fetchFeedStats = async (signal?: { cancelled: boolean }) => {
     try {
@@ -119,6 +125,7 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
   const selectFeeds = useCallback((feedIds: number[]) => {
     setSidebarActive(false);
     setSelectedFeeds(feedIds);
+    setSelectedArticleId(undefined);
     fetchArticles({ feedIds });
   }, []);
 
@@ -175,7 +182,7 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
   );
 
   const selectArticle = useCallback((articleId: number | undefined) => {
-    setSelectedArticle(articleId);
+    setSelectedArticleId(articleId);
   }, []);
 
   const feedsTitle = getFeedsTitle(user, selectedFeeds);
@@ -224,16 +231,21 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
             />
           </div>
         </div>
-        <div className="App-articles">
+        <div
+          className={className("App-articles", {
+            "App-articles-viewing": selectedArticle !== undefined,
+          })}
+        >
           <Articles
             articles={articles}
             selectedFeeds={selectedFeeds}
             settings={settings}
-            selectedArticle={selectedArticle}
+            selectedArticle={selectedArticleId}
             setArticlesRead={setArticlesRead}
             onSelectArticle={selectArticle}
             user={user}
           />
+          {selectedArticle && <Article article={selectedArticle} />}
         </div>
       </div>
     </>

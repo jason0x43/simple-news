@@ -10,14 +10,13 @@ import {
 } from "../deps.ts";
 import { useContextMenu } from "./ContextMenu.tsx";
 import Button from "./Button.tsx";
-import Article from "./Article.tsx";
-import { Article as ArticleType, Feed, User } from "../../types.ts";
+import { Article, Feed, User } from "../../types.ts";
 import { Settings } from "../types.ts";
 import { className } from "../util.ts";
 import { unescapeHtml } from "../../util.ts";
 
 function getOlderIds(
-  articles: ArticleType[],
+  articles: Article[],
   olderThan: number,
 ) {
   return articles.filter(({ published }) => published < olderThan).map((
@@ -27,7 +26,7 @@ function getOlderIds(
 
 export interface ArticlesProps {
   user: User;
-  articles: ArticleType[];
+  articles: Article[];
   settings: Settings;
   setArticlesRead: (articleIds: number[], read: boolean) => void;
   selectedFeeds: number[];
@@ -104,10 +103,6 @@ const Articles: React.FC<ArticlesProps> = (props) => {
     }
   };
 
-  const setArticleRef = useCallback((node: HTMLDivElement | null) => {
-    node?.scrollIntoView({ behavior: "smooth" });
-  }, []);
-
   const handleMenuClick = (event: React.MouseEvent<HTMLDivElement>) => {
     const articleId = Number(event.currentTarget.getAttribute("data-id"));
 
@@ -145,6 +140,10 @@ const Articles: React.FC<ArticlesProps> = (props) => {
     event.stopPropagation();
   };
 
+  const setArticleRef = useCallback((node: HTMLDivElement | null) => {
+    node?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, []);
+
   const filteredArticles = articles.filter((article) =>
     settings.articleFilter === "all" ||
     settings.articleFilter === "unread" && (!article.read ||
@@ -161,68 +160,60 @@ const Articles: React.FC<ArticlesProps> = (props) => {
               <tbody>
                 {filteredArticles.map((article) => {
                   const feed = getFeed(article.feedId, user);
-                  const isSelected = selectedArticle === article.id;
                   const isActive = activeArticle === article.id;
+                  const isSelected = selectedArticle === article.id;
                   const isRead = article.read;
 
                   return (
-                    <React.Fragment key={article.id}>
-                      <tr
-                        className={className({
-                          "Article-active": isActive,
-                          "Article-read": isRead,
-                        })}
-                        ref={isSelected ? setArticleRef : undefined}
+                    <tr
+                      className={className({
+                        "Article-active": isActive,
+                        "Article-read": isRead,
+                      })}
+                      key={article.id}
+                      ref={isSelected ? setArticleRef : undefined}
+                    >
+                      <td className="Article-icon">
+                        {feed?.icon
+                          ? <img src={feed.icon} title={feed?.title} />
+                          : (
+                            <div
+                              className="Article-monogram"
+                              title={feed?.title}
+                            >
+                              {feed?.title[0]}
+                            </div>
+                          )}
+                      </td>
+
+                      <td
+                        className="Article-title"
+                        onClick={() => {
+                          hideContextMenu();
+                          if (article.id === selectedArticle) {
+                            onSelectArticle(undefined);
+                          } else {
+                            onSelectArticle(article.id);
+                            setRead([article.id], true);
+                          }
+                        }}
+                        dangerouslySetInnerHTML={{
+                          __html: unescapeHtml(article.title),
+                        }}
+                      />
+
+                      <td className="Article-age">
+                        {getAge(article.published)}
+                      </td>
+
+                      <td
+                        className="Article-menu"
+                        data-id={article.id}
+                        onClick={handleMenuClick}
                       >
-                        <td className="Article-icon">
-                          {feed?.icon
-                            ? <img src={feed.icon} title={feed?.title} />
-                            : (
-                              <div
-                                className="Article-monogram"
-                                title={feed?.title}
-                              >
-                                {feed?.title[0]}
-                              </div>
-                            )}
-                        </td>
-                        <td
-                          onClick={() => {
-                            hideContextMenu();
-                            if (article.id === selectedArticle) {
-                              onSelectArticle(undefined);
-                            } else {
-                              onSelectArticle(article.id);
-                              setRead([article.id], true);
-                            }
-                          }}
-                        >
-                          <div
-                            className="Article-title"
-                            dangerouslySetInnerHTML={{
-                              __html: unescapeHtml(article.title),
-                            }}
-                          />
-                        </td>
-                        <td className="Article-age">
-                          {getAge(article.published)}
-                        </td>
-                        <td
-                          className="Article-menu"
-                          data-id={article.id}
-                          onClick={handleMenuClick}
-                        >
-                          {"\u22ef"}
-                        </td>
-                      </tr>
-                      {isSelected && (
-                        <tr>
-                          <td colSpan={4}>
-                            <Article article={article} />
-                          </td>
-                        </tr>
-                      )}
-                    </React.Fragment>
+                        {"\u22ef"}
+                      </td>
+                    </tr>
                   );
                 })}
               </tbody>
