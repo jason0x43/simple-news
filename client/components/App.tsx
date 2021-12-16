@@ -76,6 +76,7 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
     articleFilter: "unread",
   });
   const [sidebarActive, setSidebarActive] = useState(false);
+  const [selectedArticle, setSelectedArticle] = useState<number | undefined>();
   const [updating, setUpdating] = useState(false);
   const [articles, setArticles] = useState<Article[]>(
     props.articles ?? [],
@@ -173,6 +174,10 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
     [articles, setRead, fetchFeedStats],
   );
 
+  const selectArticle = useCallback((articleId: number | undefined) => {
+    setSelectedArticle(articleId);
+  }, []);
+
   const feedsTitle = getFeedsTitle(user, selectedFeeds);
 
   return (
@@ -219,12 +224,14 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
             />
           </div>
         </div>
-        <div className="App-center">
+        <div className="App-articles">
           <Articles
             articles={articles}
             selectedFeeds={selectedFeeds}
             settings={settings}
+            selectedArticle={selectedArticle}
             setArticlesRead={setArticlesRead}
+            onSelectArticle={selectArticle}
             user={user}
           />
         </div>

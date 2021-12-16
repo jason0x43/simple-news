@@ -1,6 +1,6 @@
 /// <reference lib="dom" />
 
-import { React, useCallback, useEffect, useRef, useState } from "../deps.ts";
+import { React, useCallback, useEffect, useRef } from "../deps.ts";
 import { useContextMenu } from "./ContextMenu.tsx";
 import Article from "./Article.tsx";
 import Button from "./Button.tsx";
@@ -22,11 +22,20 @@ export interface ArticlesProps {
   settings: Settings;
   setArticlesRead: (articleIds: number[], read: boolean) => void;
   selectedFeeds: number[];
+  selectedArticle: number | undefined;
+  onSelectArticle: (articleId: number | undefined) => void;
 }
 
 const Articles: React.FC<ArticlesProps> = (props) => {
-  const { articles, settings, setArticlesRead, selectedFeeds, user } = props;
-  const [selectedArticle, setSelectedArticle] = useState<number>();
+  const {
+    articles,
+    onSelectArticle,
+    settings,
+    setArticlesRead,
+    selectedArticle,
+    selectedFeeds,
+    user,
+  } = props;
   const recentlyChanged = useRef<Set<number>>(new Set());
   const { hideContextMenu } = useContextMenu();
 
@@ -46,9 +55,9 @@ const Articles: React.FC<ArticlesProps> = (props) => {
     (selected: number) => {
       hideContextMenu();
       if (selected === selectedArticle) {
-        setSelectedArticle(undefined);
+        onSelectArticle(undefined);
       } else {
-        setSelectedArticle(selected);
+        onSelectArticle(selected);
         setRead([selected], true);
       }
     },
