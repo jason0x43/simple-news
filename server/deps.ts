@@ -20,10 +20,10 @@ export * as path from "https://deno.land/std@0.117.0/path/mod.ts";
 // import to make SSR React (at least v17) happy
 import "http://esm.sh/raf@3.4.1/polyfill";
 
-import React from "react";
+import React from "https://esm.sh/react@17";
 export { React };
 
-import ReactDOMServer from "react-dom-server";
+import ReactDOMServer from "https://esm.sh/react-dom@17/server";
 export { ReactDOMServer };
 
 export {
@@ -33,4 +33,4 @@ export {
 
 export * as log from "https://deno.land/std@0.117.0/log/mod.ts";
 
-export * as bcrypt from 'https://deno.land/x/bcrypt@v0.2.4/mod.ts';
+export * as bcrypt from "https://deno.land/x/bcrypt@v0.2.4/mod.ts";

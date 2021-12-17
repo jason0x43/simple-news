@@ -12,13 +12,14 @@ if [ "$SN_MODE" = "dev" ]; then
 		cmd="$cmd --watch --allow-run=touch"
 	fi
 
+	export SN_IMPORT_MAP="import_map.json"
+
 	$cmd \
-		--import-map ./dev_imports.json \
+		--import-map ./$SN_IMPORT_MAP \
 		mod.ts $@
 else
 	$cmd \
 		--no-check \
-		--import-map ./prod_imports.json \
 		mod.ts $@
 fi
 

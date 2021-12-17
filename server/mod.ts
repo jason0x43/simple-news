@@ -29,22 +29,24 @@ async function watchClient() {
 }
 
 export async function serve() {
-  const importMap = Deno.env.get("SN_MODE") === "dev"
-    ? "dev_imports.json"
-    : "prod_imports.json";
+  const emitOptions: Deno.EmitOptions = {
+    bundle: "module",
+    check: false,
+    compilerOptions: {
+      target: "esnext",
+      lib: ["dom", "dom.iterable", "dom.asynciterable", "deno.ns"],
+    },
+  };
+
+  const importMap = Deno.env.get("SN_IMPORT_MAP");
+  if (importMap) {
+    emitOptions.importMapPath = path.join(__dirname, "..", importMap);
+  }
 
   // Build and cache the client code
   const { files, diagnostics } = await Deno.emit(
     path.join(clientDir, "mod.tsx"),
-    {
-      bundle: "module",
-      check: false,
-      importMapPath: path.join(__dirname, "..", importMap),
-      compilerOptions: {
-        target: "esnext",
-        lib: ["dom", "dom.iterable", "dom.asynciterable", "deno.ns"],
-      },
-    },
+    emitOptions,
   );
 
   if (diagnostics.length > 0) {
