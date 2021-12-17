@@ -302,6 +302,10 @@ html {
   border-right: solid 1px var(--border);
 }
 
+.App-articles-viewing .Article-menu {
+  display: none;
+}
+
 .Articles-list {
   list-style-type: none;
   width: 100%;
@@ -323,6 +327,10 @@ html {
 
 .Articles-article:hover {
   background: var(--matte);
+}
+
+.App-articles-viewing .Articles-article {
+  grid-template-columns: 32px auto 3em;
 }
 
 .Articles-controls,

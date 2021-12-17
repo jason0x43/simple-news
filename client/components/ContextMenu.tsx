@@ -12,7 +12,7 @@ import { className } from "../util.ts";
 
 export interface ContextMenuProps {
   items: string[];
-  anchor: HTMLElement;
+  anchor: HTMLElement | { x: number; y: number };
   onSelect: (item: string) => void;
   onClose?: () => void;
 }
@@ -44,9 +44,13 @@ const ContextMenu: React.FC<ContextMenuProps> = (props) => {
     const clickListener = (event: MouseEvent) => {
       if (!ref.current?.contains(event.target as Node)) {
         closeMenu();
+
+        // make the menu act a bit like a modal; any clicks that aren't in the
+        // menu will cause the menu to close and will then be silently discarded
+        event.stopPropagation();
       }
     };
-    document.body.addEventListener("click", clickListener);
+    document.body.addEventListener("click", clickListener, { capture: true });
 
     const escListener = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -56,12 +60,22 @@ const ContextMenu: React.FC<ContextMenuProps> = (props) => {
     document.body.addEventListener("keydown", escListener);
 
     if (!visible) {
-      const anchorRect = anchor.getBoundingClientRect();
+      let x: number;
+      let y: number;
+
+      if (anchor instanceof HTMLElement) {
+        const anchorRect = anchor.getBoundingClientRect();
+        x = anchorRect.x;
+        y = anchorRect.y;
+      } else {
+        x = anchor.x;
+        y = anchor.y;
+      }
+
       const rect = ref.current.getBoundingClientRect();
       const viewPortWidth = document.documentElement.clientWidth;
       const viewPortHeight = document.documentElement.clientHeight;
 
-      let { x, y } = anchorRect;
       if (x + rect.width > viewPortWidth) {
         x -= rect.width;
       }

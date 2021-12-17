@@ -85,6 +85,8 @@ const Articles: React.FC<ArticlesProps> = (props) => {
   const { hideContextMenu, showContextMenu, contextMenuVisible } =
     useContextMenu();
   const [activeArticle, setActiveArticle] = useState<number | undefined>();
+  const touchStartRef = useRef<number | undefined>();
+  const touchTimerRef = useRef<number | undefined>();
 
   useEffect(() => {
     updatedArticles.current.clear();
@@ -103,42 +105,64 @@ const Articles: React.FC<ArticlesProps> = (props) => {
     }
   };
 
-  const handleMenuClick = (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleMenuClick = (
+    event: {
+      currentTarget: HTMLLIElement;
+      pageX: number;
+      pageY: number;
+      preventDefault?: () => void;
+      stopPropagation?: () => void;
+    },
+  ) => {
+    console.log("event:", event);
     const articleId = Number(event.currentTarget.getAttribute("data-id"));
 
-    if (articleId === activeArticle) {
-      hideContextMenu();
-    } else {
-      showContextMenu({
-        anchor: event.currentTarget,
+    showContextMenu({
+      anchor: { x: event.pageX, y: event.pageY },
 
-        items: [
-          "Mark as read",
-          "Mark as unread",
-          "Mark older as read",
-          "Mark older as unread",
-        ],
+      items: [
+        "Mark as read",
+        "Mark as unread",
+        "Mark older as read",
+        "Mark older as unread",
+      ],
 
-        onSelect: (item: string) => {
-          const read = !/unread/.test(item);
+      onSelect: (item: string) => {
+        const read = !/unread/.test(item);
 
-          if (/older/.test(item)) {
-            const article = articles.find(({ id }) => id === articleId)!;
-            if (article) {
-              const olderIds = getOlderIds(articles, article.published);
-              setRead(olderIds, read);
-            }
-          } else {
-            setRead([articleId], read);
+        if (/older/.test(item)) {
+          const article = articles.find(({ id }) => id === articleId)!;
+          if (article) {
+            const olderIds = getOlderIds(articles, article.published);
+            setRead(olderIds, read);
           }
-        },
-      });
+        } else {
+          setRead([articleId], read);
+        }
+      },
+    });
 
-      setActiveArticle(articleId);
-    }
+    setActiveArticle(articleId);
 
-    event.stopPropagation();
+    event.preventDefault?.();
+    event.stopPropagation?.();
   };
+
+  const handleTouchStart = useCallback(
+    (event: React.TouchEvent<HTMLLIElement>) => {
+      const { currentTarget } = event;
+      const { pageX, pageY } = event.touches[0];
+      touchStartRef.current = Date.now();
+      touchTimerRef.current = setTimeout(() => {
+        handleMenuClick({ currentTarget, pageX, pageY });
+      }, 500);
+    },
+    [],
+  );
+
+  const handleTouchEnd = useCallback(() => {
+    clearTimeout(touchTimerRef.current);
+  }, []);
 
   const setArticleRef = useCallback((node: HTMLLIElement | null) => {
     node?.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -173,8 +197,13 @@ const Articles: React.FC<ArticlesProps> = (props) => {
                         "Article-read": isRead,
                       },
                     )}
+                    data-id={article.id}
                     key={article.id}
+                    onContextMenu={handleMenuClick}
                     ref={isSelected ? setArticleRef : undefined}
+                    onTouchStart={handleTouchStart}
+                    onTouchEnd={handleTouchEnd}
+                    onTouchMove={handleTouchEnd}
                   >
                     <div className="Article-icon">
                       {feed?.icon
@@ -207,14 +236,6 @@ const Articles: React.FC<ArticlesProps> = (props) => {
 
                     <div className="Article-age">
                       {getAge(article.published)}
-                    </div>
-
-                    <div
-                      className="Article-menu"
-                      data-id={article.id}
-                      onClick={handleMenuClick}
-                    >
-                      {"\u22ef"}
                     </div>
                   </li>
                 );
