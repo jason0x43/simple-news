@@ -55,7 +55,6 @@ export function createRouter(bundle: { path: string; text: string }) {
         <link rel="manifest" href="/site.webmanifest">
 
         <link rel="stylesheet" href="/styles.css">
-        <script>${preloadedState}</script>
         <script type="module" async src="${bundle.path}"></script>
       </head>
       <body>
@@ -65,6 +64,7 @@ export function createRouter(bundle: { path: string; text: string }) {
           </defs>
         </svg>
         <div id="root">${renderedApp}</div>
+        <script>${preloadedState}</script>
       </body>
     </html>`;
   };
