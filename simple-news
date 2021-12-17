@@ -8,6 +8,10 @@ cmd="deno run \
 	--unstable"
 
 if [ "$SN_MODE" = "dev" ]; then
+	if [ "$1" = "serve" ]; then
+		cmd="$cmd --watch --allow-run=touch"
+	fi
+
 	$cmd \
 		--import-map ./dev_imports.json \
 		mod.ts $@
