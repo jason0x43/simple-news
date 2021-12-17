@@ -1,3 +1,20 @@
 #!/bin/sh
 
-deno run --no-check --allow-net --allow-env --allow-read --allow-write --allow-run --unstable mod.ts $@
+cmd="deno run \
+	--allow-net \
+	--allow-env \
+	--allow-read=./ \
+	--allow-write=data.db,data.db-journal \
+	--unstable"
+
+if [ "$SN_MODE" = "dev" ]; then
+	$cmd \
+		--import-map ./dev_imports.json \
+		mod.ts $@
+else
+	$cmd \
+		--no-check \
+		--import-map ./prod_imports.json \
+		mod.ts $@
+fi
+

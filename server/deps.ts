@@ -20,10 +20,10 @@ export * as path from "https://deno.land/std@0.117.0/path/mod.ts";
 // import to make SSR React (at least v17) happy
 import "http://esm.sh/raf@3.4.1/polyfill";
 
-import React from "https://esm.sh/react@17?dev";
+import React from "react";
 export { React };
 
-import ReactDOMServer from "https://esm.sh/react-dom@17/server?dev";
+import ReactDOMServer from "react-dom-server";
 export { ReactDOMServer };
 
 export {

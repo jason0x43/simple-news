@@ -201,6 +201,8 @@ export function createRouter(bundle: { path: string; text: string }) {
     await cookies.set("userId", `${user.id}`, {
       secure: mode !== "dev",
       httpOnly: true,
+      // assume we're being proxied through an SSL server
+      ignoreInsecure: true
     });
 
     response.body = user;

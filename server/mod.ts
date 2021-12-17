@@ -1,5 +1,5 @@
 import { Application, log, path } from "./deps.ts";
-import { AppState } from '../types.ts';
+import { AppState } from "../types.ts";
 import { createRouter } from "./routes.tsx";
 import { refreshFeeds } from "./feed.ts";
 
@@ -29,12 +29,17 @@ async function watchClient() {
 }
 
 export async function serve() {
+  const importMap = Deno.env.get("SN_MODE") === "dev"
+    ? "dev_imports.json"
+    : "prod_imports.json";
+
   // Build and cache the client code
   const { files, diagnostics } = await Deno.emit(
     path.join(clientDir, "mod.tsx"),
     {
       bundle: "module",
       check: false,
+      importMapPath: path.join(__dirname, "..", importMap),
       compilerOptions: {
         target: "esnext",
         lib: ["dom", "dom.iterable", "dom.asynciterable", "deno.ns"],
@@ -54,10 +59,10 @@ export async function serve() {
   const port = 8083;
   const app = new Application<AppState>();
 
-  const appKey = Deno.env.get('SN_KEY');
+  const appKey = Deno.env.get("SN_KEY");
   if (appKey) {
     app.keys = [appKey];
-    log.debug('Set app key');
+    log.debug("Set app key");
   }
 
   app.use(async (ctx, next) => {
@@ -66,7 +71,7 @@ export async function serve() {
   });
 
   app.use(async (ctx, next) => {
-    const userId = await ctx.cookies.get('userId');
+    const userId = await ctx.cookies.get("userId");
     if (userId) {
       ctx.state.userId = Number(userId);
     }
