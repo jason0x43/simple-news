@@ -75,6 +75,7 @@ html {
   --highlight-text: #eee;
   --link: #00f;
   --border-radius: 4px;
+  --sidebar-width: 300px;
 }
 
 @supports (padding: max(0px)) {
@@ -116,10 +117,9 @@ html {
 }
 
 .App-sidebar {
-  --default-width: 250px;
   background: var(--highlight);
   color: var(--highlight-text);
-  width: var(--default-width);
+  width: var(--sidebar-width);
   display: flex;
   flex-direction: column;
 }
@@ -297,7 +297,7 @@ html {
 }
 
 .App-articles-viewing .Articles {
-  width: 300px;
+  width: var(--sidebar-width);
   flex-shrink: 0;
   border-right: solid 1px var(--border);
 }
@@ -311,9 +311,10 @@ html {
 }
 
 .Articles-article {
+  --vertical-pad: 0.5rem;
   display: grid;
-  grid-template-columns: 32px auto 2em 2em;
-  align-items: center;
+  grid-template-columns: 32px auto 3em min-content;
+  align-items: top;
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
@@ -346,7 +347,7 @@ html {
 }
 
 .Article-icon {
-  padding: 0.5em;
+  padding: var(--vertical-pad);
   width: 16px;
 }
 
@@ -369,16 +370,15 @@ html {
 }
 
 .Article-title {
-  padding: 0.25em;
+  padding: var(--vertical-pad);
 }
 
 .Article-age {
   font-size: 90%;
   text-align: right;
-  width: 2em;
   color: #999;
   white-space: nowrap;
-  padding: 0.25rem;
+  padding: var(--vertical-pad);
 }
 
 .Article-menu {
@@ -386,8 +386,7 @@ html {
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
-  width: 1.5em;
-  padding: 0.25em 0.5em;
+  padding: var(--vertical-pad);
 }
 
 .Article {
@@ -411,7 +410,7 @@ html {
   padding-right: 0;
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
+  align-items: stretch;
 }
 
 .Article-header a {
@@ -421,6 +420,7 @@ html {
 
 .Article-close {
   padding: 0 1rem;
+  cursor: pointer;
 }
 
 .Article-content {
@@ -632,7 +632,7 @@ html {
   .App-sidebar {
     position: absolute;
     z-index: 2;
-    left: calc(-1 * var(--default-width));
+    left: calc(-1 * var(--sidebar-width));
     top: 0;
     bottom: 0;
     transition: left 0.25s ease-in-out;
@@ -642,15 +642,8 @@ html {
     left: 0;
   }
 
-  .App-articles {
-    flex-direction: column;
-  }
-
-  .App-articles-viewing .Articles {
-    height: 150px;
-    width: unset;
-    flex-shrink: 0;
-    border-bottom: solid 1px var(--border);
+  .Article-inner {
+    padding: 0 8px;
   }
 
   .Header-show-feeds {
@@ -684,13 +677,7 @@ html {
   }
 }
 
-@media only screen and (max-width: 480px) {
-  .Article-inner {
-    padding: 0 8px;
-  }
-}
-
-@media only screen and (max-height: 680px) {
+@media only screen and (max-width: 800px) {
   .App-articles-viewing .Articles {
     display: none;
   }
