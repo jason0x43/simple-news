@@ -88,7 +88,9 @@ const ContextMenu: React.FC<ContextMenuProps> = (props) => {
     }
 
     return () => {
-      document.body.removeEventListener("click", clickListener);
+      document.body.removeEventListener("click", clickListener, {
+        capture: true,
+      });
       document.body.removeEventListener("keydown", escListener);
     };
   }, [pos, visible]);
