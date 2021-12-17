@@ -51,13 +51,17 @@ body,
 html {
   padding: 0;
   margin: 0;
-  height: 100vh;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
   background: black;
 }
 
 #root {
-  height: 100vh;
-
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
   --gap: 8px;
   --matte: #f7f7f7;
   --hover-matte: #f0f0f0;
@@ -104,14 +108,11 @@ html {
   display: grid;
   grid-template-columns: auto 1fr;
   height: 100%;
-  overflow: hidden;
+  max-width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
   position: relative;
   background: var(--background);
-}
-
-.App-content > * {
-  max-height: 100%;
-  overflow: auto;
 }
 
 .App-sidebar {
@@ -141,6 +142,13 @@ html {
   justify-content: center;
   margin: 1rem;
   margin-top: 0.5rem;
+}
+
+.App-articles {
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: row;
 }
 
 .Header {
@@ -284,11 +292,36 @@ html {
 
 .Articles {
   width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.App-articles-viewing .Articles {
+  width: 300px;
+  flex-shrink: 0;
+  border-right: solid 1px var(--border);
 }
 
 .Articles-list {
+  list-style-type: none;
   width: 100%;
   table-layout: fixed;
+  padding: 0;
+  margin: 0;
+}
+
+.Articles-article {
+  display: grid;
+  grid-template-columns: 32px auto 2em 2em;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+}
+
+.Articles-article:hover {
+  background: var(--matte);
 }
 
 .Articles-controls,
@@ -307,7 +340,8 @@ html {
   opacity: 0.5;
 }
 
-.Article-selected .Article-heading {
+.Article-selected {
+  opacity: 1.0;
   background: var(--selected);
 }
 
@@ -335,10 +369,7 @@ html {
 }
 
 .Article-title {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding: 0.25em 0.5em;
+  padding: 0.25em;
 }
 
 .Article-age {
@@ -347,7 +378,7 @@ html {
   width: 2em;
   color: #999;
   white-space: nowrap;
-  padding: 0.5rem;
+  padding: 0.25rem;
 }
 
 .Article-menu {
@@ -360,21 +391,31 @@ html {
 }
 
 .Article {
-  display: flex;
-  flex-direction: column;
+  overflow: auto;
+  flex-grow: 1;
+}
+
+.Article-inner {
   padding: 0 32px;
   margin: 0 auto;
   max-width: 800px;
+  display: flex;
+  flex-direction: column;
 }
 
 .Article-header {
-  text-decoration: none;
   font-weight: bold;
   font-size: 150%;
   margin: 2rem 0;
+  padding: 0 1rem;
+  padding-right: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
 }
 
-a.Article-header {
+.Article-header a {
+  text-decoration: none;
   color: var(--foreground);
 }
 
@@ -601,6 +642,17 @@ a.Article-header {
     left: 0;
   }
 
+  .App-articles {
+    flex-direction: column;
+  }
+
+  .App-articles-viewing .Articles {
+    height: 150px;
+    width: unset;
+    flex-shrink: 0;
+    border-bottom: solid 1px var(--border);
+  }
+
   .Header-show-feeds {
     display: initial;
   }
@@ -613,12 +665,8 @@ a.Article-header {
     display: none;
   }
 
-  .Article-content-header {
-    padding: 0 16px;
-  }
-
   .Article-content {
-    padding: 16px;
+    padding: 0 1rem;
   }
 
   .App blockquote {
@@ -633,6 +681,18 @@ a.Article-header {
   .Article-title {
     white-space: normal;
     padding: 0.5rem 0;
+  }
+}
+
+@media only screen and (max-width: 480px) {
+  .Article-inner {
+    padding: 0 8px;
+  }
+}
+
+@media only screen and (max-height: 680px) {
+  .App-articles-viewing .Articles {
+    display: none;
   }
 }
 

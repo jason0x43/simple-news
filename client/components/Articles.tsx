@@ -140,7 +140,7 @@ const Articles: React.FC<ArticlesProps> = (props) => {
     event.stopPropagation();
   };
 
-  const setArticleRef = useCallback((node: HTMLDivElement | null) => {
+  const setArticleRef = useCallback((node: HTMLLIElement | null) => {
     node?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, []);
 
@@ -156,68 +156,70 @@ const Articles: React.FC<ArticlesProps> = (props) => {
       {filteredArticles.length > 0
         ? (
           <>
-            <table className="Articles-list">
-              <tbody>
-                {filteredArticles.map((article) => {
-                  const feed = getFeed(article.feedId, user);
-                  const isActive = activeArticle === article.id;
-                  const isSelected = selectedArticle === article.id;
-                  const isRead = article.read;
+            <ul className="Articles-list">
+              {filteredArticles.map((article) => {
+                const feed = getFeed(article.feedId, user);
+                const isActive = activeArticle === article.id;
+                const isSelected = selectedArticle === article.id;
+                const isRead = article.read;
 
-                  return (
-                    <tr
-                      className={className({
+                return (
+                  <li
+                    className={className(
+                      "Articles-article",
+                      {
                         "Article-active": isActive,
+                        "Article-selected": isSelected,
                         "Article-read": isRead,
-                      })}
-                      key={article.id}
-                      ref={isSelected ? setArticleRef : undefined}
+                      },
+                    )}
+                    key={article.id}
+                    ref={isSelected ? setArticleRef : undefined}
+                  >
+                    <div className="Article-icon">
+                      {feed?.icon
+                        ? <img src={feed.icon} title={feed?.title} />
+                        : (
+                          <div
+                            className="Article-monogram"
+                            title={feed?.title}
+                          >
+                            {feed?.title[0]}
+                          </div>
+                        )}
+                    </div>
+
+                    <div
+                      className="Article-title"
+                      onClick={() => {
+                        hideContextMenu();
+                        if (article.id === selectedArticle) {
+                          onSelectArticle(undefined);
+                        } else {
+                          onSelectArticle(article.id);
+                          setRead([article.id], true);
+                        }
+                      }}
+                      dangerouslySetInnerHTML={{
+                        __html: unescapeHtml(article.title),
+                      }}
+                    />
+
+                    <div className="Article-age">
+                      {getAge(article.published)}
+                    </div>
+
+                    <div
+                      className="Article-menu"
+                      data-id={article.id}
+                      onClick={handleMenuClick}
                     >
-                      <td className="Article-icon">
-                        {feed?.icon
-                          ? <img src={feed.icon} title={feed?.title} />
-                          : (
-                            <div
-                              className="Article-monogram"
-                              title={feed?.title}
-                            >
-                              {feed?.title[0]}
-                            </div>
-                          )}
-                      </td>
-
-                      <td
-                        className="Article-title"
-                        onClick={() => {
-                          hideContextMenu();
-                          if (article.id === selectedArticle) {
-                            onSelectArticle(undefined);
-                          } else {
-                            onSelectArticle(article.id);
-                            setRead([article.id], true);
-                          }
-                        }}
-                        dangerouslySetInnerHTML={{
-                          __html: unescapeHtml(article.title),
-                        }}
-                      />
-
-                      <td className="Article-age">
-                        {getAge(article.published)}
-                      </td>
-
-                      <td
-                        className="Article-menu"
-                        data-id={article.id}
-                        onClick={handleMenuClick}
-                      >
-                        {"\u22ef"}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                      {"\u22ef"}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
             <div className="Articles-controls">
               <Button
                 onClick={() => {
