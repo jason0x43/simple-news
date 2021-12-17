@@ -245,7 +245,12 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
             onSelectArticle={selectArticle}
             user={user}
           />
-          {selectedArticle && <Article article={selectedArticle} />}
+          {selectedArticle && (
+            <Article
+              article={selectedArticle}
+              onClose={() => setSelectedArticleId(undefined)}
+            />
+          )}
         </div>
       </div>
     </>

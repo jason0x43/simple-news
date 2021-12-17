@@ -378,6 +378,10 @@ a.Article-header {
   color: var(--foreground);
 }
 
+.Article-close {
+  padding: 0 1rem;
+}
+
 .Article-content {
   overflow: auto;
   font-size: 16px;
