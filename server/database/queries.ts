@@ -1,7 +1,6 @@
-import { log } from "../deps.ts";
 import { getDb, query } from "./db.ts";
-import { Article, DbArticle, FeedStats } from "../../types.ts";
-import { DbArticleRow, rowToDbArticle } from "./articles.ts";
+import { Article, FeedStats } from "../../types.ts";
+import { DbArticleRow } from "./articles.ts";
 import { getFeedIds } from "./feeds.ts";
 import { parameterize } from "./util.ts";
 

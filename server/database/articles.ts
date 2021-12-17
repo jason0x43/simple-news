@@ -1,6 +1,6 @@
 import { log } from "../deps.ts";
 import { query } from "./db.ts";
-import { Article, DbArticle } from "../../types.ts";
+import { DbArticle } from "../../types.ts";
 
 export type DbArticleRow = [
   number,

@@ -13,7 +13,6 @@ import {
   Article,
   LoginRequest,
   UpdateArticleRequest,
-  User,
 } from "../types.ts";
 import App, { AppProps } from "../client/components/App.tsx";
 import { formatArticles, refreshFeeds } from "./feed.ts";
@@ -202,7 +201,7 @@ export function createRouter(bundle: { path: string; text: string }) {
       secure: mode !== "dev",
       httpOnly: true,
       // assume we're being proxied through an SSL server
-      ignoreInsecure: true
+      ignoreInsecure: true,
     });
 
     response.body = user;
