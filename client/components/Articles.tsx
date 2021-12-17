@@ -105,6 +105,13 @@ const Articles: React.FC<ArticlesProps> = (props) => {
     }
   };
 
+  const filteredArticles = articles.filter((article) =>
+    settings.articleFilter === "all" ||
+    settings.articleFilter === "unread" && (!article.read ||
+        updatedArticles.current.has(article.id)) ||
+    settings.articleFilter === "saved" && article.saved
+  );
+
   const handleMenuClick = (
     event: {
       currentTarget: HTMLLIElement;
@@ -114,7 +121,6 @@ const Articles: React.FC<ArticlesProps> = (props) => {
       stopPropagation?: () => void;
     },
   ) => {
-    console.log("event:", event);
     const articleId = Number(event.currentTarget.getAttribute("data-id"));
 
     showContextMenu({
@@ -131,9 +137,12 @@ const Articles: React.FC<ArticlesProps> = (props) => {
         const read = !/unread/.test(item);
 
         if (/older/.test(item)) {
-          const article = articles.find(({ id }) => id === articleId)!;
+          const article = filteredArticles.find(({ id }) => id === articleId)!;
           if (article) {
-            const olderIds = getOlderIds(articles, article.published);
+            const olderIds = getOlderIds(
+              filteredArticles,
+              article.published,
+            );
             setRead(olderIds, read);
           }
         } else {
@@ -167,13 +176,6 @@ const Articles: React.FC<ArticlesProps> = (props) => {
   const setArticleRef = useCallback((node: HTMLLIElement | null) => {
     node?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, []);
-
-  const filteredArticles = articles.filter((article) =>
-    settings.articleFilter === "all" ||
-    settings.articleFilter === "unread" && (!article.read ||
-        updatedArticles.current.has(article.id)) ||
-    settings.articleFilter === "saved" && article.saved
-  );
 
   return (
     <div className="Articles">
