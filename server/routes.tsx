@@ -14,7 +14,7 @@ import {
   LoginRequest,
   UpdateArticleRequest,
 } from "../types.ts";
-import App, { AppProps } from "../client/components/App.tsx";
+import App, { AppProps } from "../client/App.tsx";
 import { formatArticles, refreshFeeds } from "./feed.ts";
 
 const __filename = new URL(import.meta.url).pathname;

@@ -1,5 +1,5 @@
 import { React, ReactDOM } from "./deps.ts";
-import App from "./components/App.tsx";
+import App from "./App.tsx";
 import "../global.ts";
 
 ReactDOM.hydrate(

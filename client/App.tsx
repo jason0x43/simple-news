@@ -1,22 +1,22 @@
-import { React, useCallback, useEffect, useState } from "../deps.ts";
-import { ContextMenuProvider } from "./ContextMenu.tsx";
-import Feeds from "./Feeds.tsx";
-import Articles from "./Articles.tsx";
-import Header from "./Header.tsx";
-import Article from "./Article.tsx";
-import Button from "./Button.tsx";
-import ButtonSelector from "./ButtonSelector.tsx";
-import Input from "./Input.tsx";
+import { React, useCallback, useEffect, useState } from "./deps.ts";
+import { ContextMenuProvider } from "./components/ContextMenu.tsx";
+import Feeds from "./components/Feeds.tsx";
+import Articles from "./components/Articles.tsx";
+import Header from "./components/Header.tsx";
+import Article from "./components/Article.tsx";
+import Button from "./components/Button.tsx";
+import ButtonSelector from "./components/ButtonSelector.tsx";
+import Input from "./components/Input.tsx";
 import {
   getArticles,
   getFeedStats,
   login,
   refreshFeeds,
   setRead,
-} from "../api.ts";
-import { Article as ArticleType, FeedStats, User } from "../../types.ts";
-import { Settings } from "../types.ts";
-import { className } from "../util.ts";
+} from "./api.ts";
+import { Article as ArticleType, FeedStats, User } from "../types.ts";
+import { Settings } from "./types.ts";
+import { className } from "./util.ts";
 
 interface LoggedInProps {
   user: User;
