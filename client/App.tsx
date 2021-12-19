@@ -295,16 +295,18 @@ const Login: React.FC<LoginProps> = (props) => {
 export type AppProps = Partial<LoggedInProps>;
 
 const App: React.FC<AppProps> = (props) => {
-  const [user, setUser] = useState<User | undefined>(props.user);
+  const { user } = props;
 
   return (
-    <ContextMenuProvider>
-      <div className="App">
-        {user
-          ? <LoggedIn {...props} user={user} />
-          : <Login setUser={setUser} />}
-      </div>
-    </ContextMenuProvider>
+    <div className="App">
+      {user
+        ? (
+          <ContextMenuProvider>
+            <LoggedIn {...props} user={user} />
+          </ContextMenuProvider>
+        )
+        : <Login setUser={() => location.href = "/"} />}
+    </div>
   );
 };
 

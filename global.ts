@@ -1,4 +1,4 @@
-import { AppProps } from "./client/components/App.tsx";
+import { AppProps } from "./client/App.tsx";
 
 declare global {
   // deno-lint-ignore no-var
