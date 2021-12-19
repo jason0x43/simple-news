@@ -285,11 +285,6 @@ html {
   content: '▽';
 }
 
-.Feeds-group:hover,
-.Feeds-feed:hover {
-  background: rgba(0, 0, 0, 0.1);
-}
-
 .Articles {
   width: 100%;
   overflow-x: hidden;
@@ -325,10 +320,6 @@ html {
   -moz-user-select: none;
 }
 
-.Articles-article:hover {
-  background: var(--matte);
-}
-
 .App-articles-viewing .Articles-article {
   grid-template-columns: 32px auto 3em;
 }
@@ -350,7 +341,7 @@ html {
 }
 
 .Article-selected {
-  opacity: 1.0;
+  opacity: 1;
   background: var(--selected);
 }
 
@@ -544,10 +535,6 @@ html {
   white-space: nowrap;
 }
 
-.ContextMenu li:hover {
-  background: var(--matte);
-}
-
 .Button {
   background: var(--matte);
   color: var(--foreground);
@@ -558,10 +545,6 @@ html {
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
-}
-
-.Button:hover {
-  background: var(--hover-matte);
 }
 
 .Button:active {
@@ -701,5 +684,24 @@ html {
     --border: rgba(255, 255, 255, 0.2);
     --selected: rgba(255, 2550, 255, 0.2);
     --link: #77f;
+  }
+}
+
+@media (hover: hover) {
+  .Feeds-group:hover,
+  .Feeds-feed:hover {
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  .Articles-article:hover {
+    background: var(--matte);
+  }
+
+  .ContextMenu li:hover {
+    background: var(--matte);
+  }
+
+  .Button:hover {
+    background: var(--hover-matte);
   }
 }
