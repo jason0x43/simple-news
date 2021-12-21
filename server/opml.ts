@@ -6,7 +6,6 @@ import {
   getUserByEmail,
   updateUserConfig,
 } from "./database/mod.ts";
-import { Feed } from '../types.ts';
 
 interface OpmlFeed {
   "@title": string;
@@ -80,8 +79,10 @@ export async function importOpmlFile(
   config.feedGroups = config.feedGroups.filter((group) => group.title);
 
   for (const group of groups) {
-    const index = config.feedGroups.findIndex((grp) => grp.title === group.title);
-    const feeds: Feed[] = [];
+    const index = config.feedGroups.findIndex((grp) =>
+      grp.title === group.title
+    );
+    const feeds: number[] = [];
     if (index === -1) {
       config.feedGroups.push({
         title: group.title,
@@ -97,8 +98,8 @@ export async function importOpmlFile(
 
     for (const feed of group.feeds) {
       const dbFeed = getFeedByUrl(feed.url) ?? addFeed(feed);
-      if (!feeds.find((feed) => feed.id === dbFeed.id)) {
-        feeds.push(dbFeed);
+      if (!feeds.indexOf(dbFeed.id)) {
+        feeds.push(dbFeed.id);
         log.debug(`Added ${dbFeed.id} to user feed group ${group.title}`);
       }
     }
@@ -134,7 +135,7 @@ export async function exportOpmlFile(
     xml.push(`<outline title="${group.title}" text="${group.title}">`);
 
     for (const feed of group.feeds) {
-      const dbFeed = getFeed(feed.id);
+      const dbFeed = getFeed(feed);
       xml.push(
         `<outline title="${dbFeed.title}" xmlUrl="${dbFeed.url}" ` +
           `text="${dbFeed.title}" htmlUrl="${dbFeed.htmlUrl}" ` +
@@ -148,5 +149,5 @@ export async function exportOpmlFile(
   xml.push("</body>");
   xml.push("</opml>");
 
-  await Deno.writeTextFile(file, xml.join('\n'));
+  await Deno.writeTextFile(file, xml.join("\n"));
 }

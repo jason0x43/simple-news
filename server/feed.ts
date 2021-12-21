@@ -19,7 +19,7 @@ import {
   setFeedIcon,
 } from "./database/mod.ts";
 import { escapeHtml, unescapeHtml } from "../util.ts";
-import { DbArticle } from "../types.ts";
+import { Article } from "../types.ts";
 
 async function getIcon(feed: ParsedFeed): Promise<string | null> {
   if (feed.icon) {
@@ -98,7 +98,7 @@ async function downloadFeed(url: string) {
       log.debug(`Set icon for ${feed.id} to ${icon}`);
     }
 
-    const articles: Omit<DbArticle, "id">[] = [];
+    const articles: Omit<Article, "id">[] = [];
 
     for (const entry of parsedFeed.entries) {
       if (!hasArticle(entry.id)) {

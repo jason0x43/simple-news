@@ -227,11 +227,15 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
   );
 
   const selectArticle = useCallback(async (articleId: number | undefined) => {
-    try {
-      const article = await getArticle(articleId);
-      setSelectedArticle(article);
-    } catch (error) {
-      console.error(error);
+    if (articleId) {
+      try {
+        const article = await getArticle(articleId);
+        setSelectedArticle(article);
+      } catch (error) {
+        console.error(error);
+      }
+    } else {
+      setSelectedArticle(undefined);
     }
   }, []);
 
