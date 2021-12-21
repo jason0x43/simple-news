@@ -79,8 +79,6 @@ const Articles: React.FC<ArticlesProps> = (props) => {
   const touchStartRef = useRef<number | undefined>();
   const touchTimerRef = useRef<number | undefined>();
 
-  console.log(`rendering ${renderedArticles.length} articles`);
-
   useEffect(() => {
     updatedArticles.current.clear();
   }, [selectedFeeds]);
