@@ -1,4 +1,6 @@
-import { React, useCallback, useEffect } from "../deps.ts";
+/// <reference lib="dom" />
+
+import { React, useEffect, useRef } from "../deps.ts";
 import { Article } from "../../types.ts";
 import { unescapeHtml } from "../../util.ts";
 
@@ -9,17 +11,16 @@ export interface ArticleProps {
 
 const Article: React.FC<ArticleProps> = (props) => {
   const { article, onClose } = props;
-
-  const setRef = useCallback(() => {
-    console.log("setting ref");
-  }, [article]);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    console.log("article changed");
+    if (ref.current) {
+      ref.current.scrollTop = 0;
+    }
   }, [article]);
 
   return (
-    <div className="Article" ref={setRef}>
+    <div className="Article" ref={ref}>
       <div className="Article-inner">
         <div className="Article-header">
           <a
