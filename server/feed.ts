@@ -39,8 +39,18 @@ async function getIcon(feed: ParsedFeed): Promise<string | null> {
     if (iconLink) {
       const iconHref = iconLink.getAttribute("href")!;
       const iconUrl = new URL(iconHref, feedBase);
+
+      // Try https by default
+      iconUrl.protocol = "https";
       const iconResponse = await fetch(`${iconUrl}`, { method: "HEAD" });
       if (iconResponse.status === 200) {
+        log.debug(`Using link ${iconUrl} for ${feed.id}`);
+        return `${iconUrl}`;
+      }
+
+      iconUrl.protocol = "http";
+      const httpIconResponse = await fetch(`${iconUrl}`, { method: "HEAD" });
+      if (httpIconResponse.status === 200) {
         log.debug(`Using link ${iconUrl} for ${feed.id}`);
         return `${iconUrl}`;
       }
