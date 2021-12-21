@@ -28,4 +28,3 @@ else
 		--no-check \
 		mod.ts $@
 fi
-

@@ -102,5 +102,11 @@ export async function serve() {
   log.info(`Downloading feeds every ${refreshInterval} seconds`);
 
   log.info(`Listening on port ${port}`);
-  await Promise.allSettled([app.listen({ port }), watchClient()]);
+
+  const promises = [app.listen({ port })];
+  if (Deno.env.get('SN_MODE') === 'dev') {
+    promises.push(watchClient());
+  }
+
+  await Promise.allSettled(promises);
 }
