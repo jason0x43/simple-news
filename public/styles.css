@@ -314,6 +314,7 @@ html {
   display: grid;
   grid-template-columns: 32px auto 3em min-content;
   align-items: top;
+  min-height: 2.25rem;
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
