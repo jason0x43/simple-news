@@ -5,6 +5,7 @@ import {
   React,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "../deps.ts";
@@ -12,7 +13,7 @@ import { useContextMenu } from "./ContextMenu.tsx";
 import Button from "./Button.tsx";
 import { Article, ArticleHeading, Feed, UserArticle } from "../../types.ts";
 import { Settings } from "../types.ts";
-import { className } from "../util.ts";
+import { cancellableEffect, className } from "../util.ts";
 import { unescapeHtml } from "../../util.ts";
 
 function getOlderIds(
@@ -69,15 +70,50 @@ const Articles: React.FC<ArticlesProps> = (props) => {
     userArticles,
   } = props;
   const updatedArticles = useRef<Set<number>>(new Set());
+  const [renderedArticles, setRenderedArticles] = useState<ArticleHeading[]>(
+    [],
+  );
   const { hideContextMenu, showContextMenu, contextMenuVisible } =
     useContextMenu();
   const [activeArticle, setActiveArticle] = useState<number | undefined>();
   const touchStartRef = useRef<number | undefined>();
   const touchTimerRef = useRef<number | undefined>();
 
+  console.log(`rendering ${renderedArticles.length} articles`);
+
   useEffect(() => {
     updatedArticles.current.clear();
   }, [selectedFeeds]);
+
+  const filteredArticles = useMemo(() =>
+    articles.filter((article) => {
+      const userArticle = userArticles[article.id];
+      return settings.articleFilter === "all" ||
+        settings.articleFilter === "unread" && (
+            !userArticle?.read || updatedArticles.current.has(article.id)
+          ) ||
+        settings.articleFilter === "saved" && userArticle?.saved;
+    }), [articles, settings.articleFilter, userArticles]);
+
+  useEffect(() =>
+    cancellableEffect((signal) => {
+      let timer: number | undefined;
+
+      if (renderedArticles[0] !== filteredArticles[0]) {
+        setRenderedArticles(filteredArticles.slice(0, 50));
+      } else if (renderedArticles.length < filteredArticles.length) {
+        const { length } = renderedArticles;
+        timer = setTimeout(() => {
+          if (!signal.cancelled) {
+            setRenderedArticles(filteredArticles.slice(0, length + 50));
+          }
+        }, 250);
+      }
+
+      return () => {
+        clearTimeout(timer);
+      };
+    }), [filteredArticles, renderedArticles]);
 
   useEffect(() => {
     if (!contextMenuVisible) {
@@ -91,15 +127,6 @@ const Articles: React.FC<ArticlesProps> = (props) => {
       updatedArticles.current.add(id);
     }
   };
-
-  const filteredArticles = articles.filter((article) => {
-    const userArticle = userArticles[article.id];
-    return settings.articleFilter === "all" ||
-      settings.articleFilter === "unread" && (
-          !userArticle?.read || updatedArticles.current.has(article.id)
-        ) ||
-      settings.articleFilter === "saved" && userArticle?.saved;
-  });
 
   const handleMenuClick = (
     event: {
@@ -168,11 +195,11 @@ const Articles: React.FC<ArticlesProps> = (props) => {
 
   return (
     <div className="Articles">
-      {filteredArticles.length > 0
+      {renderedArticles.length > 0
         ? (
           <>
             <ul className="Articles-list">
-              {filteredArticles.map((article) => {
+              {renderedArticles.map((article) => {
                 const feed = feeds?.find(({ id }) => id === article.feedId);
                 const isActive = activeArticle === article.id;
                 const isSelected = selectedArticle?.id === article.id;
@@ -232,20 +259,25 @@ const Articles: React.FC<ArticlesProps> = (props) => {
                 );
               })}
             </ul>
-            <div className="Articles-controls">
-              <Button
-                onClick={() => {
-                  const ids = articles?.map(({ id }) => id);
-                  if (ids) {
-                    setRead(ids, true);
-                  }
-                }}
-                label="Mark all read"
-                size="large"
-              />
-            </div>
+
+            {renderedArticles.length > 0 && (
+              <div className="Articles-controls">
+                <Button
+                  onClick={() => {
+                    const ids = renderedArticles?.map(({ id }) => id);
+                    if (ids) {
+                      setRead(ids, true);
+                    }
+                  }}
+                  label="Mark all read"
+                  size="large"
+                />
+              </div>
+            )}
           </>
         )
+        : filteredArticles.length > 0
+        ? undefined
         : <h3 className="Articles-empty">Nothing to see here</h3>}
     </div>
   );

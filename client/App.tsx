@@ -26,7 +26,7 @@ import {
   UserArticle,
 } from "../types.ts";
 import { Settings } from "./types.ts";
-import { className, toObject } from "./util.ts";
+import { cancellableEffect, className, Signal, toObject } from "./util.ts";
 
 interface LoggedInProps {
   user: User;
@@ -36,19 +36,6 @@ interface LoggedInProps {
   userArticles?: UserArticle[];
   selectedFeeds?: number[];
   selectedArticle?: ArticleRecord;
-}
-
-type Signal = { cancelled: boolean };
-
-function cancellableEffect(
-  callback: (signal: Signal) => (void | (() => void)),
-) {
-  const signal = { cancelled: false };
-  const cleanup = callback(signal);
-  return () => {
-    signal.cancelled = true;
-    cleanup?.();
-  };
 }
 
 export function getFeedsTitle(
@@ -172,8 +159,8 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
   }, []);
 
   // Fetch articles for selected feeds every few minutes
-  useEffect(() => {
-    return cancellableEffect((signal) => {
+  useEffect(() =>
+    cancellableEffect((signal) => {
       const interval = setInterval(() => {
         if (!selectedFeeds) {
           return;
@@ -186,8 +173,7 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
       return () => {
         clearInterval(interval);
       };
-    });
-  }, [fetchFeedStats, fetchArticles, selectedFeeds]);
+    }), [fetchFeedStats, fetchArticles, selectedFeeds]);
 
   const handleShowSidebar = useCallback(() => {
     setSidebarActive(!sidebarActive);

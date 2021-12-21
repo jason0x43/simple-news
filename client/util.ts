@@ -29,3 +29,16 @@ export function toObject<T, K extends keyof T>(objArr: T[], key: K) {
   }
   return obj;
 }
+
+export type Signal = { cancelled: boolean };
+
+export function cancellableEffect(
+  callback: (signal: Signal) => (void | (() => void)),
+) {
+  const signal = { cancelled: false };
+  const cleanup = callback(signal);
+  return () => {
+    signal.cancelled = true;
+    cleanup?.();
+  };
+}
