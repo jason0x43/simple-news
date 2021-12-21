@@ -12,10 +12,15 @@ if [ "$SN_MODE" = "dev" ]; then
 		cmd="$cmd --watch --allow-run=touch"
 	fi
 
+	if [ "$SN_FAST" = "1" ]; then
+		cmd="$cmd --no-check"
+	else
+		cmd="$cmd --no-check=remote"
+	fi
+
 	export SN_IMPORT_MAP="import_map.json"
 
 	$cmd \
-		--no-check=remote \
 		--import-map ./$SN_IMPORT_MAP \
 		mod.ts $@
 else
