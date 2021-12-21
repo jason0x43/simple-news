@@ -1,5 +1,7 @@
 import { log, path, React, ReactDOMServer, Router } from "./deps.ts";
 import {
+  getArticle,
+  getArticleHeadings,
   getArticles,
   getFeeds,
   getFeedStats,
@@ -80,6 +82,7 @@ export function createRouter(bundle: { path: string; text: string }) {
   router.get("/articles", async ({ cookies, request, response, state }) => {
     const params = request.url.searchParams;
     const feedIdsList = params.get("feeds");
+    const brief = params.get("brief");
     let feedIds: number[] | undefined;
 
     if (feedIdsList) {
@@ -95,7 +98,28 @@ export function createRouter(bundle: { path: string; text: string }) {
     }
 
     response.type = "application/json";
-    response.body = feedIds ? getArticles(feedIds) : [];
+
+    if (feedIds) {
+      response.body = brief
+        ? getArticleHeadings(feedIds)
+        : getArticles(feedIds);
+    } else {
+      response.body = [];
+    }
+  });
+
+  router.get("/articles/:id", ({ params, response }) => {
+    const { id } = params;
+
+    response.type = "application/json";
+
+    try {
+      const article = getArticle(id);
+      response.body = article;
+    } catch (error) {
+      response.status = 404;
+      response.body = { error: `${error.message}` };
+    }
   });
 
   router.patch("/user_articles", async ({ request, response, state }) => {
@@ -231,7 +255,9 @@ export function createRouter(bundle: { path: string; text: string }) {
 
     const { userId, selectedFeeds } = state;
     const user = getUser(userId);
-    const articles = selectedFeeds ? getArticles(selectedFeeds) : undefined;
+    const articles = selectedFeeds
+      ? getArticleHeadings(selectedFeeds)
+      : undefined;
     const feeds = selectedFeeds ? getFeeds(selectedFeeds) : undefined;
     const feedStats = getFeedStats({ userId });
     const userArticles = selectedFeeds

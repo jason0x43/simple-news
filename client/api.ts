@@ -1,5 +1,6 @@
 import {
   Article,
+  ArticleHeading,
   Feed,
   FeedStats,
   UpdateUserArticleRequest,
@@ -82,6 +83,26 @@ export async function getArticles(
   const params = new URLSearchParams();
   params.set("feeds", feedIds.map(String).join(","));
   const response = await fetch(`/articles?${params}`);
+  return await response.json();
+}
+
+export async function getArticleHeadings(
+  feedIds: number[],
+): Promise<ArticleHeading[]> {
+  const params = new URLSearchParams();
+  params.set("feeds", feedIds.map(String).join(","));
+  params.set("brief", "1");
+  const response = await fetch(`/articles?${params}`);
+  return await response.json();
+}
+
+export async function getArticle(
+  articleId: number,
+): Promise<Article> {
+  const response = await fetch(`/articles/${articleId}`);
+  if (response.status >= 400) {
+    throw new Error(`Invalid article ID ${articleId}`);
+  }
   return await response.json();
 }
 

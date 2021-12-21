@@ -13,6 +13,8 @@ export interface Article {
   content: string | undefined;
 }
 
+export type ArticleHeading = Omit<Article, "content">;
+
 export interface UserArticle {
   articleId: number;
   read: boolean;

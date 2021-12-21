@@ -10,13 +10,13 @@ import {
 } from "../deps.ts";
 import { useContextMenu } from "./ContextMenu.tsx";
 import Button from "./Button.tsx";
-import { Article, Feed, UserArticle } from "../../types.ts";
+import { Article, ArticleHeading, Feed, UserArticle } from "../../types.ts";
 import { Settings } from "../types.ts";
 import { className } from "../util.ts";
 import { unescapeHtml } from "../../util.ts";
 
 function getOlderIds(
-  articles: Article[],
+  articles: ArticleHeading[],
   olderThan: number,
 ) {
   return articles.filter(({ published }) => published < olderThan).map((
@@ -48,12 +48,12 @@ function getAge(timestamp: number | undefined): string {
 
 export interface ArticlesProps {
   feeds: Feed[] | undefined;
-  articles: Article[];
+  articles: ArticleHeading[];
   userArticles: { [articleId: number]: UserArticle };
   settings: Settings;
   setArticlesRead: (articleIds: number[], read: boolean) => void;
   selectedFeeds: number[];
-  selectedArticle: number | undefined;
+  selectedArticle: Article | undefined;
   onSelectArticle: (articleId: number | undefined) => void;
 }
 
@@ -175,7 +175,7 @@ const Articles: React.FC<ArticlesProps> = (props) => {
               {filteredArticles.map((article) => {
                 const feed = feeds?.find(({ id }) => id === article.feedId);
                 const isActive = activeArticle === article.id;
-                const isSelected = selectedArticle === article.id;
+                const isSelected = selectedArticle?.id === article.id;
                 const isRead = userArticles?.[article.id]?.read;
 
                 return (
@@ -213,7 +213,7 @@ const Articles: React.FC<ArticlesProps> = (props) => {
                       className="Article-title"
                       onClick={() => {
                         hideContextMenu();
-                        if (article.id === selectedArticle) {
+                        if (article.id === selectedArticle?.id) {
                           onSelectArticle(undefined);
                         } else {
                           onSelectArticle(article.id);

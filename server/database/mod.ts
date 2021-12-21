@@ -21,7 +21,9 @@ export {
 } from "./feeds.ts";
 export {
   addArticle,
+  getArticle,
   getArticleCount,
+  getArticleHeadings,
   getArticles,
   hasArticle,
   setArticleContent,

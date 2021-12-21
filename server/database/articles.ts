@@ -1,5 +1,5 @@
 import { log } from "../deps.ts";
-import { Article } from "../../types.ts";
+import { Article, ArticleHeading } from "../../types.ts";
 import { query } from "./db.ts";
 import { count, createRowHelpers, parameterize } from "./util.ts";
 
@@ -16,6 +16,20 @@ const {
   "link",
   "published",
   "content",
+);
+
+const {
+  columns: headingsColumns,
+  query: headingsQuery,
+} = createRowHelpers<
+  ArticleHeading
+>()(
+  "id",
+  "feedId",
+  "articleId",
+  "title",
+  "link",
+  "published",
 );
 
 export function getArticles(feedIds?: number[]) {
@@ -36,6 +50,26 @@ export function getArticles(feedIds?: number[]) {
   return articleQuery("SELECT ${articleColumns} FROM articles");
 }
 
+export function getArticleHeadings(
+  feedIds?: number[],
+) {
+  if (feedIds) {
+    const { names: feedParamNames, values: feedParams } = parameterize(
+      "feedIds",
+      feedIds,
+    );
+    return headingsQuery(
+      `SELECT ${headingsColumns}
+      FROM articles
+      WHERE feed_id IN (${feedParamNames.join(",")})
+      ORDER BY published ASC`,
+      feedParams,
+    );
+  }
+
+  return headingsQuery("SELECT ${headingsColumns} FROM articles");
+}
+
 export function addArticle(article: Omit<Article, "id">): Article {
   log.debug(`Adding article ${article.articleId}`);
   return articleQuery(
@@ -48,13 +82,13 @@ export function addArticle(article: Omit<Article, "id">): Article {
   )[0];
 }
 
-export function getArticle(articleId: string): Article {
+export function getArticle(id: string): Article {
   const article = articleQuery(
-    `SELECT ${articleColumns} FROM articles WHERE article_id = (:articleId)`,
-    { articleId },
+    `SELECT ${articleColumns} FROM articles WHERE id = (:id)`,
+    { id },
   )[0];
   if (!article) {
-    throw new Error(`No article with articleId ${articleId}`);
+    throw new Error(`No article with ID ${id}`);
   }
   return article;
 }

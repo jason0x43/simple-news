@@ -8,7 +8,8 @@ import Button from "./components/Button.tsx";
 import ButtonSelector from "./components/ButtonSelector.tsx";
 import Input from "./components/Input.tsx";
 import {
-  getArticles,
+  getArticle,
+  getArticleHeadings,
   getFeeds,
   getFeedStats,
   getUserArticles,
@@ -17,7 +18,8 @@ import {
   setRead,
 } from "./api.ts";
 import {
-  Article as ArticleType,
+  Article as ArticleRecord,
+  ArticleHeading,
   Feed,
   FeedStats,
   User,
@@ -30,9 +32,10 @@ interface LoggedInProps {
   user: User;
   feeds?: Feed[];
   feedStats?: FeedStats;
-  articles?: ArticleType[];
+  articles?: ArticleHeading[];
   userArticles?: UserArticle[];
   selectedFeeds?: number[];
+  selectedArticle?: ArticleRecord;
 }
 
 type Signal = { cancelled: boolean };
@@ -87,9 +90,6 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
   });
   const [feeds, setFeeds] = useState(props.feeds);
   const [sidebarActive, setSidebarActive] = useState(false);
-  const [selectedArticleId, setSelectedArticleId] = useState<
-    number | undefined
-  >();
   const [updating, setUpdating] = useState(false);
   const [articles, setArticles] = useState(props.articles ?? []);
   const [feedStats, setFeedStats] = useState(props.feedStats);
@@ -97,7 +97,10 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
     props.userArticles ? toObject(props.userArticles, "articleId") : {}
   );
   const [selectedFeeds, setSelectedFeeds] = useState(props.selectedFeeds ?? []);
-  const selectedArticle = articles.find(({ id }) => id === selectedArticleId);
+  const [selectedArticle, setSelectedArticle] = useState<
+    | ArticleRecord
+    | undefined
+  >();
 
   const fetchFeedStats = async (signal?: { cancelled: boolean }) => {
     try {
@@ -116,7 +119,7 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
   }) => {
     try {
       const { feedIds = selectedFeeds, signal } = options ?? {};
-      const articles = await getArticles(feedIds);
+      const articles = await getArticleHeadings(feedIds);
       if (!signal?.cancelled) {
         setArticles(articles);
       }
@@ -165,7 +168,7 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
     ]);
 
     setSelectedFeeds(feedIds);
-    setSelectedArticleId(undefined);
+    setSelectedArticle(undefined);
   }, []);
 
   // Fetch articles for selected feeds every few minutes
@@ -223,8 +226,13 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
     [userArticles, setRead, fetchFeedStats],
   );
 
-  const selectArticle = useCallback((articleId: number | undefined) => {
-    setSelectedArticleId(articleId);
+  const selectArticle = useCallback(async (articleId: number | undefined) => {
+    try {
+      const article = await getArticle(articleId);
+      setSelectedArticle(article);
+    } catch (error) {
+      console.error(error);
+    }
   }, []);
 
   const feedsTitle = getFeedsTitle(user, feeds, selectedFeeds);
@@ -285,14 +293,14 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
             feeds={feeds}
             selectedFeeds={selectedFeeds}
             settings={settings}
-            selectedArticle={selectedArticleId}
+            selectedArticle={selectedArticle}
             setArticlesRead={setArticlesRead}
             onSelectArticle={selectArticle}
           />
           {selectedArticle && (
             <Article
               article={selectedArticle}
-              onClose={() => setSelectedArticleId(undefined)}
+              onClose={() => setSelectedArticle(undefined)}
             />
           )}
         </div>
