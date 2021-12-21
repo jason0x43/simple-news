@@ -1,42 +1,29 @@
 import { bcrypt, log } from "../deps.ts";
 import { query } from "./db.ts";
-import { getFeed } from "./feeds.ts";
 import { User, UserConfig } from "../../types.ts";
+import { createRowHelpers, select } from "./util.ts";
 
-type UserRow = [number, string, string, string?];
-
-type DehydratedFeedGroup = Omit<UserConfig["feedGroups"][0], "feeds"> & {
-  feeds: number[];
-};
-
-type DehydratedConfig = Omit<UserConfig, "feedGroups"> & {
-  feedGroups: DehydratedFeedGroup[];
-};
-
-function hydrateConfig(config: DehydratedConfig): UserConfig {
-  return {
-    ...config,
-    feedGroups: config.feedGroups.map((group) => ({
-      ...group,
-      feeds: group.feeds.map(getFeed),
-    })),
-  };
+interface DbUser extends Omit<User, "config"> {
+  config?: string;
 }
 
-function dehydrateConfig(config: UserConfig): DehydratedConfig {
-  return {
-    ...config,
-    feedGroups: config.feedGroups.map((group) => ({
-      ...group,
-      feeds: group.feeds.map(({ id }) => id),
-    })),
-  };
-}
+const {
+  columns: userColumns,
+  query: userQuery,
+} = createRowHelpers<
+  DbUser
+>()(
+  "id",
+  "name",
+  "email",
+  "config",
+);
 
-function rowToUser(row: UserRow): User {
-  const [id, email, name, rawConfig] = row;
-  const config = rawConfig ? hydrateConfig(JSON.parse(rawConfig)) : undefined;
-  return { id, name, email, config };
+function toUser(dbUser: DbUser) {
+  return {
+    ...dbUser,
+    config: dbUser.config ? JSON.parse(dbUser.config) : undefined,
+  };
 }
 
 export function addUser(
@@ -44,39 +31,40 @@ export function addUser(
   password: string,
 ): User {
   const hashedPassword = bcrypt.hashSync(password);
-  const rows = query<UserRow>(
-    `INSERT INTO users (name, email, password)
+  return toUser(
+    userQuery(
+      `INSERT INTO users (name, email, password)
     VALUES (:name, :email, :password)
-    RETURNING *`,
-    { name: user.name, email: user.email, password: hashedPassword },
+    RETURNING ${userColumns}`,
+      { name: user.name, email: user.email, password: hashedPassword },
+    )[0],
   );
-  return rowToUser(rows[0]);
 }
 
 export function getUser(userId: number): User {
-  const rows = query<UserRow>(
-    "SELECT * FROM users WHERE id = (:userId)",
+  const user = userQuery(
+    `SELECT ${userColumns} FROM users WHERE id = (:userId)`,
     { userId },
-  );
-  if (!rows[0]) {
+  )[0];
+  if (!user) {
     throw new Error(`No user with id ${userId}`);
   }
-  return rowToUser(rows[0]);
+  return toUser(user);
 }
 
 export function getUserByEmail(email: string): User {
-  const rows = query<UserRow>(
-    "SELECT * FROM users WHERE email = (:email)",
+  const user = userQuery(
+    `SELECT ${userColumns} FROM users WHERE email = (:email)`,
     { email },
-  );
-  if (!rows[0]) {
+  )[0];
+  if (!user) {
     throw new Error(`No user with email ${email}`);
   }
-  return rowToUser(rows[0]);
+  return toUser(user);
 }
 
 export function updateUserConfig(userId: number, config: UserConfig) {
-  const dbConfig = JSON.stringify(dehydrateConfig(config));
+  const dbConfig = JSON.stringify(config);
   query(
     "UPDATE users SET config = (json(:config)) WHERE id = (:userId)",
     { config: dbConfig, userId },
@@ -93,13 +81,13 @@ export function updateUserPassword(userId: number, password: string): void {
 }
 
 export function isUserPassword(userId: number, password: string): boolean {
-  const rows = query<[string]>(
+  const userPassword = select(
     "SELECT password FROM users WHERE id = (:userId)",
+    (row) => row[0] as string,
     { userId },
-  );
-  if (!rows[0]) {
+  )[0];
+  if (!userPassword) {
     throw new Error(`No user with id ${userId}`);
   }
-  const userPassword = rows[0][0];
   return bcrypt.compareSync(password, userPassword);
 }

@@ -3,7 +3,7 @@ export interface AppState {
   selectedFeeds?: number[];
 }
 
-export interface DbArticle {
+export interface Article {
   id: number;
   feedId: number;
   articleId: string;
@@ -13,9 +13,10 @@ export interface DbArticle {
   content: string | undefined;
 }
 
-export interface Article extends DbArticle {
-  read?: boolean;
-  saved?: boolean;
+export interface UserArticle {
+  articleId: number;
+  read: boolean;
+  saved: boolean;
 }
 
 export interface Feed {
@@ -41,8 +42,8 @@ export interface UserConfig {
   feedGroups: {
     /** The title of the group */
     title: string;
-    /** An array of Feeds */
-    feeds: Feed[];
+    /** An array of feed ids */
+    feeds: number[];
   }[];
 }
 
@@ -57,7 +58,7 @@ export interface User {
   config?: UserConfig;
 }
 
-export type UpdateArticleRequest = {
+export type UpdateUserArticleRequest = {
   articleId: number;
   read?: boolean;
   saved?: boolean;

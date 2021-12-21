@@ -10,7 +10,7 @@ import {
 } from "../deps.ts";
 import { useContextMenu } from "./ContextMenu.tsx";
 import Button from "./Button.tsx";
-import { Article, Feed, User } from "../../types.ts";
+import { Article, Feed, UserArticle } from "../../types.ts";
 import { Settings } from "../types.ts";
 import { className } from "../util.ts";
 import { unescapeHtml } from "../../util.ts";
@@ -22,16 +22,6 @@ function getOlderIds(
   return articles.filter(({ published }) => published < olderThan).map((
     { id },
   ) => id);
-}
-
-export interface ArticlesProps {
-  user: User;
-  articles: Article[];
-  settings: Settings;
-  setArticlesRead: (articleIds: number[], read: boolean) => void;
-  selectedFeeds: number[];
-  selectedArticle: number | undefined;
-  onSelectArticle: (articleId: number | undefined) => void;
 }
 
 function getAge(timestamp: number | undefined): string {
@@ -56,30 +46,27 @@ function getAge(timestamp: number | undefined): string {
   return `${diff.minutes} m`;
 }
 
-function getFeed(feedId: number, user: User | undefined): Feed | undefined {
-  const feedGroups = user?.config?.feedGroups;
-  if (feedGroups) {
-    for (const group of feedGroups) {
-      for (const feed of group.feeds) {
-        if (feed.id === feedId) {
-          return feed;
-        }
-      }
-    }
-  }
-
-  return undefined;
+export interface ArticlesProps {
+  feeds: Feed[] | undefined;
+  articles: Article[];
+  userArticles: { [articleId: number]: UserArticle };
+  settings: Settings;
+  setArticlesRead: (articleIds: number[], read: boolean) => void;
+  selectedFeeds: number[];
+  selectedArticle: number | undefined;
+  onSelectArticle: (articleId: number | undefined) => void;
 }
 
 const Articles: React.FC<ArticlesProps> = (props) => {
   const {
+    feeds,
     articles,
     onSelectArticle,
     settings,
     setArticlesRead,
     selectedArticle,
     selectedFeeds,
-    user,
+    userArticles,
   } = props;
   const updatedArticles = useRef<Set<number>>(new Set());
   const { hideContextMenu, showContextMenu, contextMenuVisible } =
@@ -105,12 +92,14 @@ const Articles: React.FC<ArticlesProps> = (props) => {
     }
   };
 
-  const filteredArticles = articles.filter((article) =>
-    settings.articleFilter === "all" ||
-    settings.articleFilter === "unread" && (!article.read ||
-        updatedArticles.current.has(article.id)) ||
-    settings.articleFilter === "saved" && article.saved
-  );
+  const filteredArticles = articles.filter((article) => {
+    const userArticle = userArticles[article.id];
+    return settings.articleFilter === "all" ||
+      settings.articleFilter === "unread" && (
+          !userArticle?.read || updatedArticles.current.has(article.id)
+        ) ||
+      settings.articleFilter === "saved" && userArticle?.saved;
+  });
 
   const handleMenuClick = (
     event: {
@@ -184,10 +173,10 @@ const Articles: React.FC<ArticlesProps> = (props) => {
           <>
             <ul className="Articles-list">
               {filteredArticles.map((article) => {
-                const feed = getFeed(article.feedId, user);
+                const feed = feeds?.find(({ id }) => id === article.feedId);
                 const isActive = activeArticle === article.id;
                 const isSelected = selectedArticle === article.id;
-                const isRead = article.read;
+                const isRead = userArticles?.[article.id]?.read;
 
                 return (
                   <li

@@ -20,3 +20,12 @@ export function className(...args: ClassName[]) {
   }
   return Array.from(names.values()).join(" ");
 }
+
+export function toObject<T, K extends keyof T>(objArr: T[], key: K) {
+  const obj: { [prop: string]: T } = {};
+  for (const entry of objArr) {
+    const entryKey = entry[key] as unknown as string;
+    obj[entryKey] = entry;
+  }
+  return obj;
+}

@@ -4,16 +4,12 @@ import {
   getFeeds,
   getFeedStats,
   getUser,
+  getUserArticles,
   getUserByEmail,
   isUserPassword,
-  updateArticleFlags,
+  updateUserArticles,
 } from "./database/mod.ts";
-import {
-  AppState,
-  Article,
-  LoginRequest,
-  UpdateArticleRequest,
-} from "../types.ts";
+import { AppState, LoginRequest, UpdateUserArticleRequest } from "../types.ts";
 import App, { AppProps } from "../client/App.tsx";
 import { formatArticles, refreshFeeds } from "./feed.ts";
 
@@ -84,32 +80,51 @@ export function createRouter(bundle: { path: string; text: string }) {
   router.get("/articles", async ({ cookies, request, response, state }) => {
     const params = request.url.searchParams;
     const feedIdsList = params.get("feeds");
-    const { userId } = state;
-
-    let articles: Article[];
+    let feedIds: number[] | undefined;
 
     if (feedIdsList) {
       log.debug(`getting feeds: ${feedIdsList}`);
-      const feedIds = feedIdsList.split(",").map(Number);
+      feedIds = feedIdsList.split(",").map(Number);
       await cookies.set("selectedFeeds", feedIds.map(String).join(","));
-      articles = getArticles({ userId, feedIds });
     } else {
-      articles = getArticles({ userId });
+      const user = getUser(state.userId);
+      feedIds = user.config?.feedGroups?.reduce((allFeeds, group) => {
+        allFeeds.push(...group.feeds);
+        return allFeeds;
+      }, [] as number[]);
     }
 
     response.type = "application/json";
-    response.body = articles;
+    response.body = feedIds ? getArticles(feedIds) : [];
   });
 
-  router.patch("/articles", async ({ request, response }) => {
+  router.patch("/user_articles", async ({ request, response, state }) => {
     if (request.hasBody) {
       const body = request.body();
-      const data = await body.value as UpdateArticleRequest;
-      const user = getUserByEmail("jason@jasoncheatham.com");
-      updateArticleFlags(user.id, data);
+      const data = await body.value as UpdateUserArticleRequest;
+      updateUserArticles(state.userId, data);
     }
     response.status = 204;
   });
+
+  router.get(
+    "/user_articles",
+    ({ request, response, state }) => {
+      const params = request.url.searchParams;
+      const feedIdsList = params.get("feeds");
+      let feedIds: number[] | undefined = state.selectedFeeds;
+
+      if (feedIdsList) {
+        feedIds = feedIdsList.split(",").map(Number);
+      }
+
+      const { userId } = state;
+      const userArticles = getUserArticles({ userId, feedIds });
+
+      response.type = "application/json";
+      response.body = userArticles;
+    },
+  );
 
   router.get("/refresh", async ({ response }) => {
     await refreshFeeds();
@@ -135,7 +150,7 @@ export function createRouter(bundle: { path: string; text: string }) {
         feedIds = user.config?.feedGroups.reduce<number[]>((allIds, group) => {
           return [
             ...allIds,
-            ...group.feeds.map(({ id }) => id),
+            ...group.feeds,
           ];
         }, []);
       }
@@ -159,7 +174,7 @@ export function createRouter(bundle: { path: string; text: string }) {
         feedIds = user.config?.feedGroups.reduce<number[]>((allIds, group) => {
           return [
             ...allIds,
-            ...group.feeds.map(({ id }) => id),
+            ...group.feeds,
           ];
         }, []);
       }
@@ -182,24 +197,25 @@ export function createRouter(bundle: { path: string; text: string }) {
     response.type = "application/json";
 
     if (!request.hasBody) {
-      response.status = 404;
+      response.status = 400;
       response.body = { error: "Missing or invalid credentials" };
       return;
     }
 
     const body = request.body();
-    const text = await body.value;
-    const data = JSON.parse(text) as LoginRequest;
+    const data = await body.value as LoginRequest;
     const user = getUserByEmail(data.email);
+
     if (!isUserPassword(user.id, data.password)) {
       response.status = 404;
       response.body = { error: "Missing or invalid credentials" };
+      return;
     }
 
     state.userId = user.id;
     await cookies.set("userId", `${user.id}`, {
       secure: mode !== "dev",
-      httpOnly: true,
+      httpOnly: mode !== "dev",
       // assume we're being proxied through an SSL server
       ignoreInsecure: true,
     });
@@ -207,29 +223,30 @@ export function createRouter(bundle: { path: string; text: string }) {
     response.body = user;
   });
 
-  router.get("/", async ({ cookies, response, state }) => {
+  router.get("/", ({ response, state }) => {
     if (!state.userId) {
       response.redirect("/login");
       return;
     }
 
-    const user = getUser(state.userId);
+    const { userId, selectedFeeds } = state;
+    const user = getUser(userId);
+    const articles = selectedFeeds ? getArticles(selectedFeeds) : undefined;
+    const feeds = selectedFeeds ? getFeeds(selectedFeeds) : undefined;
+    const feedStats = getFeedStats({ userId });
+    const userArticles = selectedFeeds
+      ? getUserArticles({ feedIds: selectedFeeds, userId })
+      : undefined;
 
     response.type = "text/html";
-
-    const selectedFeedsStr = await cookies.get("selectedFeeds");
-    const feedStats = getFeedStats({ userId: user.id });
-
-    if (user && selectedFeedsStr) {
-      const selectedFeeds = selectedFeedsStr.split(",").map(Number);
-      const articles = getArticles({
-        feedIds: selectedFeeds,
-        userId: user.id,
-      });
-      response.body = render({ user, selectedFeeds, articles, feedStats });
-    } else {
-      response.body = render({ user, feedStats });
-    }
+    response.body = render({
+      user,
+      selectedFeeds,
+      articles,
+      feeds,
+      feedStats,
+      userArticles,
+    });
   });
 
   return router;

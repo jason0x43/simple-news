@@ -3,11 +3,11 @@ import { className } from "../util.ts";
 import { Feed, FeedStats, User, UserConfig } from "../../types.ts";
 import { Settings } from "../types.ts";
 
-function isSelected(feeds: Feed[], selected: number[] | undefined) {
+function isSelected(feedIds: number[], selected: number[] | undefined) {
   if (!selected) {
     return false;
   }
-  return feeds.every((feed) => selected.includes(feed.id));
+  return feedIds.every((id) => selected.includes(id));
 }
 
 const getArticleCount = (
@@ -16,7 +16,7 @@ const getArticleCount = (
   settings: Settings,
 ) =>
   feeds.reduce((acc, feed) => {
-    const stats = feedStats[feed.id];
+    const stats = feedStats[feed];
     return acc + (settings.articleFilter === "unread"
       ? (stats.total - stats.read)
       : stats.total);
@@ -25,13 +25,15 @@ const getArticleCount = (
 export interface FeedsProps {
   settings: Settings;
   user: User;
+  feeds: Feed[] | undefined;
   feedStats: FeedStats | undefined;
   selectedFeeds: number[];
   onSelectFeeds: (feedIds: number[]) => void;
 }
 
 const Feeds: React.FC<FeedsProps> = (props) => {
-  const { settings, user, feedStats, selectedFeeds, onSelectFeeds } = props;
+  const { settings, user, feeds, feedStats, selectedFeeds, onSelectFeeds } =
+    props;
   const [expanded, setExpanded] = useState<{ [title: string]: boolean }>({});
 
   return (
@@ -61,7 +63,7 @@ const Feeds: React.FC<FeedsProps> = (props) => {
             />
             <span
               className="Feeds-title"
-              onClick={() => onSelectFeeds(group.feeds.map(({ id }) => id))}
+              onClick={() => onSelectFeeds(group.feeds)}
             >
               {group.title}
             </span>
@@ -80,13 +82,15 @@ const Feeds: React.FC<FeedsProps> = (props) => {
                 className={className("Feeds-feed", {
                   "Feeds-selected": isSelected([feed], selectedFeeds),
                 })}
-                key={feed.id}
-                onClick={() => onSelectFeeds([feed.id])}
+                key={feed}
+                onClick={() => onSelectFeeds([feed])}
               >
-                <div className="Feeds-title">{feed.title}</div>
+                <div className="Feeds-title">
+                  {feeds?.find((f) => f.id === feed)?.title}
+                </div>
                 <div className="Feeds-unread">
-                  {(feedStats?.[feed.id].total ?? 0) -
-                    (feedStats?.[feed.id].read ?? 0)}
+                  {(feedStats?.[feed].total ?? 0) -
+                    (feedStats?.[feed].read ?? 0)}
                 </div>
               </li>
             ))}

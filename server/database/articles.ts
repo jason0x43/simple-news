@@ -1,71 +1,79 @@
 import { log } from "../deps.ts";
+import { Article } from "../../types.ts";
 import { query } from "./db.ts";
-import { DbArticle } from "../../types.ts";
+import { count, createRowHelpers, parameterize } from "./util.ts";
 
-export type DbArticleRow = [
-  number,
-  number,
-  string,
-  string,
-  string,
-  number,
-  string,
-];
+const {
+  columns: articleColumns,
+  query: articleQuery,
+} = createRowHelpers<
+  Article
+>()(
+  "id",
+  "feedId",
+  "articleId",
+  "title",
+  "link",
+  "published",
+  "content",
+);
 
-export function rowToDbArticle(row: DbArticleRow): DbArticle {
-  const [id, feedId, articleId, title, link, published, content] = row;
-  return {
-    id,
-    feedId,
-    articleId,
-    title,
-    link,
-    published,
-    content,
-  };
+export function getArticles(feedIds?: number[]) {
+  if (feedIds) {
+    const { names: feedParamNames, values: feedParams } = parameterize(
+      "feedIds",
+      feedIds,
+    );
+    return articleQuery(
+      `SELECT ${articleColumns}
+      FROM articles
+      WHERE feed_id IN (${feedParamNames.join(",")})
+      ORDER BY published ASC`,
+      feedParams,
+    );
+  }
+
+  return articleQuery("SELECT ${articleColumns} FROM articles");
 }
 
-export function addArticle(article: Omit<DbArticle, "id">): DbArticle {
+export function addArticle(article: Omit<Article, "id">): Article {
   log.debug(`Adding article ${article.articleId}`);
-  const rows = query<DbArticleRow>(
+  return articleQuery(
     `INSERT INTO articles (
       feed_id, article_id, title, link, published, content
     )
     VALUES (:feedId, :articleId, :title, :link, :published, :content)
-    RETURNING *`,
+    RETURNING ${articleColumns}`,
     article,
-  );
-  return rowToDbArticle(rows[0]);
+  )[0];
 }
 
-export function getArticle(articleId: string): DbArticle {
-  const rows = query<DbArticleRow>(
-    "SELECT * FROM articles WHERE article_id = (:articleId)",
+export function getArticle(articleId: string): Article {
+  const article = articleQuery(
+    `SELECT ${articleColumns} FROM articles WHERE article_id = (:articleId)`,
     { articleId },
-  );
-  if (!rows[0]) {
+  )[0];
+  if (!article) {
     throw new Error(`No article with articleId ${articleId}`);
   }
-  return rowToDbArticle(rows[0]);
+  return article;
 }
 
 export function getArticleCount(feedId: number): number {
-  const rows = query<[number]>(
-    "SELECT COUNT(*) FROM articles WHERE feed_id = (:feedId)",
-    { feedId },
-  );
-  return rows[0][0];
+  return count("SELECT COUNT(*) FROM articles WHERE feed_id = (:feedId)", {
+    feedId,
+  });
 }
 
-export function getLatestArticle(feedId: number): DbArticle | undefined {
-  const rows = query<DbArticleRow>(
-    "SELECT * FROM articles WHERE feed_id = (:feedId) ORDER BY published DESC LIMIT 1",
+export function getLatestArticle(feedId: number): Article | undefined {
+  return articleQuery(
+    `SELECT ${articleColumns}
+    FROM articles
+    WHERE feed_id = (:feedId)
+    ORDER BY published DESC
+    LIMIT 1`,
     { feedId },
-  );
-  if (rows.length === 0) {
-    return undefined;
-  }
-  return rowToDbArticle(rows[0]);
+  )[0];
 }
 
 export function setArticleContent(id: number, content: string) {
@@ -76,9 +84,8 @@ export function setArticleContent(id: number, content: string) {
 }
 
 export function hasArticle(articleId: string): boolean {
-  const rows = query<DbArticleRow>(
-    "SELECT id FROM articles WHERE article_id = (:articleId)",
+  return count(
+    "SELECT COUNT(*) FROM articles WHERE article_id = (:articleId)",
     { articleId },
-  );
-  return rows.length > 0;
+  ) > 0;
 }

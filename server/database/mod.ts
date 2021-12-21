@@ -22,11 +22,16 @@ export {
 export {
   addArticle,
   getArticleCount,
+  getArticles,
   hasArticle,
   setArticleContent,
 } from "./articles.ts";
-export { getReadArticleIds, updateArticleFlags } from "./user_articles.ts";
-export * from "./queries.ts";
+export {
+  getReadArticleIds,
+  getUserArticles,
+  updateUserArticles,
+} from "./user_articles.ts";
+export { getFeedStats } from "./queries.ts";
 
 export function openDatabase(name = "data.db") {
   try {
@@ -34,7 +39,7 @@ export function openDatabase(name = "data.db") {
   } catch {
     createDb(name);
     log.debug(`Foreign key support: ${getPragma("foreign_keys")}`);
-    migrateDatabase(7);
+    migrateDatabase(8);
     log.debug(`Database using v${getSchemaVersion()} schema`);
   }
 }
@@ -247,6 +252,25 @@ const migrations: Migration[] = [
 
     down: (db) => {
       db.query("ALTER TABLE users DROP COLUMN password");
+    },
+  },
+
+  {
+    // fix htmlUrl column name
+    up: (db) => {
+      inTransaction(() => {
+        db.query("ALTER TABLE feeds ADD COLUMN html_url TEXT");
+        db.query("UPDATE feeds SET html_url = htmlUrl");
+        db.query("ALTER TABLE feeds DROP COLUMN htmlUrl");
+      });
+    },
+
+    down: (db) => {
+      inTransaction(() => {
+        db.query("ALTER TABLE feeds ADD COLUMN htmlUrl TEXT");
+        db.query("UPDATE feeds SET htmlUrl = html_url");
+        db.query("ALTER TABLE feeds DROP COLUMN html_url");
+      });
     },
   },
 ];

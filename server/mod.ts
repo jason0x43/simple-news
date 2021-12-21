@@ -72,11 +72,17 @@ export async function serve() {
     await next();
   });
 
-  app.use(async (ctx, next) => {
-    const userId = await ctx.cookies.get("userId");
+  app.use(async ({ cookies, state }, next) => {
+    const userId = await cookies.get("userId");
     if (userId) {
-      ctx.state.userId = Number(userId);
+      state.userId = Number(userId);
     }
+
+    const selectedFeedsStr = await cookies.get("selectedFeeds");
+    if (selectedFeedsStr) {
+      state.selectedFeeds = selectedFeedsStr.split(",").map(Number);
+    }
+
     await next();
   });
 

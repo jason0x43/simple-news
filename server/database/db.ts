@@ -23,6 +23,13 @@ export const query: InstanceType<typeof DB>["query"] = (...args) => {
   return db.query(...args);
 };
 
+export const prepareQuery: InstanceType<typeof DB>["prepareQuery"] = (
+  ...args
+) => {
+  const db = getDb();
+  return db.prepareQuery(...args);
+};
+
 export function inTransaction<T>(callback: (db: DB) => T): T {
   const db = getDb();
   db.query("BEGIN TRANSACTION");

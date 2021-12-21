@@ -1,81 +1,77 @@
 import { log } from "../deps.ts";
 import { query } from "./db.ts";
 import { Feed } from "../../types.ts";
-import { parameterize } from "./util.ts";
+import { createRowHelpers, parameterize, select } from "./util.ts";
 
-type FeedRow = [
-  number,
-  string,
-  string,
-  string,
-  number,
-  string,
-  boolean,
-  string,
-];
-
-function rowToFeed(row: FeedRow): Feed {
-  const [id, url, title, type, lastUpdate, htmlUrl, disabled, icon] = row;
-  return { id, url, title, type, lastUpdate, htmlUrl, disabled, icon };
-}
+const {
+  columns: feedColumns,
+  query: feedQuery,
+} = createRowHelpers<
+  Feed
+>()(
+  "id",
+  "url",
+  "title",
+  "type",
+  "lastUpdate",
+  "htmlUrl",
+  "disabled",
+  "icon",
+);
 
 export function addFeed(
   feed: Omit<Feed, "id" | "lastUpdate" | "disabled" | "icon">,
 ): Feed {
   log.debug(`Adding feed ${JSON.stringify(feed)}`);
-  const rows = query<FeedRow>(
+  return feedQuery(
     `INSERT INTO feeds (url, title, type)
     VALUES (:url, :title, :type)
-    RETURNING *`,
+    RETURNING ${feedColumns}`,
     feed,
-  );
-  return rowToFeed(rows[0]);
+  )[0];
 }
 
 export function getFeed(id: number): Feed {
-  const rows = query<FeedRow>(
-    "SELECT * FROM feeds WHERE id = (:id)",
+  const feed = feedQuery(
+    "SELECT ${feedColumns} FROM feeds WHERE id = (:id)",
     { id },
-  );
-  if (!rows[0]) {
+  )[0];
+  if (!feed) {
     throw new Error(`No feed with ID ${id}`);
   }
-  return rowToFeed(rows[0]);
+  return feed;
 }
 
 export function getFeeds(feedIds?: number[]): Feed[] {
-  let rows: FeedRow[];
-
   if (feedIds) {
     const { names: feedParamNames, values: feedParams } = parameterize(
       "feedIds",
       feedIds,
     );
-    rows = query<FeedRow>(
-      `SELECT * FROM feeds WHERE id IN (${feedParamNames.join(",")})`,
+    return feedQuery(
+      `SELECT ${feedColumns}
+      FROM feeds
+      WHERE id IN (${feedParamNames.join(",")})`,
       feedParams,
     );
-  } else {
-    rows = query<FeedRow>("SELECT * FROM feeds");
   }
 
-  return rows.map(rowToFeed);
+  return feedQuery(`SELECT ${feedColumns} FROM feeds`);
 }
 
 export function getFeedByUrl(feedUrl: string): Feed {
-  const rows = query<FeedRow>(
-    "SELECT * FROM feeds WHERE url = (:url)",
+  const feed = feedQuery(
+    `SELECT ${feedColumns} FROM feeds WHERE url = (:url)`,
     { url: feedUrl },
-  );
-  if (!rows[0]) {
+  )[0];
+  if (!feed) {
     throw new Error(`No feed with URL ${feedUrl}`);
   }
-  return rowToFeed(rows[0]);
+  return feed;
 }
 
 export function getFeedIds(): number[] {
-  const rows = query<[number]>("SELECT id FROM feeds");
-  return rows.map((row) => row[0]);
+  return select("SELECT id FROM feeds", (row) => row[0] as number);
 }
 
 export function setFeedUrl(id: number, url: string) {

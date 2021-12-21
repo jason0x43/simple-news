@@ -9,19 +9,29 @@ import ButtonSelector from "./components/ButtonSelector.tsx";
 import Input from "./components/Input.tsx";
 import {
   getArticles,
+  getFeeds,
   getFeedStats,
+  getUserArticles,
   login,
   refreshFeeds,
   setRead,
 } from "./api.ts";
-import { Article as ArticleType, FeedStats, User } from "../types.ts";
+import {
+  Article as ArticleType,
+  Feed,
+  FeedStats,
+  User,
+  UserArticle,
+} from "../types.ts";
 import { Settings } from "./types.ts";
-import { className } from "./util.ts";
+import { className, toObject } from "./util.ts";
 
 interface LoggedInProps {
   user: User;
+  feeds?: Feed[];
   feedStats?: FeedStats;
   articles?: ArticleType[];
+  userArticles?: UserArticle[];
   selectedFeeds?: number[];
 }
 
@@ -39,30 +49,28 @@ function cancellableEffect(
 }
 
 export function getFeedsTitle(
-  user: User | undefined,
+  user: User,
+  feeds: Feed[] | undefined,
   selectedFeeds: number[] | undefined,
 ) {
   if (!selectedFeeds || selectedFeeds.length === 0) {
     return undefined;
   }
-  const feedGroups = user?.config?.feedGroups;
 
-  if (!feedGroups) {
+  if (!feeds || !user?.config?.feedGroups) {
     return undefined;
   }
 
   if (selectedFeeds.length === 1) {
-    for (const group of feedGroups) {
-      for (const feed of group.feeds) {
-        if (feed.id === selectedFeeds[0]) {
-          return feed.title;
-        }
+    for (const feed of feeds) {
+      if (feed.id === selectedFeeds[0]) {
+        return feed.title;
       }
     }
   } else if (selectedFeeds.length > 1) {
-    for (const group of feedGroups) {
+    for (const group of user?.config?.feedGroups) {
       for (const feed of group.feeds) {
-        if (feed.id === selectedFeeds[0]) {
+        if (feed === selectedFeeds[0]) {
           return group.title;
         }
       }
@@ -77,22 +85,18 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
   const [settings, setSettings] = useState<Settings>({
     articleFilter: "unread",
   });
+  const [feeds, setFeeds] = useState(props.feeds);
   const [sidebarActive, setSidebarActive] = useState(false);
   const [selectedArticleId, setSelectedArticleId] = useState<
     number | undefined
   >();
   const [updating, setUpdating] = useState(false);
-  const [articles, setArticles] = useState<ArticleType[]>(
-    props.articles ?? [],
+  const [articles, setArticles] = useState(props.articles ?? []);
+  const [feedStats, setFeedStats] = useState(props.feedStats);
+  const [userArticles, setUserArticles] = useState(() =>
+    props.userArticles ? toObject(props.userArticles, "articleId") : {}
   );
-  const [feedStats, setFeedStats] = useState<
-    | FeedStats
-    | undefined
-  >(props.feedStats);
-  const [selectedFeeds, setSelectedFeeds] = useState<number[]>(
-    props.selectedFeeds ?? [],
-  );
-
+  const [selectedFeeds, setSelectedFeeds] = useState(props.selectedFeeds ?? []);
   const selectedArticle = articles.find(({ id }) => id === selectedArticleId);
 
   const fetchFeedStats = async (signal?: { cancelled: boolean }) => {
@@ -114,7 +118,6 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
       const { feedIds = selectedFeeds, signal } = options ?? {};
       const articles = await getArticles(feedIds);
       if (!signal?.cancelled) {
-        console.log("setting articles");
         setArticles(articles);
       }
     } catch (error) {
@@ -122,11 +125,47 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
     }
   };
 
-  const selectFeeds = useCallback((feedIds: number[]) => {
+  const fetchFeeds = async (options?: {
+    feedIds?: number[];
+    signal?: Signal;
+  }) => {
+    try {
+      const { feedIds = selectedFeeds, signal } = options ?? {};
+      const feeds = await getFeeds(feedIds);
+      if (!signal?.cancelled) {
+        setFeeds(feeds);
+      }
+    } catch (error) {
+      console.error(`Error loading feeds: ${error.message}`);
+    }
+  };
+
+  const fetchUserArticles = async (options?: {
+    feedIds?: number[];
+    signal?: Signal;
+  }) => {
+    try {
+      const { feedIds = selectedFeeds, signal } = options ?? {};
+      const userArticles = await getUserArticles(feedIds);
+      if (!signal?.cancelled) {
+        setUserArticles(toObject(userArticles, "articleId"));
+      }
+    } catch (error) {
+      console.error(`Error loading user articles: ${error.message}`);
+    }
+  };
+
+  const selectFeeds = useCallback(async (feedIds: number[]) => {
     setSidebarActive(false);
+
+    await Promise.all([
+      fetchArticles({ feedIds }),
+      fetchUserArticles({ feedIds }),
+      fetchFeeds({ feedIds }),
+    ]);
+
     setSelectedFeeds(feedIds);
     setSelectedArticleId(undefined);
-    fetchArticles({ feedIds });
   }, []);
 
   // Fetch articles for selected feeds every few minutes
@@ -170,22 +209,25 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
     async (articleIds: number[], read: boolean) => {
       await setRead(articleIds, read);
 
-      setArticles(
-        articles.map((article) =>
-          articleIds.includes(article.id) ? { ...article, read } : article
-        ),
-      );
+      const updatedUserArticles = { ...userArticles };
+      for (const id of articleIds) {
+        updatedUserArticles[id] = {
+          ...userArticles[id],
+          read,
+        };
+      }
 
+      setUserArticles(updatedUserArticles);
       fetchFeedStats();
     },
-    [articles, setRead, fetchFeedStats],
+    [userArticles, setRead, fetchFeedStats],
   );
 
   const selectArticle = useCallback((articleId: number | undefined) => {
     setSelectedArticleId(articleId);
   }, []);
 
-  const feedsTitle = getFeedsTitle(user, selectedFeeds);
+  const feedsTitle = getFeedsTitle(user, feeds, selectedFeeds);
 
   return (
     <>
@@ -201,6 +243,7 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
           <div className="App-sidebar-feeds">
             <Feeds
               user={user}
+              feeds={feeds}
               feedStats={feedStats}
               selectedFeeds={selectedFeeds}
               onSelectFeeds={selectFeeds}
@@ -238,12 +281,13 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
         >
           <Articles
             articles={articles}
+            userArticles={userArticles}
+            feeds={feeds}
             selectedFeeds={selectedFeeds}
             settings={settings}
             selectedArticle={selectedArticleId}
             setArticlesRead={setArticlesRead}
             onSelectArticle={selectArticle}
-            user={user}
           />
           {selectedArticle && (
             <Article

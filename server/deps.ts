@@ -3,18 +3,21 @@
 /// <reference lib="dom.asynciterable" />
 
 export * as color from "https://deno.land/std@0.117.0/fmt/colors.ts";
-export { DB } from "https://deno.land/x/sqlite@v3.1.3/mod.ts";
+export {
+  DB,
+  type QueryParameterSet,
+} from "https://deno.land/x/sqlite@v3.1.3/mod.ts";
 export {
   Application,
   Router,
   send,
 } from "https://deno.land/x/oak@v10.0.0/mod.ts";
 export { parse as parseXml } from "https://deno.land/x/xml@2.0.2/mod.ts";
-export { parseFeed } from "https://deno.land/x/rss@0.5.4/mod.ts";
-export type {
-  Feed as ParsedFeed,
-  FeedEntry,
-} from "https://deno.land/x/rss@0.5.4/src/types/mod.ts";
+export {
+  type Feed as ParsedFeed,
+  parseFeed,
+} from "https://deno.land/x/rss@0.5.4/mod.ts";
+export type { FeedEntry } from "https://deno.land/x/rss@0.5.4/src/types/mod.ts";
 export * as path from "https://deno.land/std@0.117.0/path/mod.ts";
 
 // import to make SSR React (at least v17) happy

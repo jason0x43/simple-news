@@ -2,8 +2,9 @@ import {
   Article,
   Feed,
   FeedStats,
-  UpdateArticleRequest,
+  UpdateUserArticleRequest,
   User,
+  UserArticle,
 } from "../types.ts";
 
 export class ResponseError extends Error {
@@ -29,13 +30,16 @@ export async function refreshFeeds() {
   await fetch("/refresh");
 }
 
-export async function setRead(articleIds: number[], read = true) {
-  const body: UpdateArticleRequest = articleIds.map((articleId) => ({
+export async function setRead(
+  articleIds: number[],
+  read = true,
+) {
+  const body: UpdateUserArticleRequest = articleIds.map((articleId) => ({
     articleId,
     read,
   }));
 
-  const response = await fetch(`/articles`, {
+  const response = await fetch(`/user_articles`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -43,7 +47,7 @@ export async function setRead(articleIds: number[], read = true) {
     body: JSON.stringify(body),
   });
 
-  if (response.status !== 204) {
+  if (response.status >= 400) {
     throw new Error(`Error updating articles: ${response.status}`);
   }
 }
@@ -60,6 +64,7 @@ export async function getUser(): Promise<User> {
 export async function login(email: string, password: string): Promise<User> {
   const response = await fetch("/login", {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
   });
 
@@ -99,5 +104,16 @@ export async function getFeedStats(
     params.set("feeds", feedIds.map(String).join(","));
   }
   const response = await fetch(`/feedstats?${params}`);
+  return await response.json();
+}
+
+export async function getUserArticles(
+  feedIds?: number[],
+): Promise<UserArticle[]> {
+  const params = new URLSearchParams();
+  if (feedIds) {
+    params.set("feeds", feedIds.map(String).join(","));
+  }
+  const response = await fetch(`/user_articles?${params}`);
   return await response.json();
 }

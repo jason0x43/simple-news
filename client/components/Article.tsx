@@ -1,4 +1,4 @@
-import { React } from "../deps.ts";
+import { React, useCallback, useEffect } from "../deps.ts";
 import { Article } from "../../types.ts";
 import { unescapeHtml } from "../../util.ts";
 
@@ -10,8 +10,16 @@ export interface ArticleProps {
 const Article: React.FC<ArticleProps> = (props) => {
   const { article, onClose } = props;
 
+  const setRef = useCallback(() => {
+    console.log("setting ref");
+  }, [article]);
+
+  useEffect(() => {
+    console.log("article changed");
+  }, [article]);
+
   return (
-    <div className="Article">
+    <div className="Article" ref={setRef}>
       <div className="Article-inner">
         <div className="Article-header">
           <a

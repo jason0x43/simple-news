@@ -1,20 +1,56 @@
-import { getDb, inTransaction, query } from "./db.ts";
+import { inTransaction, prepareQuery } from "./db.ts";
 import { log } from "../deps.ts";
+import { UserArticle } from "../../types.ts";
+import { createRowHelpers, parameterize, select } from "./util.ts";
 
-export interface UserArticle {
-  id: number;
-  userId: number;
-  articleId: number;
-  read: boolean;
-  saved: boolean;
+const {
+  columns: userArticleColumns,
+  query: userArticleQuery,
+} = createRowHelpers<
+  UserArticle
+>()(
+  "articleId",
+  "read",
+  "saved",
+);
+
+export function getUserArticles(
+  data: { userId: number; feedIds?: number[] },
+): UserArticle[] {
+  const { userId, feedIds } = data;
+  if (feedIds) {
+    const { names: feedParamNames, values: feedParams } = parameterize(
+      "feedIds",
+      feedIds,
+    );
+    return userArticleQuery(
+      `SELECT ${
+        userArticleColumns.split(",").map((col) => `user_articles.${col}`).join(
+          ",",
+        )
+      }
+      FROM user_articles
+      INNER JOIN articles
+        ON articles.id = user_articles.article_id 
+        AND articles.feed_id IN  (${feedParamNames.join(",")})
+      WHERE user_id = (:userId)`,
+      { userId, ...feedParams },
+    );
+  }
+
+  return userArticleQuery(
+    `SELECT ${userArticleColumns}
+      FROM user_articles WHERE user_id = (:userId)`,
+    { userId: data.userId },
+  );
 }
 
 export function getReadArticleIds(userId: number): number[] {
-  const rows = query<number[]>(
+  return select(
     "SELECT article_id FROM user_articles WHERE user_id = (:userId)",
+    (row) => row[0] as number,
     { userId },
   );
-  return rows.map((row) => row[0]);
 }
 
 function updateFlags<Flag extends "read" | "saved">(
@@ -28,7 +64,7 @@ function updateFlags<Flag extends "read" | "saved">(
       [flagName]: patch[flagName],
     }));
 
-  const flagStatement = getDb().prepareQuery(
+  const flagStatement = prepareQuery(
     `INSERT INTO user_articles (user_id, article_id, ${flagName})
     VALUES (:userId, :articleId, :${flagName})
     ON CONFLICT(user_id, article_id)
@@ -43,7 +79,7 @@ function updateFlags<Flag extends "read" | "saved">(
   }
 }
 
-export function updateArticleFlags(
+export function updateUserArticles(
   userId: number,
   patches: { articleId: number; read?: boolean; saved?: boolean }[],
 ): void {
