@@ -1,4 +1,4 @@
-import { React, useCallback, useEffect, useState } from "./deps.ts";
+import { React, useCallback, useEffect, useReducer, useState } from "./deps.ts";
 import { ContextMenuProvider } from "./components/ContextMenu.tsx";
 import Feeds from "./components/Feeds.tsx";
 import Articles from "./components/Articles.tsx";
@@ -70,30 +70,146 @@ export function getFeedsTitle(
   return undefined;
 }
 
+interface AppState {
+  settings: Settings;
+  feeds: Feed[] | undefined;
+  sidebarActive: boolean;
+  updating: boolean;
+  articles: ArticleHeading[];
+  feedStats: FeedStats | undefined;
+  userArticles: { [prop: string]: UserArticle };
+  selectedFeeds: number[];
+  selectedArticle: ArticleRecord | undefined;
+  user: User;
+}
+
+function initState(props: LoggedInProps): AppState {
+  return {
+    settings: { articleFilter: "unread" },
+    feeds: props.feeds,
+    sidebarActive: false,
+    updating: false,
+    articles: props.articles ?? [],
+    feedStats: props.feedStats,
+    userArticles: props.userArticles
+      ? toObject(props.userArticles, "articleId")
+      : {},
+    selectedFeeds: props.selectedFeeds ?? [],
+    selectedArticle: undefined,
+    user: props.user,
+  };
+}
+
+type AppStateAction =
+  | { type: "setSettings"; payload: Partial<Settings> }
+  | { type: "setArticles"; payload: ArticleHeading[] }
+  | { type: "setSelectedArticle"; payload: ArticleRecord | undefined }
+  | { type: "setUserArticles"; payload: UserArticle[] }
+  | { type: "setUserArticlesRead"; payload: { ids: number[]; read: boolean } }
+  | { type: "setFeeds"; payload: Feed[] }
+  | { type: "setFeedStats"; payload: FeedStats }
+  | { type: "setSelectedFeeds"; payload: number[] | undefined }
+  | { type: "setSidebarActive"; payload: boolean }
+  | { type: "toggleSidebarActive" }
+  | { type: "setUpdating"; payload: boolean };
+
+function updateState(state: AppState, action: AppStateAction): AppState {
+  switch (action.type) {
+    case "setSettings":
+      return {
+        ...state,
+        settings: {
+          ...state.settings,
+          ...action.payload,
+        },
+      };
+    case "setFeeds":
+      return {
+        ...state,
+        feeds: action.payload,
+      };
+    case "setSidebarActive":
+      return {
+        ...state,
+        sidebarActive: action.payload,
+      };
+    case "toggleSidebarActive":
+      return {
+        ...state,
+        sidebarActive: !state.sidebarActive,
+      };
+    case "setArticles":
+      return {
+        ...state,
+        articles: action.payload,
+      };
+    case "setSelectedArticle":
+      return {
+        ...state,
+        selectedArticle: action.payload,
+      };
+    case "setFeedStats":
+      return {
+        ...state,
+        feedStats: action.payload,
+      };
+    case "setSelectedFeeds":
+      return {
+        ...state,
+        selectedFeeds: action.payload ?? [],
+      };
+    case "setUpdating":
+      return {
+        ...state,
+        updating: action.payload,
+      };
+    case "setUserArticles":
+      return {
+        ...state,
+        userArticles: toObject(action.payload, "articleId"),
+      };
+    case "setUserArticlesRead":
+      return {
+        ...state,
+        userArticles: Object.keys(state.userArticles).reduce(
+          (articles, idStr) => {
+            const id = Number(idStr);
+            if (action.payload.ids.includes(id)) {
+              articles[id] = {
+                ...state.userArticles[id],
+                read: action.payload.read,
+              };
+            } else {
+              articles[id] = state.userArticles[id];
+            }
+            return articles;
+          },
+          {} as typeof state.userArticles,
+        ),
+      };
+  }
+}
+
 const LoggedIn: React.FC<LoggedInProps> = (props) => {
-  const { user } = props;
-  const [settings, setSettings] = useState<Settings>({
-    articleFilter: "unread",
-  });
-  const [feeds, setFeeds] = useState(props.feeds);
-  const [sidebarActive, setSidebarActive] = useState(false);
-  const [updating, setUpdating] = useState(false);
-  const [articles, setArticles] = useState(props.articles ?? []);
-  const [feedStats, setFeedStats] = useState(props.feedStats);
-  const [userArticles, setUserArticles] = useState(() =>
-    props.userArticles ? toObject(props.userArticles, "articleId") : {}
-  );
-  const [selectedFeeds, setSelectedFeeds] = useState(props.selectedFeeds ?? []);
-  const [selectedArticle, setSelectedArticle] = useState<
-    | ArticleRecord
-    | undefined
-  >();
+  const [state, dispatch] = useReducer(updateState, props, initState);
+  const {
+    articles,
+    feedStats,
+    settings,
+    feeds,
+    selectedFeeds,
+    selectedArticle,
+    sidebarActive,
+    updating,
+    user,
+    userArticles,
+  } = state;
 
   const fetchFeedStats = async (signal?: { cancelled: boolean }) => {
     try {
       const stats = await getFeedStats();
       if (!signal?.cancelled) {
-        setFeedStats(stats);
+        dispatch({ type: "setFeedStats", payload: stats });
       }
     } catch (error) {
       console.error(`Error loading feed stats: ${error.message}`);
@@ -108,7 +224,7 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
       const { feedIds = selectedFeeds, signal } = options ?? {};
       const articles = await getArticleHeadings(feedIds);
       if (!signal?.cancelled) {
-        setArticles(articles);
+        dispatch({ type: "setArticles", payload: articles });
       }
     } catch (error) {
       console.error(`Error loading feed stats: ${error.message}`);
@@ -123,7 +239,7 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
       const { feedIds = selectedFeeds, signal } = options ?? {};
       const feeds = await getFeeds(feedIds);
       if (!signal?.cancelled) {
-        setFeeds(feeds);
+        dispatch({ type: "setFeeds", payload: feeds });
       }
     } catch (error) {
       console.error(`Error loading feeds: ${error.message}`);
@@ -138,7 +254,7 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
       const { feedIds = selectedFeeds, signal } = options ?? {};
       const userArticles = await getUserArticles(feedIds);
       if (!signal?.cancelled) {
-        setUserArticles(toObject(userArticles, "articleId"));
+        dispatch({ type: "setUserArticles", payload: userArticles });
       }
     } catch (error) {
       console.error(`Error loading user articles: ${error.message}`);
@@ -146,7 +262,7 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
   };
 
   const selectFeeds = useCallback(async (feedIds: number[]) => {
-    setSidebarActive(false);
+    dispatch({ type: "setSidebarActive", payload: false });
 
     await Promise.all([
       fetchArticles({ feedIds }),
@@ -154,8 +270,8 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
       fetchFeeds({ feedIds }),
     ]);
 
-    setSelectedFeeds(feedIds);
-    setSelectedArticle(undefined);
+    dispatch({ type: "setSelectedFeeds", payload: feedIds });
+    dispatch({ type: "setSelectedArticle", payload: undefined });
   }, []);
 
   // Fetch articles for selected feeds every few minutes
@@ -176,12 +292,12 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
     }), [fetchFeedStats, fetchArticles, selectedFeeds]);
 
   const handleShowSidebar = useCallback(() => {
-    setSidebarActive(!sidebarActive);
+    dispatch({ type: "toggleSidebarActive" });
   }, [sidebarActive]);
 
   const handleUpdateFeeds = useCallback(async () => {
     try {
-      setUpdating(true);
+      dispatch({ type: "setUpdating", payload: true });
       await refreshFeeds();
       await fetchFeedStats();
       if (selectedFeeds) {
@@ -190,7 +306,7 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
     } catch (error) {
       console.warn(`Error updating feeds: ${error.message}`);
     } finally {
-      setUpdating(false);
+      dispatch({ type: "setUpdating", payload: false });
     }
   }, [fetchArticles, fetchFeedStats, refreshFeeds, selectedFeeds]);
 
@@ -206,7 +322,10 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
         };
       }
 
-      setUserArticles(updatedUserArticles);
+      dispatch({
+        type: "setUserArticlesRead",
+        payload: { ids: articleIds, read },
+      });
       fetchFeedStats();
     },
     [userArticles, setRead, fetchFeedStats],
@@ -216,12 +335,12 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
     if (articleId) {
       try {
         const article = await getArticle(articleId);
-        setSelectedArticle(article);
+        dispatch({ type: "setSelectedArticle", payload: article });
       } catch (error) {
         console.error(error);
       }
     } else {
-      setSelectedArticle(undefined);
+      dispatch({ type: "setSelectedArticle", payload: undefined });
     }
   }, []);
 
@@ -267,7 +386,7 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
               selected={settings.articleFilter}
               onSelect={(value) => {
                 const articleFilter = value as Settings["articleFilter"];
-                setSettings({ ...settings, articleFilter });
+                dispatch({ type: "setSettings", payload: { articleFilter } });
               }}
             />
           </div>
@@ -290,7 +409,8 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
           {selectedArticle && (
             <Article
               article={selectedArticle}
-              onClose={() => setSelectedArticle(undefined)}
+              onClose={() =>
+                dispatch({ type: "setSelectedArticle", payload: undefined })}
             />
           )}
         </div>
