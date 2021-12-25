@@ -21,7 +21,7 @@ const Article: React.FC<ArticleProps> = (props) => {
 
   return (
     <div className="Article" ref={ref}>
-      <div className="Article-inner">
+      <div className="Article-header-wrapper">
         <div className="Article-header">
           <a
             href={article.link}
@@ -33,6 +33,8 @@ const Article: React.FC<ArticleProps> = (props) => {
             ×
           </div>
         </div>
+      </div>
+      <div className="Article-scroller">
         <div
           className="Article-content"
           dangerouslySetInnerHTML={{

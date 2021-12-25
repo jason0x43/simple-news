@@ -1,44 +1,58 @@
 .Article {
-  overflow: auto;
-  flex-grow: 1;
-}
-
-.Article-inner {
-  padding: 0 32px;
-  margin: 0 auto;
-  max-width: 800px;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+.Article-scroller {
+  overflow-y: auto;
+}
+
+.Article-header-wrapper {
+  width: 100%;
 }
 
 .Article-header {
   font-weight: bold;
   font-size: 150%;
-  margin: 2rem 0;
-  padding: 0 1rem;
-  padding-right: 0;
   display: flex;
   flex-direction: row;
   align-items: stretch;
+  padding-left: 5%;
+  padding-right: 5%;
+}
+
+.Article-header,
+.Article-content {
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .Article-header a {
+  padding: 1rem 0;
   text-decoration: none;
   color: var(--foreground);
+  display: block;
+  flex-grow: 1;
 }
 
 .Article-close {
-  padding: 0 1rem;
+  padding: 1rem 0;
+  padding-left: 1rem;
   cursor: pointer;
 }
 
 .Article-content {
-  overflow: auto;
+  padding-left: 5%;
+  padding-right: 5%;
   font-size: 16px;
   font-family: Merriweather, serif;
   font-weight: 300;
-  line-height: 1.5em;
   padding-bottom: 1rem;
+  line-height: 1.5em;
+  display: flex;
+  flex-direction: column;
 }
 
 .Article-content > :first-child {
@@ -57,6 +71,10 @@
 
 .Article-content p {
   margin: 0.75em 0;
+}
+
+.Article-content pre {
+  overflow-x: auto;
 }
 
 .Article-content li {
@@ -119,14 +137,6 @@
 }
 
 @media only screen and (max-width: 1000px) {
-  .Article-inner {
-    padding: 0 8px;
-  }
-
-  .Article-content {
-    padding: 0 1rem;
-  }
-
   .Article-content blockquote {
     margin-left: 20px;
     margin-right: 20px;

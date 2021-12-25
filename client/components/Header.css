@@ -31,6 +31,7 @@
   gap: 0.5rem;
 }
 
+.Header-left h2,
 .Header-center h2 {
   font-size: 14px;
   overflow: hidden;
