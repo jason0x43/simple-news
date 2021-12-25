@@ -20,7 +20,7 @@ const Article: React.FC<ArticleProps> = (props) => {
   }, [article]);
 
   return (
-    <div className="Article" ref={ref}>
+    <div className="Article">
       <div className="Article-header-wrapper">
         <div className="Article-header">
           <a
@@ -34,7 +34,7 @@ const Article: React.FC<ArticleProps> = (props) => {
           </div>
         </div>
       </div>
-      <div className="Article-scroller">
+      <div className="Article-scroller" ref={ref}>
         <div
           className="Article-content"
           dangerouslySetInnerHTML={{

@@ -105,13 +105,19 @@
   font-style: italic;
 }
 
-.Article-content img {
+.Article-content img,
+.Article-content iframe {
   max-width: 100% !important;
   height: auto !important;
 }
 
 .Article-content > img {
   margin: 1rem 0;
+}
+
+.Article-content figure {
+  margin-left: 0;
+  margin-right: 0;
 }
 
 .Article-content .feedflare {
