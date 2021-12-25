@@ -24,7 +24,9 @@ function toString(value: unknown): string {
 
 const mode = Deno.env.get("SN_MODE") ?? "production";
 
-export function createRouter(bundle: { path: string; text: string }) {
+export function createRouter(
+  { client, styles }: { client: string; styles: string },
+) {
   // Render the base HTML
   const render = (initialState: AppProps) => {
     const preloadedState = `globalThis.__PRELOADED_STATE__ = ${
@@ -52,7 +54,7 @@ export function createRouter(bundle: { path: string; text: string }) {
         <link rel="manifest" href="/site.webmanifest">
 
         <link rel="stylesheet" href="/styles.css">
-        <script type="module" async src="${bundle.path}"></script>
+        <script type="module" async src="/client.js"></script>
       </head>
       <body>
         <svg style="display:none" version="2.0">
@@ -74,9 +76,14 @@ export function createRouter(bundle: { path: string; text: string }) {
     response.body = user;
   });
 
-  router.get(bundle.path, ({ response }) => {
+  router.get("/client.js", ({ response }) => {
     response.type = "application/javascript";
-    response.body = bundle.text;
+    response.body = client;
+  });
+
+  router.get("/styles.css", ({ response }) => {
+    response.type = "text/css";
+    response.body = styles;
   });
 
   router.get("/articles", async ({ cookies, request, response, state }) => {

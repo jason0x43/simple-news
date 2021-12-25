@@ -1,4 +1,4 @@
-import { Application, log, path } from "./deps.ts";
+import { Application, expandGlob, log, path } from "./deps.ts";
 import { AppState } from "../types.ts";
 import { createRouter } from "./routes.tsx";
 import { refreshFeeds } from "./feed.ts";
@@ -13,13 +13,15 @@ const clientDir = path.join(__dirname, "..", "client");
 const refreshInterval = 600;
 
 /**
- * Touch this file (to intiate a reload) if the client code changes.
+ * Touch this file (to intiate a reload) if the styles change.
  */
-async function watchClient() {
+async function watchStyles() {
   const watcher = Deno.watchFs(clientDir);
   let timer: number | undefined;
   for await (const event of watcher) {
-    if (event.paths.some((p) => /\.tsx?/.test(p))) {
+    if (
+      event.paths.some((p) => /\.css$/.test(p) || /client\/mod.tsx$/.test(p))
+    ) {
       clearTimeout(timer);
       timer = setTimeout(() => {
         Deno.run({ cmd: ["touch", __filename] });
@@ -53,9 +55,20 @@ export async function serve() {
     log.warning(Deno.formatDiagnostics(diagnostics));
   }
 
+  // Build and cache the styles
+  let styles = "";
+  for await (
+    const entry of expandGlob(
+      path.join(__dirname, "..", "client", "**", "*.css"),
+    )
+  ) {
+    const text = await Deno.readTextFile(entry.path);
+    styles += `${text}\n`;
+  }
+
   const router = createRouter({
-    path: "/client.js",
-    text: files["deno:///bundle.js"],
+    client: files["deno:///bundle.js"],
+    styles,
   });
 
   const port = 8083;
@@ -104,8 +117,8 @@ export async function serve() {
   log.info(`Listening on port ${port}`);
 
   const promises = [app.listen({ port })];
-  if (Deno.env.get('SN_MODE') === 'dev') {
-    promises.push(watchClient());
+  if (Deno.env.get("SN_MODE") === "dev") {
+    promises.push(watchStyles());
   }
 
   await Promise.allSettled(promises);

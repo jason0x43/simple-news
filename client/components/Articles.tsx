@@ -15,6 +15,7 @@ import { Article, ArticleHeading, Feed, UserArticle } from "../../types.ts";
 import { Settings } from "../types.ts";
 import { cancellableEffect, className } from "../util.ts";
 import { unescapeHtml } from "../../util.ts";
+import { useWidthObserver } from "../hooks.ts";
 
 function getOlderIds(
   articles: ArticleHeading[],
@@ -78,10 +79,20 @@ const Articles: React.FC<ArticlesProps> = (props) => {
   const [activeArticle, setActiveArticle] = useState<number | undefined>();
   const touchStartRef = useRef<number | undefined>();
   const touchTimerRef = useRef<number | undefined>();
+  const selectedArticleRef = useRef<HTMLElement | null>(null);
+  const [width, setRef] = useWidthObserver();
 
   useEffect(() => {
     updatedArticles.current.clear();
+    selectedArticleRef.current = null;
   }, [selectedFeeds]);
+
+  useEffect(() => {
+    selectedArticleRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+    });
+  }, [width]);
 
   const filteredArticles = useMemo(() =>
     articles.filter((article) => {
@@ -188,11 +199,14 @@ const Articles: React.FC<ArticlesProps> = (props) => {
   }, []);
 
   const setArticleRef = useCallback((node: HTMLLIElement | null) => {
+    if (node) {
+      selectedArticleRef.current = node;
+    }
     node?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, []);
 
   return (
-    <div className="Articles">
+    <div className="Articles" ref={setRef}>
       {renderedArticles.length > 0
         ? (
           <>
@@ -208,9 +222,9 @@ const Articles: React.FC<ArticlesProps> = (props) => {
                     className={className(
                       "Articles-article",
                       {
-                        "Article-active": isActive,
-                        "Article-selected": isSelected,
-                        "Article-read": isRead,
+                        "Articles-active": isActive,
+                        "Articles-selected": isSelected,
+                        "Articles-read": isRead,
                       },
                     )}
                     data-id={article.id}
@@ -221,12 +235,12 @@ const Articles: React.FC<ArticlesProps> = (props) => {
                     onTouchEnd={handleTouchEnd}
                     onTouchMove={handleTouchEnd}
                   >
-                    <div className="Article-icon">
+                    <div className="Articles-icon">
                       {feed?.icon
                         ? <img src={feed.icon} title={feed?.title} />
                         : (
                           <div
-                            className="Article-monogram"
+                            className="Articles-monogram"
                             title={feed?.title}
                           >
                             {feed?.title[0]}
@@ -235,7 +249,7 @@ const Articles: React.FC<ArticlesProps> = (props) => {
                     </div>
 
                     <div
-                      className="Article-title"
+                      className="Articles-title"
                       onClick={() => {
                         hideContextMenu();
                         if (article.id === selectedArticle?.id) {
@@ -250,7 +264,7 @@ const Articles: React.FC<ArticlesProps> = (props) => {
                       }}
                     />
 
-                    <div className="Article-age">
+                    <div className="Articles-age">
                       {getAge(article.published)}
                     </div>
                   </li>

@@ -1,0 +1,134 @@
+.Article {
+  overflow: auto;
+  flex-grow: 1;
+}
+
+.Article-inner {
+  padding: 0 32px;
+  margin: 0 auto;
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+}
+
+.Article-header {
+  font-weight: bold;
+  font-size: 150%;
+  margin: 2rem 0;
+  padding: 0 1rem;
+  padding-right: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+
+.Article-header a {
+  text-decoration: none;
+  color: var(--foreground);
+}
+
+.Article-close {
+  padding: 0 1rem;
+  cursor: pointer;
+}
+
+.Article-content {
+  overflow: auto;
+  font-size: 16px;
+  font-family: Merriweather, serif;
+  font-weight: 300;
+  line-height: 1.5em;
+  padding-bottom: 1rem;
+}
+
+.Article-content > :first-child {
+  margin-top: 0;
+}
+
+.Article-content h1 {
+  margin-top: 0;
+}
+
+.Article-content figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.Article-content p {
+  margin: 0.75em 0;
+}
+
+.Article-content li {
+  margin: 0.5em 0;
+}
+
+.Article-content table {
+  margin: 1em auto;
+}
+
+.Article-content table td {
+  padding: 0 0.5em;
+}
+
+.Article-content aside {
+  margin: 1.5em 0;
+  font-size: 125%;
+}
+
+.Article-content q {
+  font-style: italic;
+  color: #999;
+  margin: 0 64px;
+  display: block;
+}
+
+.Article-content blockquote {
+  font-style: italic;
+}
+
+.Article-content img {
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+.Article-content > img {
+  margin: 1rem 0;
+}
+
+.Article-content .feedflare {
+  display: none;
+}
+
+/* from tor.com feeds */
+.Article-content .ebook-links {
+  display: flex;
+  flex-direction: row;
+  list-style-type: none;
+  padding: 0;
+  gap: 1rem;
+}
+.Article-content .ebook-links img,
+.Article-content .ebook-links li {
+  margin: 0;
+}
+.Article-content .squib .alignleft {
+  margin: 0;
+  margin-right: 1em;
+  float: left;
+}
+
+@media only screen and (max-width: 1000px) {
+  .Article-inner {
+    padding: 0 8px;
+  }
+
+  .Article-content {
+    padding: 0 1rem;
+  }
+
+  .Article-content blockquote {
+    margin-left: 20px;
+    margin-right: 20px;
+  }
+}

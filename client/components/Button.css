@@ -1,0 +1,36 @@
+.Button {
+  background: var(--matte);
+  color: var(--foreground);
+  font-size: 14px;
+  padding: 0.5em 1em 0.7em 1em;
+  border: solid 1px var(--border);
+  border-radius: var(--border-radius);
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+}
+
+.Button:active {
+  background: var(--active-matte);
+}
+
+.Button:disabled {
+  opacity: 0.5;
+}
+
+.Button-large {
+  padding: 0.75em 1em;
+  font-size: 18px;
+}
+
+.Button-small {
+  margin: 0.25em 0.5em;
+  padding: 0.25em 0.5em;
+  font-size: 12px;
+}
+
+@media (hover: hover) {
+  .Button:hover {
+    background: var(--hover-matte);
+  }
+}
