@@ -23,6 +23,9 @@
   padding: 0.5rem;
   cursor: pointer;
   white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
 }
 
 @media (hover: hover) {
