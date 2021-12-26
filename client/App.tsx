@@ -77,7 +77,7 @@ interface AppState {
   updating: boolean;
   articles: ArticleHeading[];
   feedStats: FeedStats | undefined;
-  userArticles: { [prop: string]: UserArticle };
+  userArticles: { [articleId: number]: UserArticle };
   selectedFeeds: number[];
   selectedArticle: ArticleRecord | undefined;
   user: User;
@@ -168,25 +168,16 @@ function updateState(state: AppState, action: AppStateAction): AppState {
         ...state,
         userArticles: toObject(action.payload, "articleId"),
       };
-    case "setUserArticlesRead":
-      return {
-        ...state,
-        userArticles: Object.keys(state.userArticles).reduce(
-          (articles, idStr) => {
-            const id = Number(idStr);
-            if (action.payload.ids.includes(id)) {
-              articles[id] = {
-                ...state.userArticles[id],
-                read: action.payload.read,
-              };
-            } else {
-              articles[id] = state.userArticles[id];
-            }
-            return articles;
-          },
-          {} as typeof state.userArticles,
-        ),
-      };
+    case "setUserArticlesRead": {
+      const newUserArticles = { ...state.userArticles };
+      for (const id of action.payload.ids) {
+        newUserArticles[id] = {
+          ...newUserArticles[id],
+          read: action.payload.read,
+        };
+      }
+      return { ...state, userArticles: newUserArticles };
+    }
   }
 }
 
@@ -313,14 +304,6 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
   const setArticlesRead = useCallback(
     async (articleIds: number[], read: boolean) => {
       await setRead(articleIds, read);
-
-      const updatedUserArticles = { ...userArticles };
-      for (const id of articleIds) {
-        updatedUserArticles[id] = {
-          ...userArticles[id],
-          read,
-        };
-      }
 
       dispatch({
         type: "setUserArticlesRead",
