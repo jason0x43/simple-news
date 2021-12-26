@@ -26,7 +26,7 @@ import {
   UserArticle,
 } from "../types.ts";
 import { Settings } from "./types.ts";
-import { cancellableEffect, className, Signal, toObject } from "./util.ts";
+import { className, toObject } from "./util.ts";
 
 interface LoggedInProps {
   user: User;
@@ -196,122 +196,80 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
     userArticles,
   } = state;
 
-  const fetchFeedStats = async (signal?: { cancelled: boolean }) => {
-    try {
-      const stats = await getFeedStats();
-      if (!signal?.cancelled) {
-        dispatch({ type: "setFeedStats", payload: stats });
-      }
-    } catch (error) {
-      console.error(`Error loading feed stats: ${error.message}`);
-    }
-  };
-
-  const fetchArticles = async (options?: {
-    feedIds?: number[];
-    signal?: Signal;
-  }) => {
-    try {
-      const { feedIds = selectedFeeds, signal } = options ?? {};
-      const articles = await getArticleHeadings(feedIds);
-      if (!signal?.cancelled) {
-        dispatch({ type: "setArticles", payload: articles });
-      }
-    } catch (error) {
-      console.error(`Error loading feed stats: ${error.message}`);
-    }
-  };
-
-  const fetchFeeds = async (options?: {
-    feedIds?: number[];
-    signal?: Signal;
-  }) => {
-    try {
-      const { feedIds = selectedFeeds, signal } = options ?? {};
-      const feeds = await getFeeds(feedIds);
-      if (!signal?.cancelled) {
-        dispatch({ type: "setFeeds", payload: feeds });
-      }
-    } catch (error) {
-      console.error(`Error loading feeds: ${error.message}`);
-    }
-  };
-
-  const fetchUserArticles = async (options?: {
-    feedIds?: number[];
-    signal?: Signal;
-  }) => {
-    try {
-      const { feedIds = selectedFeeds, signal } = options ?? {};
-      const userArticles = await getUserArticles(feedIds);
-      if (!signal?.cancelled) {
-        dispatch({ type: "setUserArticles", payload: userArticles });
-      }
-    } catch (error) {
-      console.error(`Error loading user articles: ${error.message}`);
-    }
-  };
-
   const selectFeeds = useCallback(async (feedIds: number[]) => {
     dispatch({ type: "setSidebarActive", payload: false });
 
-    await Promise.all([
-      fetchArticles({ feedIds }),
-      fetchUserArticles({ feedIds }),
-      fetchFeeds({ feedIds }),
+    const [articles, userArticles, feeds] = await Promise.all([
+      getArticleHeadings(feedIds),
+      getUserArticles(feedIds),
+      getFeeds(feedIds),
     ]);
 
-    dispatch({ type: "setSelectedFeeds", payload: feedIds });
-    dispatch({ type: "setSelectedArticle", payload: undefined });
+    dispatch({ type: "setArticles", payload: articles });
+    dispatch({ type: "setUserArticles", payload: userArticles });
+    dispatch({ type: "setFeeds", payload: feeds });
   }, []);
 
   // Fetch articles for selected feeds every few minutes
-  useEffect(() =>
-    cancellableEffect((signal) => {
-      const interval = setInterval(() => {
-        if (!selectedFeeds) {
-          return;
-        }
+  useEffect(() => {
+    let cancelled = false;
+    const interval = setInterval(async () => {
+      if (!selectedFeeds) {
+        return;
+      }
 
-        fetchFeedStats(signal);
-        fetchArticles({ signal });
-      }, 600000);
+      const [feedStats, articles, userArticles] = await Promise.all([
+        getFeedStats(),
+        getArticleHeadings(selectedFeeds),
+        getUserArticles(selectedFeeds),
+      ]);
 
-      return () => {
-        clearInterval(interval);
-      };
-    }), [fetchFeedStats, fetchArticles, selectedFeeds]);
+      if (!cancelled) {
+        dispatch({ type: "setArticles", payload: articles });
+        dispatch({ type: "setUserArticles", payload: userArticles });
+        dispatch({ type: "setFeedStats", payload: feedStats });
+      }
+    }, 600000);
 
-  const handleShowSidebar = useCallback(() => {
-    dispatch({ type: "toggleSidebarActive" });
-  }, [sidebarActive]);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [selectedFeeds]);
 
-  const handleUpdateFeeds = useCallback(async () => {
+  const handleUpdateFeeds = async () => {
     try {
       dispatch({ type: "setUpdating", payload: true });
       await refreshFeeds();
-      await fetchFeedStats();
       if (selectedFeeds) {
-        await fetchArticles();
+        const [feedStats, articles] = await Promise.all([
+          getFeedStats(),
+          getArticleHeadings(selectedFeeds),
+        ]);
+        dispatch({ type: "setFeedStats", payload: feedStats });
+        dispatch({ type: "setArticles", payload: articles });
+      } else {
+        const feedStats = await getFeedStats();
+        dispatch({ type: "setFeedStats", payload: feedStats });
       }
     } catch (error) {
       console.warn(`Error updating feeds: ${error.message}`);
     } finally {
       dispatch({ type: "setUpdating", payload: false });
     }
-  }, [fetchArticles, fetchFeedStats, refreshFeeds, selectedFeeds]);
+  };
 
   const setArticlesRead = useCallback(
     async (articleIds: number[], read: boolean) => {
       await setRead(articleIds, read);
-
       dispatch({
         type: "setUserArticlesRead",
         payload: { ids: articleIds, read },
       });
-      fetchFeedStats();
+      const feedStats = await getFeedStats();
+      dispatch({ type: "setFeedStats", payload: feedStats });
     },
-    [userArticles, setRead, fetchFeedStats],
+    [],
   );
 
   const selectArticle = useCallback(async (articleId: number | undefined) => {
@@ -334,7 +292,7 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
       <div className="App-header">
         <Header
           user={user}
-          onShowSidebar={handleShowSidebar}
+          onShowSidebar={() => dispatch({ type: "toggleSidebarActive" })}
           title={feedsTitle}
         />
       </div>
