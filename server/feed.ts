@@ -192,6 +192,15 @@ async function getEntryContent(
   return undefined;
 }
 
+function normalizeLink(elem: Element, attr: string, baseUrl?: string) {
+  const link = elem.getAttribute(attr);
+  if (link) {
+    const url = new URL(elem.getAttribute(attr)!, baseUrl);
+    url.protocol = "https";
+    elem.setAttribute(attr, `${url}`);
+  }
+}
+
 function formatArticle(text: string, baseUrl?: string): string {
   text = unescapeHtml(text);
 
@@ -199,21 +208,21 @@ function formatArticle(text: string, baseUrl?: string): string {
 
   if (baseUrl) {
     try {
-      const imgs = doc.querySelectorAll("img");
-      for (const img of imgs) {
-        const imgElement = img as unknown as Element;
-        const src = imgElement.getAttribute("src")!;
-        const newSrc = `${new URL(src, baseUrl)}`;
-        imgElement.setAttribute("src", newSrc);
-      }
+      doc.querySelectorAll("img").forEach((img) => {
+        normalizeLink(img as Element, "src", baseUrl);
+      });
 
-      const anchors = doc.querySelectorAll("a");
-      for (const a of anchors) {
-        const aElement = a as unknown as Element;
-        const href = aElement.getAttribute("href")!;
-        const newSrc = `${new URL(href, baseUrl)}`;
-        aElement.setAttribute("src", newSrc);
-      }
+      doc.querySelectorAll("a").forEach((a) => {
+        normalizeLink(a as Element, "href", baseUrl);
+      });
+
+      doc.querySelectorAll("link").forEach((link) => {
+        normalizeLink(link as Element, "href", baseUrl);
+      });
+
+      doc.querySelectorAll("script").forEach((script) => {
+        normalizeLink(script as Element, "src", baseUrl);
+      });
 
       const listItems = doc.querySelectorAll("li");
       for (const item of listItems) {

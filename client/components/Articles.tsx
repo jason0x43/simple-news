@@ -77,6 +77,9 @@ const Articles: React.FC<ArticlesProps> = (props) => {
   const { hideContextMenu, showContextMenu, contextMenuVisible } =
     useContextMenu();
   const [activeArticle, setActiveArticle] = useState<number | undefined>();
+  const [highlightedArticle, setHighlightedArticle] = useState<
+    number | undefined
+  >(selectedArticle?.id);
   const touchStartRef = useRef<number | undefined>();
   const touchTimerRef = useRef<number | undefined>();
   const selectedArticleRef = useRef<HTMLElement | null>(null);
@@ -215,6 +218,7 @@ const Articles: React.FC<ArticlesProps> = (props) => {
                 const feed = feeds?.find(({ id }) => id === article.feedId);
                 const isActive = activeArticle === article.id;
                 const isSelected = selectedArticle?.id === article.id;
+                const isHighlighted = highlightedArticle === article.id;
                 const isRead = userArticles?.[article.id]?.read;
 
                 return (
@@ -223,13 +227,23 @@ const Articles: React.FC<ArticlesProps> = (props) => {
                       "Articles-article",
                       {
                         "Articles-active": isActive,
-                        "Articles-selected": isSelected,
+                        "Articles-selected": isHighlighted,
                         "Articles-read": isRead,
                       },
                     )}
                     data-id={article.id}
                     key={article.id}
                     onContextMenu={handleMenuClick}
+                    onClick={() => {
+                      hideContextMenu();
+                      if (article.id === selectedArticle?.id) {
+                        onSelectArticle(undefined);
+                      } else {
+                        onSelectArticle(article.id);
+                        setHighlightedArticle(article.id);
+                        setRead([article.id], true);
+                      }
+                    }}
                     ref={isSelected ? setArticleRef : undefined}
                     onTouchStart={handleTouchStart}
                     onTouchEnd={handleTouchEnd}
@@ -250,15 +264,6 @@ const Articles: React.FC<ArticlesProps> = (props) => {
 
                     <div
                       className="Articles-title"
-                      onClick={() => {
-                        hideContextMenu();
-                        if (article.id === selectedArticle?.id) {
-                          onSelectArticle(undefined);
-                        } else {
-                          onSelectArticle(article.id);
-                          setRead([article.id], true);
-                        }
-                      }}
                       dangerouslySetInnerHTML={{
                         __html: unescapeHtml(article.title),
                       }}

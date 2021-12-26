@@ -14,9 +14,10 @@
 
 .Article-header {
   font-weight: bold;
-  font-size: 150%;
+  font-size: 1.25rem;
   display: flex;
   flex-direction: row;
+  gap: 1rem;
   align-items: stretch;
   padding-left: 5%;
   padding-right: 5%;
@@ -30,17 +31,31 @@
 }
 
 .Article-header a {
-  padding: 1rem 0;
-  text-decoration: none;
   color: var(--foreground);
+  text-decoration: none;
   display: block;
+  margin: 1rem 0;
   flex-grow: 1;
 }
 
-.Article-close {
-  padding: 1rem 0;
-  padding-left: 1rem;
+.Article-header h2 {
+  margin: 0;
+}
+
+.Article-header-clickable {
   cursor: pointer;
+}
+
+.Article-close {
+  padding: 0 1rem;
+  margin: 1rem 0;
+  cursor: pointer;
+  background: var(--matte);
+  border: solid 1px var(--border);
+  border-radius: var(--border-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .Article-content {
@@ -105,9 +120,12 @@
   font-style: italic;
 }
 
+.Article-content * {
+  max-width: 100% !important;
+}
+
 .Article-content img,
 .Article-content iframe {
-  max-width: 100% !important;
   height: auto !important;
 }
 

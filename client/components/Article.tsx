@@ -9,6 +9,8 @@ export interface ArticleProps {
   onClose: () => void;
 }
 
+const target = "SimpleNews_ArticleView";
+
 const Article: React.FC<ArticleProps> = (props) => {
   const { article, onClose } = props;
   const ref = useRef<HTMLDivElement>(null);
@@ -23,11 +25,8 @@ const Article: React.FC<ArticleProps> = (props) => {
     <div className="Article">
       <div className="Article-header-wrapper">
         <div className="Article-header">
-          <a
-            href={article.link}
-            target={"_blank"}
-          >
-            {article.title}
+          <a href={article.link} target={target}>
+            <h2>{article.title}</h2>
           </a>
           <div className="Article-close" onClick={onClose}>
             ×
@@ -37,6 +36,14 @@ const Article: React.FC<ArticleProps> = (props) => {
       <div className="Article-scroller" ref={ref}>
         <div
           className="Article-content"
+          onClick={(event) => {
+            event.preventDefault();
+            const elem = event.target as HTMLElement;
+            const href = elem.getAttribute("href") ?? undefined;
+            if (href) {
+              globalThis.open(href, target);
+            }
+          }}
           dangerouslySetInnerHTML={{
             __html: unescapeHtml(article.content ?? ""),
           }}
