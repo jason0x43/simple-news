@@ -124,8 +124,7 @@
   max-width: 100% !important;
 }
 
-.Article-content img,
-.Article-content iframe {
+.Article-content img {
   height: auto !important;
 }
 
