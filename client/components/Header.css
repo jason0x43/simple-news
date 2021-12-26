@@ -8,7 +8,7 @@
 .Header-left {
   display: flex;
   align-items: center;
-  padding: 8px 16px;
+  padding: calc(var(--side-pad) / 2) var(--side-pad);
   gap: 0.25rem;
 }
 
@@ -46,7 +46,7 @@
 
 .Header-right {
   justify-self: right;
-  padding: 8px 16px;
+  padding: calc(var(--side-pad) / 2) var(--side-pad);
 }
 
 @media only screen and (max-width: 1000px) {

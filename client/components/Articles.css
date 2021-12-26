@@ -20,6 +20,7 @@
 
 .Articles-article {
   --vertical-pad: 0.5rem;
+  padding: 0 calc(var(--side-pad) - var(--vertical-pad));
   display: grid;
   grid-template-columns: 32px auto 3em min-content;
   align-items: top;

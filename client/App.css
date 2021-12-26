@@ -76,6 +76,7 @@ html {
   --link: #00f;
   --border-radius: 4px;
   --sidebar-width: 300px;
+  --side-pad: 1rem;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -119,8 +120,6 @@ html {
 }
 
 .App-content {
-  display: grid;
-  grid-template-columns: auto 1fr;
   height: 100%;
   max-width: 100%;
   overflow-y: auto;
@@ -135,6 +134,16 @@ html {
   width: var(--sidebar-width);
   display: flex;
   flex-direction: column;
+  position: absolute;
+  z-index: 2;
+  left: calc(-1 * var(--sidebar-width));
+  top: 0;
+  bottom: 0;
+  transition: left 0.25s ease-in-out;
+}
+
+.App-sidebar[data-active='true'] {
+  left: 0;
 }
 
 .App-sidebar-feeds {
@@ -176,23 +185,4 @@ html {
   border-radius: var(--border-radius);
   background: var(--surface);
   width: 15rem;
-}
-
-@media only screen and (max-width: 1000px) {
-  .App-content {
-    grid-template-columns: 1fr;
-  }
-
-  .App-sidebar {
-    position: absolute;
-    z-index: 2;
-    left: calc(-1 * var(--sidebar-width));
-    top: 0;
-    bottom: 0;
-    transition: left 0.25s ease-in-out;
-  }
-
-  .App-sidebar[data-active='true'] {
-    left: 0;
-  }
 }
