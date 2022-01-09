@@ -2,7 +2,7 @@
 /// <reference lib="dom.iterable" />
 /// <reference lib="dom.asynciterable" />
 
-export * as color from "https://deno.land/std@0.118.0/fmt/colors.ts";
+export * as color from "https://deno.land/std@0.120.0/fmt/colors.ts";
 export {
   DB,
   type QueryParameterSet,
@@ -18,8 +18,8 @@ export {
   parseFeed,
 } from "https://deno.land/x/rss@0.5.4/mod.ts";
 export type { FeedEntry } from "https://deno.land/x/rss@0.5.4/src/types/mod.ts";
-export * as path from "https://deno.land/std@0.118.0/path/mod.ts";
-export { expandGlob } from "https://deno.land/std@0.118.0/fs/mod.ts";
+export * as path from "https://deno.land/std@0.120.0/path/mod.ts";
+export { expandGlob } from "https://deno.land/std@0.120.0/fs/mod.ts";
 
 // import to make SSR React (at least v17) happy
 import "http://esm.sh/raf@3.4.1/polyfill";
@@ -35,6 +35,6 @@ export {
   Element,
 } from "https://deno.land/x/deno_dom@v0.1.17-alpha/deno-dom-wasm.ts";
 
-export * as log from "https://deno.land/std@0.118.0/log/mod.ts";
+export * as log from "https://deno.land/std@0.120.0/log/mod.ts";
 
 export * as bcrypt from "https://deno.land/x/bcrypt@v0.2.4/mod.ts";

@@ -23,4 +23,4 @@ export {
 import ReactDOM from "https://esm.sh/react-dom@17";
 export { ReactDOM };
 
-export * as datetime from "https://deno.land/std@0.118.0/datetime/mod.ts";
+export * as datetime from "https://deno.land/std@0.120.0/datetime/mod.ts";
