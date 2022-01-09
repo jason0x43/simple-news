@@ -1,4 +1,11 @@
-import { log, path, React, ReactDOMServer, Router } from "./deps.ts";
+import {
+  log,
+  Middleware,
+  path,
+  React,
+  ReactDOMServer,
+  Router,
+} from "./deps.ts";
 import {
   getArticle,
   getArticleHeadings,
@@ -23,6 +30,17 @@ function toString(value: unknown): string {
 }
 
 const mode = Deno.env.get("SN_MODE") ?? "production";
+
+const requireUser: Middleware<AppState> = async ({ response, state }, next) => {
+  log.debug("Checking for user");
+  if (state.userId === undefined) {
+    response.type = "application/json";
+    response.status = 403;
+    response.body = { error: "Must be logged in" };
+  } else {
+    await next();
+  }
+};
 
 export function createRouter(
   { client, styles }: { client: string; styles: string },
@@ -70,12 +88,6 @@ export function createRouter(
 
   const router = new Router<AppState>();
 
-  router.get("/user", ({ response, state }) => {
-    const user = getUser(state.userId);
-    response.type = "application/json";
-    response.body = user;
-  });
-
   router.get("/client.js", ({ response }) => {
     response.type = "application/javascript";
     response.body = client;
@@ -86,36 +98,45 @@ export function createRouter(
     response.body = styles;
   });
 
-  router.get("/articles", async ({ cookies, request, response, state }) => {
-    const params = request.url.searchParams;
-    const feedIdsList = params.get("feeds");
-    const brief = params.get("brief");
-    let feedIds: number[] | undefined;
-
-    if (feedIdsList) {
-      log.debug(`getting feeds: ${feedIdsList}`);
-      feedIds = feedIdsList.split(",").map(Number);
-      await cookies.set("selectedFeeds", feedIds.map(String).join(","));
-    } else {
-      const user = getUser(state.userId);
-      feedIds = user.config?.feedGroups?.reduce((allFeeds, group) => {
-        allFeeds.push(...group.feeds);
-        return allFeeds;
-      }, [] as number[]);
-    }
-
+  router.get("/user", requireUser, ({ response, state }) => {
+    const user = getUser(state.userId);
     response.type = "application/json";
-
-    if (feedIds) {
-      response.body = brief
-        ? getArticleHeadings(feedIds)
-        : getArticles(feedIds);
-    } else {
-      response.body = [];
-    }
+    response.body = user;
   });
 
-  router.get("/articles/:id", ({ params, response }) => {
+  router.get(
+    "/articles",
+    requireUser,
+    async ({ cookies, request, response, state }) => {
+      const params = request.url.searchParams;
+      const feedIdsList = params.get("feeds");
+      const brief = params.get("brief");
+      let feedIds: number[] | undefined;
+
+      if (feedIdsList) {
+        log.debug(`getting feeds: ${feedIdsList}`);
+        feedIds = feedIdsList.split(",").map(Number);
+        await cookies.set("selectedFeeds", feedIds.map(String).join(","));
+      } else {
+        const user = getUser(state.userId);
+        feedIds = user.config?.feedGroups?.reduce((allFeeds, group) => {
+          allFeeds.push(...group.feeds);
+          return allFeeds;
+        }, [] as number[]);
+      }
+
+      response.type = "application/json";
+
+      if (feedIds) {
+        response.body = brief ? getArticleHeadings(feedIds)
+        : getArticles(feedIds);
+      } else {
+        response.body = [];
+      }
+    },
+  );
+
+  router.get("/articles/:id", requireUser, ({ params, response }) => {
     const { id } = params;
 
     response.type = "application/json";
@@ -129,17 +150,22 @@ export function createRouter(
     }
   });
 
-  router.patch("/user_articles", async ({ request, response, state }) => {
-    if (request.hasBody) {
-      const body = request.body();
-      const data = await body.value as UpdateUserArticleRequest;
-      updateUserArticles(state.userId, data);
-    }
-    response.status = 204;
-  });
+  router.patch(
+    "/user_articles",
+    requireUser,
+    async ({ request, response, state }) => {
+      if (request.hasBody) {
+        const body = request.body();
+        const data = await body.value as UpdateUserArticleRequest;
+        updateUserArticles(state.userId, data);
+      }
+      response.status = 204;
+    },
+  );
 
   router.get(
     "/user_articles",
+    requireUser,
     ({ request, response, state }) => {
       const params = request.url.searchParams;
       const feedIdsList = params.get("feeds");
@@ -157,17 +183,17 @@ export function createRouter(
     },
   );
 
-  router.get("/refresh", async ({ response }) => {
+  router.get("/refresh", requireUser, async ({ response }) => {
     await refreshFeeds();
     response.status = 204;
   });
 
-  router.get("/reprocess", ({ response }) => {
+  router.get("/reprocess", requireUser, ({ response }) => {
     formatArticles();
     response.status = 204;
   });
 
-  router.get("/feeds", ({ request, response, state }) => {
+  router.get("/feeds", requireUser, ({ request, response, state }) => {
     const params = request.url.searchParams;
     const feedIdsList = params.get("feeds");
     const { userId } = state;
@@ -191,7 +217,7 @@ export function createRouter(
     response.body = feedIds ? getFeeds(feedIds) : {};
   });
 
-  router.get("/feedstats", ({ request, response, state }) => {
+  router.get("/feedstats", requireUser, ({ request, response, state }) => {
     const params = request.url.searchParams;
     const feedIdsList = params.get("feeds");
     const { userId } = state;

@@ -9,6 +9,7 @@ export {
 } from "https://deno.land/x/sqlite@v3.1.3/mod.ts";
 export {
   Application,
+  type Middleware,
   Router,
   send,
 } from "https://deno.land/x/oak@v10.0.0/mod.ts";
