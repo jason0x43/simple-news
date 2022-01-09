@@ -36,6 +36,7 @@ export async function serve() {
     check: false,
     compilerOptions: {
       target: "esnext",
+      inlineSourceMap: true,
       lib: ["dom", "dom.iterable", "dom.asynciterable", "deno.ns"],
     },
   };

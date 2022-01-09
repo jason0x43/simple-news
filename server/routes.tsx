@@ -128,8 +128,9 @@ export function createRouter(
       response.type = "application/json";
 
       if (feedIds) {
-        response.body = brief ? getArticleHeadings(feedIds)
-        : getArticles(feedIds);
+        response.body = brief
+          ? getArticleHeadings(feedIds)
+          : getArticles(feedIds);
       } else {
         response.body = [];
       }
@@ -264,7 +265,7 @@ export function createRouter(
     const user = getUserByEmail(data.email);
 
     if (!isUserPassword(user.id, data.password)) {
-      response.status = 404;
+      response.status = 400;
       response.body = { error: "Missing or invalid credentials" };
       return;
     }

@@ -13,6 +13,7 @@ import {
   getFeeds,
   getFeedStats,
   getUserArticles,
+  isResponseError,
   login,
   refreshFeeds,
   setRead,
@@ -30,6 +31,7 @@ import { className, toObject } from "./util.ts";
 
 interface LoggedInProps {
   user: User;
+  logout: () => void;
   feeds?: Feed[];
   feedStats?: FeedStats;
   articles?: ArticleHeading[];
@@ -181,7 +183,12 @@ function updateState(state: AppState, action: AppStateAction): AppState {
   }
 }
 
+function shouldLogout(error: Error) {
+  return isResponseError(error) && error.status === 403;
+}
+
 const LoggedIn: React.FC<LoggedInProps> = (props) => {
+  const { logout } = props;
   const [state, dispatch] = useReducer(updateState, props, initState);
   const {
     articles,
@@ -196,19 +203,27 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
     userArticles,
   } = state;
 
-  const selectFeeds = useCallback(async (feedIds: number[]) => {
+  const selectFeeds = async (feedIds: number[]) => {
     dispatch({ type: "setSidebarActive", payload: false });
 
-    const [articles, userArticles, feeds] = await Promise.all([
-      getArticleHeadings(feedIds),
-      getUserArticles(feedIds),
-      getFeeds(feedIds),
-    ]);
+    try {
+      const [articles, userArticles, feeds] = await Promise.all([
+        getArticleHeadings(feedIds),
+        getUserArticles(feedIds),
+        getFeeds(feedIds),
+      ]);
 
-    dispatch({ type: "setArticles", payload: articles });
-    dispatch({ type: "setUserArticles", payload: userArticles });
-    dispatch({ type: "setFeeds", payload: feeds });
-  }, []);
+      dispatch({ type: "setArticles", payload: articles });
+      dispatch({ type: "setUserArticles", payload: userArticles });
+      dispatch({ type: "setFeeds", payload: feeds });
+    } catch (error) {
+      if (shouldLogout(error)) {
+        logout();
+      } else {
+        console.warn("Error while selecting feeds:", error);
+      }
+    }
+  };
 
   // Fetch articles for selected feeds every few minutes
   useEffect(() => {
@@ -218,16 +233,24 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
         return;
       }
 
-      const [feedStats, articles, userArticles] = await Promise.all([
-        getFeedStats(),
-        getArticleHeadings(selectedFeeds),
-        getUserArticles(selectedFeeds),
-      ]);
+      try {
+        const [feedStats, articles, userArticles] = await Promise.all([
+          getFeedStats(),
+          getArticleHeadings(selectedFeeds),
+          getUserArticles(selectedFeeds),
+        ]);
 
-      if (!cancelled) {
-        dispatch({ type: "setArticles", payload: articles });
-        dispatch({ type: "setUserArticles", payload: userArticles });
-        dispatch({ type: "setFeedStats", payload: feedStats });
+        if (!cancelled) {
+          dispatch({ type: "setArticles", payload: articles });
+          dispatch({ type: "setUserArticles", payload: userArticles });
+          dispatch({ type: "setFeedStats", payload: feedStats });
+        }
+      } catch (error) {
+        if (shouldLogout(error)) {
+          logout();
+        } else {
+          console.warn("Error during periodic update:", error);
+        }
       }
     }, 600000);
 
@@ -253,7 +276,11 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
         dispatch({ type: "setFeedStats", payload: feedStats });
       }
     } catch (error) {
-      console.warn(`Error updating feeds: ${error.message}`);
+      if (shouldLogout(error)) {
+        logout();
+      } else {
+        console.warn(`Error updating feeds: ${error.message}`);
+      }
     } finally {
       dispatch({ type: "setUpdating", payload: false });
     }
@@ -261,13 +288,21 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
 
   const setArticlesRead = useCallback(
     async (articleIds: number[], read: boolean) => {
-      await setRead(articleIds, read);
-      dispatch({
-        type: "setUserArticlesRead",
-        payload: { ids: articleIds, read },
-      });
-      const feedStats = await getFeedStats();
-      dispatch({ type: "setFeedStats", payload: feedStats });
+      try {
+        await setRead(articleIds, read);
+        dispatch({
+          type: "setUserArticlesRead",
+          payload: { ids: articleIds, read },
+        });
+        const feedStats = await getFeedStats();
+        dispatch({ type: "setFeedStats", payload: feedStats });
+      } catch (error) {
+        if (shouldLogout(error)) {
+          logout();
+        } else {
+          console.warn(`Error settings articles read: ${error.message}`);
+        }
+      }
     },
     [],
   );
@@ -278,14 +313,16 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
         const article = await getArticle(articleId);
         dispatch({ type: "setSelectedArticle", payload: article });
       } catch (error) {
-        console.error(error);
+        if (shouldLogout(error)) {
+          logout();
+        } else {
+          console.warn(`Error getting article: ${error.message}`);
+        }
       }
     } else {
       dispatch({ type: "setSelectedArticle", payload: undefined });
     }
   }, []);
-
-  const feedsTitle = getFeedsTitle(user, feeds, selectedFeeds);
 
   return (
     <>
@@ -293,7 +330,7 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
         <Header
           user={user}
           onShowSidebar={() => dispatch({ type: "toggleSidebarActive" })}
-          title={feedsTitle}
+          title={getFeedsTitle(user, feeds, selectedFeeds)}
         />
       </div>
       <div className="App-content">
@@ -400,12 +437,20 @@ export type AppProps = Partial<LoggedInProps>;
 const App: React.FC<AppProps> = (props) => {
   const { user } = props;
 
+  const logout = useCallback(() => {
+    location.href = "/login";
+  }, []);
+
   return (
     <div className="App">
       {user
         ? (
           <ContextMenuProvider>
-            <LoggedIn {...props} user={user} />
+            <LoggedIn
+              {...props}
+              user={user}
+              logout={logout}
+            />
           </ContextMenuProvider>
         )
         : <Login setUser={() => location.href = "/"} />}
