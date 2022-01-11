@@ -289,14 +289,19 @@ export function createRouter(
 
     const { userId, selectedFeeds } = state;
     const user = getUser(userId);
-    const articles = selectedFeeds
-      ? getArticleHeadings(selectedFeeds)
-      : undefined;
-    const feeds = selectedFeeds ? getFeeds(selectedFeeds) : undefined;
+
+    let feedIds: number[] | undefined = selectedFeeds;
+    if (!feedIds) {
+      feedIds = user.config?.feedGroups.reduce((allIds, group) => {
+        allIds.push(...group.feeds);
+        return allIds;
+      }, [] as number[]);
+    }
+
+    const articles = getArticleHeadings(feedIds);
+    const feeds = getFeeds(feedIds);
     const feedStats = getFeedStats({ userId });
-    const userArticles = selectedFeeds
-      ? getUserArticles({ feedIds: selectedFeeds, userId })
-      : undefined;
+    const userArticles = getUserArticles({ feedIds, userId });
 
     response.type = "text/html";
     response.body = render({

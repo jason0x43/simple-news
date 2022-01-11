@@ -67,7 +67,7 @@ export function getArticleHeadings(
     );
   }
 
-  return headingsQuery("SELECT ${headingsColumns} FROM articles");
+  return headingsQuery(`SELECT ${headingsColumns} FROM articles`);
 }
 
 export function addArticle(article: Omit<Article, "id">): Article {
