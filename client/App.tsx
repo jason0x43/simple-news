@@ -227,12 +227,13 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
 
   // Fetch articles for selected feeds every few minutes
   useEffect(() => {
-    let cancelled = false;
-    const interval = setInterval(async () => {
-      if (!selectedFeeds) {
-        return;
-      }
+    if (!selectedFeeds) {
+      return;
+    }
 
+    let cancelled = false;
+
+    const interval = setInterval(async () => {
       try {
         const [feedStats, articles, userArticles] = await Promise.all([
           getFeedStats(),

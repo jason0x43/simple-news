@@ -13,7 +13,7 @@ import { useContextMenu } from "./ContextMenu.tsx";
 import Button from "./Button.tsx";
 import { Article, ArticleHeading, Feed, UserArticle } from "../../types.ts";
 import { Settings } from "../types.ts";
-import { cancellableEffect, className } from "../util.ts";
+import { className } from "../util.ts";
 import { unescapeHtml } from "../../util.ts";
 import { useWidthObserver } from "../hooks.ts";
 
@@ -24,6 +24,10 @@ function getOlderIds(
   return articles.filter(({ published }) => published < olderThan).map((
     { id },
   ) => id);
+}
+
+function sameArticle(a: ArticleHeading, b: ArticleHeading) {
+  return a.id === b.id;
 }
 
 function getAge(timestamp: number | undefined): string {
@@ -107,25 +111,35 @@ const Articles: React.FC<ArticlesProps> = (props) => {
         settings.articleFilter === "saved" && userArticle?.saved;
     }), [articles, settings.articleFilter, userArticles]);
 
-  useEffect(() =>
-    cancellableEffect((signal) => {
-      let timer: number | undefined;
+  useEffect(() => {
+    let timer: number | undefined;
+    let cancelled = false;
 
-      if (renderedArticles[0] !== filteredArticles[0]) {
-        setRenderedArticles(filteredArticles.slice(0, 50));
-      } else if (renderedArticles.length < filteredArticles.length) {
-        const { length } = renderedArticles;
-        timer = setTimeout(() => {
-          if (!signal.cancelled) {
-            setRenderedArticles(filteredArticles.slice(0, length + 50));
-          }
-        }, 250);
-      }
+    let end = 0;
+    while (
+      end < renderedArticles.length &&
+      end < filteredArticles.length &&
+      sameArticle(renderedArticles[end], filteredArticles[end])
+    ) {
+      end++;
+    }
 
-      return () => {
-        clearTimeout(timer);
-      };
-    }), [filteredArticles, renderedArticles]);
+    if (end === 0) {
+      setRenderedArticles(filteredArticles.slice(0, 50));
+    } else if (end < filteredArticles.length) {
+      const { length } = renderedArticles;
+      timer = setTimeout(() => {
+        if (!cancelled) {
+          setRenderedArticles(filteredArticles.slice(0, length + 50));
+        }
+      }, 250);
+    }
+
+    return () => {
+      clearTimeout(timer);
+      cancelled = true;
+    };
+  }, [filteredArticles, renderedArticles]);
 
   useEffect(() => {
     if (!contextMenuVisible) {
