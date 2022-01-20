@@ -43,8 +43,8 @@ const requireUser: Middleware<AppState> = async ({ response, state }, next) => {
 };
 
 export function createRouter(
-  { client, styles }: { client: string; styles: string },
-) {
+  init: { client: string; styles: string },
+): Router<AppState> {
   // Render the base HTML
   const render = (initialState: AppProps) => {
     const preloadedState = `globalThis.__PRELOADED_STATE__ = ${
@@ -90,12 +90,12 @@ export function createRouter(
 
   router.get("/client.js", ({ response }) => {
     response.type = "application/javascript";
-    response.body = client;
+    response.body = init.client;
   });
 
   router.get("/styles.css", ({ response }) => {
     response.type = "text/css";
-    response.body = styles;
+    response.body = init.styles;
   });
 
   router.get("/user", requireUser, ({ response, state }) => {

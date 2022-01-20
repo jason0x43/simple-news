@@ -203,6 +203,33 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
     userArticles,
   } = state;
 
+  // Restore parts of the app state if the app was refreshed
+  useEffect(() => {
+    const store = globalThis.localStorage;
+    const sbActive = store.getItem("sidebarActive");
+    if (sbActive) {
+      dispatch({
+        type: "setSidebarActive",
+        payload: JSON.parse(sbActive) as boolean,
+      });
+    }
+
+    const selArticle = store.getItem("selectedArticle");
+    if (selArticle) {
+      dispatch({
+        type: "setSelectedArticle",
+        payload: JSON.parse(selArticle) as ArticleRecord,
+      });
+    }
+  }, []);
+
+  // Store some parts of the app state when the state updates
+  useEffect(() => {
+    const store = globalThis.localStorage;
+    store.setItem("sidebarActive", JSON.stringify(state.sidebarActive));
+    store.setItem("selectedArticle", JSON.stringify(state.selectedArticle));
+  }, [state.sidebarActive, state.selectedArticle]);
+
   const selectFeeds = async (feedIds: number[]) => {
     dispatch({ type: "setSidebarActive", payload: false });
 

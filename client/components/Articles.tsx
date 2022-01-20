@@ -5,7 +5,6 @@ import {
   React,
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from "../deps.ts";
@@ -81,19 +80,28 @@ const Articles: React.FC<ArticlesProps> = (props) => {
   const { hideContextMenu, showContextMenu, contextMenuVisible } =
     useContextMenu();
   const [activeArticle, setActiveArticle] = useState<number | undefined>();
-  const [highlightedArticle, setHighlightedArticle] = useState<
-    number | undefined
-  >(selectedArticle?.id);
   const touchStartRef = useRef<number | undefined>();
   const touchTimerRef = useRef<number | undefined>();
   const selectedArticleRef = useRef<HTMLElement | null>(null);
   const [width, setRef] = useWidthObserver();
 
+  // Ensure the selected article is added to updatedArticles. This prevents an
+  // article that was initially selected after a refresh from disappearing when
+  // deselected.
+  useEffect(() => {
+    if (selectedArticle) {
+      updatedArticles.current.add(selectedArticle.id);
+    }
+  }, [selectedArticle]);
+
+  // Clear the updated articles list if the selected feed set is changed.
   useEffect(() => {
     updatedArticles.current.clear();
     selectedArticleRef.current = null;
   }, [selectedFeeds]);
 
+  // Ensure the selected article is scrolled into view if the width of the
+  // Articles list changes
   useEffect(() => {
     selectedArticleRef.current?.scrollIntoView({
       behavior: "smooth",
@@ -101,15 +109,31 @@ const Articles: React.FC<ArticlesProps> = (props) => {
     });
   }, [width]);
 
-  const filteredArticles = useMemo(() =>
-    articles.filter((article) => {
-      const userArticle = userArticles[article.id];
-      return settings.articleFilter === "all" ||
-        settings.articleFilter === "unread" && (
-            !userArticle?.read || updatedArticles.current.has(article.id)
-          ) ||
-        settings.articleFilter === "saved" && userArticle?.saved;
-    }), [articles, settings.articleFilter, userArticles]);
+  const filteredArticles = articles.filter((article) => {
+    const userArticle = userArticles[article.id];
+
+    if (article.articleId === selectedArticle?.articleId) {
+      return true;
+    }
+
+    if (settings.articleFilter === "all") {
+      return true;
+    }
+
+    if (
+      settings.articleFilter === "unread" && (
+        !userArticle?.read || updatedArticles.current.has(article.id)
+      )
+    ) {
+      return true;
+    }
+
+    if (settings.articleFilter === "saved" && userArticle?.saved) {
+      return true;
+    }
+
+    return false;
+  });
 
   useEffect(() => {
     let timer: number | undefined;
@@ -232,7 +256,6 @@ const Articles: React.FC<ArticlesProps> = (props) => {
                 const feed = feeds?.find(({ id }) => id === article.feedId);
                 const isActive = activeArticle === article.id;
                 const isSelected = selectedArticle?.id === article.id;
-                const isHighlighted = highlightedArticle === article.id;
                 const isRead = userArticles?.[article.id]?.read;
 
                 return (
@@ -241,7 +264,7 @@ const Articles: React.FC<ArticlesProps> = (props) => {
                       "Articles-article",
                       {
                         "Articles-active": isActive,
-                        "Articles-selected": isHighlighted,
+                        "Articles-selected": isSelected,
                         "Articles-read": isRead,
                       },
                     )}
@@ -250,11 +273,10 @@ const Articles: React.FC<ArticlesProps> = (props) => {
                     onContextMenu={handleMenuClick}
                     onClick={() => {
                       hideContextMenu();
-                      if (article.id === selectedArticle?.id) {
+                      if (isSelected) {
                         onSelectArticle(undefined);
                       } else {
                         onSelectArticle(article.id);
-                        setHighlightedArticle(article.id);
                         setRead([article.id], true);
                       }
                     }}
