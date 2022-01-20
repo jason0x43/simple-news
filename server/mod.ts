@@ -15,7 +15,7 @@ const refreshInterval = 600;
 // Connected websockets
 const sockets: Set<WebSocket> = new Set();
 
-let routerInit: { client: string; styles: string };
+let routerInit: { client: string; styles: string; dev: boolean | undefined };
 let initialReloadSent = false;
 
 /**
@@ -101,8 +101,10 @@ async function buildStyles(): Promise<string> {
 }
 
 export async function serve() {
+  const devMode = Deno.env.get("SN_MODE") === "dev";
+
   const [styles, client] = await Promise.all([buildStyles(), buildClient()]);
-  routerInit = { styles, client };
+  routerInit = { styles, client, dev: devMode };
 
   const router = createRouter(routerInit);
   const app = new Application<AppState>();

@@ -43,13 +43,14 @@ const requireUser: Middleware<AppState> = async ({ response, state }, next) => {
 };
 
 export function createRouter(
-  init: { client: string; styles: string },
+  init: { client: string; styles: string; dev: boolean | undefined },
 ): Router<AppState> {
   // Render the base HTML
   const render = (initialState: AppProps) => {
     const preloadedState = `globalThis.__PRELOADED_STATE__ = ${
       toString(initialState)
     };`;
+    const devMode = `globalThis.__DEV__ = ${init.dev ? "true" : "false"};`;
     const renderedApp = ReactDOMServer.renderToString(
       <App {...initialState} />,
     );
@@ -81,7 +82,10 @@ export function createRouter(
           </defs>
         </svg>
         <div id="root">${renderedApp}</div>
-        <script>${preloadedState}</script>
+        <script>
+          ${preloadedState}
+          ${devMode}
+        </script>
       </body>
     </html>`;
   };
