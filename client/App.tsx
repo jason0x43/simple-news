@@ -205,20 +205,14 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
 
   // Restore parts of the app state if the app was refreshed
   useEffect(() => {
-    const sbActive = loadValue("sidebarActive");
+    const sbActive = loadValue<boolean>("sidebarActive");
     if (sbActive !== undefined) {
-      dispatch({
-        type: "setSidebarActive",
-        payload: JSON.parse(sbActive) as boolean,
-      });
+      dispatch({ type: "setSidebarActive", payload: sbActive });
     }
 
-    const selArticle = loadValue("selectedArticle");
+    const selArticle = loadValue<ArticleRecord>("selectedArticle");
     if (selArticle !== undefined) {
-      dispatch({
-        type: "setSelectedArticle",
-        payload: JSON.parse(selArticle) as ArticleRecord,
-      });
+      dispatch({ type: "setSelectedArticle", payload: selArticle });
     }
   }, []);
 
