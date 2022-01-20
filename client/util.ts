@@ -30,15 +30,21 @@ export function toObject<T, K extends keyof T>(objArr: T[], key: K) {
   return obj;
 }
 
-export type Signal = { cancelled: boolean };
+export function loadValue(name: string) {
+  const store = globalThis.localStorage;
+  const val = store.getItem(name);
+  if (val === null) {
+    return undefined;
+  }
+  return JSON.parse(val);
+}
 
-export function cancellableEffect(
-  callback: (signal: Signal) => (void | (() => void)),
-) {
-  const signal = { cancelled: false };
-  const cleanup = callback(signal);
-  return () => {
-    signal.cancelled = true;
-    cleanup?.();
-  };
+export function storeValue(name: string, value: unknown) {
+  const store = globalThis.localStorage;
+
+  if (value !== undefined) {
+    store.setItem(name, JSON.stringify(value));
+  } else {
+    store.removeItem(name);
+  }
 }

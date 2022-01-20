@@ -27,7 +27,7 @@ import {
   UserArticle,
 } from "../types.ts";
 import { Settings } from "./types.ts";
-import { className, toObject } from "./util.ts";
+import { className, loadValue, storeValue, toObject } from "./util.ts";
 
 interface LoggedInProps {
   user: User;
@@ -205,17 +205,16 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
 
   // Restore parts of the app state if the app was refreshed
   useEffect(() => {
-    const store = globalThis.localStorage;
-    const sbActive = store.getItem("sidebarActive");
-    if (sbActive) {
+    const sbActive = loadValue("sidebarActive");
+    if (sbActive !== undefined) {
       dispatch({
         type: "setSidebarActive",
         payload: JSON.parse(sbActive) as boolean,
       });
     }
 
-    const selArticle = store.getItem("selectedArticle");
-    if (selArticle) {
+    const selArticle = loadValue("selectedArticle");
+    if (selArticle !== undefined) {
       dispatch({
         type: "setSelectedArticle",
         payload: JSON.parse(selArticle) as ArticleRecord,
@@ -225,9 +224,8 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
 
   // Store some parts of the app state when the state updates
   useEffect(() => {
-    const store = globalThis.localStorage;
-    store.setItem("sidebarActive", JSON.stringify(state.sidebarActive));
-    store.setItem("selectedArticle", JSON.stringify(state.selectedArticle));
+    storeValue("sidebarActive", state.sidebarActive);
+    storeValue("selectedArticle", state.selectedArticle);
   }, [state.sidebarActive, state.selectedArticle]);
 
   const selectFeeds = async (feedIds: number[]) => {
