@@ -1,11 +1,4 @@
-import {
-  datetime,
-  React,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "../deps.ts";
+import { datetime, React, useEffect, useRef, useState } from "../deps.ts";
 import { useContextMenu } from "./ContextMenu.tsx";
 import Button from "./Button.tsx";
 import { Article, ArticleHeading, Feed, UserArticle } from "../../types.ts";
@@ -110,27 +103,12 @@ const Articles: React.FC<ArticlesProps> = (props) => {
   const filteredArticles = articles.filter((article) => {
     const userArticle = userArticles[article.id];
 
-    if (article.articleId === selectedArticle?.articleId) {
-      return true;
-    }
-
-    if (settings.articleFilter === "all") {
-      return true;
-    }
-
-    if (
-      settings.articleFilter === "unread" && (
+    return article.articleId === selectedArticle?.articleId ||
+      settings.articleFilter === "all" ||
+      (settings.articleFilter === "unread" && (
         !userArticle?.read || updatedArticles.current.has(article.id)
-      )
-    ) {
-      return true;
-    }
-
-    if (settings.articleFilter === "saved" && userArticle?.saved) {
-      return true;
-    }
-
-    return false;
+      )) ||
+      settings.articleFilter === "saved" && userArticle?.saved;
   });
 
   useEffect(() => {
@@ -221,28 +199,25 @@ const Articles: React.FC<ArticlesProps> = (props) => {
     event.stopPropagation?.();
   };
 
-  const handleTouchStart = useCallback(
-    (event: React.TouchEvent<HTMLLIElement>) => {
-      const { currentTarget } = event;
-      const { pageX, pageY } = event.touches[0];
-      touchStartRef.current = Date.now();
-      touchTimerRef.current = setTimeout(() => {
-        handleMenuClick({ currentTarget, pageX, pageY });
-      }, 500);
-    },
-    [],
-  );
+  const handleTouchStart = (event: React.TouchEvent<HTMLLIElement>) => {
+    const { currentTarget } = event;
+    const { pageX, pageY } = event.touches[0];
+    touchStartRef.current = Date.now();
+    touchTimerRef.current = setTimeout(() => {
+      handleMenuClick({ currentTarget, pageX, pageY });
+    }, 500);
+  };
 
-  const handleTouchEnd = useCallback(() => {
+  const handleTouchEnd = () => {
     clearTimeout(touchTimerRef.current);
-  }, []);
+  };
 
-  const setArticleRef = useCallback((node: HTMLLIElement | null) => {
+  const setArticleRef = (node: HTMLLIElement | null) => {
     if (node) {
       selectedArticleRef.current = node;
     }
     node?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }, []);
+  };
 
   return (
     <div className="Articles" ref={setRef}>
