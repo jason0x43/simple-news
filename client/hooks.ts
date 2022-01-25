@@ -31,11 +31,15 @@ export function useWidthObserver(): [
       | HTMLElement
       | null,
   ) => void,
+  React.RefObject<HTMLElement>,
 ] {
   const observer = useRef<ResizeObserver | undefined>();
   const [width, setWidth] = useState<number | undefined>();
+  const ref = useRef<HTMLElement | null>(null);
 
   const setRef = useCallback((elem: HTMLElement | null) => {
+    ref.current = elem;
+
     if (observer.current) {
       observer.current.disconnect();
       observer.current = undefined;
@@ -59,5 +63,5 @@ export function useWidthObserver(): [
     };
   }, []);
 
-  return [width, setRef];
+  return [width, setRef, ref];
 }

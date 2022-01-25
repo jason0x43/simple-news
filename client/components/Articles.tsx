@@ -16,10 +16,6 @@ function getOlderIds(
   ) => id);
 }
 
-function sameArticle(a: ArticleHeading, b: ArticleHeading) {
-  return a.id === b.id;
-}
-
 function getAge(timestamp: number | undefined): string {
   if (timestamp === undefined) {
     return "?";
@@ -65,16 +61,14 @@ const Articles: React.FC<ArticlesProps> = (props) => {
     userArticles,
   } = props;
   const updatedArticles = useRef<Set<number>>(new Set());
-  const [renderedArticles, setRenderedArticles] = useState<ArticleHeading[]>(
-    [],
-  );
   const { hideContextMenu, showContextMenu, contextMenuVisible } =
     useContextMenu();
   const [activeArticle, setActiveArticle] = useState<number | undefined>();
   const touchStartRef = useRef<number | undefined>();
   const touchTimerRef = useRef<number | undefined>();
   const selectedArticleRef = useRef<HTMLElement | null>(null);
-  const [width, setRef] = useWidthObserver();
+  const [width, setRef, listRef] = useWidthObserver();
+  const [visibleCount, setVisibleCount] = useState(0);
 
   // Ensure the selected article is added to updatedArticles. This prevents an
   // article that was initially selected after a refresh from disappearing when
@@ -89,6 +83,10 @@ const Articles: React.FC<ArticlesProps> = (props) => {
   useEffect(() => {
     updatedArticles.current.clear();
     selectedArticleRef.current = null;
+
+    if (listRef.current) {
+      listRef.current.scrollTop = 0;
+    }
   }, [selectedFeeds]);
 
   // Ensure the selected article is scrolled into view if the width of the
@@ -112,34 +110,14 @@ const Articles: React.FC<ArticlesProps> = (props) => {
   });
 
   useEffect(() => {
-    let timer: number | undefined;
-    let cancelled = false;
+    const selectedIndex = filteredArticles.findIndex(({ id }) =>
+      id === selectedArticle?.id
+    );
+    const targetIndex = Math.max(selectedIndex, 0) + 50;
+    setVisibleCount(Math.min(filteredArticles.length, targetIndex));
+  }, [filteredArticles.length, selectedArticle]);
 
-    let end = 0;
-    while (
-      end < renderedArticles.length &&
-      end < filteredArticles.length &&
-      sameArticle(renderedArticles[end], filteredArticles[end])
-    ) {
-      end++;
-    }
-
-    if (end === 0) {
-      setRenderedArticles(filteredArticles.slice(0, 50));
-    } else if (end < filteredArticles.length) {
-      const { length } = renderedArticles;
-      timer = setTimeout(() => {
-        if (!cancelled) {
-          setRenderedArticles(filteredArticles.slice(0, length + 50));
-        }
-      }, 250);
-    }
-
-    return () => {
-      clearTimeout(timer);
-      cancelled = true;
-    };
-  }, [filteredArticles, renderedArticles]);
+  const renderedArticles = filteredArticles.slice(0, visibleCount);
 
   useEffect(() => {
     if (!contextMenuVisible) {
@@ -151,6 +129,17 @@ const Articles: React.FC<ArticlesProps> = (props) => {
     setArticlesRead(articleIds, read);
     for (const id of articleIds) {
       updatedArticles.current.add(id);
+    }
+  };
+
+  const handleListScroll = (
+    event: React.UIEvent<HTMLDivElement>,
+  ) => {
+    const target = event.nativeEvent.currentTarget! as HTMLDivElement;
+    const { clientHeight, scrollHeight, scrollTop } = target;
+    const remaining = scrollHeight - (scrollTop + clientHeight);
+    if (remaining < 500 && visibleCount < filteredArticles.length) {
+      setVisibleCount(Math.min(visibleCount + 50, filteredArticles.length));
     }
   };
 
@@ -220,7 +209,7 @@ const Articles: React.FC<ArticlesProps> = (props) => {
   };
 
   return (
-    <div className="Articles" ref={setRef}>
+    <div className="Articles" ref={setRef} onScroll={handleListScroll}>
       {renderedArticles.length > 0
         ? (
           <>
@@ -290,7 +279,7 @@ const Articles: React.FC<ArticlesProps> = (props) => {
               <div className="Articles-controls">
                 <Button
                   onClick={() => {
-                    const ids = renderedArticles?.map(({ id }) => id);
+                    const ids = renderedArticles.map(({ id }) => id);
                     if (ids) {
                       setRead(ids, true);
                     }
