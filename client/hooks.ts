@@ -65,3 +65,21 @@ export function useWidthObserver(): [
 
   return [width, setRef, ref];
 }
+
+export function useAppVisibility() {
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const listener = () => {
+      setVisible(document.visibilityState !== "hidden");
+    };
+
+    document.addEventListener("visibilitychange", listener);
+
+    return () => {
+      document.removeEventListener("visibilitychange", listener);
+    };
+  }, []);
+
+  return visible;
+}

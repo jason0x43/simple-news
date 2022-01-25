@@ -29,6 +29,7 @@ import {
 import { Settings } from "./types.ts";
 import { className, loadValue, storeValue } from "./util.ts";
 import { initState, updateState } from "./appState.ts";
+import { useAppVisibility } from "./hooks.ts";
 
 interface LoggedInProps {
   user: User;
@@ -91,6 +92,7 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
     user,
     userArticles,
   } = state;
+  const visibility = useAppVisibility();
 
   // Restore parts of the app state if the app was refreshed
   useEffect(() => {
@@ -111,11 +113,8 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
     storeValue("selectedArticle", state.selectedArticle);
   }, [state.sidebarActive, state.selectedArticle]);
 
-  // Fetch updates for the currently viewed feeds every few minutes
-  useEffect(() => {
-    let cancelled = false;
-
-    const interval = setInterval(async () => {
+  // Fetch updated data for the current selected feeds and update the app state
+  const fetchData = async (signal?: { cancelled: boolean }) => {
       try {
         const [feedStats, articles, userArticles] = await Promise.all([
           getFeedStats(),
@@ -123,7 +122,7 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
           getUserArticles(selectedFeeds),
         ]);
 
-        if (!cancelled) {
+        if (!signal?.cancelled) {
           dispatch({ type: "setFeedStats", payload: feedStats });
           dispatch({ type: "setArticles", payload: articles });
           dispatch({ type: "setUserArticles", payload: userArticles });
@@ -135,13 +134,29 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
           console.warn("Error during periodic update:", error);
         }
       }
+  };
+
+  // Fetch updated data in the background every few minutes
+  useEffect(() => {
+    const signal = { cancelled: false };
+
+    const interval = setInterval(() => {
+      fetchData(signal);
     }, 600000);
 
     return () => {
-      cancelled = true;
+      signal.cancelled = true;
       clearInterval(interval);
     };
   }, [dispatch, logout, selectedFeeds]);
+
+  // Fetch updated data when the app becomes visible
+  useEffect(() => {
+    if (visibility) {
+      console.log('app became visible');
+      fetchData();
+    }
+  }, [visibility]);
 
   const selectFeeds = async (feedIds: number[]) => {
     dispatch({ type: "setSidebarActive", payload: false });
