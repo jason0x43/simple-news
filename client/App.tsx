@@ -1,4 +1,4 @@
-import { React, useCallback, useEffect, useReducer, useState } from "./deps.ts";
+import { React, useEffect, useReducer, useState } from "./deps.ts";
 import { ContextMenuProvider } from "./components/ContextMenu.tsx";
 import Feeds from "./components/Feeds.tsx";
 import Articles from "./components/Articles.tsx";
@@ -46,11 +46,10 @@ export function getFeedsTitle(
   feeds: Feed[] | undefined,
   selectedFeeds: number[] | undefined,
 ) {
-  if (!selectedFeeds || selectedFeeds.length === 0) {
-    return undefined;
-  }
-
-  if (!feeds || !user?.config?.feedGroups) {
+  if (
+    !selectedFeeds || selectedFeeds.length === 0 || !feeds ||
+    !user?.config?.feedGroups
+  ) {
     return undefined;
   }
 
@@ -157,6 +156,7 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
       dispatch({ type: "setArticles", payload: articles });
       dispatch({ type: "setUserArticles", payload: userArticles });
       dispatch({ type: "setFeeds", payload: feeds });
+      dispatch({ type: "setSelectedFeeds", payload: feedIds });
     } catch (error) {
       if (shouldLogout(error)) {
         logout();
