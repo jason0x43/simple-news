@@ -55,10 +55,12 @@ export function createRouter(
       <App {...initialState} />,
     );
 
-    const feeds = getFeeds();
-    const faviconLinks = feeds.filter((feed) => feed.icon).map(({ icon }) =>
+    const { feeds } = initialState;
+    const faviconLinks = feeds?.filter((feed) => feed.icon).map(({ icon }) =>
       icon!
-    ).map((icon) => `<link rel="preload" href="${icon}" as="image">`).join('\n');
+    ).map((icon) => `<link rel="preload" href="${icon}" as="image">`).join(
+      "\n",
+    );
 
     const logo = Deno.readTextFileSync(
       path.join(__dirname, "..", "public", "favicon.svg"),
@@ -77,7 +79,7 @@ export function createRouter(
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
         <link rel="manifest" href="/site.webmanifest">
 
-        ${faviconLinks}
+        ${faviconLinks ?? ""}
 
         <link rel="stylesheet" href="/styles.css">
         <script type="module" async src="/client.js"></script>
