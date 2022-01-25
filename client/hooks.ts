@@ -40,16 +40,16 @@ export function useWidthObserver(): [
   const setRef = useCallback((elem: HTMLElement | null) => {
     ref.current = elem;
 
-    if (observer.current) {
+    if (!observer.current) {
+      observer.current = new ResizeObserver((entries) => {
+        // Update the width in a timeout to avoid an observer loop
+        setTimeout(() => setWidth(entries[0].contentRect.width));
+      });
+    } else {
       observer.current.disconnect();
-      observer.current = undefined;
     }
 
     if (elem) {
-      observer.current = new ResizeObserver((entries) => {
-        setWidth(entries[0].contentRect.width);
-      });
-
       observer.current.observe(elem);
     }
   }, []);
