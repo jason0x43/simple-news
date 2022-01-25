@@ -1,5 +1,3 @@
-/// <reference lib="dom" />
-
 import { React, ReactDOM } from "./deps.ts";
 import App from "./App.tsx";
 import "../global.ts";

@@ -1,7 +1,3 @@
-/// <reference lib="dom" />
-/// <reference lib="dom.iterable" />
-/// <reference lib="dom.asynciterable" />
-
 export * as color from "https://deno.land/std@0.120.0/fmt/colors.ts";
 export {
   DB,

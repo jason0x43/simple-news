@@ -1,7 +1,3 @@
-/// <reference no-default-lib="true" />
-/// <reference lib="deno.ns" />
-/// <reference lib="deno.unstable" />
-
 import { Arguments, log, Yargs, yargs } from "./deps.ts";
 import { serve } from "./server/mod.ts";
 import {
