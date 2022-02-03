@@ -1,12 +1,13 @@
-import {
-  React,
+import { React } from "../deps.ts";
+import { className } from "../util.ts";
+
+const {
   useContext,
   useEffect,
   useMemo,
   useRef,
   useState,
-} from "../deps.ts";
-import { className } from "../util.ts";
+} = React;
 
 export interface ContextMenuProps {
   items: string[];

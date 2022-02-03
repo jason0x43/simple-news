@@ -1,37 +1,16 @@
-export * as color from "https://deno.land/std@0.120.0/fmt/colors.ts";
-export {
-  DB,
-  type QueryParameterSet,
-} from "https://deno.land/x/sqlite@v3.1.3/mod.ts";
-export {
-  Application,
-  type Middleware,
-  Router,
-  send,
-} from "https://deno.land/x/oak@v10.0.0/mod.ts";
-export { parse as parseXml } from "https://deno.land/x/xml@2.0.2/mod.ts";
-export {
-  type Feed as ParsedFeed,
-  parseFeed,
-} from "https://deno.land/x/rss@0.5.4/mod.ts";
-export type { FeedEntry } from "https://deno.land/x/rss@0.5.4/src/types/mod.ts";
-export * as path from "https://deno.land/std@0.120.0/path/mod.ts";
-export { expandGlob } from "https://deno.land/std@0.120.0/fs/mod.ts";
-
 // import to make SSR React (at least v17) happy
-import "http://esm.sh/raf@3.4.1/polyfill";
+import "./raf.ts";
 
-import React from "https://esm.sh/react@17";
-export { React };
-
-import ReactDOMServer from "https://esm.sh/react-dom@17/server";
-export { ReactDOMServer };
-
-export {
-  DOMParser,
-  Element,
-} from "https://deno.land/x/deno_dom@v0.1.17-alpha/deno-dom-wasm.ts";
-
-export * as log from "https://deno.land/std@0.120.0/log/mod.ts";
-
-export * as bcrypt from "https://deno.land/x/bcrypt@v0.2.4/mod.ts";
+export * as color from "std/fmt/colors.ts";
+export { DB, type QueryParameterSet } from "sqlite";
+export { Application, type Middleware, Router, send } from "oak";
+export { parse as parseXml } from "xml";
+export { type Feed as ParsedFeed, parseFeed } from "rss/mod.ts";
+export type { FeedEntry } from "rss/src/types/mod.ts";
+export * as path from "std/path/mod.ts";
+export { expandGlob } from "std/fs/mod.ts";
+export { default as React } from "react";
+export { default as ReactDOMServer } from "react-dom-server";
+export { DOMParser, Element } from "deno-dom-wasm";
+export * as log from "std/log/mod.ts";
+export * as bcrypt from "bcrypt";

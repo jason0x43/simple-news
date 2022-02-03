@@ -1,7 +1,9 @@
-import { React, useState } from "../deps.ts";
+import { React } from "../deps.ts";
 import { className } from "../util.ts";
 import { Feed, FeedStats, User, UserConfig } from "../../types.ts";
 import { Settings } from "../types.ts";
+
+const { useState } = React;
 
 function isSelected(feedIds: number[], selected: number[] | undefined) {
   if (!selected) {

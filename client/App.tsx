@@ -1,4 +1,4 @@
-import { React, useEffect, useReducer, useState } from "./deps.ts";
+import { React } from "./deps.ts";
 import { ContextMenuProvider } from "./components/ContextMenu.tsx";
 import Feeds from "./components/Feeds.tsx";
 import Articles from "./components/Articles.tsx";
@@ -30,6 +30,8 @@ import { Settings } from "./types.ts";
 import { className, loadValue, storeValue } from "./util.ts";
 import { initState, updateState } from "./appState.ts";
 import { useAppVisibility } from "./hooks.ts";
+
+const { useEffect, useReducer, useState } = React;
 
 interface LoggedInProps {
   user: User;
@@ -115,25 +117,25 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
 
   // Fetch updated data for the current selected feeds and update the app state
   const fetchData = async (signal?: { cancelled: boolean }) => {
-      try {
-        const [feedStats, articles, userArticles] = await Promise.all([
-          getFeedStats(),
-          getArticleHeadings(selectedFeeds),
-          getUserArticles(selectedFeeds),
-        ]);
+    try {
+      const [feedStats, articles, userArticles] = await Promise.all([
+        getFeedStats(),
+        getArticleHeadings(selectedFeeds),
+        getUserArticles(selectedFeeds),
+      ]);
 
-        if (!signal?.cancelled) {
-          dispatch({ type: "setFeedStats", payload: feedStats });
-          dispatch({ type: "setArticles", payload: articles });
-          dispatch({ type: "setUserArticles", payload: userArticles });
-        }
-      } catch (error) {
-        if (shouldLogout(error)) {
-          logout();
-        } else {
-          console.warn("Error during periodic update:", error);
-        }
+      if (!signal?.cancelled) {
+        dispatch({ type: "setFeedStats", payload: feedStats });
+        dispatch({ type: "setArticles", payload: articles });
+        dispatch({ type: "setUserArticles", payload: userArticles });
       }
+    } catch (error) {
+      if (shouldLogout(error)) {
+        logout();
+      } else {
+        console.warn("Error during periodic update:", error);
+      }
+    }
   };
 
   // Fetch updated data in the background every few minutes
@@ -153,7 +155,7 @@ const LoggedIn: React.FC<LoggedInProps> = (props) => {
   // Fetch updated data when the app becomes visible
   useEffect(() => {
     if (visibility) {
-      console.log('app became visible');
+      console.log("app became visible");
       fetchData();
     }
   }, [visibility]);

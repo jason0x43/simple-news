@@ -1,5 +1,21 @@
 #!/bin/sh
 
+args=()
+mode=prod
+serve=0
+
+if [ "$1" = "serve" ]; then
+	serve=1
+fi
+
+for arg in $@; do
+	if [ "$arg" = "-d" ] || [ "$arg" = "--dev" ]; then
+		mode=dev
+	else
+		args+=($arg)
+	fi
+done
+
 cmd="deno run \
 	--allow-net \
 	--allow-env \
@@ -7,24 +23,18 @@ cmd="deno run \
 	--allow-write=data.db,data.db-journal \
 	--unstable"
 
-if [ "$SN_MODE" = "dev" ]; then
-	if [ "$1" = "serve" ]; then
+if [ "$mode" = "dev" ]; then
+	if [ "$serve" ]; then
+		echo "Enabling watch mode"
 		cmd="$cmd --watch --allow-run=touch"
 	fi
-
-	if [ "$SN_FAST" = "1" ]; then
-		cmd="$cmd --no-check"
-	else
-		cmd="$cmd --no-check=remote"
-	fi
-
+	cmd="$cmd --no-check=remote"
+	echo "Using default import map"
 	export SN_IMPORT_MAP="import_map.json"
-
-	$cmd \
-		--import-map ./$SN_IMPORT_MAP \
-		mod.ts $@
 else
-	$cmd \
-		--no-check \
-		mod.ts $@
+	cmd="$cmd --no-check"
+	echo "Using prod import map"
+	export SN_IMPORT_MAP="import_map_prod.json"
 fi
+
+$cmd --import-map ./$SN_IMPORT_MAP mod.ts ${args[@]}

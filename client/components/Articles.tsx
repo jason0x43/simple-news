@@ -1,4 +1,4 @@
-import { datetime, React, useEffect, useRef, useState } from "../deps.ts";
+import { datetime, React } from "../deps.ts";
 import { useContextMenu } from "./ContextMenu.tsx";
 import Button from "./Button.tsx";
 import { Article, ArticleHeading, Feed, UserArticle } from "../../types.ts";
@@ -6,6 +6,8 @@ import { Settings } from "../types.ts";
 import { className } from "../util.ts";
 import { unescapeHtml } from "../../util.ts";
 import { useWidthObserver } from "../hooks.ts";
+
+const { useEffect, useRef, useState } = React;
 
 function getOlderIds(
   articles: ArticleHeading[],
