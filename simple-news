@@ -1,6 +1,6 @@
 #!/bin/sh
 
-args=()
+args=""
 mode=prod
 serve=0
 
@@ -11,30 +11,33 @@ fi
 for arg in $@; do
 	if [ "$arg" = "-d" ] || [ "$arg" = "--dev" ]; then
 		mode=dev
+	elif [ "$args" = "" ]; then
+		args=$arg
 	else
-		args+=($arg)
+		args="$args $arg"
 	fi
 done
 
-cmd="deno run \
-	--allow-net \
-	--allow-env \
-	--allow-read=./ \
-	--allow-write=data.db,data.db-journal \
-	--unstable"
+cmd="deno run"
+cmd="$cmd --allow-net"
+cmd="$cmd --allow-env"
+cmd="$cmd --allow-read"
+cmd="$cmd --allow-write=data.db,data.db-journal"
+cmd="$cmd --unstable"
 
 if [ "$mode" = "dev" ]; then
 	if [ "$serve" ]; then
 		echo "Enabling watch mode"
-		cmd="$cmd --watch --allow-run=touch"
+		cmd="$cmd --watch --no-clear-screen --allow-run=touch"
 	fi
 	cmd="$cmd --no-check=remote"
-	echo "Using default import map"
-	export SN_IMPORT_MAP="import_map.json"
+	echo "Using dev import map"
+	export SN_IMPORT_MAP="import_map_dev.json"
+	export SN_MODE="dev"
 else
 	cmd="$cmd --no-check"
 	echo "Using prod import map"
-	export SN_IMPORT_MAP="import_map_prod.json"
+	export SN_IMPORT_MAP="import_map.json"
 fi
 
-$cmd --import-map ./$SN_IMPORT_MAP mod.ts ${args[@]}
+eval $cmd --import-map ./$SN_IMPORT_MAP mod.ts $args
