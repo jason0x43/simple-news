@@ -1,4 +1,4 @@
-import { React } from "../deps.ts";
+import React from "react";
 import { className } from "../util.ts";
 import { Feed, FeedStats, User, UserConfig } from "../../types.ts";
 import { Settings } from "../types.ts";

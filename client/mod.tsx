@@ -1,4 +1,5 @@
-import { React, ReactDOM } from "./deps.ts";
+import React from "react";
+import ReactDOM from "react-dom";
 import App from "./App.tsx";
 import "../global.ts";
 import initReloader from "./reload.ts";

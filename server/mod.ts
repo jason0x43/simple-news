@@ -62,10 +62,13 @@ async function buildClient(): Promise<string> {
     check: false,
     compilerOptions: {
       target: "esnext",
-      inlineSourceMap: true,
       lib: ["dom", "dom.iterable", "dom.asynciterable", "deno.ns"],
     },
   };
+
+  if (Deno.env.get("SN_MODE") == "dev") {
+    emitOptions.compilerOptions!.inlineSourceMap = true;
+  }
 
   const importMap = Deno.env.get("SN_IMPORT_MAP");
   if (importMap) {

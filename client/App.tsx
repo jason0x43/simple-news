@@ -1,4 +1,4 @@
-import { React } from "./deps.ts";
+import React from "react";
 import { ContextMenuProvider } from "./components/ContextMenu.tsx";
 import Feeds from "./components/Feeds.tsx";
 import Articles from "./components/Articles.tsx";

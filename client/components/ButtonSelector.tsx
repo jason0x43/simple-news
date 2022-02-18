@@ -1,4 +1,4 @@
-import { React } from "../deps.ts";
+import React from "react";
 import Button from "./Button.tsx";
 
 export interface ButtonSelectorProps {

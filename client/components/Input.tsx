@@ -1,4 +1,4 @@
-import { React } from "../deps.ts";
+import React from "react";
 import { className } from "../util.ts";
 
 export interface InputProps {

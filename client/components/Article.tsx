@@ -1,8 +1,6 @@
-import { React } from "../deps.ts";
+import React, { useEffect, useRef } from "react";
 import { Article } from "../../types.ts";
 import { unescapeHtml } from "../../util.ts";
-
-const { useEffect, useRef } = React;
 
 export interface ArticleProps {
   article: Article;

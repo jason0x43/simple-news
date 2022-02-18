@@ -1,4 +1,4 @@
-import { React } from "../deps.ts";
+import React from "react";
 import { User } from "../../types.ts";
 
 export interface HeaderProps {

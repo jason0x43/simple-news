@@ -1,5 +1,4 @@
-import { React } from './deps.ts';
-const { useCallback, useEffect, useRef, useState } = React;
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export default function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(false);
