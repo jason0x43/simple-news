@@ -85,7 +85,12 @@ async function buildClient(): Promise<string> {
     log.warning(Deno.formatDiagnostics(diagnostics));
   }
 
-  return files["deno:///bundle.js"];
+  const bundle = files["deno:///bundle.js"];
+
+  const formatter = new Intl.NumberFormat('en-US');
+  log.debug(`Bundle is ${formatter.format(bundle.length)} bytes`);
+
+  return bundle;
 }
 
 async function buildStyles(): Promise<string> {
