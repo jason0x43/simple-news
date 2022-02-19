@@ -27,7 +27,7 @@ export type ArticlesState = {
   feeds: Feed[] | undefined;
   articles: ArticleHeading[];
   feedStats: FeedStats | undefined;
-  userArticles: { [articleId: number]: UserArticle };
+  userArticles: { [articleId: string]: UserArticle };
 };
 
 const shouldLogout = (error: Error) =>

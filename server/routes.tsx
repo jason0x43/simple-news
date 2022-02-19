@@ -16,7 +16,7 @@ import {
   isUserPassword,
   updateUserArticles,
 } from "./database/mod.ts";
-import { AppState, LoginRequest, UpdateUserArticleRequest } from "../types.ts";
+import { AppState, LoginRequest, UpdateUserArticleRequest, UserArticle } from "../types.ts";
 import App from "../client/App.tsx";
 import { formatArticles, refreshFeeds } from "./feed.ts";
 import {
@@ -332,7 +332,10 @@ export function createRouter(
         articles,
         feeds,
         feedStats,
-        userArticles,
+        userArticles: userArticles.reduce((all, article) => {
+          all[article.articleId] = article;
+          return all;
+        }, {} as { [key: string]: UserArticle })
       },
     });
   });
