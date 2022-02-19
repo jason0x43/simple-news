@@ -11,9 +11,9 @@ import { toObject } from "./util.ts";
 
 export type AppState = {
   settings: Settings;
-  feeds: Feed[] | undefined;
   sidebarActive: boolean;
   updating: boolean;
+  feeds: Feed[] | undefined;
   articles: ArticleHeading[];
   feedStats: FeedStats | undefined;
   userArticles: { [articleId: number]: UserArticle };

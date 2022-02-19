@@ -12,6 +12,10 @@
 
     "react": "https://esm.sh/react@17.0.2?dev&pin=v66",
     "react-dom": "https://esm.sh/react-dom@17.0.2?dev&pin=v66",
-    "react-dom-server": "https://esm.sh/react-dom@17.0.2/server?dev&pin=v66"
+    "react-dom-server": "https://esm.sh/react-dom@17.0.2/server?dev&pin=v66",
+
+    "@reduxjs/toolkit": "https://esm.sh/@reduxjs/toolkit@1.7.2?dev&pin=v66",
+    "react-redux": "https://esm.sh/react-redux@7.2.6?dev&pin=v66",
+    "redux": "https://esm.sh/redux@4.1.2?dev&pin=v66"
   }
 }

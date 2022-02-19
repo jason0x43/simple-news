@@ -1,18 +1,18 @@
 import React from "react";
-import { User } from "../../types.ts";
+import { useAppDispatch, useAppSelector } from "../store/mod.ts";
+import { selectFeedsTitle, toggleSidebarActive } from "../store/ui.ts";
+import { selectUser } from "../store/user.ts";
 
-export interface HeaderProps {
-  user: User;
-  onShowSidebar: () => void;
-  title?: string;
-}
-
-const Header: React.FC<HeaderProps> = (props) => {
-  const { user, onShowSidebar, title } = props;
+const Header: React.FC = () => {
+  const title = useAppSelector(selectFeedsTitle);
+  const user = useAppSelector(selectUser);
+  const dispatch = useAppDispatch();
 
   return (
     <header className="Header">
-      <div className="Header-left" onClick={onShowSidebar}>
+      <div className="Header-left" onClick={() => {
+        dispatch(toggleSidebarActive());
+      }}>
         <svg width="22" height="22" version="2.0">
           <use href="#sn-logo" />
         </svg>
@@ -21,7 +21,7 @@ const Header: React.FC<HeaderProps> = (props) => {
       <div className="Header-center">
         <h2>{title}</h2>
       </div>
-      <div className="Header-right">{user.name}</div>
+      <div className="Header-right">{user?.name}</div>
     </header>
   );
 };

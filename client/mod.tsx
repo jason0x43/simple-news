@@ -1,12 +1,17 @@
 import React from "react";
 import ReactDOM from "react-dom";
+import { Provider } from "react-redux";
 import App from "./App.tsx";
-import "../global.ts";
+import { createStore } from "./store/mod.ts";
 import initReloader from "./reload.ts";
+
+const store = createStore(globalThis.__PRELOADED_STATE__);
 
 ReactDOM.hydrate(
   <React.StrictMode>
-    <App {...globalThis.__PRELOADED_STATE__} />
+    <Provider store={store}>
+      <App />
+    </Provider>
   </React.StrictMode>,
   document.getElementById("root"),
 );

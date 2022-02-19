@@ -1,11 +1,9 @@
-import {
-  log,
-  Middleware,
-  path,
-  React,
-  ReactDOMServer,
-  Router,
-} from "./deps.ts";
+import * as path from "std/path/mod.ts";
+import { Middleware, Router } from "oak";
+import * as log from "std/log/mod.ts";
+import ReactDOMServer from "react-dom-server";
+import React from "react";
+import { Provider } from "react-redux";
 import {
   getArticle,
   getArticleHeadings,
@@ -19,8 +17,13 @@ import {
   updateUserArticles,
 } from "./database/mod.ts";
 import { AppState, LoginRequest, UpdateUserArticleRequest } from "../types.ts";
-import App, { AppProps } from "../client/App.tsx";
+import App from "../client/App.tsx";
 import { formatArticles, refreshFeeds } from "./feed.ts";
+import {
+  AppState as ClientAppState,
+  createStore,
+} from "../client/store/mod.ts";
+import { selectFeeds } from "../client/store/articles.ts";
 
 const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);
@@ -46,16 +49,20 @@ export function createRouter(
   init: { client: string; styles: string; dev: boolean | undefined },
 ): Router<AppState> {
   // Render the base HTML
-  const render = (initialState: AppProps) => {
-    const preloadedState = `globalThis.__PRELOADED_STATE__ = ${
-      toString(initialState)
-    };`;
+  const render = (initialState: Partial<ClientAppState>) => {
+    const store = createStore(initialState);
+
     const devMode = `globalThis.__DEV__ = ${init.dev ? "true" : "false"};`;
     const renderedApp = ReactDOMServer.renderToString(
-      <App {...initialState} />,
+      <Provider store={store}>
+        <App />
+      </Provider>,
     );
+    const preloadedState = `globalThis.__PRELOADED_STATE__ = ${
+      toString(store.getState())
+    };`;
 
-    const { feeds } = initialState;
+    const feeds = selectFeeds(store.getState());
     const faviconLinks = feeds?.filter((feed) => feed.icon).map(({ icon }) =>
       icon!
     ).map((icon) => `<link rel="preload" href="${icon}" as="image">`).join(
@@ -318,12 +325,15 @@ export function createRouter(
 
     response.type = "text/html";
     response.body = render({
-      user,
-      selectedFeeds,
-      articles,
-      feeds,
-      feedStats,
-      userArticles,
+      user: {
+        user,
+      },
+      articles: {
+        articles,
+        feeds,
+        feedStats,
+        userArticles,
+      },
     });
   });
 

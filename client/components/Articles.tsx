@@ -7,6 +7,9 @@ import { Settings } from "../types.ts";
 import { className } from "../util.ts";
 import { unescapeHtml } from "../../util.ts";
 import { useWidthObserver } from "../hooks.ts";
+import { useAppDispatch, useAppSelector } from "../store/mod.ts";
+import { selectArticle, selectArticles, selectFeeds, selectUserArticles, setArticlesRead } from "../store/articles.ts";
+import { selectSelectedArticle, selectSelectedFeeds, selectSettings } from "../store/ui.ts";
 
 function getOlderIds(
   articles: ArticleHeading[],
@@ -39,29 +42,14 @@ function getAge(timestamp: number | undefined): string {
   return `${diff.minutes} m`;
 }
 
-export interface ArticlesProps {
-  feeds: Feed[] | undefined;
-  articles: ArticleHeading[];
-  userArticles: { [articleId: number]: UserArticle };
-  settings: Settings;
-  setArticlesRead: (articleIds: number[], read: boolean) => void;
-  selectedFeeds: number[];
-  selectedArticle: Article | undefined;
-  onSelectArticle: (articleId: number | undefined) => void;
-}
-
-const Articles: React.FC<ArticlesProps> = (props) => {
-  const {
-    feeds,
-    articles,
-    onSelectArticle,
-    settings,
-    setArticlesRead,
-    selectedArticle,
-    selectedFeeds,
-    userArticles,
-  } = props;
+const Articles: React.FC = () => {
+  const feeds = useAppSelector(selectFeeds);
+  const articles = useAppSelector(selectArticles);
+  const settings = useAppSelector(selectSettings);
+  const userArticles = useAppSelector(selectUserArticles);
   const updatedArticles = useRef<Set<number>>(new Set());
+  const selectedArticle = useAppSelector(selectSelectedArticle);
+  const selectedFeeds = useAppSelector(selectSelectedFeeds);
   const { hideContextMenu, showContextMenu, contextMenuVisible } =
     useContextMenu();
   const [activeArticle, setActiveArticle] = useState<number | undefined>();
@@ -70,6 +58,7 @@ const Articles: React.FC<ArticlesProps> = (props) => {
   const selectedArticleRef = useRef<HTMLElement | null>(null);
   const [width, setRef, listRef] = useWidthObserver();
   const [visibleCount, setVisibleCount] = useState(0);
+  const dispatch = useAppDispatch();
 
   // Ensure the selected article is added to updatedArticles. This prevents an
   // article that was initially selected after a refresh from disappearing when
@@ -126,8 +115,8 @@ const Articles: React.FC<ArticlesProps> = (props) => {
     }
   }, [contextMenuVisible]);
 
-  const setRead = (articleIds: number[], read: boolean) => {
-    setArticlesRead(articleIds, read);
+  const setRead = async (articleIds: number[], read: boolean) => {
+    await dispatch(setArticlesRead({ articleIds, read }));
     for (const id of articleIds) {
       updatedArticles.current.add(id);
     }
@@ -237,10 +226,9 @@ const Articles: React.FC<ArticlesProps> = (props) => {
                     onClick={() => {
                       hideContextMenu();
                       if (isSelected) {
-                        onSelectArticle(undefined);
+                        dispatch(selectArticle(undefined));
                       } else {
-                        onSelectArticle(article.id);
-                        setRead([article.id], true);
+                        dispatch(selectArticle(article.id));
                       }
                     }}
                     ref={isSelected ? setArticleRef : undefined}

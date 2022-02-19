@@ -1,9 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { className } from "../util.ts";
-import { Feed, FeedStats, User, UserConfig } from "../../types.ts";
+import { FeedStats, UserConfig } from "../../types.ts";
 import { Settings } from "../types.ts";
-
-const { useState } = React;
+import { useAppDispatch, useAppSelector } from "../store/mod.ts";
+import { selectUser } from "../store/user.ts";
+import { selectSelectedFeeds, selectSettings } from "../store/ui.ts";
+import { loadFeeds, selectFeeds, selectFeedStats } from "../store/articles.ts";
 
 function isSelected(feedIds: number[], selected: number[] | undefined) {
   if (!selected) {
@@ -24,19 +26,14 @@ const getArticleCount = (
       : stats.total);
   }, 0);
 
-export interface FeedsProps {
-  settings: Settings;
-  user: User;
-  feeds: Feed[] | undefined;
-  feedStats: FeedStats | undefined;
-  selectedFeeds: number[];
-  onSelectFeeds: (feedIds: number[]) => void;
-}
-
-const Feeds: React.FC<FeedsProps> = (props) => {
-  const { settings, user, feeds, feedStats, selectedFeeds, onSelectFeeds } =
-    props;
+const Feeds: React.FC = () => {
   const [expanded, setExpanded] = useState<{ [title: string]: boolean }>({});
+  const user = useAppSelector(selectUser);
+  const settings = useAppSelector(selectSettings);
+  const feeds = useAppSelector(selectFeeds);
+  const feedStats = useAppSelector(selectFeedStats);
+  const selectedFeeds = useAppSelector(selectSelectedFeeds);
+  const dispatch = useAppDispatch();
 
   return (
     <ul className="Feeds">
@@ -65,7 +62,7 @@ const Feeds: React.FC<FeedsProps> = (props) => {
             />
             <span
               className="Feeds-title"
-              onClick={() => onSelectFeeds(group.feeds)}
+              onClick={() => dispatch(loadFeeds(group.feeds))}
             >
               {group.title}
             </span>
@@ -85,7 +82,7 @@ const Feeds: React.FC<FeedsProps> = (props) => {
                   "Feeds-selected": isSelected([feed], selectedFeeds),
                 })}
                 key={feed}
-                onClick={() => onSelectFeeds([feed])}
+                onClick={() => dispatch(loadFeeds([feed]))}
               >
                 <div className="Feeds-title">
                   {feeds?.find((f) => f.id === feed)?.title}
