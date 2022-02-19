@@ -63,8 +63,6 @@ const Articles: React.FC = () => {
   const [visibleCount, setVisibleCount] = useState(0);
   const dispatch = useAppDispatch();
 
-  console.log("rendering with userArticles", Object.keys(userArticles));
-
   // Clear the updated articles list if the selected feed set is changed.
   useEffect(() => {
     selectedArticleRef.current = null;
@@ -94,11 +92,6 @@ const Articles: React.FC = () => {
       settings.articleFilter === "saved" && userArticle?.saved;
   });
 
-  console.log(
-    "rendering with filteredArticles",
-    filteredArticles.map(({ id }) => id),
-  );
-
   useEffect(() => {
     const selectedIndex = filteredArticles.findIndex(({ id }) =>
       id === selectedArticle?.id
@@ -124,6 +117,7 @@ const Articles: React.FC = () => {
     if (remaining < 500 && visibleCount < filteredArticles.length) {
       setVisibleCount(Math.min(visibleCount + 50, filteredArticles.length));
     }
+    hideContextMenu();
   };
 
   const handleMenuClick = (
@@ -181,10 +175,10 @@ const Articles: React.FC = () => {
   };
 
   const setArticleRef = (node: HTMLLIElement | null) => {
-    if (node) {
+    if (node && node !== selectedArticleRef.current) {
       selectedArticleRef.current = node;
+      node.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
-    node?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   };
 
   return (
