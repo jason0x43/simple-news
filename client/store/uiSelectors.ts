@@ -1,7 +1,7 @@
-import type { AppState } from './mod.ts';
-import { createSelector } from '@reduxjs/toolkit';
-import { selectUser } from './userSelectors.ts';
-import { selectFeeds } from './articlesSelectors.ts';
+import type { AppState } from "./mod.ts";
+import { createSelector } from "@reduxjs/toolkit";
+import { selectUser } from "./userSelectors.ts";
+import { selectFeeds } from "./articlesSelectors.ts";
 
 export const selectSelectedArticle = (state: AppState) =>
   state.ui.selectedArticle;
@@ -9,6 +9,8 @@ export const selectSelectedFeeds = (state: AppState) => state.ui.selectedFeeds;
 export const selectSettings = (state: AppState) => state.ui.settings;
 export const selectSidebarActive = (state: AppState) => state.ui.sidebarActive;
 export const selectUpdating = (state: AppState) => state.ui.updating;
+export const selectUpdatedArticles = (state: AppState) =>
+  state.ui.updatedArticles;
 
 export const selectFeedsTitle = createSelector(
   selectUser,

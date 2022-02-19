@@ -2,12 +2,15 @@ import React, { useEffect, useRef, useState } from "react";
 import * as datetime from "std/datetime/mod.ts";
 import { useContextMenu } from "./ContextMenu.tsx";
 import Button from "./Button.tsx";
-import { ArticleHeading } from "../../types.ts";
 import { className } from "../util.ts";
 import { unescapeHtml } from "../../util.ts";
 import { useWidthObserver } from "../hooks.ts";
 import { useAppDispatch, useAppSelector } from "../store/mod.ts";
-import { selectArticle, setArticlesRead } from "../store/articles.ts";
+import {
+  selectArticle,
+  setArticlesRead,
+  setOlderArticlesRead,
+} from "../store/articles.ts";
 import {
   selectArticles,
   selectFeeds,
@@ -17,16 +20,8 @@ import {
   selectSelectedArticle,
   selectSelectedFeeds,
   selectSettings,
+  selectUpdatedArticles,
 } from "../store/uiSelectors.ts";
-
-function getOlderIds(
-  articles: ArticleHeading[],
-  olderThan: number,
-) {
-  return articles.filter(({ published }) => published < olderThan).map((
-    { id },
-  ) => id);
-}
 
 function getAge(timestamp: number | undefined): string {
   if (timestamp === undefined) {
@@ -55,7 +50,7 @@ const Articles: React.FC = () => {
   const articles = useAppSelector(selectArticles);
   const settings = useAppSelector(selectSettings);
   const userArticles = useAppSelector(selectUserArticles);
-  const updatedArticles = useRef<Set<number>>(new Set());
+  const updatedArticles = useAppSelector(selectUpdatedArticles);
   const selectedArticle = useAppSelector(selectSelectedArticle);
   const selectedFeeds = useAppSelector(selectSelectedFeeds);
   const { hideContextMenu, showContextMenu, contextMenuVisible } =
@@ -68,18 +63,10 @@ const Articles: React.FC = () => {
   const [visibleCount, setVisibleCount] = useState(0);
   const dispatch = useAppDispatch();
 
-  // Ensure the selected article is added to updatedArticles. This prevents an
-  // article that was initially selected after a refresh from disappearing when
-  // deselected.
-  useEffect(() => {
-    if (selectedArticle) {
-      updatedArticles.current.add(selectedArticle.id);
-    }
-  }, [selectedArticle]);
+  console.log("rendering with userArticles", Object.keys(userArticles));
 
   // Clear the updated articles list if the selected feed set is changed.
   useEffect(() => {
-    updatedArticles.current.clear();
     selectedArticleRef.current = null;
 
     if (listRef.current) {
@@ -102,10 +89,15 @@ const Articles: React.FC = () => {
     return article.articleId === selectedArticle?.articleId ||
       settings.articleFilter === "all" ||
       (settings.articleFilter === "unread" && (
-        !userArticle?.read || updatedArticles.current.has(article.id)
+        !userArticle?.read || updatedArticles.includes(article.id)
       )) ||
       settings.articleFilter === "saved" && userArticle?.saved;
   });
+
+  console.log(
+    "rendering with filteredArticles",
+    filteredArticles.map(({ id }) => id),
+  );
 
   useEffect(() => {
     const selectedIndex = filteredArticles.findIndex(({ id }) =>
@@ -122,13 +114,6 @@ const Articles: React.FC = () => {
       setActiveArticle(undefined);
     }
   }, [contextMenuVisible]);
-
-  const setRead = async (articleIds: number[], read: boolean) => {
-    await dispatch(setArticlesRead({ articleIds, read }));
-    for (const id of articleIds) {
-      updatedArticles.current.add(id);
-    }
-  };
 
   const handleListScroll = (
     event: React.UIEvent<HTMLDivElement>,
@@ -168,14 +153,10 @@ const Articles: React.FC = () => {
         if (/older/.test(item)) {
           const article = filteredArticles.find(({ id }) => id === articleId)!;
           if (article) {
-            const olderIds = getOlderIds(
-              filteredArticles,
-              article.published,
-            );
-            setRead(olderIds, read);
+            dispatch(setOlderArticlesRead({ articleId, read }));
           }
         } else {
-          setRead([articleId], read);
+          dispatch(setArticlesRead({ articleIds: [articleId], read }));
         }
       },
     });
@@ -278,7 +259,9 @@ const Articles: React.FC = () => {
                   onClick={() => {
                     const ids = renderedArticles.map(({ id }) => id);
                     if (ids) {
-                      setRead(ids, true);
+                      dispatch(
+                        setArticlesRead({ articleIds: ids, read: true }),
+                      );
                     }
                   }}
                   label="Mark all read"

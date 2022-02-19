@@ -6,7 +6,12 @@ import {
 import type { Article } from "../../types.ts";
 import type { Settings } from "../types.ts";
 import { loadValue, storeValue } from "../util.ts";
-import { loadFeeds, selectArticle, updateFeeds } from "./articles.ts";
+import {
+  loadFeeds,
+  selectArticle,
+  setArticlesRead,
+  updateFeeds,
+} from "./articles.ts";
 import type { AppDispatch, AppState } from "./mod.ts";
 import {
   selectSelectedArticle,
@@ -20,6 +25,7 @@ export type UiState = {
   settings: Settings;
   sidebarActive: boolean;
   updating: boolean;
+  updatedArticles: number[];
 };
 
 export const restoreUiState = createAsyncThunk<
@@ -43,6 +49,7 @@ export const restoreUiState = createAsyncThunk<
 
     if (selectedArticle !== undefined) {
       dispatch(setSelectedArticle(selectedArticle));
+      dispatch(addUpdatedArticle(selectedArticle.id));
     }
   },
 );
@@ -53,6 +60,7 @@ const initialState: UiState = {
   settings: { articleFilter: "unread" },
   sidebarActive: false,
   updating: false,
+  updatedArticles: [],
 };
 
 export const uiSlice = createSlice({
@@ -99,6 +107,13 @@ export const uiSlice = createSlice({
     toggleSidebarActive: (state) => {
       state.sidebarActive = !state.sidebarActive;
     },
+
+    addUpdatedArticle: (state, action: PayloadAction<number>) => {
+      state.updatedArticles = [
+        ...state.updatedArticles,
+        action.payload,
+      ];
+    },
   },
 
   extraReducers: (builder) => {
@@ -117,6 +132,7 @@ export const uiSlice = createSlice({
     });
     builder.addCase(loadFeeds.fulfilled, (state, { payload }) => {
       state.selectedFeeds = payload ?? [];
+      state.updatedArticles = [];
     });
     builder.addCase(loadFeeds.rejected, (state) => {
       state.selectedFeeds = [];
@@ -124,11 +140,28 @@ export const uiSlice = createSlice({
 
     builder.addCase(selectArticle.fulfilled, (state, { payload }) => {
       state.selectedArticle = payload;
+      if (payload) {
+        state.updatedArticles = [
+          ...state.updatedArticles,
+          payload.id,
+        ];
+      }
+    });
+
+    builder.addCase(setArticlesRead.fulfilled, (state, { payload }) => {
+      if (payload) {
+        state.updatedArticles = [
+          ...state.updatedArticles,
+          ...payload,
+        ];
+      }
     });
   },
 });
 
 export default uiSlice.reducer;
+
+const { addUpdatedArticle } = uiSlice.actions;
 
 export const {
   setSelectedArticle,

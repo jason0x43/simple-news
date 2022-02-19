@@ -20,6 +20,7 @@ import {
   refreshFeeds,
   setRead,
 } from "../api.ts";
+import { selectArticles, selectUserArticles } from "./articlesSelectors.ts";
 import type { AppDispatch, AppState } from "./mod.ts";
 import { selectSelectedFeeds } from "./uiSelectors.ts";
 
@@ -130,7 +131,7 @@ export const updateFeeds = createAsyncThunk<
 );
 
 export const setArticlesRead = createAsyncThunk<
-  void,
+  number[] | undefined,
   { articleIds: number[]; read: boolean },
   { dispatch: AppDispatch }
 >(
@@ -141,12 +142,32 @@ export const setArticlesRead = createAsyncThunk<
       const feedStats = await getFeedStats();
       dispatch(setUserArticlesRead({ ids: articleIds, read }));
       dispatch(setFeedStats(feedStats));
+      return articleIds;
     } catch (error) {
       if (shouldLogout(error)) {
         logout();
       } else {
         console.warn(`Error settings articles read: ${error.message}`);
       }
+    }
+  },
+);
+
+export const setOlderArticlesRead = createAsyncThunk<
+  void,
+  { articleId: number; read: boolean },
+  { dispatch: AppDispatch; state: AppState }
+>(
+  "articles/setOlderArticlesRead",
+  ({ articleId, read }, { dispatch, getState }) => {
+    const articles = selectArticles(getState());
+    const userArticles = selectUserArticles(getState());
+    const index = articles.findIndex((article) => article.id === articleId);
+    if (index !== -1) {
+      const olderIds = articles.slice(0, index)
+        .filter(({ id }) => !userArticles[id]?.read)
+        .map(({ id }) => id);
+      dispatch(setArticlesRead({ articleIds: olderIds, read }));
     }
   },
 );
@@ -210,9 +231,16 @@ export const articlesSlice = createSlice({
 
     setUserArticles: (
       state,
-      action: PayloadAction<ArticlesState["userArticles"]>,
+      action: PayloadAction<ArticlesState["userArticles"] | UserArticle[]>,
     ) => {
-      state.userArticles = action.payload;
+      if (Array.isArray(action.payload)) {
+        state.userArticles = action.payload.reduce((all, article) => {
+          all[article.articleId] = article;
+          return all;
+        }, {} as { [key: string]: UserArticle })
+      } else {
+        state.userArticles = action.payload;
+      }
     },
 
     setUserArticlesRead: (
