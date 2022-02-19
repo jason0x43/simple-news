@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import * as datetime from "std/datetime/mod.ts";
 import { useContextMenu } from "./ContextMenu.tsx";
 import Button from "./Button.tsx";
@@ -62,6 +62,7 @@ const Articles: React.FC = () => {
   const [width, setRef, listRef] = useWidthObserver();
   const [visibleCount, setVisibleCount] = useState(0);
   const dispatch = useAppDispatch();
+  const selectedFeedsRef = useRef<number[]>(selectedFeeds);
 
   // Clear the updated articles list if the selected feed set is changed.
   useEffect(() => {
@@ -77,28 +78,42 @@ const Articles: React.FC = () => {
   useEffect(() => {
     selectedArticleRef.current?.scrollIntoView({
       behavior: "smooth",
-      block: "nearest",
+      block: "center",
     });
   }, [width]);
 
-  const filteredArticles = articles.filter((article) => {
-    const userArticle = userArticles[article.id];
+  const filteredArticles = useMemo(() => {
+    if (settings.articleFilter === "all") {
+      return articles;
+    }
 
-    return article.articleId === selectedArticle?.articleId ||
-      settings.articleFilter === "all" ||
-      (settings.articleFilter === "unread" && (
-        !userArticle?.read || updatedArticles.includes(article.id)
-      )) ||
-      settings.articleFilter === "saved" && userArticle?.saved;
-  });
+    if (settings.articleFilter === "saved") {
+      return articles.filter((article) => userArticles[article.id]?.saved);
+    }
+
+    return articles.filter((article) =>
+      article.articleId === selectedArticle?.articleId ||
+      !userArticles[article.id]?.read ||
+      updatedArticles.includes(article.id)
+    );
+  }, [
+    articles,
+    userArticles,
+    selectedArticle,
+    settings.articleFilter,
+    updatedArticles,
+  ]);
 
   useEffect(() => {
-    const selectedIndex = filteredArticles.findIndex(({ id }) =>
-      id === selectedArticle?.id
-    );
-    const targetIndex = Math.max(selectedIndex, 0) + 50;
-    setVisibleCount(Math.min(filteredArticles.length, targetIndex));
-  }, [filteredArticles.length, selectedArticle]);
+    if (selectedFeedsRef.current !== selectedFeeds) {
+      selectedFeedsRef.current = selectedFeeds;
+      const selectedIndex = filteredArticles.findIndex(({ id }) =>
+        id === selectedArticle?.id
+      );
+      const targetIndex = Math.max(selectedIndex, 0) + 20;
+      setVisibleCount(Math.min(filteredArticles.length, targetIndex));
+    }
+  }, [selectedFeeds, filteredArticles, selectedArticle]);
 
   const renderedArticles = filteredArticles.slice(0, visibleCount);
 
@@ -115,7 +130,7 @@ const Articles: React.FC = () => {
     const { clientHeight, scrollHeight, scrollTop } = target;
     const remaining = scrollHeight - (scrollTop + clientHeight);
     if (remaining < 500 && visibleCount < filteredArticles.length) {
-      setVisibleCount(Math.min(visibleCount + 50, filteredArticles.length));
+      setVisibleCount(Math.min(visibleCount + 20, filteredArticles.length));
     }
     hideContextMenu();
   };
