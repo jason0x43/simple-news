@@ -1,23 +1,21 @@
 import {
   createAsyncThunk,
-  createSelector,
   createSlice,
-  PayloadAction,
+  type PayloadAction,
 } from "@reduxjs/toolkit";
-import { Article, Article as ArticleRecord } from "../../types.ts";
-import { Settings } from "../types.ts";
+import type { Article } from "../../types.ts";
+import type { Settings } from "../types.ts";
 import { loadValue, storeValue } from "../util.ts";
+import { loadFeeds, selectArticle, updateFeeds } from "./articles.ts";
+import type { AppDispatch, AppState } from "./mod.ts";
 import {
-  loadFeeds,
-  selectArticle,
-  selectFeeds,
-  updateFeeds,
-} from "./articles.ts";
-import { AppDispatch, AppState } from "./mod.ts";
-import { selectUser } from "./user.ts";
+  selectSelectedArticle,
+  selectSelectedFeeds,
+  selectSidebarActive,
+} from "./uiSelectors.ts";
 
 export type UiState = {
-  selectedArticle: ArticleRecord | undefined;
+  selectedArticle: Article | undefined;
   selectedFeeds: number[];
   settings: Settings;
   sidebarActive: boolean;
@@ -56,8 +54,6 @@ const initialState: UiState = {
   sidebarActive: false,
   updating: false,
 };
-
-console.log("initial state:", initialState);
 
 export const uiSlice = createSlice({
   name: "ui",
@@ -106,10 +102,6 @@ export const uiSlice = createSlice({
   },
 
   extraReducers: (builder) => {
-    builder.addCase(selectArticle.fulfilled, (state, { payload }) => {
-      state.selectedArticle = payload;
-    });
-
     builder.addCase(updateFeeds.pending, (state) => {
       state.updating = true;
     });
@@ -129,6 +121,10 @@ export const uiSlice = createSlice({
     builder.addCase(loadFeeds.rejected, (state) => {
       state.selectedFeeds = [];
     });
+
+    builder.addCase(selectArticle.fulfilled, (state, { payload }) => {
+      state.selectedArticle = payload;
+    });
   },
 });
 
@@ -142,45 +138,6 @@ export const {
   setUpdating,
   toggleSidebarActive,
 } = uiSlice.actions;
-
-export const selectSelectedArticle = (state: AppState) =>
-  state.ui.selectedArticle;
-export const selectSelectedFeeds = (state: AppState) => state.ui.selectedFeeds;
-export const selectSettings = (state: AppState) => state.ui.settings;
-export const selectSidebarActive = (state: AppState) => state.ui.sidebarActive;
-export const selectUpdating = (state: AppState) => state.ui.updating;
-
-export const selectFeedsTitle = createSelector(
-  selectUser,
-  selectFeeds,
-  selectSelectedFeeds,
-  (user, feeds, selectedFeeds) => {
-    if (
-      !selectedFeeds || selectedFeeds.length === 0 || !feeds ||
-      !user?.config?.feedGroups
-    ) {
-      return undefined;
-    }
-
-    if (selectedFeeds.length === 1) {
-      for (const feed of feeds) {
-        if (feed.id === selectedFeeds[0]) {
-          return feed.title;
-        }
-      }
-    } else if (selectedFeeds.length > 1) {
-      for (const group of user?.config?.feedGroups) {
-        for (const feed of group.feeds) {
-          if (feed === selectedFeeds[0]) {
-            return group.title;
-          }
-        }
-      }
-    }
-
-    return undefined;
-  },
-);
 
 const isDifferent = (
   oldState: AppState,

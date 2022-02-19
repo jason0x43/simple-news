@@ -1,5 +1,9 @@
-import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import {
+  createAsyncThunk,
+  createSlice,
+  type PayloadAction,
+} from "@reduxjs/toolkit";
+import type {
   Article,
   ArticleHeading,
   Feed,
@@ -16,8 +20,15 @@ import {
   refreshFeeds,
   setRead,
 } from "../api.ts";
-import { AppDispatch, AppState } from "./mod.ts";
-import { selectSelectedFeeds } from "./ui.ts";
+import type { AppDispatch, AppState } from "./mod.ts";
+import { selectSelectedFeeds } from "./uiSelectors.ts";
+
+export type ArticlesState = {
+  feeds: Feed[] | undefined;
+  articles: ArticleHeading[];
+  feedStats: FeedStats | undefined;
+  userArticles: { [articleId: number]: UserArticle };
+};
 
 const shouldLogout = (error: Error) =>
   isResponseError(error) && error.status === 403;
@@ -63,7 +74,7 @@ export const loadFeeds = createAsyncThunk<
 >(
   "articles/loadFeeds",
   async (feedIds, { dispatch }) => {
-    console.log('loading feeds', feedIds);
+    console.log("loading feeds", feedIds);
     try {
       const [articles, userArticles, feeds] = await Promise.all([
         getArticleHeadings(feedIds),
@@ -127,8 +138,8 @@ export const setArticlesRead = createAsyncThunk<
   async ({ articleIds, read }, { dispatch }) => {
     try {
       await setRead(articleIds, read);
-      dispatch(setUserArticlesRead({ ids: articleIds, read }));
       const feedStats = await getFeedStats();
+      dispatch(setUserArticlesRead({ ids: articleIds, read }));
       dispatch(setFeedStats(feedStats));
     } catch (error) {
       if (shouldLogout(error)) {
@@ -150,9 +161,7 @@ export const selectArticle = createAsyncThunk<
     if (articleId) {
       try {
         const article = await getArticle(articleId);
-        await dispatch(
-          setArticlesRead({ articleIds: [articleId], read: true }),
-        );
+        dispatch(setArticlesRead({ articleIds: [articleId], read: true }));
         return article;
       } catch (error) {
         if (shouldLogout(error)) {
@@ -164,13 +173,6 @@ export const selectArticle = createAsyncThunk<
     }
   },
 );
-
-export type ArticlesState = {
-  feeds: Feed[] | undefined;
-  articles: ArticleHeading[];
-  feedStats: FeedStats | undefined;
-  userArticles: { [articleId: number]: UserArticle };
-};
 
 const initialState: ArticlesState = {
   feeds: undefined,
@@ -238,9 +240,3 @@ const {
   setUserArticles,
   setUserArticlesRead,
 } = articlesSlice.actions;
-
-export const selectFeeds = (state: AppState) => state.articles.feeds;
-export const selectArticles = (state: AppState) => state.articles.articles;
-export const selectFeedStats = (state: AppState) => state.articles.feedStats;
-export const selectUserArticles = (state: AppState) =>
-  state.articles.userArticles;

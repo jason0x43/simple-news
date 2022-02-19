@@ -23,7 +23,7 @@ import {
   AppState as ClientAppState,
   createStore,
 } from "../client/store/mod.ts";
-import { selectFeeds } from "../client/store/articles.ts";
+import { selectFeeds } from "../client/store/articlesSelectors.ts";
 
 const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);

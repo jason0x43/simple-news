@@ -20,16 +20,15 @@ import { className } from "./util.ts";
 import { useAppVisibility } from "./hooks.ts";
 import { useAppDispatch, useAppSelector } from "./store/mod.ts";
 import {
-restoreUiState,
   selectSelectedArticle,
   selectSelectedFeeds,
   selectSettings,
   selectSidebarActive,
   selectUpdating,
-  setSelectedArticle,
-} from "./store/ui.ts";
+} from "./store/uiSelectors.ts";
 import { loadArticles, updateFeeds } from "./store/articles.ts";
-import { selectUser } from "./store/user.ts";
+import { selectUser } from "./store/userSelectors.ts";
+import { restoreUiState, setSelectedArticle } from "./store/ui.ts";
 
 export function getFeedsTitle(
   user: User,

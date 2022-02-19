@@ -1,6 +1,5 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { User } from "../../types.ts";
-import { AppState } from "./mod.ts";
+import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import type { User } from "../../types.ts";
 
 export type UserState = {
   user: User | undefined;
@@ -28,6 +27,3 @@ export const userSlice = createSlice({
 export default userSlice.reducer;
 
 export const { setUser } = userSlice.actions;
-
-export const selectUser = (state: AppState) => state.user.user;
-

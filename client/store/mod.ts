@@ -1,5 +1,13 @@
-import { combineReducers, configureStore, Middleware } from "@reduxjs/toolkit";
-import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
+import {
+  combineReducers,
+  configureStore,
+  type Middleware,
+} from "@reduxjs/toolkit";
+import {
+  type TypedUseSelectorHook,
+  useDispatch,
+  useSelector,
+} from "react-redux";
 import ui, { saveUiState } from "./ui.ts";
 import articles from "./articles.ts";
 import user from "./user.ts";

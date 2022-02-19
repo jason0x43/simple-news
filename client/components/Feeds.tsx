@@ -3,9 +3,10 @@ import { className } from "../util.ts";
 import { FeedStats, UserConfig } from "../../types.ts";
 import { Settings } from "../types.ts";
 import { useAppDispatch, useAppSelector } from "../store/mod.ts";
-import { selectUser } from "../store/user.ts";
-import { selectSelectedFeeds, selectSettings } from "../store/ui.ts";
-import { loadFeeds, selectFeeds, selectFeedStats } from "../store/articles.ts";
+import { selectUser } from "../store/userSelectors.ts";
+import { selectSelectedFeeds, selectSettings } from "../store/uiSelectors.ts";
+import { loadFeeds } from "../store/articles.ts";
+import { selectFeeds, selectFeedStats } from "../store/articlesSelectors.ts";
 
 function isSelected(feedIds: number[], selected: number[] | undefined) {
   if (!selected) {

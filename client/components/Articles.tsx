@@ -2,14 +2,22 @@ import React, { useEffect, useRef, useState } from "react";
 import * as datetime from "std/datetime/mod.ts";
 import { useContextMenu } from "./ContextMenu.tsx";
 import Button from "./Button.tsx";
-import { Article, ArticleHeading, Feed, UserArticle } from "../../types.ts";
-import { Settings } from "../types.ts";
+import { ArticleHeading } from "../../types.ts";
 import { className } from "../util.ts";
 import { unescapeHtml } from "../../util.ts";
 import { useWidthObserver } from "../hooks.ts";
 import { useAppDispatch, useAppSelector } from "../store/mod.ts";
-import { selectArticle, selectArticles, selectFeeds, selectUserArticles, setArticlesRead } from "../store/articles.ts";
-import { selectSelectedArticle, selectSelectedFeeds, selectSettings } from "../store/ui.ts";
+import { selectArticle, setArticlesRead } from "../store/articles.ts";
+import {
+  selectArticles,
+  selectFeeds,
+  selectUserArticles,
+} from "../store/articlesSelectors.ts";
+import {
+  selectSelectedArticle,
+  selectSelectedFeeds,
+  selectSettings,
+} from "../store/uiSelectors.ts";
 
 function getOlderIds(
   articles: ArticleHeading[],
