@@ -56,15 +56,15 @@ const Article: React.FC = () => {
     }
 
     const newX = event.touches[0].clientX;
-    const delta = newX - touchStart.current;
 
-    if (delta / width.current! > 0.75) {
+    if (newX / width.current! > 0.5) {
       // The user has dragged the article more than 3/4 of the way across the
       // screen -- assume they want to close it (and do that).
       handleTouchEnd();
       setClassName('Article');
     } else {
       // The user is dragging the article horizontally -- update its position.
+      const delta = newX - touchStart.current;
       articleRef.current!.style.transform = `translate3d(${delta}px, 0, 0)`;
     }
   };
