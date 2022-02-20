@@ -108,6 +108,7 @@ html {
   overflow: hidden;
   color: var(--foreground);
   position: fixed;
+  width: 100%;
 }
 
 .App a {
