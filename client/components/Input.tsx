@@ -1,4 +1,4 @@
-import React from "react";
+import React, { type FC } from "react";
 import { className } from "../util.ts";
 
 export interface InputProps {
@@ -10,7 +10,7 @@ export interface InputProps {
   type?: "text" | "password";
 }
 
-const Input: React.FC<InputProps> = (props) => {
+const Input: FC<InputProps> = (props) => {
   const {
     className: extraClass,
     placeholder,

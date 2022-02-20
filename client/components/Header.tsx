@@ -1,10 +1,10 @@
-import React from "react";
+import React, { type FC } from "react";
 import { useAppDispatch, useAppSelector } from "../store/mod.ts";
 import { toggleSidebarActive } from "../store/ui.ts";
 import { selectFeedsTitle } from "../store/uiSelectors.ts";
 import { selectUser } from "../store/userSelectors.ts";
 
-const Header: React.FC = () => {
+const Header: FC = () => {
   const title = useAppSelector(selectFeedsTitle);
   const user = useAppSelector(selectUser);
   const dispatch = useAppDispatch();

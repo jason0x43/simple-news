@@ -1,4 +1,12 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  type FC,
+  type TouchEvent,
+  type UIEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import * as datetime from "std/datetime/mod.ts";
 import { useContextMenu } from "./ContextMenu.tsx";
 import Button from "./Button.tsx";
@@ -45,7 +53,7 @@ function getAge(timestamp: number | undefined): string {
   return `${diff.minutes} m`;
 }
 
-const Articles: React.FC = () => {
+const Articles: FC = () => {
   const feeds = useAppSelector(selectFeeds);
   const articles = useAppSelector(selectArticles);
   const settings = useAppSelector(selectSettings);
@@ -124,7 +132,7 @@ const Articles: React.FC = () => {
   }, [contextMenuVisible]);
 
   const handleListScroll = (
-    event: React.UIEvent<HTMLDivElement>,
+    event: UIEvent<HTMLDivElement>,
   ) => {
     const target = event.nativeEvent.currentTarget! as HTMLDivElement;
     const { clientHeight, scrollHeight, scrollTop } = target;
@@ -176,7 +184,7 @@ const Articles: React.FC = () => {
     event.stopPropagation?.();
   };
 
-  const handleTouchStart = (event: React.TouchEvent<HTMLLIElement>) => {
+  const handleTouchStart = (event: TouchEvent<HTMLLIElement>) => {
     const { currentTarget } = event;
     const { pageX, pageY } = event.touches[0];
     touchStartRef.current = Date.now();

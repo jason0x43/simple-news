@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { type FC, useState } from "react";
 import { className } from "../util.ts";
-import { FeedStats, UserConfig } from "../../types.ts";
-import { Settings } from "../types.ts";
+import type { FeedStats, UserConfig } from "../../types.ts";
+import type { Settings } from "../types.ts";
 import { useAppDispatch, useAppSelector } from "../store/mod.ts";
 import { selectUser } from "../store/userSelectors.ts";
 import { selectSelectedFeeds, selectSettings } from "../store/uiSelectors.ts";
@@ -27,7 +27,7 @@ const getArticleCount = (
       : stats.total);
   }, 0);
 
-const Feeds: React.FC = () => {
+const Feeds: FC = () => {
   const [expanded, setExpanded] = useState<{ [title: string]: boolean }>({});
   const user = useAppSelector(selectUser);
   const settings = useAppSelector(selectSettings);

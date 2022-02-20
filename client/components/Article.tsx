@@ -1,5 +1,10 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Article } from "../../types.ts";
+import React, {
+  type FC,
+  type TouchEvent,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { unescapeHtml } from "../../util.ts";
 import { useAppDispatch, useAppSelector } from "../store/mod.ts";
 import { setSelectedArticle } from "../store/ui.ts";
@@ -7,13 +12,12 @@ import { selectSelectedArticle } from "../store/uiSelectors.ts";
 
 const target = "SimpleNews_ArticleView";
 
-const Article: React.FC = () => {
+const Article: FC = () => {
   const article = useAppSelector(selectSelectedArticle);
   const dispatch = useAppDispatch();
   const articleRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const touchStart = useRef<number>();
-  const touchX = useRef<number>();
   const width = useRef<number>();
   const [className, setClassName] = useState("Article");
 
@@ -37,7 +41,7 @@ const Article: React.FC = () => {
     }
   };
 
-  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+  const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {
     const x = event.touches[0].clientX;
     width.current = articleRef.current!.offsetWidth;
 
@@ -45,12 +49,12 @@ const Article: React.FC = () => {
       // The user started a touch at the left side of the article -- assume this
       // might be a drag.
       touchStart.current = x;
-      articleRef.current!.style.transitionProperty = 'none';
-      scrollRef.current!.style.overflow = 'hidden';
+      articleRef.current!.style.transitionProperty = "none";
+      scrollRef.current!.style.overflow = "hidden";
     }
   };
 
-  const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+  const handleTouchMove = (event: TouchEvent<HTMLDivElement>) => {
     if (touchStart.current === undefined) {
       return;
     }
@@ -61,7 +65,7 @@ const Article: React.FC = () => {
       // The user has dragged the article more than 3/4 of the way across the
       // screen -- assume they want to close it (and do that).
       handleTouchEnd();
-      setClassName('Article');
+      setClassName("Article");
     } else {
       // The user is dragging the article horizontally -- update its position.
       const delta = newX - touchStart.current;
@@ -73,9 +77,9 @@ const Article: React.FC = () => {
     if (touchStart.current !== undefined) {
       // If a drag was active, reset all the style properties we might have
       // overridden.
-      articleRef.current!.style.transitionProperty = '';
-      articleRef.current!.style.transform = '';
-      scrollRef.current!.style.overflow = '';
+      articleRef.current!.style.transitionProperty = "";
+      articleRef.current!.style.transform = "";
+      scrollRef.current!.style.overflow = "";
       touchStart.current = undefined;
     }
   };

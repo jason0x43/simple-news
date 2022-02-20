@@ -1,4 +1,4 @@
-import React from "react";
+import React, { createContext, type FC } from "react";
 import { className } from "../util.ts";
 
 const {
@@ -18,7 +18,7 @@ export interface ContextMenuProps {
 
 const defaultPos = { x: 0, y: 0 };
 
-const ContextMenu: React.FC<ContextMenuProps> = (props) => {
+const ContextMenu: FC<ContextMenuProps> = (props) => {
   const { items, anchor, onSelect, onClose } = props;
   const [visible, setVisible] = useState(false);
   const [pos, setPos] = useState(defaultPos);
@@ -121,7 +121,7 @@ const ContextMenu: React.FC<ContextMenuProps> = (props) => {
 
 export default ContextMenu;
 
-const ContextMenuContext = React.createContext<{
+const ContextMenuContext = createContext<{
   showContextMenu: (props: ContextMenuProps) => void;
   hideContextMenu: () => void;
   contextMenuVisible: boolean;
@@ -131,7 +131,7 @@ const ContextMenuContext = React.createContext<{
   contextMenuVisible: false,
 });
 
-export const ContextMenuProvider: React.FC = (props) => {
+export const ContextMenuProvider: FC = (props) => {
   const [cmProps, setCmProps] = useState<ContextMenuProps | undefined>();
 
   const value = useMemo(() => ({

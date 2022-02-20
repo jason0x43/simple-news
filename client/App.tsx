@@ -7,15 +7,9 @@ import Article from "./components/Article.tsx";
 import Button from "./components/Button.tsx";
 import ButtonSelector from "./components/ButtonSelector.tsx";
 import Input from "./components/Input.tsx";
-import {
-  getArticleHeadings,
-  getFeedStats,
-  getUserArticles,
-  isResponseError,
-  login,
-} from "./api.ts";
-import { Feed, User } from "../types.ts";
-import { Settings } from "./types.ts";
+import { login } from "./api.ts";
+import type { Feed, User } from "../types.ts";
+import type { Settings } from "./types.ts";
 import { className } from "./util.ts";
 import { useAppVisibility } from "./hooks.ts";
 import { useAppDispatch, useAppSelector } from "./store/mod.ts";
@@ -28,7 +22,7 @@ import {
 } from "./store/uiSelectors.ts";
 import { loadArticles, updateFeeds } from "./store/articles.ts";
 import { selectUser } from "./store/userSelectors.ts";
-import { restoreUiState, setSelectedArticle } from "./store/ui.ts";
+import { restoreUiState } from "./store/ui.ts";
 
 export function getFeedsTitle(
   user: User,
