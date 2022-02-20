@@ -39,16 +39,14 @@ const Article: React.FC = () => {
 
   const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
     const x = event.touches[0].clientX;
-    if (x < 10) {
-      // The user started a touch at the left edge of the article -- assume this
+    width.current = articleRef.current!.offsetWidth;
+
+    if (x / width.current < 0.30) {
+      // The user started a touch at the left side of the article -- assume this
       // might be a drag.
       touchStart.current = x;
-      width.current = event.currentTarget.offsetWidth;
       articleRef.current!.style.transitionProperty = 'none';
       scrollRef.current!.style.overflow = 'hidden';
-
-      // Prevent the default "back" action
-      event.preventDefault();
     }
   };
 
