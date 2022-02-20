@@ -23,7 +23,7 @@ export type AppState = ReturnType<typeof rootReducer>;
 const errorLogoutMiddlware: Middleware<void, AppState> = () =>
   (next) =>
     (action) => {
-      console.log("handling", action);
+      // TODO: logout on auth error
       next(action);
     };
 

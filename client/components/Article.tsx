@@ -1,37 +1,64 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Article } from "../../types.ts";
 import { unescapeHtml } from "../../util.ts";
-
-export interface ArticleProps {
-  article: Article;
-  onClose: () => void;
-}
+import { useAppDispatch, useAppSelector } from "../store/mod.ts";
+import { setSelectedArticle } from "../store/ui.ts";
+import { selectSelectedArticle } from "../store/uiSelectors.ts";
 
 const target = "SimpleNews_ArticleView";
 
-const Article: React.FC<ArticleProps> = (props) => {
-  const { article, onClose } = props;
-  const ref = useRef<HTMLDivElement>(null);
+const Article: React.FC = () => {
+  const article = useAppSelector(selectSelectedArticle);
+  const dispatch = useAppDispatch();
+  const articleRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [className, setClassName] = useState("Article");
 
   useEffect(() => {
-    if (ref.current) {
-      ref.current.scrollTop = 0;
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = 0;
+    }
+
+    if (article) {
+      setClassName('Article Article-visible');
     }
   }, [article]);
 
+  useEffect(() => {
+    const articleNode = articleRef.current;
+    if (!articleNode) {
+      return;
+    }
+
+    const handleEnd = () => {
+      if (className === 'Article') {
+        dispatch(setSelectedArticle(undefined));
+      }
+    };
+
+    articleNode.addEventListener('transitionend', handleEnd);
+
+    return () => {
+      articleNode.removeEventListener('transitionend', handleEnd);
+    };
+  }, [className]);
+
   return (
-    <div className="Article">
+    <div className={className} ref={articleRef}>
       <div className="Article-header-wrapper">
         <div className="Article-header">
-          <a href={article.link} target={target}>
-            <h2>{article.title}</h2>
+          <a href={article?.link} target={target}>
+            <h2>{article?.title}</h2>
           </a>
-          <div className="Article-close" onClick={onClose}>
+          <div
+            className="Article-close"
+            onClick={() => setClassName('Article')}
+          >
             ×
           </div>
         </div>
       </div>
-      <div className="Article-scroller" ref={ref}>
+      <div className="Article-scroller" ref={scrollRef}>
         <div
           className="Article-content"
           onClick={(event) => {
@@ -43,7 +70,7 @@ const Article: React.FC<ArticleProps> = (props) => {
             }
           }}
           dangerouslySetInnerHTML={{
-            __html: unescapeHtml(article.content ?? ""),
+            __html: unescapeHtml(article?.content ?? ""),
           }}
         />
       </div>

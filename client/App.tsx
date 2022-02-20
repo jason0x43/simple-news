@@ -138,12 +138,7 @@ const LoggedIn: React.FC = () => {
           })}
         >
           <Articles />
-          {selectedArticle && (
-            <Article
-              article={selectedArticle}
-              onClose={() => dispatch(setSelectedArticle(undefined))}
-            />
-          )}
+          <Article />
         </div>
       </div>
     </ContextMenuProvider>

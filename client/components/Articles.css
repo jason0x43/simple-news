@@ -97,12 +97,14 @@
   }
 }
 
+/* Mobile */
 @media only screen and (max-width: 800px) {
   .App-articles-viewing .Articles {
-    display: none;
+    width: 100%;
   }
 }
 
+/* Narrow desktop */
 @media only screen and (max-width: 1000px) {
   .Articles-title {
     white-space: normal;
