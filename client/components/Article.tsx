@@ -46,6 +46,9 @@ const Article: React.FC = () => {
       width.current = event.currentTarget.offsetWidth;
       articleRef.current!.style.transitionProperty = 'none';
       scrollRef.current!.style.overflow = 'hidden';
+
+      // Prevent the default "back" action
+      event.preventDefault();
     }
   };
 
