@@ -12,6 +12,9 @@ const Article: React.FC = () => {
   const dispatch = useAppDispatch();
   const articleRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const touchStart = useRef<number>();
+  const touchX = useRef<number>();
+  const width = useRef<number>();
   const [className, setClassName] = useState("Article");
 
   useEffect(() => {
@@ -20,31 +23,71 @@ const Article: React.FC = () => {
     }
 
     if (article) {
-      setClassName('Article Article-visible');
+      // Add the visible class when an article is being displayed. On mobile
+      // this will cause the article to transition in from the right.
+      setClassName("Article Article-visible");
     }
   }, [article]);
 
-  useEffect(() => {
-    const articleNode = articleRef.current;
-    if (!articleNode) {
+  const handleTransitionEnd = () => {
+    if (className === "Article") {
+      // If the className is Article at the end of a transition, it means
+      // Article-visible was removed, so the article should be deselected.
+      dispatch(setSelectedArticle(undefined));
+    }
+  };
+
+  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    const x = event.touches[0].clientX;
+    if (x < 10) {
+      // The user started a touch at the left edge of the article -- assume this
+      // might be a drag.
+      touchStart.current = x;
+      width.current = event.currentTarget.offsetWidth;
+      articleRef.current!.style.transitionProperty = 'none';
+      scrollRef.current!.style.overflow = 'hidden';
+    }
+  };
+
+  const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (touchStart.current === undefined) {
       return;
     }
 
-    const handleEnd = () => {
-      if (className === 'Article') {
-        dispatch(setSelectedArticle(undefined));
-      }
-    };
+    const newX = event.touches[0].clientX;
+    const delta = newX - touchStart.current;
 
-    articleNode.addEventListener('transitionend', handleEnd);
+    if (delta / width.current! > 0.75) {
+      // The user has dragged the article more than 3/4 of the way across the
+      // screen -- assume they want to close it (and do that).
+      handleTouchEnd();
+      setClassName('Article');
+    } else {
+      // The user is dragging the article horizontally -- update its position.
+      articleRef.current!.style.transform = `translate3d(${delta}px, 0, 0)`;
+    }
+  };
 
-    return () => {
-      articleNode.removeEventListener('transitionend', handleEnd);
-    };
-  }, [className]);
+  const handleTouchEnd = () => {
+    if (touchStart.current !== undefined) {
+      // If a drag was active, reset all the style properties we might have
+      // overridden.
+      articleRef.current!.style.transitionProperty = '';
+      articleRef.current!.style.transform = '';
+      scrollRef.current!.style.overflow = '';
+      touchStart.current = undefined;
+    }
+  };
 
   return (
-    <div className={className} ref={articleRef}>
+    <div
+      className={className}
+      ref={articleRef}
+      onTransitionEnd={handleTransitionEnd}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       <div className="Article-header-wrapper">
         <div className="Article-header">
           <a href={article?.link} target={target}>
@@ -52,7 +95,7 @@ const Article: React.FC = () => {
           </a>
           <div
             className="Article-close"
-            onClick={() => setClassName('Article')}
+            onClick={() => setClassName("Article")}
           >
             ×
           </div>
