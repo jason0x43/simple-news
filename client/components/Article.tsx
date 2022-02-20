@@ -57,7 +57,7 @@ const Article: React.FC = () => {
 
     const newX = event.touches[0].clientX;
 
-    if (newX / width.current! > 0.5) {
+    if (newX / width.current! > 0.75) {
       // The user has dragged the article more than 3/4 of the way across the
       // screen -- assume they want to close it (and do that).
       handleTouchEnd();
