@@ -16,14 +16,16 @@ const {
 
 export function getUserArticles(
   data: { userId: number; feedIds?: number[] },
-): UserArticle[] {
+): { [articleId: string]: UserArticle } {
   const { userId, feedIds } = data;
+  let userArticles: UserArticle[];
+
   if (feedIds) {
     const { names: feedParamNames, values: feedParams } = parameterize(
       "feedIds",
       feedIds,
     );
-    return userArticleQuery(
+    userArticles = userArticleQuery(
       `SELECT ${
         userArticleColumns.split(",").map((col) => `user_articles.${col}`).join(
           ",",
@@ -36,13 +38,18 @@ export function getUserArticles(
       WHERE user_id = (:userId)`,
       { userId, ...feedParams },
     );
+  } else {
+    userArticles = userArticleQuery(
+      `SELECT ${userArticleColumns}
+      FROM user_articles WHERE user_id = (:userId)`,
+        { userId: data.userId },
+    );
   }
 
-  return userArticleQuery(
-    `SELECT ${userArticleColumns}
-      FROM user_articles WHERE user_id = (:userId)`,
-    { userId: data.userId },
-  );
+  return userArticles.reduce((all, article) => {
+    all[article.articleId] = article;
+    return all;
+  }, {} as { [key: string]: UserArticle })
 }
 
 export function getReadArticleIds(userId: number): number[] {

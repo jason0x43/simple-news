@@ -16,7 +16,7 @@ import {
   isUserPassword,
   updateUserArticles,
 } from "./database/mod.ts";
-import { AppState, LoginRequest, UpdateUserArticleRequest, UserArticle } from "../types.ts";
+import { AppState, LoginRequest, UpdateUserArticleRequest } from "../types.ts";
 import App from "../client/App.tsx";
 import { formatArticles, refreshFeeds } from "./feed.ts";
 import {
@@ -131,6 +131,7 @@ export function createRouter(
       const params = request.url.searchParams;
       const feedIdsList = params.get("feeds");
       const brief = params.get("brief");
+      const all = params.get("all");
       let feedIds: number[] | undefined;
 
       if (feedIdsList) {
@@ -148,9 +149,21 @@ export function createRouter(
       response.type = "application/json";
 
       if (feedIds) {
-        response.body = brief
+        const articles = brief
           ? getArticleHeadings(feedIds)
           : getArticles(feedIds);
+
+        if (all) {
+          response.body = articles;
+        } else {
+          const userArticles = getUserArticles({
+            feedIds,
+            userId: state.userId,
+          });
+          response.body = articles.filter((article) =>
+            !userArticles[article.id]?.read
+          );
+        }
       } else {
         response.body = [];
       }
@@ -322,6 +335,9 @@ export function createRouter(
     const feeds = getFeeds(feedIds);
     const feedStats = getFeedStats({ userId });
     const userArticles = getUserArticles({ feedIds, userId });
+    const unreadArticles = articles.filter((article) =>
+      !userArticles[article.id]?.read
+    );
 
     response.type = "text/html";
     response.body = render({
@@ -329,13 +345,10 @@ export function createRouter(
         user,
       },
       articles: {
-        articles,
+        articles: unreadArticles,
         feeds,
         feedStats,
-        userArticles: userArticles.reduce((all, article) => {
-          all[article.articleId] = article;
-          return all;
-        }, {} as { [key: string]: UserArticle })
+        userArticles,
       },
     });
   });
