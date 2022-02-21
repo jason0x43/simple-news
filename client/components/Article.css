@@ -180,7 +180,8 @@
     width: 100vw;
     transform: translate3d(100vw, 0, 0);
     transition-property: transform;
-    transition-duration: 250ms;
+    transition-duration: 200ms;
+    transition-timing-function: ease-in-out;
   }
 
   .Article-visible {
