@@ -138,14 +138,16 @@ html {
   flex-direction: column;
   position: absolute;
   z-index: 2;
-  left: calc(-1 * var(--sidebar-width));
   top: 0;
+  left: 0;
   bottom: 0;
-  transition: left 0.25s ease-in-out;
+  transform: translate3d(calc(-1 * var(--sidebar-width)), 0, 0);
+  transition-property: transform;
+  transition-duration: 200ms;
 }
 
 .App-sidebar[data-active='true'] {
-  left: 0;
+  transform: translate3d(0, 0, 0);
 }
 
 .App-sidebar-feeds {

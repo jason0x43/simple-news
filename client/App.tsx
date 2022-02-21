@@ -22,7 +22,7 @@ import {
 } from "./store/uiSelectors.ts";
 import { loadArticles, updateFeeds } from "./store/articles.ts";
 import { selectUser } from "./store/userSelectors.ts";
-import { restoreUiState } from "./store/ui.ts";
+import { restoreUiState, setSidebarActive } from "./store/ui.ts";
 
 export function getFeedsTitle(
   user: User,
@@ -64,10 +64,27 @@ const LoggedIn: React.FC = () => {
   const selectedArticle = useAppSelector(selectSelectedArticle);
   const dispatch = useAppDispatch();
   const visibilityRef = useRef(visibility);
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     dispatch(restoreUiState());
   }, []);
+
+  useEffect(() => {
+    const handleClick = (event: MouseEvent) => {
+      if (
+        sidebarActive && !sidebarRef.current!.contains(event.target as Node)
+      ) {
+        dispatch(setSidebarActive(false));
+      }
+    };
+
+    document.body.addEventListener("click", handleClick);
+
+    return () => {
+      document.body.removeEventListener("click", handleClick);
+    };
+  }, [sidebarActive]);
 
   // Fetch updated data in the background every few minutes
   useEffect(() => {
@@ -99,7 +116,7 @@ const LoggedIn: React.FC = () => {
       </div>
       <div className="App-content">
         <div className="App-sidebar" data-active={sidebarActive}>
-          <div className="App-sidebar-feeds">
+          <div className="App-sidebar-feeds" ref={sidebarRef}>
             <Feeds />
           </div>
           <div className="App-sidebar-controls">
