@@ -181,7 +181,7 @@
     transform: translate3d(100vw, 0, 0);
     transition-property: transform;
     transition-duration: 200ms;
-    transition-timing-function: ease-in-out;
+    transition-timing-function: ease-out;
   }
 
   .Article-visible {
