@@ -7,7 +7,6 @@ import Article from "./components/Article.tsx";
 import Button from "./components/Button.tsx";
 import ButtonSelector from "./components/ButtonSelector.tsx";
 import Input from "./components/Input.tsx";
-import { login } from "./api.ts";
 import type { Feed, User } from "../types.ts";
 import type { Settings } from "./types.ts";
 import { className } from "./util.ts";
@@ -21,8 +20,9 @@ import {
   selectUpdating,
 } from "./store/uiSelectors.ts";
 import { loadArticles, updateFeeds } from "./store/articles.ts";
-import { selectUser } from "./store/userSelectors.ts";
+import { selectUser, selectUserError } from "./store/userSelectors.ts";
 import { restoreUiState, setSidebarActive } from "./store/ui.ts";
+import { signin } from "./store/user.ts";
 
 export function getFeedsTitle(
   user: User,
@@ -156,37 +156,34 @@ const LoggedIn: React.FC = () => {
   );
 };
 
-interface LoginProps {
-  setUser: (user: User) => void;
-}
-
-const Login: React.FC<LoginProps> = (props) => {
-  const { setUser } = props;
-  const [email, setEmail] = useState("");
+const Login: React.FC = () => {
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<Error>();
+  const dispatch = useAppDispatch();
+  const error = useAppSelector(selectUserError);
 
-  const handleLogin = async () => {
-    try {
-      const user = await login(email, password);
-      setUser(user);
-    } catch (error) {
-      setError(error);
+  const doSignin = () => {
+    dispatch(signin({ username, password }));
+  };
+
+  const handleKey = (event: React.KeyboardEvent<HTMLFormElement>) => {
+    if (event.key === "Enter") {
+      doSignin();
     }
   };
 
   return (
-    <form className="Login">
-      <Input placeholder="Email" value={email} onChange={setEmail} />
+    <form className="Login" onKeyDown={handleKey}>
+      <Input placeholder="Username" value={username} onChange={setUsername} />
       <Input
         placeholder="Password"
         type="password"
         value={password}
         onChange={setPassword}
       />
-      <Button label="Login" onClick={handleLogin} />
+      <Button label="Login" onClick={doSignin} />
 
-      {error && <div className="LoginError">{error.message}</div>}
+      {error && <div className="LoginError">{error}</div>}
     </form>
   );
 };
@@ -196,7 +193,7 @@ const App: React.FC = () => {
 
   return (
     <div className="App">
-      {user ? <LoggedIn /> : <Login setUser={() => location.href = "/"} />}
+      {user ? <LoggedIn /> : <Login />}
     </div>
   );
 };
