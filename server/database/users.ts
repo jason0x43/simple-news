@@ -3,9 +3,9 @@ import { query } from "./db.ts";
 import { User, UserConfig } from "../../types.ts";
 import { createRowHelpers, select } from "./util.ts";
 
-interface DbUser extends Omit<User, "config"> {
+type DbUser = Omit<User, "config"> & {
   config?: string;
-}
+};
 
 const {
   columns: userColumns,

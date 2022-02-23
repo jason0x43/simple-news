@@ -9,12 +9,12 @@ const {
   useState,
 } = React;
 
-export interface ContextMenuProps {
+export type ContextMenuProps = {
   items: string[];
   anchor: HTMLElement | { x: number; y: number };
   onSelect: (item: string) => void;
   onClose?: () => void;
-}
+};
 
 const defaultPos = { x: 0, y: 0 };
 

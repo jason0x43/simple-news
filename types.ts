@@ -1,9 +1,9 @@
-export interface AppState {
+export type AppState = {
   userId: number;
   selectedFeeds?: number[];
-}
+};
 
-export interface Article {
+export type Article = {
   id: number;
   feedId: number;
   articleId: string;
@@ -11,17 +11,17 @@ export interface Article {
   link: string | undefined;
   published: number;
   content: string | undefined;
-}
+};
 
 export type ArticleHeading = Omit<Article, "content">;
 
-export interface UserArticle {
+export type UserArticle = {
   articleId: number;
   read: boolean;
   saved: boolean;
-}
+};
 
-export interface Feed {
+export type Feed = {
   id: number;
   url: string;
   title: string;
@@ -30,16 +30,16 @@ export interface Feed {
   htmlUrl: string;
   disabled: boolean;
   icon: string | null;
-}
+};
 
-export interface FeedStats {
+export type FeedStats = {
   [feedId: number]: {
     total: number;
     read: number;
   };
-}
+};
 
-export interface UserConfig {
+export type UserConfig = {
   /** User feeds organized by group */
   feedGroups: {
     /** The title of the group */
@@ -47,9 +47,9 @@ export interface UserConfig {
     /** An array of feed ids */
     feeds: number[];
   }[];
-}
+};
 
-export interface User {
+export type User = {
   /** A unique ID */
   id: number;
   /** The user's name */
@@ -58,7 +58,7 @@ export interface User {
   email: string;
   /** User settings */
   config?: UserConfig;
-}
+};
 
 export type UpdateUserArticleRequest = {
   articleId: number;
@@ -66,7 +66,7 @@ export type UpdateUserArticleRequest = {
   saved?: boolean;
 }[];
 
-export interface LoginRequest {
+export type LoginRequest = {
   email: string;
   password: string;
-}
+};

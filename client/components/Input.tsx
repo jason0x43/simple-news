@@ -1,14 +1,14 @@
 import React, { type FC } from "react";
 import { className } from "../util.ts";
 
-export interface InputProps {
+export type InputProps = {
   onChange: (value: string) => void;
   value: string;
   placeholder?: string;
   disabled?: boolean;
   className?: string;
   type?: "text" | "password";
-}
+};
 
 const Input: FC<InputProps> = (props) => {
   const {

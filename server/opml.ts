@@ -7,16 +7,16 @@ import {
   updateUserConfig,
 } from "./database/mod.ts";
 
-interface OpmlFeed {
+type OpmlFeed = {
   "@title": string;
   "@xmlUrl": string;
   "@text": string;
   "@htmlUrl": string;
   "@type": string;
   "#text": null;
-}
+};
 
-interface OpmlData {
+type OpmlData = {
   opml: {
     "@version": number;
     head: {
@@ -30,12 +30,12 @@ interface OpmlData {
       }[];
     };
   };
-}
+};
 
-export interface ImportOptions {
+export type ImportOptions = {
   email: string;
   file: string;
-}
+};
 
 export async function importOpmlFile(
   { email, file }: ImportOptions,

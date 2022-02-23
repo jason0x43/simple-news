@@ -1,13 +1,13 @@
 import React, { type FC, type MouseEvent } from "react";
 import { className } from "../util.ts";
 
-export interface ButtonProps {
+export type ButtonProps = {
   label: string;
   disabled?: boolean;
   onClick?: (event: MouseEvent) => void;
   size?: "small" | "normal" | "large";
   className?: string;
-}
+};
 
 const Button: FC<ButtonProps> = (props) => {
   const { className: extraClass, label, onClick, disabled, size } = props;

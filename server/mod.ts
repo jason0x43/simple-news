@@ -1,5 +1,5 @@
 import { Application, expandGlob, log, path } from "./deps.ts";
-import { AppState } from "../types.ts";
+import type { AppState } from "../types.ts";
 import { createRouter } from "./routes.tsx";
 import { refreshFeeds } from "./feed.ts";
 import { hasActiveSession } from "./database/sessions.ts";

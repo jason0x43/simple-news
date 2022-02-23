@@ -1,9 +1,9 @@
 import {
   DOMParser,
-  Element,
-  FeedEntry,
+  type Element,
+  type FeedEntry,
   log,
-  ParsedFeed,
+  type ParsedFeed,
   parseFeed,
 } from "./deps.ts";
 import {
@@ -17,7 +17,7 @@ import {
   setFeedIcon,
 } from "./database/mod.ts";
 import { escapeHtml, unescapeHtml } from "../util.ts";
-import { Article } from "../types.ts";
+import type { Article } from "../types.ts";
 
 async function getIcon(feed: ParsedFeed): Promise<string | null> {
   if (feed.icon) {

@@ -81,10 +81,10 @@ export function migrateDatabase(targetVersion: number) {
   }
 }
 
-interface Migration {
+type Migration = {
   up: (db: DB) => void;
   down: (db: DB) => void;
-}
+};
 
 // DB version is index + 1
 const migrations: Migration[] = [

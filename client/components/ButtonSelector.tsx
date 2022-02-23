@@ -1,12 +1,12 @@
 import React, { type FC } from "react";
 import Button from "./Button.tsx";
 
-export interface ButtonSelectorProps {
+export type ButtonSelectorProps = {
   options: { label: string; value: string }[];
   selected: string;
   size?: "small" | "normal" | "large";
   onSelect: (value: string) => void;
-}
+};
 
 const ButtonSelector: FC<ButtonSelectorProps> = (props) => {
   const { options, size, selected, onSelect } = props;

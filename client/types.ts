@@ -1,5 +1,5 @@
 export type ArticleFilter = "unread" | "all" | "saved";
 
-export interface Settings {
+export type Settings = {
   articleFilter: ArticleFilter;
-}
+};
