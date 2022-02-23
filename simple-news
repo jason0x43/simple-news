@@ -30,7 +30,7 @@ if [ "$mode" = "dev" ]; then
 		echo "Enabling watch mode"
 		cmd="$cmd --watch --no-clear-screen --allow-run=touch"
 	fi
-	cmd="$cmd --no-check=remote"
+	cmd="$cmd --no-check"
 	echo "Using dev import map"
 	export SN_IMPORT_MAP="import_map_dev.json"
 	export SN_MODE="dev"
