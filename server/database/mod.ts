@@ -40,8 +40,7 @@ export function openDatabase(name = "data.db") {
     getDb();
   } catch {
     createDb(name);
-    log.debug(`Foreign key support: ${getPragma("foreign_keys")}`);
-    migrateDatabase(8);
+    migrateDatabase(9);
     log.debug(`Database using v${getSchemaVersion()} schema`);
   }
 }
@@ -272,6 +271,27 @@ const migrations: Migration[] = [
         db.query("ALTER TABLE feeds ADD COLUMN htmlUrl TEXT");
         db.query("UPDATE feeds SET htmlUrl = html_url");
         db.query("ALTER TABLE feeds DROP COLUMN html_url");
+      });
+    },
+  },
+
+  {
+    // add sessions
+    up: (db) => {
+      inTransaction(() => {
+        db.query(
+          `CREATE TABLE sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+            expires INTEGER NOT NULL
+          )`,
+        );
+      });
+    },
+
+    down: (db) => {
+      inTransaction(() => {
+        db.query("DROP TABLE sessions");
       });
     },
   },

@@ -16,6 +16,7 @@ import {
   isUserPassword,
   updateUserArticles,
 } from "./database/mod.ts";
+import { addSession } from './database/sessions.ts';
 import { AppState, LoginRequest, UpdateUserArticleRequest } from "../types.ts";
 import App from "../client/App.tsx";
 import { formatArticles, refreshFeeds } from "./feed.ts";
@@ -304,11 +305,13 @@ export function createRouter(
     }
 
     state.userId = user.id;
+    const session = addSession({ userId: user.id });
     await cookies.set("userId", `${user.id}`, {
       secure: mode !== "dev",
       httpOnly: mode !== "dev",
       // assume we're being proxied through an SSL server
       ignoreInsecure: true,
+      expires: new Date(session.expires)
     });
 
     response.body = user;

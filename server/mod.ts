@@ -2,6 +2,7 @@ import { Application, expandGlob, log, path } from "./deps.ts";
 import { AppState } from "../types.ts";
 import { createRouter } from "./routes.tsx";
 import { refreshFeeds } from "./feed.ts";
+import { hasActiveSession } from "./database/sessions.ts";
 
 const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);
@@ -87,7 +88,7 @@ async function buildClient(): Promise<string> {
 
   const bundle = files["deno:///bundle.js"];
 
-  const formatter = new Intl.NumberFormat('en-US');
+  const formatter = new Intl.NumberFormat("en-US");
   log.debug(`Bundle is ${formatter.format(bundle.length)} bytes`);
 
   return bundle;
@@ -154,14 +155,19 @@ export async function serve() {
 
   // Add cookie data to the app state
   app.use(async ({ cookies, state }, next) => {
-    const userId = await cookies.get("userId");
-    if (userId) {
-      state.userId = Number(userId);
-    }
+    const userIdStr = await cookies.get("userId");
+    if (userIdStr) {
+      const userId = Number(userIdStr);
+      log.debug(`user: ${userId}`);
+      if (hasActiveSession(userId)) {
+        log.debug(`user has active session`);
+        state.userId = userId;
 
-    const selectedFeedsStr = await cookies.get("selectedFeeds");
-    if (selectedFeedsStr) {
-      state.selectedFeeds = selectedFeedsStr.split(",").map(Number);
+        const selectedFeedsStr = await cookies.get("selectedFeeds");
+        if (selectedFeedsStr) {
+          state.selectedFeeds = selectedFeedsStr.split(",").map(Number);
+        }
+      }
     }
 
     await next();
