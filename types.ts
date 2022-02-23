@@ -52,8 +52,8 @@ export type UserConfig = {
 export type User = {
   /** A unique ID */
   id: number;
-  /** The user's name */
-  name: string;
+  /** The user's username */
+  username: string;
   /** The user's email address */
   email: string;
   /** User settings */
@@ -67,6 +67,6 @@ export type UpdateUserArticleRequest = {
 }[];
 
 export type LoginRequest = {
-  email: string;
+  username: string;
   password: string;
 };

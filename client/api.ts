@@ -111,13 +111,13 @@ export async function getUser(): Promise<User> {
 /**
  * Login a user
  */
-export async function login(email: string, password: string): Promise<User> {
+export async function login(username: string, password: string): Promise<User> {
   const response = await fetch("/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ username, password }),
   });
-  await assertSuccess(response, `logging in ${email}`);
+  await assertSuccess(response, `logging in ${username}`);
   return await response.json();
 }
 

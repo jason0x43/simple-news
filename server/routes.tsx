@@ -12,7 +12,6 @@ import {
   getFeedStats,
   getUser,
   getUserArticles,
-  getUserByEmail,
   isUserPassword,
   updateUserArticles,
 } from "./database/mod.ts";
@@ -25,6 +24,7 @@ import {
   createStore,
 } from "../client/store/mod.ts";
 import { selectFeeds } from "../client/store/articlesSelectors.ts";
+import { getUserByUsername } from "./database/users.ts";
 
 const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);
@@ -296,7 +296,7 @@ export function createRouter(
 
     const body = request.body();
     const data = await body.value as LoginRequest;
-    const user = getUserByEmail(data.email);
+    const user = getUserByUsername(data.username);
 
     if (!isUserPassword(user.id, data.password)) {
       response.status = 400;

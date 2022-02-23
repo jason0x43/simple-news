@@ -40,7 +40,7 @@ export function openDatabase(name = "data.db") {
     getDb();
   } catch {
     createDb(name);
-    migrateDatabase(9);
+    migrateDatabase(10);
     log.debug(`Database using v${getSchemaVersion()} schema`);
   }
 }
@@ -292,6 +292,25 @@ const migrations: Migration[] = [
     down: (db) => {
       inTransaction(() => {
         db.query("DROP TABLE sessions");
+      });
+    },
+  },
+
+  {
+    // rename user.name to user.username
+    up: (db) => {
+      inTransaction(() => {
+        db.query("ALTER TABLE users ADD COLUMN username TEXT");
+        db.query("UPDATE users SET username = LOWER(name)");
+        db.query("ALTER TABLE users DROP COLUMN name");
+      });
+    },
+
+    down: (db) => {
+      inTransaction(() => {
+        db.query("ALTER TABLE users ADD COLUMN name TEXT");
+        db.query("UPDATE users SET name = username");
+        db.query("ALTER TABLE users DROP COLUMN username");
       });
     },
   },

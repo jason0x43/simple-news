@@ -14,9 +14,9 @@ const {
   DbUser
 >()(
   "id",
-  "name",
   "email",
   "config",
+  "username"
 );
 
 function toUser(dbUser: DbUser) {
@@ -27,16 +27,16 @@ function toUser(dbUser: DbUser) {
 }
 
 export function addUser(
-  user: Pick<User, "name" | "email">,
+  user: Pick<User, "username" | "email">,
   password: string,
 ): User {
   const hashedPassword = bcrypt.hashSync(password);
   return toUser(
     userQuery(
-      `INSERT INTO users (name, email, password)
-    VALUES (:name, :email, :password)
+      `INSERT INTO users (username, email, password)
+    VALUES (:username, :email, :password)
     RETURNING ${userColumns}`,
-      { name: user.name, email: user.email, password: hashedPassword },
+      { username: user.username, email: user.email, password: hashedPassword },
     )[0],
   );
 }
@@ -59,6 +59,17 @@ export function getUserByEmail(email: string): User {
   )[0];
   if (!user) {
     throw new Error(`No user with email ${email}`);
+  }
+  return toUser(user);
+}
+
+export function getUserByUsername(username: string): User {
+  const user = userQuery(
+    `SELECT ${userColumns} FROM users WHERE username = (:username)`,
+    { username },
+  )[0];
+  if (!user) {
+    throw new Error(`No user with username ${username}`);
   }
   return toUser(user);
 }
