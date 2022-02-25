@@ -306,7 +306,7 @@ export function createRouter(
 
     state.userId = user.id;
     const session = addSession({ userId: user.id });
-    await cookies.set("userId", `${user.id}`, {
+    await cookies.set("sessionId", `${session.sessionId}`, {
       secure: mode !== "dev",
       httpOnly: mode !== "dev",
       // assume we're being proxied through an SSL server

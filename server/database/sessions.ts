@@ -10,6 +10,7 @@ const {
 >()(
   "id",
   "userId",
+  "sessionId",
   "expires",
 );
 
@@ -23,23 +24,23 @@ export function addSession({ userId, expires }: {
     expires = Date.now() + 365 * 24 * 60 * 60 * 1000;
   }
   const user = sessionQuery(
-    `INSERT INTO sessions (user_id, expires)
-    VALUES (:userId, :expires)
+    `INSERT INTO sessions (session_id, user_id, expires)
+    VALUES (:sessionId, :userId, :expires)
     RETURNING ${sessionColumns}`,
-    { userId, expires },
+    { sessionId: createSessionId(), userId, expires },
   )[0];
   log.debug("Finished add");
   return user;
 }
 
-export function getSession(userId: number): Session {
-  log.debug(`Getting session for user ${userId}`);
+export function getSession(sessionId: string): Session {
+  log.debug(`Getting session ${sessionId}`);
   const session = sessionQuery(
-    `SELECT ${sessionColumns} FROM sessions WHERE user_id = (:userId)`,
-    { userId },
+    `SELECT ${sessionColumns} FROM sessions WHERE session_id = (:sessionId)`,
+    { sessionId },
   )[0];
   if (!session) {
-    throw new Error(`No active session for ${userId}`);
+    throw new Error(`No active session with ID ${sessionId}`);
   }
   return session;
 }
@@ -49,16 +50,24 @@ export function getSessions(): Session[] {
   return sessionQuery(`SELECT ${sessionColumns} FROM sessions`);
 }
 
-export function removeSession(id: number): void {
-  log.debug(`Removing session ${id}`);
-  sessionQuery(`DELETE FROM sessions WHERE id = (:id)`, { id });
+export function removeSession(sessionId: string): void {
+  log.debug(`Removing session ${sessionId}`);
+  sessionQuery(`DELETE FROM sessions WHERE session_id = (:sessionId)`, {
+    sessionId,
+  });
 }
 
-export function hasActiveSession(userId: number): boolean {
-  try {
-    const session = getSession(userId);
-    return session.expires > Date.now();
-  } catch {
-    return false;
+export function isActiveSession(session: Session): boolean {
+  return session.expires > Date.now();
+}
+
+export function createSessionId(): string {
+  return crypto.randomUUID();
+}
+
+// This is necessary until TS's types know about randomUUID
+declare global {
+  interface Crypto {
+    randomUUID: () => string;
   }
 }

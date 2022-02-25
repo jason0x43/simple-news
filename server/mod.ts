@@ -2,7 +2,7 @@ import { Application, expandGlob, log, path } from "./deps.ts";
 import type { AppState } from "../types.ts";
 import { createRouter } from "./routes.tsx";
 import { refreshFeeds } from "./feed.ts";
-import { hasActiveSession } from "./database/sessions.ts";
+import { getSession, hasActiveSession, isActiveSession } from "./database/sessions.ts";
 
 const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);
@@ -157,18 +157,22 @@ export async function serve() {
 
   // Add cookie data to the app state
   app.use(async ({ cookies, state }, next) => {
-    const userIdStr = await cookies.get("userId");
-    if (userIdStr) {
-      const userId = Number(userIdStr);
-      log.debug(`user: ${userId}`);
-      if (hasActiveSession(userId)) {
-        log.debug(`user has active session`);
-        state.userId = userId;
-
-        const selectedFeedsStr = await cookies.get("selectedFeeds");
-        if (selectedFeedsStr) {
-          state.selectedFeeds = selectedFeedsStr.split(",").map(Number);
+    const sessionId = await cookies.get("sessionId");
+    if (sessionId) {
+      log.debug(`sessionId: ${sessionId}`);
+      try {
+        const session = getSession(sessionId);
+        if (isActiveSession(session)) {
+          log.debug(`session is active`);
+          state.userId = session.userId;
         }
+      } catch {
+        log.warning(`Invalid session ${sessionId}`);
+      }
+
+      const selectedFeedsStr = await cookies.get("selectedFeeds");
+      if (selectedFeedsStr) {
+        state.selectedFeeds = selectedFeedsStr.split(",").map(Number);
       }
     }
 
