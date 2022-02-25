@@ -117,7 +117,9 @@ export async function serve() {
 
   const router = createRouter(routerInit);
   const app = new Application<AppState>();
-  const port = 8083;
+
+  const envPort = Deno.env.get("SN_PORT");
+  const port = envPort ? Number(envPort) : 8083;
 
   const appKey = Deno.env.get("SN_KEY");
   if (appKey) {
