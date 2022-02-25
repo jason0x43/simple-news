@@ -30,6 +30,8 @@ const Article: FC = () => {
       // Add the visible class when an article is being displayed. On mobile
       // this will cause the article to transition in from the right.
       setClassName("Article Article-visible");
+    } else {
+      setClassName("Article");
     }
   }, [article]);
 
