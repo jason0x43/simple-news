@@ -22,7 +22,7 @@ const Header: FC = () => {
       <div className="Header-center">
         <h2>{title}</h2>
       </div>
-      <div className="Header-right">{user?.name}</div>
+      <div className="Header-right">{user?.username}</div>
     </header>
   );
 };
