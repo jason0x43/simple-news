@@ -2,7 +2,7 @@ import { Application, expandGlob, log, path } from "./deps.ts";
 import type { AppState } from "../types.ts";
 import { createRouter } from "./routes.tsx";
 import { refreshFeeds } from "./feed.ts";
-import { getSession, hasActiveSession, isActiveSession } from "./database/sessions.ts";
+import { getSession, isActiveSession } from "./database/sessions.ts";
 
 const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);

@@ -150,14 +150,14 @@ const parser = yargs(Deno.args)
         type: "string",
       });
       yargs.positional("name", {
-        describe: "The user's name, or a username",
+        describe: "A username",
         type: "string",
       });
     },
     async (args: Arguments & { email: string; name: string }) => {
       const password = await promptSecret("Password: ");
       if (password) {
-        const user = addUser({ email: args.email, name: args.name }, password);
+        const user = addUser({ email: args.email, username: args.name }, password);
         console.log(`Created user ${user.id}`);
       } else {
         console.log("Add cancelled");
