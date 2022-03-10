@@ -95,20 +95,12 @@ const Article: FC = () => {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      <div className="Article-header-wrapper">
+      <div className="Article-scroller" ref={scrollRef}>
         <div className="Article-header">
           <a href={article?.link} target={target}>
             <h2>{article?.title}</h2>
           </a>
-          <div
-            className="Article-close"
-            onClick={() => setClassName("Article")}
-          >
-            ×
-          </div>
         </div>
-      </div>
-      <div className="Article-scroller" ref={scrollRef}>
         <div
           className="Article-content"
           onClick={(event) => {
@@ -123,6 +115,12 @@ const Article: FC = () => {
             __html: unescapeHtml(article?.content ?? ""),
           }}
         />
+      </div>
+      <div
+        className="Article-close"
+        onClick={() => setClassName("Article")}
+      >
+        ×
       </div>
     </div>
   );
