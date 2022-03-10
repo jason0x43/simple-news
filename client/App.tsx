@@ -1,9 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ContextMenuProvider } from "./components/ContextMenu.tsx";
 import Feeds from "./components/Feeds.tsx";
 import Articles from "./components/Articles.tsx";
 import Header from "./components/Header.tsx";
-import Article from "./components/Article.tsx";
+import Article, { ArticleRef } from "./components/Article.tsx";
 import Button from "./components/Button.tsx";
 import ButtonSelector from "./components/ButtonSelector.tsx";
 import Input from "./components/Input.tsx";
@@ -65,6 +65,11 @@ const LoggedIn: React.FC = () => {
   const dispatch = useAppDispatch();
   const visibilityRef = useRef(visibility);
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const articleRef = useRef<ArticleRef>(null);
+
+  const handleTitlePress = useCallback(() => {
+    articleRef.current?.resetScroll();
+  }, []);
 
   useEffect(() => {
     dispatch(restoreUiState());
@@ -112,7 +117,7 @@ const LoggedIn: React.FC = () => {
   return (
     <ContextMenuProvider>
       <div className="App-header">
-        <Header />
+        <Header onTitlePress={handleTitlePress} />
       </div>
       <div className="App-content">
         <div className="App-sidebar" data-active={sidebarActive}>
@@ -149,7 +154,7 @@ const LoggedIn: React.FC = () => {
           })}
         >
           <Articles />
-          <Article />
+          <Article ref={articleRef} />
         </div>
       </div>
     </ContextMenuProvider>

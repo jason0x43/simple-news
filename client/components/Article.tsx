@@ -1,4 +1,4 @@
-import React, { type FC, useEffect, useRef, useState } from "react";
+import React, { type FC, forwardRef, useEffect, useRef, useState, useImperativeHandle } from "react";
 import { unescapeHtml } from "../../util.ts";
 import { useAppDispatch, useAppSelector } from "../store/mod.ts";
 import { setSelectedArticle } from "../store/ui.ts";
@@ -6,12 +6,22 @@ import { selectSelectedArticle } from "../store/uiSelectors.ts";
 
 const target = "SimpleNews_ArticleView";
 
-const Article: FC = () => {
+export type ArticleRef = {
+  resetScroll: () => void;
+};
+
+const Article = forwardRef((_, ref) => {
   const article = useAppSelector(selectSelectedArticle);
   const dispatch = useAppDispatch();
   const articleRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [className, setClassName] = useState("Article");
+
+  useImperativeHandle(ref, () => ({
+    resetScroll: () => {
+      scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+  }));
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -70,6 +80,6 @@ const Article: FC = () => {
       </div>
     </div>
   );
-};
+});
 
 export default Article;

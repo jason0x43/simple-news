@@ -1,10 +1,14 @@
-import React, { type FC } from "react";
+import React, { type VFC } from "react";
 import { useAppDispatch, useAppSelector } from "../store/mod.ts";
 import { toggleSidebarActive } from "../store/ui.ts";
 import { selectFeedsTitle } from "../store/uiSelectors.ts";
 import { selectUser } from "../store/userSelectors.ts";
 
-const Header: FC = () => {
+type HeaderProps = {
+  onTitlePress?: () => void;
+};
+
+const Header: VFC<HeaderProps> = ({ onTitlePress }) => {
   const title = useAppSelector(selectFeedsTitle);
   const user = useAppSelector(selectUser);
   const dispatch = useAppDispatch();
@@ -20,7 +24,7 @@ const Header: FC = () => {
         <h1>Simple News</h1>
       </div>
       <div className="Header-center">
-        <h2>{title}</h2>
+      <h2 onClick={onTitlePress}>{title}</h2>
       </div>
       <div className="Header-right">{user?.username}</div>
     </header>
