@@ -1,10 +1,4 @@
-import React, {
-  type FC,
-  type TouchEvent,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { type FC, useEffect, useRef, useState } from "react";
 import { unescapeHtml } from "../../util.ts";
 import { useAppDispatch, useAppSelector } from "../store/mod.ts";
 import { setSelectedArticle } from "../store/ui.ts";
@@ -17,8 +11,6 @@ const Article: FC = () => {
   const dispatch = useAppDispatch();
   const articleRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const touchStart = useRef<number>();
-  const width = useRef<number>();
   const [className, setClassName] = useState("Article");
 
   useEffect(() => {
@@ -43,57 +35,11 @@ const Article: FC = () => {
     }
   };
 
-  const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {
-    const x = event.touches[0].clientX;
-    width.current = articleRef.current!.offsetWidth;
-
-    if (x / width.current < 0.30) {
-      // The user started a touch at the left side of the article -- assume this
-      // might be a drag.
-      touchStart.current = x;
-      articleRef.current!.style.transitionProperty = "none";
-      scrollRef.current!.style.overflow = "hidden";
-    }
-  };
-
-  const handleTouchMove = (event: TouchEvent<HTMLDivElement>) => {
-    if (touchStart.current === undefined) {
-      return;
-    }
-
-    const newX = event.touches[0].clientX;
-
-    if (newX / width.current! > 0.75) {
-      // The user has dragged the article more than 3/4 of the way across the
-      // screen -- assume they want to close it (and do that).
-      handleTouchEnd();
-      setClassName("Article");
-    } else {
-      // The user is dragging the article horizontally -- update its position.
-      const delta = newX - touchStart.current;
-      articleRef.current!.style.transform = `translate3d(${delta}px, 0, 0)`;
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (touchStart.current !== undefined) {
-      // If a drag was active, reset all the style properties we might have
-      // overridden.
-      articleRef.current!.style.transitionProperty = "";
-      articleRef.current!.style.transform = "";
-      scrollRef.current!.style.overflow = "";
-      touchStart.current = undefined;
-    }
-  };
-
   return (
     <div
       className={className}
       ref={articleRef}
       onTransitionEnd={handleTransitionEnd}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
     >
       <div className="Article-scroller" ref={scrollRef}>
         <div className="Article-header">
