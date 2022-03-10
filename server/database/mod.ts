@@ -317,7 +317,7 @@ const migrations: Migration[] = [
   },
 
   {
-    // add sessions
+    // use a unique session ID
     up: (db) => {
       inTransaction(() => {
         db.query(
