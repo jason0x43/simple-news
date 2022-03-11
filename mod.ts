@@ -37,6 +37,7 @@ async function configureLogger(args: Arguments) {
 const parser = yargs(Deno.args)
   .strict()
   .version("0.1.0")
+  .scriptName('simple-news')
   .option("v", {
     alias: "verbose",
     describe: "Enable more verbose output",
