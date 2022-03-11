@@ -1,7 +1,7 @@
 export default function initReloader() {
   let socket: WebSocket | undefined;
   let reconnectTimer: number | undefined;
-  const url = `${window.location.origin.replace("http", "ws")}/refresh`;
+  const url = `${window.location.origin.replace("http", "ws")}/livereload`;
 
   function connect() {
     if (socket) {
@@ -21,7 +21,7 @@ export default function initReloader() {
         link.href = "/styles.css";
         const existing = document.head.querySelector('link[rel="stylesheet"]')!;
         existing.replaceWith(link);
-      } else if (event.data === "refresh") {
+      } else if (event.data === "reload") {
         window.location.reload();
       }
     });

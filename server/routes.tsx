@@ -27,6 +27,7 @@ import {
 } from "../client/store/mod.ts";
 import { selectFeeds } from "../client/store/articlesSelectors.ts";
 import { getUserByUsername } from "./database/users.ts";
+import { addLiveReloadRoute } from "./reload.ts";
 
 const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);
@@ -110,6 +111,8 @@ export function createRouter(
   };
 
   const router = new Router<AppState>();
+
+  addLiveReloadRoute(router);
 
   router.get("/client.js", ({ response }) => {
     response.type = "application/javascript";

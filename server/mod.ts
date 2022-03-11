@@ -6,6 +6,7 @@ import type { AppState } from "../types.ts";
 import { createRouter } from "./routes.tsx";
 import { refreshFeeds } from "./feed.ts";
 import { getSession, isActiveSession } from "./database/sessions.ts";
+import { addLiveReloadMiddleware } from "./reload.ts";
 
 const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);
@@ -138,24 +139,7 @@ export async function serve() {
 
   // Connect live-reload websockets
   if (Deno.env.get("SN_MODE") === "dev") {
-    app.use(async (ctx, next) => {
-      if (ctx.request.url.pathname.endsWith("/refresh")) {
-        const socket = ctx.upgrade();
-        sockets.add(socket);
-        socket.onclose = () => {
-          sockets.delete(socket);
-        };
-
-        socket.onopen = () => {
-          if (!initialReloadSent) {
-            socket.send("refresh");
-            initialReloadSent = true;
-          }
-        };
-      }
-
-      await next();
-    });
+    addLiveReloadMiddleware(app);
   }
 
   // Add cookie data to the app state
