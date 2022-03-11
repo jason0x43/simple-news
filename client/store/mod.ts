@@ -20,14 +20,14 @@ export const rootReducer = combineReducers({
 
 export type AppState = ReturnType<typeof rootReducer>;
 
-const errorLogoutMiddlware: Middleware<void, AppState> = () =>
+const errorLogoutMiddlware: Middleware<unknown, AppState> = () =>
   (next) =>
     (action) => {
       // TODO: logout on auth error
       next(action);
     };
 
-const persistMiddleware: Middleware<void, AppState> = ({ getState }) =>
+const persistMiddleware: Middleware<unknown, AppState> = ({ getState }) =>
   (next) =>
     (action) => {
       const oldState = getState();
@@ -47,15 +47,7 @@ export function createStore(preloadedState?: Partial<AppState>) {
   });
 }
 
-type StoreType = ReturnType<typeof createStore>;
-export type AppDispatch = StoreType["dispatch"];
+export type AppDispatch = ReturnType<typeof createStore>["dispatch"];
 
 export const useAppDispatch = () => useDispatch<AppDispatch>();
 export const useAppSelector: TypedUseSelectorHook<AppState> = useSelector;
-
-declare global {
-  // deno-lint-ignore no-var
-  var __PRELOADED_STATE__: AppState | undefined;
-  // deno-lint-ignore no-var
-  var __DEV__: boolean | undefined;
-}

@@ -2,7 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { Provider } from "react-redux";
 import App from "./App.tsx";
-import { createStore } from "./store/mod.ts";
+import { createStore, type AppState } from "./store/mod.ts";
 import initReloader from "./reload.ts";
 
 const store = createStore(globalThis.__PRELOADED_STATE__);
@@ -20,4 +20,11 @@ delete globalThis.__PRELOADED_STATE__;
 
 if (globalThis.__DEV__) {
   initReloader();
+}
+
+declare global {
+  // deno-lint-ignore no-var
+  var __PRELOADED_STATE__: AppState | undefined;
+  // deno-lint-ignore no-var
+  var __DEV__: boolean | undefined;
 }
