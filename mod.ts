@@ -1,4 +1,6 @@
-import { Arguments, log, Yargs, yargs } from "./deps.ts";
+import yargs from "yargs";
+import type { Arguments } from "yargs-types";
+import * as log from "std/log/mod.ts";
 import { serve } from "./server/mod.ts";
 import {
   addUser,
@@ -15,6 +17,8 @@ import {
 import { formatArticles, refreshFeeds } from "./server/feed.ts";
 import { exportOpmlFile, importOpmlFile } from "./server/opml.ts";
 import { printTable, promptSecret } from "./server/util.ts";
+
+type Yargs = ReturnType<typeof yargs>;
 
 async function configureLogger(args: Arguments) {
   await log.setup({

@@ -1,4 +1,4 @@
-import { color } from "./deps.ts";
+import * as color from "std/fmt/colors.ts";
 
 export function printTable(rows: Record<string, unknown>[]) {
   if (rows.length === 0) {

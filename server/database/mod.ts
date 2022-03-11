@@ -1,6 +1,7 @@
-import { DB, log } from "../deps.ts";
+import { DB } from "sqlite";
+import * as log from "std/log/mod.ts";
 import { closeDb, createDb, getDb, inTransaction, query } from "./db.ts";
-import { createSessionId, getSessions } from "./sessions.ts";
+import { createSessionId } from "./sessions.ts";
 
 export { inTransaction };
 export {

@@ -1,4 +1,4 @@
-import { log } from "../deps.ts";
+import * as log from 'std/log/mod.ts';
 import { Article, ArticleHeading } from "../../types.ts";
 import { query } from "./db.ts";
 import { count, createRowHelpers, parameterize } from "./util.ts";

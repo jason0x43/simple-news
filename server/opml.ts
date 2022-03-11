@@ -1,4 +1,5 @@
-import { log, parseXml } from "./deps.ts";
+import * as log from "std/log/mod.ts";
+import { parse as parseXml } from "xml";
 import {
   addFeed,
   getFeed,

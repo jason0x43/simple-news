@@ -1,11 +1,7 @@
-import {
-  DOMParser,
-  type Element,
-  type FeedEntry,
-  log,
-  type ParsedFeed,
-  parseFeed,
-} from "./deps.ts";
+import { DOMParser, type Element } from "deno-dom-wasm";
+import type { FeedEntry } from "rss/src/types/mod.ts";
+import * as log from "std/log/mod.ts";
+import { type Feed as ParsedFeed, parseFeed } from "rss/mod.ts";
 import {
   addArticle,
   getArticles,

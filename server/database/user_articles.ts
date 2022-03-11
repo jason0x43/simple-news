@@ -1,5 +1,5 @@
 import { inTransaction, prepareQuery } from "./db.ts";
-import { log } from "../deps.ts";
+import * as log from "std/log/mod.ts";
 import { UserArticle } from "../../types.ts";
 import { createRowHelpers, parameterize, select } from "./util.ts";
 

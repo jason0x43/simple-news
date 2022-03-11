@@ -1,3 +1,5 @@
+// import to make SSR React (at least v17) happy
+import "./raf.ts";
 import * as path from "std/path/mod.ts";
 import { Middleware, Router } from "oak";
 import * as log from "std/log/mod.ts";

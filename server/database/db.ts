@@ -1,4 +1,4 @@
-import { DB } from "../deps.ts";
+import { DB } from "sqlite";
 
 let dbRef: DB | undefined;
 

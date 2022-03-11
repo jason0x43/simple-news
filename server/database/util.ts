@@ -1,4 +1,4 @@
-import { QueryParameterSet } from "../deps.ts";
+import type { QueryParameterSet } from "sqlite";
 import { query } from "./db.ts";
 
 export function parameterize(name: string, values: (string | number)[]) {

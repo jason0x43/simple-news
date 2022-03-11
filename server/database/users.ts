@@ -1,4 +1,5 @@
-import { bcrypt, log } from "../deps.ts";
+import * as bcrypt from "bcrypt";
+import * as log from "std/log/mod.ts";
 import { query } from "./db.ts";
 import { User, UserConfig } from "../../types.ts";
 import { createRowHelpers, select } from "./util.ts";
