@@ -21,7 +21,6 @@ const refreshInterval = 600;
 const sockets: Set<WebSocket> = new Set();
 
 let routerInit: { client: string; styles: string; dev: boolean | undefined };
-let initialReloadSent = false;
 
 /**
  * Touch this file (to intiate a reload) if the styles change.

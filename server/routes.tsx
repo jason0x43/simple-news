@@ -1,7 +1,7 @@
 // import to make SSR React (at least v17) happy
 import "./raf.ts";
 import * as path from "std/path/mod.ts";
-import { Middleware, Router } from "oak";
+import { Router } from "oak";
 import * as log from "std/log/mod.ts";
 import ReactDOMServer from "react-dom-server";
 import React from "react";
@@ -17,7 +17,6 @@ import {
   isUserPassword,
   updateUserArticles,
 } from "./database/mod.ts";
-import { addSession } from './database/sessions.ts';
 import { AppState, LoginRequest, UpdateUserArticleRequest } from "../types.ts";
 import App from "../client/App.tsx";
 import { formatArticles, refreshFeeds } from "./feed.ts";
@@ -28,6 +27,8 @@ import {
 import { selectFeeds } from "../client/store/articlesSelectors.ts";
 import { getUserByUsername } from "./database/users.ts";
 import { addLiveReloadRoute } from "./reload.ts";
+import { requireUser } from "./middleware.ts";
+import { createSession, deleteSession } from "./sessions.ts";
 
 const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);
@@ -36,22 +37,16 @@ function toString(value: unknown): string {
   return JSON.stringify(value ?? null).replace(/</g, "\\u003c");
 }
 
-const mode = Deno.env.get("SN_MODE") ?? "production";
-
-const requireUser: Middleware<AppState> = async ({ response, state }, next) => {
-  log.debug("Checking for user");
-  if (state.userId === undefined) {
-    response.type = "application/json";
-    response.status = 403;
-    response.body = { error: "Must be logged in" };
-  } else {
-    await next();
-  }
-};
-
 export function createRouter(
   init: { client: string; styles: string; dev: boolean | undefined },
 ): Router<AppState> {
+  const cookieOptions = {
+    secure: !init.dev,
+    httpOnly: true,
+    // assume we're being proxied through an SSL server
+    ignoreInsecure: true,
+  };
+
   // Render the base HTML
   const render = (initialState: Partial<ClientAppState>) => {
     const store = createStore(initialState);
@@ -290,6 +285,12 @@ export function createRouter(
     }
   });
 
+  router.get("/logout", async ({ response, cookies }) => {
+    await deleteSession({ cookies, cookieOptions });
+    response.type = "application/json";
+    response.body = { success: true };
+  });
+
   router.post("/login", async ({ cookies, request, response, state }) => {
     response.type = "application/json";
 
@@ -310,14 +311,7 @@ export function createRouter(
     }
 
     state.userId = user.id;
-    const session = addSession({ userId: user.id });
-    await cookies.set("sessionId", `${session.sessionId}`, {
-      secure: mode !== "dev",
-      httpOnly: mode !== "dev",
-      // assume we're being proxied through an SSL server
-      ignoreInsecure: true,
-      expires: new Date(session.expires)
-    });
+    await createSession({ userId: user.id, cookies, cookieOptions });
 
     response.body = user;
   });

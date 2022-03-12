@@ -122,6 +122,18 @@ export async function login(username: string, password: string): Promise<User> {
 }
 
 /**
+ * Logout a user
+ */
+export async function logout(): Promise<void> {
+  const response = await fetch("/logout", {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+  await assertSuccess(response, `logged out current user`);
+  return await response.json();
+}
+
+/**
  * Get the articles for a list of feed IDs
  */
 export async function getArticles(feedIds: number[]): Promise<Article[]> {

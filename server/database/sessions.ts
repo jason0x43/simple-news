@@ -50,6 +50,16 @@ export function getSessions(): Session[] {
   return sessionQuery(`SELECT ${sessionColumns} FROM sessions`);
 }
 
+export function getUserSessions(userId: number): Session[] {
+  log.debug(`Getting sessions`);
+  return sessionQuery(
+    `SELECT ${sessionColumns}
+    FROM sessions
+    WHERE user_id = (:userId)`,
+    { userId },
+  );
+}
+
 export function removeSession(sessionId: string): void {
   log.debug(`Removing session ${sessionId}`);
   sessionQuery(`DELETE FROM sessions WHERE session_id = (:sessionId)`, {

@@ -30,6 +30,24 @@ export const signin = createAsyncThunk<
   },
 );
 
+export const signout = createAsyncThunk<
+  void,
+  void,
+  { dispatch: AppDispatch }
+>(
+  "user/signout",
+  async (_, { dispatch }) => {
+    dispatch(setError(undefined));
+    try {
+      await api.logout();
+      dispatch(setUser(undefined));
+    } catch (error) {
+      dispatch(setError(`${error}`));
+      throw error;
+    }
+  },
+);
+
 const initialState: UserState = {
   user: undefined,
 };
