@@ -22,11 +22,11 @@ import {
 import {
   selectArticles,
   selectFeeds,
+  selectSelectedFeeds,
   selectUserArticles,
 } from "../store/articlesSelectors.ts";
 import {
   selectSelectedArticle,
-  selectSelectedFeeds,
   selectSettings,
   selectUpdatedArticles,
 } from "../store/uiSelectors.ts";
@@ -70,7 +70,7 @@ const Articles: FC = () => {
   const [width, setRef, listRef] = useWidthObserver();
   const [visibleCount, setVisibleCount] = useState(0);
   const dispatch = useAppDispatch();
-  const selectedFeedsRef = useRef<number[]>(selectedFeeds);
+  const selectedFeedsRef = useRef<number[]>();
 
   // Clear the updated articles list if the selected feed set is changed.
   useEffect(() => {

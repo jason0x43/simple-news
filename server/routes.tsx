@@ -17,7 +17,12 @@ import {
   isUserPassword,
   updateUserArticles,
 } from "./database/mod.ts";
-import { AppState, LoginRequest, UpdateUserArticleRequest } from "../types.ts";
+import {
+  AppState,
+  LoginRequest,
+  LoginResponse,
+  UpdateUserArticleRequest,
+} from "../types.ts";
 import App from "../client/App.tsx";
 import { formatArticles, refreshFeeds } from "./feed.ts";
 import {
@@ -33,6 +38,8 @@ import { createSession, deleteSession } from "./sessions.ts";
 const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);
 
+const selectedFeedsCookie = "selectedFeeds";
+
 function toString(value: unknown): string {
   return JSON.stringify(value ?? null).replace(/</g, "\\u003c");
 }
@@ -45,6 +52,23 @@ export function createRouter(
     httpOnly: true,
     // assume we're being proxied through an SSL server
     ignoreInsecure: true,
+  };
+
+  const getUserData = (userId: number): LoginResponse => {
+    const user = getUser(userId);
+    const feedIds = user.config?.feedGroups.reduce((allIds, group) => {
+      allIds.push(...group.feeds);
+      return allIds;
+    }, [] as number[]);
+
+    const feeds = getFeeds(feedIds);
+    const feedStats = getFeedStats({ userId });
+
+    return {
+      user,
+      feeds,
+      feedStats,
+    };
   };
 
   // Render the base HTML
@@ -128,7 +152,7 @@ export function createRouter(
   router.get(
     "/articles",
     requireUser,
-    async ({ cookies, request, response, state }) => {
+    ({ request, response, state }) => {
       const params = request.url.searchParams;
       const feedIdsList = params.get("feeds");
       const brief = params.get("brief");
@@ -138,7 +162,6 @@ export function createRouter(
       if (feedIdsList) {
         log.debug(`getting feeds: ${feedIdsList}`);
         feedIds = feedIdsList.split(",").map(Number);
-        await cookies.set("selectedFeeds", feedIds.map(String).join(","));
       } else {
         const user = getUser(state.userId);
         feedIds = user.config?.feedGroups?.reduce((allFeeds, group) => {
@@ -204,7 +227,7 @@ export function createRouter(
     ({ request, response, state }) => {
       const params = request.url.searchParams;
       const feedIdsList = params.get("feeds");
-      let feedIds: number[] | undefined = state.selectedFeeds;
+      let feedIds: number[] | undefined;
 
       if (feedIdsList) {
         feedIds = feedIdsList.split(",").map(Number);
@@ -228,29 +251,37 @@ export function createRouter(
     response.status = 204;
   });
 
-  router.get("/feeds", requireUser, ({ request, response, state }) => {
-    const params = request.url.searchParams;
-    const feedIdsList = params.get("feeds");
-    const { userId } = state;
-    let feedIds: number[] | undefined;
+  router.get(
+    "/feeds",
+    requireUser,
+    async ({ cookies, request, response, state }) => {
+      const params = request.url.searchParams;
+      const feedIdsList = params.get("feeds");
+      const { userId } = state;
+      let feedIds: number[] | undefined;
 
-    if (feedIdsList) {
-      feedIds = feedIdsList.split(",").map(Number);
-    } else {
-      const user = getUser(userId);
-      if (user.config) {
-        feedIds = user.config?.feedGroups.reduce<number[]>((allIds, group) => {
-          return [
-            ...allIds,
-            ...group.feeds,
-          ];
-        }, []);
+      if (feedIdsList) {
+        feedIds = feedIdsList.split(",").map(Number);
+        await cookies.set(selectedFeedsCookie, feedIdsList, cookieOptions);
+      } else {
+        const user = getUser(userId);
+        if (user.config) {
+          feedIds = user.config?.feedGroups.reduce<number[]>(
+            (allIds, group) => {
+              return [
+                ...allIds,
+                ...group.feeds,
+              ];
+            },
+            [],
+          );
+        }
       }
-    }
 
-    response.type = "application/json";
-    response.body = feedIds ? getFeeds(feedIds) : {};
-  });
+      response.type = "application/json";
+      response.body = feedIds ? getFeeds(feedIds) : {};
+    },
+  );
 
   router.get("/feedstats", requireUser, ({ request, response, state }) => {
     const params = request.url.searchParams;
@@ -285,12 +316,6 @@ export function createRouter(
     }
   });
 
-  router.get("/logout", async ({ response, cookies }) => {
-    await deleteSession({ cookies, cookieOptions });
-    response.type = "application/json";
-    response.body = { success: true };
-  });
-
   router.post("/login", async ({ cookies, request, response, state }) => {
     response.type = "application/json";
 
@@ -313,29 +338,29 @@ export function createRouter(
     state.userId = user.id;
     await createSession({ userId: user.id, cookies, cookieOptions });
 
-    response.body = user;
+    response.body = getUserData(user.id);
   });
 
-  router.get("/", ({ response, state }) => {
+  router.get("/logout", async ({ response, cookies }) => {
+    await deleteSession({ cookies, cookieOptions });
+    await cookies.set(selectedFeedsCookie, "", cookieOptions);
+
+    response.type = "application/json";
+    response.body = { success: true };
+  });
+
+  router.get("/", async ({ cookies, response, state }) => {
     if (!state.userId) {
       response.redirect("/login");
       return;
     }
 
-    const { userId, selectedFeeds } = state;
-    const user = getUser(userId);
+    const feedIdsList = await cookies.get(selectedFeedsCookie);
+    const feedIds: number[] | undefined = feedIdsList?.split(",").map(Number);
 
-    let feedIds: number[] | undefined = selectedFeeds;
-    if (!feedIds) {
-      feedIds = user.config?.feedGroups.reduce((allIds, group) => {
-        allIds.push(...group.feeds);
-        return allIds;
-      }, [] as number[]);
-    }
-
+    const { userId } = state;
+    const data = getUserData(userId);
     const articles = getArticleHeadings(feedIds);
-    const feeds = getFeeds(feedIds);
-    const feedStats = getFeedStats({ userId });
     const userArticles = getUserArticles({ feedIds, userId });
     const unreadArticles = articles.filter((article) =>
       !userArticles[article.id]?.read
@@ -344,13 +369,14 @@ export function createRouter(
     response.type = "text/html";
     response.body = render({
       user: {
-        user,
+        user: data.user,
       },
       articles: {
         articles: unreadArticles,
-        feeds,
-        feedStats,
+        feeds: data.feeds,
+        feedStats: data.feedStats,
         userArticles,
+        selectedFeeds: feedIds ?? [],
       },
     });
   });

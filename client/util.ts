@@ -48,3 +48,8 @@ export function storeValue(name: string, value: unknown) {
     store.removeItem(name);
   }
 }
+
+export function removeValue(name: string) {
+  const store = globalThis.localStorage;
+  store.removeItem(name);
+}

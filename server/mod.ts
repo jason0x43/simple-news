@@ -7,6 +7,7 @@ import { createRouter } from "./routes.tsx";
 import { refreshFeeds } from "./feed.ts";
 import { getSession, isActiveSession } from "./database/sessions.ts";
 import { addLiveReloadMiddleware } from "./reload.ts";
+import { addSessionMiddleware } from "./sessions.ts";
 
 const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);
@@ -142,28 +143,7 @@ export async function serve() {
   }
 
   // Add cookie data to the app state
-  app.use(async ({ cookies, state }, next) => {
-    const sessionId = await cookies.get("sessionId");
-    if (sessionId) {
-      log.debug(`sessionId: ${sessionId}`);
-      try {
-        const session = getSession(sessionId);
-        if (isActiveSession(session)) {
-          log.debug(`session is active`);
-          state.userId = session.userId;
-        }
-      } catch {
-        log.warning(`Invalid session ${sessionId}`);
-      }
-
-      const selectedFeedsStr = await cookies.get("selectedFeeds");
-      if (selectedFeedsStr) {
-        state.selectedFeeds = selectedFeedsStr.split(",").map(Number);
-      }
-    }
-
-    await next();
-  });
+  addSessionMiddleware(app);
 
   app.use(router.routes());
   app.use(router.allowedMethods());

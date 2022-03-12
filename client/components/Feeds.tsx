@@ -4,9 +4,9 @@ import type { FeedStats, UserConfig } from "../../types.ts";
 import type { Settings } from "../types.ts";
 import { useAppDispatch, useAppSelector } from "../store/mod.ts";
 import { selectUser } from "../store/userSelectors.ts";
-import { selectSelectedFeeds, selectSettings } from "../store/uiSelectors.ts";
+import { selectSettings } from "../store/uiSelectors.ts";
 import { loadFeeds } from "../store/articles.ts";
-import { selectFeeds, selectFeedStats } from "../store/articlesSelectors.ts";
+import { selectFeeds, selectFeedStats, selectSelectedFeeds } from "../store/articlesSelectors.ts";
 
 function isSelected(feedIds: number[], selected: number[] | undefined) {
   if (!selected) {

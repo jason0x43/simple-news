@@ -20,15 +20,20 @@ import {
   refreshFeeds,
   setRead,
 } from "../api.ts";
-import { selectArticles, selectUserArticles } from "./articlesSelectors.ts";
+import {
+  selectArticles,
+  selectSelectedFeeds,
+  selectUserArticles,
+} from "./articlesSelectors.ts";
 import type { AppDispatch, AppState } from "./mod.ts";
-import { selectSelectedFeeds } from "./uiSelectors.ts";
+import { signin, signout } from "./user.ts";
 
 export type ArticlesState = {
   feeds: Feed[] | undefined;
   articles: ArticleHeading[];
   feedStats: FeedStats | undefined;
   userArticles: { [articleId: string]: UserArticle };
+  selectedFeeds: number[];
 };
 
 const shouldLogout = (error: Error) =>
@@ -70,24 +75,25 @@ export const loadArticles = createAsyncThunk<
 
 export const loadFeeds = createAsyncThunk<
   number[] | undefined,
-  number[],
+  number[] | undefined,
   { dispatch: AppDispatch }
 >(
   "articles/loadFeeds",
   async (feedIds, { dispatch }) => {
-    console.log("loading feeds", feedIds);
     try {
-      const [articles, userArticles, feeds] = await Promise.all([
-        getArticleHeadings(feedIds),
-        getUserArticles(feedIds),
-        getFeeds(feedIds),
+      const feeds = await getFeeds(feedIds);
+      const ids = feeds.map((feed) => feed.id);
+      const [articles, userArticles] = await Promise.all([
+        getArticleHeadings(ids),
+        getUserArticles(ids),
       ]);
 
       dispatch(setArticles(articles));
       dispatch(setUserArticles(userArticles));
       dispatch(setFeeds(feeds));
+      dispatch(setSelectedFeeds(feedIds ?? []));
 
-      return feedIds;
+      return ids;
     } catch (error) {
       if (shouldLogout(error)) {
         logout();
@@ -200,6 +206,7 @@ const initialState: ArticlesState = {
   articles: [],
   feedStats: undefined,
   userArticles: {},
+  selectedFeeds: [],
 };
 
 export const articlesSlice = createSlice({
@@ -237,7 +244,7 @@ export const articlesSlice = createSlice({
         state.userArticles = action.payload.reduce((all, article) => {
           all[article.articleId] = article;
           return all;
-        }, {} as { [key: string]: UserArticle })
+        }, {} as { [key: string]: UserArticle });
       } else {
         state.userArticles = action.payload;
       }
@@ -256,6 +263,24 @@ export const articlesSlice = createSlice({
       }
       return { ...state, userArticles: newUserArticles };
     },
+
+    setSelectedFeeds: (
+      state,
+      action: PayloadAction<ArticlesState["selectedFeeds"]>,
+    ) => {
+      state.selectedFeeds = action.payload;
+    },
+  },
+
+  extraReducers: (builder) => {
+    builder.addCase(signin.fulfilled, (state, { payload }) => {
+      state.feeds = payload.feeds;
+      state.feedStats = payload.feedStats;
+    });
+
+    builder.addCase(signout.fulfilled, () => {
+      return initialState;
+    });
   },
 });
 
@@ -265,6 +290,7 @@ const {
   setFeeds,
   setArticles,
   setFeedStats,
+  setSelectedFeeds,
   setUserArticles,
   setUserArticlesRead,
 } = articlesSlice.actions;

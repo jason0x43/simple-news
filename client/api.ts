@@ -3,6 +3,7 @@ import {
   ArticleHeading,
   Feed,
   FeedStats,
+  LoginResponse,
   UpdateUserArticleRequest,
   User,
   UserArticle,
@@ -111,7 +112,10 @@ export async function getUser(): Promise<User> {
 /**
  * Login a user
  */
-export async function login(username: string, password: string): Promise<User> {
+export async function login(
+  username: string,
+  password: string,
+): Promise<LoginResponse> {
   const response = await fetch("/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

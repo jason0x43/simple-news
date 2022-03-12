@@ -3,9 +3,10 @@ import {
   createSlice,
   type PayloadAction,
 } from "@reduxjs/toolkit";
-import type { User } from "../../types.ts";
+import type { LoginResponse, User } from "../../types.ts";
 import { AppDispatch } from "./mod.ts";
-import * as api from '../api.ts';
+import * as api from "../api.ts";
+import { removeValue } from "../util.ts";
 
 export type UserState = {
   user: User | undefined;
@@ -13,7 +14,7 @@ export type UserState = {
 };
 
 export const signin = createAsyncThunk<
-  void,
+  LoginResponse,
   { username: string; password: string },
   { dispatch: AppDispatch }
 >(
@@ -21,8 +22,9 @@ export const signin = createAsyncThunk<
   async ({ username, password }, { dispatch }) => {
     dispatch(setError(undefined));
     try {
-      const user = await api.login(username, password);
-      dispatch(setUser(user));
+      const data = await api.login(username, password);
+      dispatch(setUser(data.user));
+      return data;
     } catch (error) {
       dispatch(setError(`${error}`));
       throw error;
@@ -41,6 +43,8 @@ export const signout = createAsyncThunk<
     try {
       await api.logout();
       dispatch(setUser(undefined));
+      removeValue('selectedArticle');
+      removeValue('sidebarActive');
     } catch (error) {
       dispatch(setError(`${error}`));
       throw error;

@@ -14,7 +14,6 @@ import { useAppVisibility } from "./hooks.ts";
 import { useAppDispatch, useAppSelector } from "./store/mod.ts";
 import {
   selectSelectedArticle,
-  selectSelectedFeeds,
   selectSettings,
   selectSidebarActive,
   selectUpdating,
@@ -23,6 +22,7 @@ import { loadArticles, updateFeeds } from "./store/articles.ts";
 import { selectUser, selectUserError } from "./store/userSelectors.ts";
 import { restoreUiState, setSidebarActive } from "./store/ui.ts";
 import { signin } from "./store/user.ts";
+import { selectSelectedFeeds } from "./store/articlesSelectors.ts";
 
 export function getFeedsTitle(
   user: User,
@@ -93,14 +93,11 @@ const LoggedIn: React.FC = () => {
 
   // Fetch updated data in the background every few minutes
   useEffect(() => {
-    const signal = { cancelled: false };
-
     const interval = setInterval(() => {
       dispatch(loadArticles());
     }, 600000);
 
     return () => {
-      signal.cancelled = true;
       clearInterval(interval);
     };
   }, [dispatch, selectedFeeds]);
