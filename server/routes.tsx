@@ -22,6 +22,7 @@ import {
   LoginRequest,
   LoginResponse,
   UpdateUserArticleRequest,
+User,
 } from "../types.ts";
 import App from "../client/App.tsx";
 import { formatArticles, refreshFeeds } from "./feed.ts";
@@ -45,6 +46,13 @@ function toString(value: unknown): string {
   return JSON.stringify(value ?? null).replace(/</g, "\\u003c");
 }
 
+function getUserFeedIds(user: User): number[] | undefined {
+  return user.config?.feedGroups?.reduce((allFeeds, group) => {
+    allFeeds.push(...group.feeds);
+    return allFeeds;
+  }, [] as number[]);
+}
+
 export function createRouter(
   init: { client: string; styles: string; dev: boolean | undefined },
 ): Router<AppState> {
@@ -57,11 +65,7 @@ export function createRouter(
 
   const getUserData = (userId: number): LoginResponse => {
     const user = getUser(userId);
-    const feedIds = user.config?.feedGroups.reduce((allIds, group) => {
-      allIds.push(...group.feeds);
-      return allIds;
-    }, [] as number[]);
-
+    const feedIds = getUserFeedIds(user);
     const feeds = getFeeds(feedIds);
     const feedStats = getFeedStats({ userId });
 
@@ -110,10 +114,10 @@ export function createRouter(
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
         <link rel="manifest" href="/site.webmanifest">
 
-        ${faviconLinks ?? ""}
-
         <link rel="stylesheet" href="/styles.css">
         <script type="module" async src="/client.js"></script>
+
+        ${faviconLinks ?? ""}
       </head>
       <body>
         <svg style="display:none" version="2.0">
@@ -165,10 +169,7 @@ export function createRouter(
         feedIds = feedIdsList.split(",").map(Number);
       } else {
         const user = getUser(state.userId);
-        feedIds = user.config?.feedGroups?.reduce((allFeeds, group) => {
-          allFeeds.push(...group.feeds);
-          return allFeeds;
-        }, [] as number[]);
+        feedIds = getUserFeedIds(user);
       }
 
       response.type = "application/json";
@@ -274,17 +275,7 @@ export function createRouter(
         await cookies.set(selectedFeedsCookie, feedIdsList, cookieOptions);
       } else {
         const user = getUser(userId);
-        if (user.config) {
-          feedIds = user.config?.feedGroups.reduce<number[]>(
-            (allIds, group) => {
-              return [
-                ...allIds,
-                ...group.feeds,
-              ];
-            },
-            [],
-          );
-        }
+        feedIds = getUserFeedIds(user);
       }
 
       response.type = "application/json";
@@ -302,14 +293,7 @@ export function createRouter(
       feedIds = feedIdsList.split(",").map(Number);
     } else {
       const user = getUser(userId);
-      if (user.config) {
-        feedIds = user.config?.feedGroups.reduce<number[]>((allIds, group) => {
-          return [
-            ...allIds,
-            ...group.feeds,
-          ];
-        }, []);
-      }
+      feedIds = getUserFeedIds(user);
     }
 
     response.type = "application/json";
