@@ -189,7 +189,8 @@ export function createRouter(
             userId: state.userId,
           });
           response.body = articles.filter((article) =>
-            !userArticles[article.id]?.read
+            !userArticles[article.id]?.read ||
+            article.id === state.selectedArticle
           );
         }
       } else {
