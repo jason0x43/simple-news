@@ -70,7 +70,6 @@ const Articles: FC = () => {
   const [width, setRef, listRef] = useWidthObserver();
   const [visibleCount, setVisibleCount] = useState(0);
   const dispatch = useAppDispatch();
-  const selectedFeedsRef = useRef<number[]>();
 
   // Clear the updated articles list if the selected feed set is changed.
   useEffect(() => {
@@ -100,7 +99,7 @@ const Articles: FC = () => {
     }
 
     return articles.filter((article) =>
-      article.articleId === selectedArticle?.articleId ||
+      article.id === selectedArticle?.id ||
       !userArticles[article.id]?.read ||
       updatedArticles.includes(article.id)
     );
@@ -113,15 +112,12 @@ const Articles: FC = () => {
   ]);
 
   useEffect(() => {
-    if (selectedFeedsRef.current !== selectedFeeds) {
-      selectedFeedsRef.current = selectedFeeds;
-      const selectedIndex = filteredArticles.findIndex(({ id }) =>
-        id === selectedArticle?.id
-      );
-      const targetIndex = Math.max(selectedIndex, 0) + 20;
-      setVisibleCount(Math.min(filteredArticles.length, targetIndex));
-    }
-  }, [selectedFeeds, filteredArticles, selectedArticle]);
+    const selectedIndex = filteredArticles.findIndex(({ id }) =>
+      id === selectedArticle?.id
+    );
+    const targetIndex = Math.max(selectedIndex, 0) + 20;
+    setVisibleCount(Math.min(filteredArticles.length, targetIndex));
+  }, [filteredArticles, selectedArticle]);
 
   const renderedArticles = filteredArticles.slice(0, visibleCount);
 

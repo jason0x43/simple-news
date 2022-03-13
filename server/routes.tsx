@@ -345,7 +345,7 @@ export function createRouter(
     response.body = { success: true };
   });
 
-  router.get("/", ({ cookies, response, state }) => {
+  router.get("/", ({ response, state }) => {
     if (!state.userId) {
       response.redirect("/login");
       return;
