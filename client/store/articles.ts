@@ -26,6 +26,7 @@ import {
   selectUserArticles,
 } from "./articlesSelectors.ts";
 import type { AppDispatch, AppState } from "./mod.ts";
+import { selectSelectedArticle } from "./uiSelectors.ts";
 import { signin, signout } from "./user.ts";
 
 export type ArticlesState = {
@@ -181,14 +182,21 @@ export const setOlderArticlesRead = createAsyncThunk<
 export const selectArticle = createAsyncThunk<
   Article | undefined,
   number | undefined,
-  { dispatch: AppDispatch }
+  { dispatch: AppDispatch; state: AppState }
 >(
   "articles/selectArticle",
-  async (articleId, { dispatch }) => {
+  async (articleId, { dispatch, getState }) => {
     if (articleId) {
       try {
+        const currentArticle = selectSelectedArticle(getState());
         const article = await getArticle(articleId);
-        dispatch(setArticlesRead({ articleIds: [articleId], read: true }));
+        if (currentArticle) {
+          // If there was an article selected before this one, mark it read
+          // after the new article has been successfully loaded
+          dispatch(
+            setArticlesRead({ articleIds: [currentArticle.id], read: true }),
+          );
+        }
         return article;
       } catch (error) {
         if (shouldLogout(error)) {
