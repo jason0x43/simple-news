@@ -64,6 +64,7 @@ export type UpdateUserArticleRequest = {
   articleId: number;
   read?: boolean;
   saved?: boolean;
+  isSelected?: boolean;
 }[];
 
 export type LoginRequest = {

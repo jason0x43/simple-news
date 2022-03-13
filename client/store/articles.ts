@@ -26,7 +26,6 @@ import {
   selectUserArticles,
 } from "./articlesSelectors.ts";
 import type { AppDispatch, AppState } from "./mod.ts";
-import { selectSelectedArticle } from "./uiSelectors.ts";
 import { signin, signout } from "./user.ts";
 
 export type ArticlesState = {
@@ -139,13 +138,13 @@ export const updateFeeds = createAsyncThunk<
 
 export const setArticlesRead = createAsyncThunk<
   number[] | undefined,
-  { articleIds: number[]; read: boolean },
+  { articleIds: number[]; read: boolean, isSelected?: boolean },
   { dispatch: AppDispatch }
 >(
   "articles/setArticlesRead",
-  async ({ articleIds, read }, { dispatch }) => {
+  async ({ articleIds, read, isSelected }, { dispatch }) => {
     try {
-      await setRead(articleIds, read);
+      await setRead(articleIds, read, isSelected);
       const feedStats = await getFeedStats();
       dispatch(setUserArticlesRead({ ids: articleIds, read }));
       dispatch(setFeedStats(feedStats));
@@ -182,21 +181,15 @@ export const setOlderArticlesRead = createAsyncThunk<
 export const selectArticle = createAsyncThunk<
   Article | undefined,
   number | undefined,
-  { dispatch: AppDispatch; state: AppState }
+  { dispatch: AppDispatch }
 >(
   "articles/selectArticle",
-  async (articleId, { dispatch, getState }) => {
+  async (articleId, { dispatch }) => {
     if (articleId) {
       try {
-        const currentArticle = selectSelectedArticle(getState());
         const article = await getArticle(articleId);
-        if (currentArticle) {
-          // If there was an article selected before this one, mark it read
-          // after the new article has been successfully loaded
-          dispatch(
-            setArticlesRead({ articleIds: [currentArticle.id], read: true }),
-          );
-        }
+        dispatch(setArticlesRead({ articleIds: [articleId], read: true,
+                                 isSelected: true }));
         return article;
       } catch (error) {
         if (shouldLogout(error)) {

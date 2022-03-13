@@ -39,6 +39,7 @@ const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);
 
 const selectedFeedsCookie = "selectedFeeds";
+const selectedArticleCookie = "selectedArticle";
 
 function toString(value: unknown): string {
   return JSON.stringify(value ?? null).replace(/</g, "\\u003c");
@@ -211,11 +212,19 @@ export function createRouter(
   router.patch(
     "/user_articles",
     requireUser,
-    async ({ request, response, state }) => {
+    async ({ cookies, request, response, state }) => {
       if (request.hasBody) {
         const body = request.body();
         const data = await body.value as UpdateUserArticleRequest;
         updateUserArticles(state.userId, data);
+
+        if (data.length === 1 && data[0].isSelected) {
+          await cookies.set(
+            selectedArticleCookie,
+            `${data[0].articleId}`,
+            cookieOptions,
+          );
+        }
       }
       response.status = 204;
     },
@@ -358,12 +367,17 @@ export function createRouter(
     const feedIdsList = await cookies.get(selectedFeedsCookie);
     const feedIds: number[] | undefined = feedIdsList?.split(",").map(Number);
 
+    const selectedArticle = await cookies.get(selectedArticleCookie);
+    const selectedArticleId = selectedArticle
+      ? Number(selectedArticle)
+      : undefined;
+
     const { userId } = state;
     const data = getUserData(userId);
     const articles = getArticleHeadings(feedIds);
     const userArticles = getUserArticles({ feedIds, userId });
     const unreadArticles = articles.filter((article) =>
-      !userArticles[article.id]?.read
+      !userArticles[article.id]?.read || article.id === selectedArticleId
     );
 
     response.type = "text/html";

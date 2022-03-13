@@ -80,10 +80,16 @@ export async function refreshFeeds() {
 export async function setRead(
   articleIds: number[],
   read = true,
+  isSelected = false
 ): Promise<void> {
+  if (isSelected && articleIds.length > 1) {
+    throw new Error('Only a single article ID may be marked as "selected"');
+  }
+
   const body: UpdateUserArticleRequest = articleIds.map((articleId) => ({
     articleId,
     read,
+    isSelected,
   }));
 
   const response = await fetch(`/user_articles`, {
