@@ -12,7 +12,9 @@ import {
 import { getUserByUsername } from "./database/users.ts";
 import { requireLocal } from "./middleware.ts";
 
-const sessionCookie = "sessionId";
+export const sessionCookie = "sessionId";
+export const selectedFeedsCookie = "selectedFeeds";
+export const selectedArticleCookie = "selectedArticle";
 
 export async function createSession(
   { userId, cookies, cookieOptions }: {
@@ -56,6 +58,24 @@ export function addSessionMiddleware(app: Application<AppState>) {
         log.warning(`Invalid session ${sessionId}`);
       }
     }
+    await next();
+  });
+}
+
+export function addUserDataMiddleware(app: Application<AppState>) {
+  app.use(async ({ cookies, state }, next) => {
+    const selectedArticle = await cookies.get(selectedArticleCookie);
+    if (selectedArticle) {
+      log.debug(`selectedArticle: ${selectedArticle}`);
+      state.selectedArticle = Number(selectedArticle);
+    }
+
+    const selectedFeeds = await cookies.get(selectedFeedsCookie);
+    if (selectedFeeds) {
+      log.debug(`selectedFeeds: ${selectedFeeds}`);
+      state.selectedFeeds = selectedFeeds?.split(",").map(Number);
+    }
+
     await next();
   });
 }

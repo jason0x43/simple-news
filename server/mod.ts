@@ -5,9 +5,8 @@ import { expandGlob } from "std/fs/mod.ts";
 import type { AppState } from "../types.ts";
 import { createRouter } from "./routes.tsx";
 import { refreshFeeds } from "./feed.ts";
-import { getSession, isActiveSession } from "./database/sessions.ts";
 import { addLiveReloadMiddleware } from "./reload.ts";
-import { addSessionMiddleware } from "./sessions.ts";
+import { addSessionMiddleware, addUserDataMiddleware } from "./sessions.ts";
 
 const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);
@@ -144,6 +143,7 @@ export async function serve() {
 
   // Add cookie data to the app state
   addSessionMiddleware(app);
+  addUserDataMiddleware(app);
 
   app.use(router.routes());
   app.use(router.allowedMethods());

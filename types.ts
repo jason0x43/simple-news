@@ -1,6 +1,7 @@
 export type AppState = {
   userId: number;
   selectedFeeds?: number[];
+  selectedArticle?: number;
 };
 
 export type Article = {

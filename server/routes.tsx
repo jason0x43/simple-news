@@ -22,7 +22,7 @@ import {
   LoginRequest,
   LoginResponse,
   UpdateUserArticleRequest,
-User,
+  User,
 } from "../types.ts";
 import App from "../client/App.tsx";
 import { formatArticles, refreshFeeds } from "./feed.ts";
@@ -34,13 +34,15 @@ import { selectFeeds } from "../client/store/articlesSelectors.ts";
 import { getUserByUsername } from "./database/users.ts";
 import { addLiveReloadRoute } from "./reload.ts";
 import { requireUser } from "./middleware.ts";
-import { createSession, deleteSession } from "./sessions.ts";
+import {
+  createSession,
+  deleteSession,
+  selectedArticleCookie,
+  selectedFeedsCookie,
+} from "./sessions.ts";
 
 const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);
-
-const selectedFeedsCookie = "selectedFeeds";
-const selectedArticleCookie = "selectedArticle";
 
 function toString(value: unknown): string {
   return JSON.stringify(value ?? null).replace(/</g, "\\u003c");
@@ -342,26 +344,18 @@ export function createRouter(
     response.body = { success: true };
   });
 
-  router.get("/", async ({ cookies, response, state }) => {
+  router.get("/", ({ cookies, response, state }) => {
     if (!state.userId) {
       response.redirect("/login");
       return;
     }
 
-    const feedIdsList = await cookies.get(selectedFeedsCookie);
-    const feedIds: number[] | undefined = feedIdsList?.split(",").map(Number);
-
-    const selectedArticle = await cookies.get(selectedArticleCookie);
-    const selectedArticleId = selectedArticle
-      ? Number(selectedArticle)
-      : undefined;
-
-    const { userId } = state;
+    const { userId, selectedFeeds, selectedArticle } = state;
     const data = getUserData(userId);
-    const articles = getArticleHeadings(feedIds);
-    const userArticles = getUserArticles({ feedIds, userId });
+    const articles = getArticleHeadings(selectedFeeds);
+    const userArticles = getUserArticles({ feedIds: selectedFeeds, userId });
     const unreadArticles = articles.filter((article) =>
-      !userArticles[article.id]?.read || article.id === selectedArticleId
+      !userArticles[article.id]?.read || article.id === selectedArticle
     );
 
     response.type = "text/html";
@@ -374,7 +368,7 @@ export function createRouter(
         feeds: data.feeds,
         feedStats: data.feedStats,
         userArticles,
-        selectedFeeds: feedIds ?? [],
+        selectedFeeds: selectedFeeds ?? [],
       },
     });
   });
