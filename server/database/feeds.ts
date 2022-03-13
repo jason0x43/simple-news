@@ -33,7 +33,7 @@ export function addFeed(
 
 export function getFeed(id: number): Feed {
   const feed = feedQuery(
-    "SELECT ${feedColumns} FROM feeds WHERE id = (:id)",
+    `SELECT ${feedColumns} FROM feeds WHERE id = (:id)`,
     { id },
   )[0];
   if (!feed) {
