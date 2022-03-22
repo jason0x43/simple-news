@@ -1,6 +1,6 @@
 import { Application, Cookies, CookiesSetDeleteOptions, Router } from "oak";
 import * as log from "std/log/mod.ts";
-import { AppState } from "../types.ts";
+import { AppState } from "./types.ts";
 import {
   addSession,
   getSession,

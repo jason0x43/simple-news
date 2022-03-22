@@ -1,9 +1,3 @@
-export type AppState = {
-  userId: number;
-  selectedFeeds?: number[];
-  selectedArticle?: number;
-};
-
 export type Article = {
   id: number;
   feedId: number;
@@ -77,4 +71,8 @@ export type LoginResponse = {
   user: User;
   feeds: Feed[];
   feedStats: FeedStats;
+};
+
+export type UserArticlesResponse = {
+  [articleId: string]: UserArticle;
 };

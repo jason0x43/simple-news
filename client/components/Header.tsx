@@ -1,26 +1,56 @@
 import React, { type VFC } from "react";
-import { useAppDispatch, useAppSelector } from "../store/mod.ts";
-import { toggleSidebarActive } from "../store/ui.ts";
-import { selectFeedsTitle } from "../store/uiSelectors.ts";
-import { selectUser } from "../store/userSelectors.ts";
-import { signout } from "../store/user.ts";
+import { Feed, User } from "../../types.ts";
+import { useFeeds, useSignout, useUser } from "../queries/mod.ts";
+import { useSelectedFeeds } from "../contexts/selectedFeeds.ts";
 
 type HeaderProps = {
-  onTitlePress?: () => void;
+  onTitlePress: () => void;
+  toggleSidebar: () => void;
 };
 
-const Header: VFC<HeaderProps> = ({ onTitlePress }) => {
-  const title = useAppSelector(selectFeedsTitle);
-  const user = useAppSelector(selectUser);
-  const dispatch = useAppDispatch();
+const getFeedsTitle = (
+  user: User | undefined,
+  feeds: Feed[] | undefined,
+  selectedFeeds: number[] | undefined,
+) => {
+  if (
+    !selectedFeeds || selectedFeeds.length === 0 || !feeds ||
+    !user?.config?.feedGroups
+  ) {
+    return undefined;
+  }
+
+  if (selectedFeeds.length === 1) {
+    for (const feed of feeds) {
+      if (feed.id === selectedFeeds[0]) {
+        return feed.title;
+      }
+    }
+  } else if (selectedFeeds.length > 1) {
+    for (const group of user?.config?.feedGroups) {
+      for (const feed of group.feeds) {
+        if (feed === selectedFeeds[0]) {
+          return group.title;
+        }
+      }
+    }
+  }
+
+  return undefined;
+};
+
+const Header: VFC<HeaderProps> = ({ onTitlePress, toggleSidebar }) => {
+  const { data: user } = useUser();
+  const { data: feeds } = useFeeds();
+  const selectedFeeds = useSelectedFeeds();
+  const title = getFeedsTitle(user, feeds, selectedFeeds);
+  const signout = useSignout();
 
   return (
     <header className="Header">
       <div
         className="Header-left"
-        onClick={() => {
-          dispatch(toggleSidebarActive());
-        }}
+        onClick={toggleSidebar}
       >
         <svg width="22" height="22" version="2.0">
           <use href="#sn-logo" />
@@ -31,7 +61,7 @@ const Header: VFC<HeaderProps> = ({ onTitlePress }) => {
         <h2 onClick={onTitlePress}>{title}</h2>
       </div>
       <div className="Header-right">
-        <span className="Header-user" onClick={() => dispatch(signout())}>
+        <span className="Header-user" onClick={() => signout.mutate()}>
           {user?.username}
         </span>
       </div>

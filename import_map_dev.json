@@ -14,12 +14,6 @@
     "react": "https://esm.sh/react@17.0.2?dev&pin=v68",
     "react-dom": "https://esm.sh/react-dom@17.0.2?dev&pin=v68",
     "react-dom-server": "https://esm.sh/react-dom@17.0.2/server?dev&pin=v68",
-
-    "@reduxjs/toolkit": "https://esm.sh/@reduxjs/toolkit@1.8.0?dev&pin=v68",
-    "react-redux": "https://esm.sh/react-redux@7.2.6?dev&pin=v68&deps=@types/react@17.0.40",
-    "redux": "https://esm.sh/redux@4.1.2?dev&pin=v68",
-
-    "https://cdn.esm.sh/v68/@types/react-redux@7.1.23/index.d.ts": "./types/react-redux@7.1.23.d.ts",
-    "https://cdn.esm.sh/v68/@types/react@17.0.39/index.d.ts": "https://cdn.esm.sh/v68/@types/react@17.0.40/index.d.ts"
+    "react-query": "https://esm.sh/react-query@3.34.16?dev&pin=v68"
   }
 }

@@ -5,7 +5,6 @@ import { Router } from "oak";
 import * as log from "std/log/mod.ts";
 import ReactDOMServer from "react-dom-server";
 import React from "react";
-import { Provider } from "react-redux";
 import {
   getArticle,
   getArticleHeadings,
@@ -17,20 +16,18 @@ import {
   isUserPassword,
   updateUserArticles,
 } from "./database/mod.ts";
-import {
-  AppState,
+import type {
+  ArticleHeading,
+  Feed,
+  FeedStats,
   LoginRequest,
   LoginResponse,
   UpdateUserArticleRequest,
   User,
+  UserArticle,
 } from "../types.ts";
 import App from "../client/App.tsx";
 import { formatArticles, refreshFeeds } from "./feed.ts";
-import {
-  AppState as ClientAppState,
-  createStore,
-} from "../client/store/mod.ts";
-import { selectFeeds } from "../client/store/articlesSelectors.ts";
 import { getUserByUsername } from "./database/users.ts";
 import { addLiveReloadRoute } from "./reload.ts";
 import { requireUser } from "./middleware.ts";
@@ -40,13 +37,21 @@ import {
   selectedArticleCookie,
   selectedFeedsCookie,
 } from "./sessions.ts";
+import { dehydrate, QueryClient } from "react-query";
+import { type AppState } from "./types.ts";
+import { getDehydratedStateStatement } from "../global.ts";
 
 const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);
 
-function toString(value: unknown): string {
-  return JSON.stringify(value ?? null).replace(/</g, "\\u003c");
-}
+type RenderState = Partial<{
+  user: User | undefined;
+  feeds: Feed[] | undefined;
+  articles: ArticleHeading[] | undefined;
+  feedStats: FeedStats | undefined;
+  userArticles: UserArticle[] | undefined;
+  selectedFeeds: number[] | undefined;
+}>;
 
 function getUserFeedIds(user: User): number[] | undefined {
   return user.config?.feedGroups?.reduce((allFeeds, group) => {
@@ -78,25 +83,33 @@ export function createRouter(
     };
   };
 
+  const toDehydratedState = (state: RenderState) => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData("user", state.user);
+    queryClient.setQueryData("feeds", state.feeds);
+    queryClient.setQueryData("feedStats", state.feedStats);
+    return dehydrate(queryClient);
+  };
+
   // Render the base HTML
-  const render = (initialState: Partial<ClientAppState>) => {
-    const store = createStore(initialState);
-
+  const render = (initialState: RenderState) => {
     const devMode = `globalThis.__DEV__ = ${init.dev ? "true" : "false"};`;
+    const dehydratedState = toDehydratedState(initialState);
     const renderedApp = ReactDOMServer.renderToString(
-      <Provider store={store}>
-        <App />
-      </Provider>,
+      <App dehydratedState={dehydratedState} />,
     );
-    const preloadedState = `globalThis.__PRELOADED_STATE__ = ${
-      toString(store.getState())
-    };`;
-
-    const feeds = selectFeeds(store.getState());
+    const globalState = getDehydratedStateStatement(dehydratedState);
+    const feeds = initialState.feeds;
     const faviconLinks = feeds?.filter((feed) => feed.icon).map(({ icon }) =>
       icon!
     ).map((icon) => `<link rel="preload" href="${icon}" as="image">`).join(
       "\n",
+    );
+
+    log.debug(
+      `rendering with selectedFeeds ${
+        JSON.stringify(initialState.selectedFeeds)
+      }`,
     );
 
     const logo = Deno.readTextFileSync(
@@ -129,7 +142,7 @@ export function createRouter(
         </svg>
         <div id="root">${renderedApp}</div>
         <script>
-          ${preloadedState}
+          ${globalState}
           ${devMode}
         </script>
       </body>
@@ -217,20 +230,29 @@ export function createRouter(
     "/user_articles",
     requireUser,
     async ({ cookies, request, response, state }) => {
-      if (request.hasBody) {
-        const body = request.body();
-        const data = await body.value as UpdateUserArticleRequest;
-        updateUserArticles(state.userId, data);
+      response.type = "application/json";
 
-        if (data.length === 1 && data[0].isSelected) {
-          await cookies.set(
-            selectedArticleCookie,
-            `${data[0].articleId}`,
-            cookieOptions,
-          );
-        }
+      if (!request.hasBody) {
+        response.status = 400;
+        response.body = { error: "Missing request body" };
       }
-      response.status = 204;
+
+      const body = request.body();
+      const data = await body.value as UpdateUserArticleRequest;
+      const updatedArticles = updateUserArticles(state.userId, data);
+
+      log.debug(`updated articles: ${JSON.stringify(updatedArticles)}`);
+
+      if (data.length === 1 && data[0].isSelected) {
+        await cookies.set(
+          selectedArticleCookie,
+          `${data[0].articleId}`,
+          cookieOptions,
+        );
+      }
+
+      response.status = 200;
+      response.body = updatedArticles;
     },
   );
 
@@ -247,7 +269,10 @@ export function createRouter(
       }
 
       const { userId } = state;
-      const userArticles = getUserArticles({ userId, feedIds });
+      const userArticles: UserArticle[] = getUserArticles({
+        userId,
+        feedIds,
+      });
 
       response.type = "application/json";
       response.body = userArticles;
@@ -361,16 +386,12 @@ export function createRouter(
 
     response.type = "text/html";
     response.body = render({
-      user: {
-        user: data.user,
-      },
-      articles: {
-        articles: unreadArticles,
-        feeds: data.feeds,
-        feedStats: data.feedStats,
-        userArticles,
-        selectedFeeds: selectedFeeds ?? [],
-      },
+      user: data.user,
+      articles: unreadArticles,
+      feeds: data.feeds,
+      feedStats: data.feedStats,
+      userArticles,
+      selectedFeeds: selectedFeeds ?? [],
     });
   });
 

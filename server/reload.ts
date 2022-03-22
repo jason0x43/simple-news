@@ -1,4 +1,4 @@
-import { AppState } from "../types.ts";
+import { AppState } from "./types.ts";
 import { Application, Router } from "oak";
 
 export function addLiveReloadMiddleware(app: Application<AppState>) {

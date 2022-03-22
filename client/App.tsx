@@ -3,76 +3,48 @@ import { ContextMenuProvider } from "./components/ContextMenu.tsx";
 import Feeds from "./components/Feeds.tsx";
 import Articles from "./components/Articles.tsx";
 import Header from "./components/Header.tsx";
-import Article, { ArticleRef } from "./components/Article.tsx";
+import Article, { type ArticleRef } from "./components/Article.tsx";
 import Button from "./components/Button.tsx";
 import ButtonSelector from "./components/ButtonSelector.tsx";
 import Input from "./components/Input.tsx";
-import type { Feed, User } from "../types.ts";
 import type { Settings } from "./types.ts";
 import { className } from "./util.ts";
-import { useAppVisibility } from "./hooks.ts";
-import { useAppDispatch, useAppSelector } from "./store/mod.ts";
+import { useStoredState } from "./hooks.ts";
 import {
-  selectSelectedArticle,
-  selectSettings,
-  selectSidebarActive,
-  selectUpdating,
-} from "./store/uiSelectors.ts";
-import { loadArticles, updateFeeds } from "./store/articles.ts";
-import { selectUser, selectUserError } from "./store/userSelectors.ts";
-import { restoreUiState, setSidebarActive } from "./store/ui.ts";
-import { signin } from "./store/user.ts";
-import { selectSelectedFeeds } from "./store/articlesSelectors.ts";
-
-export function getFeedsTitle(
-  user: User,
-  feeds: Feed[] | undefined,
-  selectedFeeds: number[] | undefined,
-) {
-  if (
-    !selectedFeeds || selectedFeeds.length === 0 || !feeds ||
-    !user?.config?.feedGroups
-  ) {
-    return undefined;
-  }
-
-  if (selectedFeeds.length === 1) {
-    for (const feed of feeds) {
-      if (feed.id === selectedFeeds[0]) {
-        return feed.title;
-      }
-    }
-  } else if (selectedFeeds.length > 1) {
-    for (const group of user?.config?.feedGroups) {
-      for (const feed of group.feeds) {
-        if (feed === selectedFeeds[0]) {
-          return group.title;
-        }
-      }
-    }
-  }
-
-  return undefined;
-}
+  useFeeds,
+  useRefreshFeeds,
+  useSignin,
+  useUser,
+} from "./queries/mod.ts";
+import { useSettings, useSettingsSetter } from "./contexts/settings.ts";
+import { useSelectedArticle } from "./contexts/selectedArticle.ts";
+import {
+  type DehydratedState,
+  Hydrate,
+  QueryClient,
+  QueryClientProvider,
+  useQuery,
+} from "react-query";
+import { getUser } from "./queries/api.ts";
+import AppProvider from "./contexts/mod.tsx";
+import { useSelectedFeeds } from "./contexts/selectedFeeds.ts";
 
 const LoggedIn: React.FC = () => {
-  const sidebarActive = useAppSelector(selectSidebarActive);
-  const visibility = useAppVisibility();
-  const selectedFeeds = useAppSelector(selectSelectedFeeds);
-  const updating = useAppSelector(selectUpdating);
-  const settings = useAppSelector(selectSettings);
-  const selectedArticle = useAppSelector(selectSelectedArticle);
-  const dispatch = useAppDispatch();
-  const visibilityRef = useRef(visibility);
+  const [sidebarActive, setSidebarActive] = useStoredState(
+    "sidebarActive",
+    false,
+  );
+  const { isLoading: feedsLoading } = useFeeds();
+  const settings = useSettings();
+  const setSettings = useSettingsSetter();
+  const selectedArticle = useSelectedArticle();
   const sidebarRef = useRef<HTMLDivElement>(null);
   const articleRef = useRef<ArticleRef>(null);
+  const refresher = useRefreshFeeds();
+  const selectedFeeds = useSelectedFeeds();
 
   const handleTitlePress = useCallback(() => {
     articleRef.current?.resetScroll();
-  }, []);
-
-  useEffect(() => {
-    dispatch(restoreUiState());
   }, []);
 
   useEffect(() => {
@@ -80,7 +52,7 @@ const LoggedIn: React.FC = () => {
       if (
         sidebarActive && !sidebarRef.current!.contains(event.target as Node)
       ) {
-        dispatch(setSidebarActive(false));
+        setSidebarActive(false);
       }
     };
 
@@ -91,30 +63,19 @@ const LoggedIn: React.FC = () => {
     };
   }, [sidebarActive]);
 
-  // Fetch updated data in the background every few minutes
   useEffect(() => {
-    const interval = setInterval(() => {
-      dispatch(loadArticles());
-    }, 600000);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [dispatch, selectedFeeds]);
-
-  // Fetch updated data when the app becomes visible
-  useEffect(() => {
-    if (visibility && !visibilityRef.current) {
-      console.log("app became visible");
-      dispatch(loadArticles());
-    }
-    visibilityRef.current = visibility;
-  }, [visibility]);
+    setSidebarActive(false);
+  }, [selectedFeeds]);
 
   return (
     <ContextMenuProvider>
       <div className="App-header">
-        <Header onTitlePress={handleTitlePress} />
+        <Header
+          onTitlePress={handleTitlePress}
+          toggleSidebar={() => {
+            setSidebarActive(!sidebarActive);
+          }}
+        />
       </div>
       <div className="App-content">
         <div className="App-sidebar" data-active={sidebarActive}>
@@ -124,9 +85,9 @@ const LoggedIn: React.FC = () => {
           <div className="App-sidebar-controls">
             <Button
               size="small"
-              disabled={updating}
+              disabled={feedsLoading}
               label="Update feeds"
-              onClick={() => updateFeeds()}
+              onClick={() => refresher.mutate()}
             />
           </div>
           <div className="App-sidebar-settings">
@@ -140,7 +101,7 @@ const LoggedIn: React.FC = () => {
               selected={settings.articleFilter}
               onSelect={(value) => {
                 const articleFilter = value as Settings["articleFilter"];
-                dispatch({ type: "setSettings", payload: { articleFilter } });
+                setSettings({ articleFilter });
               }}
             />
           </div>
@@ -161,11 +122,11 @@ const LoggedIn: React.FC = () => {
 const Login: React.FC = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const dispatch = useAppDispatch();
-  const error = useAppSelector(selectUserError);
+  const { error } = useUser();
+  const signin = useSignin();
 
   const doSignin = () => {
-    dispatch(signin({ username, password }));
+    signin.mutate({ username, password });
   };
 
   const handleKey = (event: React.KeyboardEvent<HTMLFormElement>) => {
@@ -185,18 +146,39 @@ const Login: React.FC = () => {
       />
       <Button label="Login" onClick={doSignin} />
 
-      {error && <div className="LoginError">{error}</div>}
+      {error && <div className="LoginError">{`${error}`}</div>}
     </form>
   );
 };
 
-const App: React.FC = () => {
-  const user = useAppSelector(selectUser);
+const AuthRouter: React.VFC = () => {
+  // const { data: user } = useUser();
+  const { data: user } = useQuery("user", () => getUser());
 
   return (
     <div className="App">
       {user ? <LoggedIn /> : <Login />}
     </div>
+  );
+};
+
+export type AppProps = {
+  dehydratedState?: DehydratedState;
+};
+
+const App: React.VFC<AppProps> = ({ dehydratedState }) => {
+  const [queryClient] = useState(() => new QueryClient());
+
+  console.log('hydrating with', dehydratedState);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Hydrate state={dehydratedState}>
+        <AppProvider>
+          <AuthRouter />
+        </AppProvider>
+      </Hydrate>
+    </QueryClientProvider>
   );
 };
 

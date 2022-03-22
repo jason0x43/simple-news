@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { loadValue, storeValue } from "./util.ts";
 
 export default function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(false);
@@ -82,4 +83,18 @@ export function useAppVisibility() {
   }, []);
 
   return visible;
+}
+
+export function useStoredState<T>(key: string, initialValue: T) {
+  const [value, setValue] = useState(() => loadValue<T>(key) ?? initialValue);
+
+  const setter = (newValue: T | ((oldVal: T) => T)) => {
+    const valueToStore = newValue instanceof Function
+      ? newValue(value)
+      : newValue;
+    setValue(valueToStore);
+    storeValue(key, valueToStore);
+  };
+
+  return [value, setter] as const;
 }

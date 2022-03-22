@@ -2,7 +2,7 @@ import { Application } from "oak";
 import * as log from "std/log/mod.ts";
 import * as path from "std/path/mod.ts";
 import { expandGlob } from "std/fs/mod.ts";
-import type { AppState } from "../types.ts";
+import type { AppState } from "./types.ts";
 import { createRouter } from "./routes.tsx";
 import { refreshFeeds } from "./feed.ts";
 import { addLiveReloadMiddleware } from "./reload.ts";
@@ -78,6 +78,8 @@ async function buildClient(): Promise<string> {
   if (importMap) {
     emitOptions.importMapPath = path.join(__dirname, "..", importMap);
   }
+
+  log.debug(`Bundling with import map ${importMap}`);
 
   // Build and cache the client code
   const { files, diagnostics } = await Deno.emit(

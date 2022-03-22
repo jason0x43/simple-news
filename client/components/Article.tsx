@@ -1,8 +1,16 @@
-import React, { type FC, forwardRef, useEffect, useRef, useState, useImperativeHandle } from "react";
+import React, {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 import { unescapeHtml } from "../../util.ts";
-import { useAppDispatch, useAppSelector } from "../store/mod.ts";
-import { setSelectedArticle } from "../store/ui.ts";
-import { selectSelectedArticle } from "../store/uiSelectors.ts";
+import {
+  useSelectedArticle,
+  useSelectedArticleSetter,
+} from "../contexts/selectedArticle.ts";
+import { useArticle } from "../queries/mod.ts";
 
 const target = "SimpleNews_ArticleView";
 
@@ -11,15 +19,16 @@ export type ArticleRef = {
 };
 
 const Article = forwardRef((_, ref) => {
-  const article = useAppSelector(selectSelectedArticle);
-  const dispatch = useAppDispatch();
+  const selectedArticle = useSelectedArticle();
+  const setSelectedArticle = useSelectedArticleSetter();
+  const { data: article } = useArticle(selectedArticle);
   const articleRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [className, setClassName] = useState("Article");
 
   useImperativeHandle(ref, () => ({
     resetScroll: () => {
-      scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+      scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
     },
   }));
 
@@ -41,7 +50,7 @@ const Article = forwardRef((_, ref) => {
     if (className === "Article") {
       // If the className is Article at the end of a transition, it means
       // Article-visible was removed, so the article should be deselected.
-      dispatch(setSelectedArticle(undefined));
+      setSelectedArticle(undefined);
     }
   };
 

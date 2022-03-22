@@ -13,23 +13,20 @@ import Button from "./Button.tsx";
 import { className } from "../util.ts";
 import { unescapeHtml } from "../../util.ts";
 import { useWidthObserver } from "../hooks.ts";
-import { useAppDispatch, useAppSelector } from "../store/mod.ts";
 import {
-  selectArticle,
-  setArticlesRead,
-  setOlderArticlesRead,
-} from "../store/articles.ts";
+  useArticleHeadings,
+  useFeeds,
+  useSetArticlesRead,
+  useUserArticles,
+} from "../queries/mod.ts";
+import { useSelectedFeeds } from "../contexts/selectedFeeds.ts";
+import { useSettings } from "../contexts/settings.ts";
+import { useUpdatedArticles } from "../contexts/updatedArticles.ts";
 import {
-  selectArticles,
-  selectFeeds,
-  selectSelectedFeeds,
-  selectUserArticles,
-} from "../store/articlesSelectors.ts";
-import {
-  selectSelectedArticle,
-  selectSettings,
-  selectUpdatedArticles,
-} from "../store/uiSelectors.ts";
+  useSelectedArticle,
+  useSelectedArticleSetter,
+} from "../contexts/selectedArticle.ts";
+import { UserArticle } from "../../types.ts";
 
 function getAge(timestamp: number | undefined): string {
   if (timestamp === undefined) {
@@ -54,13 +51,16 @@ function getAge(timestamp: number | undefined): string {
 }
 
 const Articles: FC = () => {
-  const feeds = useAppSelector(selectFeeds);
-  const articles = useAppSelector(selectArticles);
-  const settings = useAppSelector(selectSettings);
-  const userArticles = useAppSelector(selectUserArticles);
-  const updatedArticles = useAppSelector(selectUpdatedArticles);
-  const selectedArticle = useAppSelector(selectSelectedArticle);
-  const selectedFeeds = useAppSelector(selectSelectedFeeds);
+  const selectedFeeds = useSelectedFeeds();
+  const { data: feeds } = useFeeds();
+  const { data: articles = [] } = useArticleHeadings(selectedFeeds, {
+    refetchInterval: 300_000,
+  });
+  const settings = useSettings();
+  const { data: userArticles = [] } = useUserArticles(selectedFeeds);
+  const updatedArticles = useUpdatedArticles();
+  const selectedArticle = useSelectedArticle();
+  const setSelectedArticle = useSelectedArticleSetter();
   const { hideContextMenu, showContextMenu, contextMenuVisible } =
     useContextMenu();
   const [activeArticle, setActiveArticle] = useState<number | undefined>();
@@ -69,25 +69,16 @@ const Articles: FC = () => {
   const selectedArticleRef = useRef<HTMLElement | null>(null);
   const [width, setRef, listRef] = useWidthObserver();
   const [visibleCount, setVisibleCount] = useState(0);
-  const dispatch = useAppDispatch();
+  const setArticlesRead = useSetArticlesRead();
 
-  // Clear the updated articles list if the selected feed set is changed.
-  useEffect(() => {
-    selectedArticleRef.current = null;
-
-    if (listRef.current) {
-      listRef.current.scrollTop = 0;
-    }
-  }, [selectedFeeds]);
-
-  // Ensure the selected article is scrolled into view if the width of the
-  // Articles list changes
-  useEffect(() => {
-    selectedArticleRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "center",
-    });
-  }, [width]);
+  const userArticlesMap = useMemo(
+    () =>
+      userArticles?.reduce((all, userArticle) => {
+        all[userArticle.articleId] = userArticle;
+        return all;
+      }, {} as { [articleId: number]: UserArticle }),
+    [userArticles],
+  );
 
   const filteredArticles = useMemo(() => {
     if (settings.articleFilter === "all") {
@@ -95,17 +86,17 @@ const Articles: FC = () => {
     }
 
     if (settings.articleFilter === "saved") {
-      return articles.filter((article) => userArticles[article.id]?.saved);
+      return articles.filter((article) => userArticlesMap[article.id]?.saved);
     }
 
     return articles.filter((article) =>
-      article.id === selectedArticle?.id ||
-      !userArticles[article.id]?.read ||
+      article.id === selectedArticle ||
+      !userArticlesMap[article.id]?.read ||
       updatedArticles.includes(article.id)
     );
   }, [
     articles,
-    userArticles,
+    userArticlesMap,
     selectedArticle,
     settings.articleFilter,
     updatedArticles,
@@ -113,7 +104,7 @@ const Articles: FC = () => {
 
   useEffect(() => {
     const selectedIndex = filteredArticles.findIndex(({ id }) =>
-      id === selectedArticle?.id
+      id === selectedArticle
     );
     const targetIndex = Math.max(selectedIndex, 0) + 20;
     setVisibleCount(Math.min(filteredArticles.length, targetIndex));
@@ -162,14 +153,18 @@ const Articles: FC = () => {
 
       onSelect: (item: string) => {
         const read = !/unread/.test(item);
+        const article = filteredArticles.find(({ id }) => id === articleId)!;
 
         if (/older/.test(item)) {
-          const article = filteredArticles.find(({ id }) => id === articleId)!;
           if (article) {
-            dispatch(setOlderArticlesRead({ articleId, read }));
+            setArticlesRead.mutate({
+              articles: filteredArticles,
+              olderThan: article,
+              read,
+            });
           }
         } else {
-          dispatch(setArticlesRead({ articleIds: [articleId], read }));
+          setArticlesRead.mutate({ articles: [article], read });
         }
       },
     });
@@ -200,6 +195,24 @@ const Articles: FC = () => {
     }
   };
 
+  // Clear the updated articles list if the selected feed set is changed.
+  useEffect(() => {
+    selectedArticleRef.current = null;
+
+    if (listRef.current) {
+      listRef.current.scrollTop = 0;
+    }
+  }, [selectedFeeds]);
+
+  // Ensure the selected article is scrolled into view if the width of the
+  // Articles list changes
+  useEffect(() => {
+    selectedArticleRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, [width]);
+
   return (
     <div className="Articles" ref={setRef} onScroll={handleListScroll}>
       {renderedArticles.length > 0
@@ -209,8 +222,8 @@ const Articles: FC = () => {
               {renderedArticles.map((article) => {
                 const feed = feeds?.find(({ id }) => id === article.feedId);
                 const isActive = activeArticle === article.id;
-                const isSelected = selectedArticle?.id === article.id;
-                const isRead = userArticles?.[article.id]?.read;
+                const isSelected = selectedArticle === article.id;
+                const isRead = userArticlesMap?.[article.id]?.read;
 
                 return (
                   <li
@@ -228,9 +241,13 @@ const Articles: FC = () => {
                     onClick={() => {
                       hideContextMenu();
                       if (isSelected) {
-                        dispatch(selectArticle(undefined));
+                        setSelectedArticle(undefined);
                       } else {
-                        dispatch(selectArticle(article.id));
+                        setSelectedArticle(article.id);
+                        setArticlesRead.mutate({
+                          articles: [article],
+                          read: true,
+                        });
                       }
                     }}
                     ref={isSelected ? setArticleRef : undefined}
@@ -270,12 +287,10 @@ const Articles: FC = () => {
               <div className="Articles-controls">
                 <Button
                   onClick={() => {
-                    const ids = renderedArticles.map(({ id }) => id);
-                    if (ids) {
-                      dispatch(
-                        setArticlesRead({ articleIds: ids, read: true }),
-                      );
-                    }
+                    setArticlesRead.mutate({
+                      articles: renderedArticles,
+                      read: true,
+                    });
                   }}
                   label="Mark all read"
                   size="large"

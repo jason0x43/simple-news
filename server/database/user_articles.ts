@@ -1,6 +1,6 @@
 import { inTransaction, prepareQuery } from "./db.ts";
 import * as log from "std/log/mod.ts";
-import { UserArticle } from "../../types.ts";
+import { UserArticle, UserArticlesResponse } from "../../types.ts";
 import { createRowHelpers, parameterize, select } from "./util.ts";
 
 const {
@@ -16,7 +16,7 @@ const {
 
 export function getUserArticles(
   data: { userId: number; feedIds?: number[] },
-): { [articleId: string]: UserArticle } {
+): UserArticle[] {
   const { userId, feedIds } = data;
   let userArticles: UserArticle[];
 
@@ -42,14 +42,11 @@ export function getUserArticles(
     userArticles = userArticleQuery(
       `SELECT ${userArticleColumns}
       FROM user_articles WHERE user_id = (:userId)`,
-        { userId: data.userId },
+      { userId: data.userId },
     );
   }
 
-  return userArticles.reduce((all, article) => {
-    all[article.articleId] = article;
-    return all;
-  }, {} as { [key: string]: UserArticle })
+  return userArticles;
 }
 
 export function getReadArticleIds(userId: number): number[] {
@@ -89,9 +86,16 @@ function updateFlags<Flag extends "read" | "saved">(
 export function updateUserArticles(
   userId: number,
   patches: { articleId: number; read?: boolean; saved?: boolean }[],
-): void {
+): UserArticle[] {
   inTransaction(() => {
     updateFlags("read", userId, patches);
     updateFlags("saved", userId, patches);
   });
+
+  const articleIds = patches.map(({ articleId }) => articleId);
+  return userArticleQuery(
+    `SELECT ${userArticleColumns}
+    FROM user_articles
+    WHERE article_id IN (${articleIds.join(",")})`,
+  );
 }

@@ -30,11 +30,14 @@ export function toObject<T, K extends keyof T>(objArr: T[], key: K) {
   return obj;
 }
 
-export function loadValue<T = unknown>(name: string): T | undefined {
+export function loadValue<T = unknown>(
+  name: string,
+  defaultValue?: T,
+): T | undefined {
   const store = globalThis.localStorage;
   const val = store.getItem(name);
   if (val === null) {
-    return undefined;
+    return defaultValue;
   }
   return JSON.parse(val);
 }

@@ -1,8 +1,16 @@
-import { AppProps } from "./client/App.tsx";
+import type { DehydratedState } from "react-query";
 
 declare global {
   // deno-lint-ignore no-var
-  var __PRELOADED_STATE__: AppProps | undefined;
+  var __DEHYDRATED_STATE__: DehydratedState | undefined;
   // deno-lint-ignore no-var
   var __DEV__: boolean | undefined;
+}
+
+function toString(value: unknown): string {
+  return JSON.stringify(value ?? null).replace(/</g, "\\u003c");
+}
+
+export function getDehydratedStateStatement(state: DehydratedState) {
+    return `globalThis.__DEHYDRATED_STATE__ = ${toString(state)};`;
 }

@@ -7,7 +7,8 @@ import {
   UpdateUserArticleRequest,
   User,
   UserArticle,
-} from "../types.ts";
+  UserArticlesResponse,
+} from "../../types.ts";
 
 /**
  * An error thrown when a response indicates failure
@@ -80,8 +81,8 @@ export async function refreshFeeds() {
 export async function setRead(
   articleIds: number[],
   read = true,
-  isSelected = false
-): Promise<void> {
+  isSelected = false,
+): Promise<UserArticle[]> {
   if (isSelected && articleIds.length > 1) {
     throw new Error('Only a single article ID may be marked as "selected"');
   }
@@ -104,6 +105,8 @@ export async function setRead(
     response,
     `updating read status of articles ${JSON.stringify(articleIds)} to ${read}`,
   );
+
+  return response.json();
 }
 
 /**
