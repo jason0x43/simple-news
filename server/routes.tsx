@@ -51,6 +51,7 @@ type RenderState = Partial<{
   feedStats: FeedStats | undefined;
   userArticles: UserArticle[] | undefined;
   selectedFeeds: number[] | undefined;
+  selectedArticle: number | undefined; 
 }>;
 
 function getUserFeedIds(user: User): number[] | undefined {
@@ -66,8 +67,6 @@ export function createRouter(
   const cookieOptions = {
     secure: !init.dev,
     httpOnly: true,
-    // assume we're being proxied through an SSL server
-    ignoreInsecure: true,
   };
 
   const getUserData = (userId: number): LoginResponse => {
@@ -88,7 +87,27 @@ export function createRouter(
     queryClient.setQueryData("user", state.user);
     queryClient.setQueryData("feeds", state.feeds);
     queryClient.setQueryData("feedStats", state.feedStats);
-    return dehydrate(queryClient);
+
+    if (state.selectedFeeds?.length ?? 0 > 0) {
+      queryClient.setQueryData(
+        ["articleHeadings", state.selectedFeeds],
+        state.articles,
+      );
+      queryClient.setQueryData(
+        ["userArticles", state.selectedFeeds],
+        state.userArticles,
+      );
+    }
+
+    if (state.selectedArticle !== undefined) {
+      const article = getArticle(state.selectedArticle);
+      queryClient.setQueryData(["article", state.selectedArticle], article);
+    }
+
+    const dehydrated = dehydrate(queryClient);
+    queryClient.clear();
+
+    return dehydrated;
   };
 
   // Render the base HTML
@@ -99,12 +118,6 @@ export function createRouter(
       <App dehydratedState={dehydratedState} />,
     );
     const globalState = getDehydratedStateStatement(dehydratedState);
-    const feeds = initialState.feeds;
-    const faviconLinks = feeds?.filter((feed) => feed.icon).map(({ icon }) =>
-      icon!
-    ).map((icon) => `<link rel="preload" href="${icon}" as="image">`).join(
-      "\n",
-    );
 
     log.debug(
       `rendering with selectedFeeds ${
@@ -131,8 +144,6 @@ export function createRouter(
 
         <link rel="stylesheet" href="/styles.css">
         <script type="module" async src="/client.js"></script>
-
-        ${faviconLinks ?? ""}
       </head>
       <body>
         <svg style="display:none" version="2.0">
@@ -218,7 +229,7 @@ export function createRouter(
     response.type = "application/json";
 
     try {
-      const article = getArticle(id);
+      const article = getArticle(Number(id));
       response.body = article;
     } catch (error) {
       response.status = 404;
@@ -242,14 +253,6 @@ export function createRouter(
       const updatedArticles = updateUserArticles(state.userId, data);
 
       log.debug(`updated articles: ${JSON.stringify(updatedArticles)}`);
-
-      if (data.length === 1 && data[0].isSelected) {
-        await cookies.set(
-          selectedArticleCookie,
-          `${data[0].articleId}`,
-          cookieOptions,
-        );
-      }
 
       response.status = 200;
       response.body = updatedArticles;
@@ -292,7 +295,7 @@ export function createRouter(
   router.get(
     "/feeds",
     requireUser,
-    async ({ cookies, request, response, state }) => {
+    ({ cookies, request, response, state }) => {
       const params = request.url.searchParams;
       const feedIdsList = params.get("feeds");
       const { userId } = state;
@@ -300,7 +303,6 @@ export function createRouter(
 
       if (feedIdsList) {
         feedIds = feedIdsList.split(",").map(Number);
-        await cookies.set(selectedFeedsCookie, feedIdsList, cookieOptions);
       } else {
         const user = getUser(userId);
         feedIds = getUserFeedIds(user);
@@ -377,6 +379,7 @@ export function createRouter(
     }
 
     const { userId, selectedFeeds, selectedArticle } = state;
+
     const data = getUserData(userId);
     const articles = getArticleHeadings(selectedFeeds);
     const userArticles = getUserArticles({ feedIds: selectedFeeds, userId });
@@ -391,7 +394,8 @@ export function createRouter(
       feeds: data.feeds,
       feedStats: data.feedStats,
       userArticles,
-      selectedFeeds: selectedFeeds ?? [],
+      selectedFeeds,
+      selectedArticle,
     });
   });
 

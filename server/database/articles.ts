@@ -82,7 +82,7 @@ export function addArticle(article: Omit<Article, "id">): Article {
   )[0];
 }
 
-export function getArticle(id: string): Article {
+export function getArticle(id: number): Article {
   const article = articleQuery(
     `SELECT ${articleColumns} FROM articles WHERE id = (:id)`,
     { id },

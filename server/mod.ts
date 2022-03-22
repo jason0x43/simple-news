@@ -126,12 +126,6 @@ export async function serve() {
   const envPort = Deno.env.get("SN_PORT");
   const port = envPort ? Number(envPort) : 8083;
 
-  const appKey = Deno.env.get("SN_KEY");
-  if (appKey) {
-    app.keys = [appKey];
-    log.debug("Set app key");
-  }
-
   // Log requests
   app.use(async (ctx, next) => {
     log.info(`${ctx.request.method} ${ctx.request.url.pathname}`);

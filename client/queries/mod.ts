@@ -1,7 +1,6 @@
 import {
   getArticle,
   getArticleHeadings,
-  getArticles,
   getFeeds,
   getFeedStats,
   getUser,
@@ -45,15 +44,21 @@ export function useSignout() {
 }
 
 export function useFeeds() {
-  return useQuery("feeds", () => getFeeds());
+  return useQuery("feeds", () => getFeeds(), {
+    staleTime: 5000,
+  });
 }
 
 export function useUser() {
-  return useQuery("user", () => getUser());
+  return useQuery("user", () => getUser(), {
+    staleTime: 5000,
+  });
 }
 
 export function useFeedStats() {
-  return useQuery("feedStats", () => getFeedStats());
+  return useQuery("feedStats", () => getFeedStats(), {
+    staleTime: 5000,
+  });
 }
 
 export function useArticle(articleId: number | undefined) {
@@ -62,16 +67,7 @@ export function useArticle(articleId: number | undefined) {
     (context) => getArticle(context.queryKey[1] as number),
     {
       enabled: articleId !== undefined,
-    },
-  );
-}
-
-export function useArticles(feedIds: number[] | undefined) {
-  return useQuery(
-    ["articles", feedIds] as const,
-    (context) => getArticles(context.queryKey[1] as number[]),
-    {
-      enabled: feedIds !== undefined,
+      staleTime: 5000,
     },
   );
 }
@@ -84,6 +80,7 @@ export function useArticleHeadings(feedIds: number[] | undefined, options?: {
     (context) => getArticleHeadings(context.queryKey[1] as number[]),
     {
       enabled: feedIds !== undefined,
+      staleTime: 5000,
       ...options,
     },
   );
@@ -95,6 +92,7 @@ export function useUserArticles(feedIds: number[] | undefined) {
     (context) => getUserArticles(context.queryKey[1] as number[]),
     {
       enabled: feedIds !== undefined,
+      staleTime: 5000,
     },
   );
 }

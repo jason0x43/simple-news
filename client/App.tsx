@@ -23,9 +23,7 @@ import {
   Hydrate,
   QueryClient,
   QueryClientProvider,
-  useQuery,
 } from "react-query";
-import { getUser } from "./queries/api.ts";
 import AppProvider from "./contexts/mod.tsx";
 import { useSelectedFeeds } from "./contexts/selectedFeeds.ts";
 
@@ -152,8 +150,7 @@ const Login: React.FC = () => {
 };
 
 const AuthRouter: React.VFC = () => {
-  // const { data: user } = useUser();
-  const { data: user } = useQuery("user", () => getUser());
+  const { data: user } = useUser();
 
   return (
     <div className="App">

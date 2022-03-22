@@ -40,6 +40,7 @@ export function createContextValue<T>(defaultValue: T | (() => T)) {
 export function createPersistedContextValue<T>(
   key: string,
   defaultValue: T | (() => T),
+  useCookie = false,
 ) {
   const context = createContextValue<T>(defaultValue);
   const {
@@ -86,6 +87,15 @@ export function createPersistedContextValue<T>(
         : valueOrSetter;
       contextSetter(value);
       storeValue(key, value ?? null);
+      if (useCookie) {
+        const expires = new Date();
+        // Safari caps cookie length at 7 days
+        expires.setDate(expires.getDate() + 7);
+
+        document.cookie = `${key}=${
+          value ?? ""
+        }; expires=${expires.toUTCString()}; samesite=strict`;
+      }
     };
   };
 
