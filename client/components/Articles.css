@@ -48,11 +48,10 @@
 }
 
 .Articles-read {
-  opacity: 0.5;
+  color: #999;
 }
 
 .Articles-selected {
-  opacity: 1;
   background: var(--selected);
 }
 
@@ -92,7 +91,7 @@
 }
 
 @media (hover: hover) {
-  .Articles-article:hover {
+  .Articles-article:hover:not(.Articles-selected) {
     background: var(--matte);
   }
 }
