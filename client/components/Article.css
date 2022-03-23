@@ -69,10 +69,6 @@
   line-height: 1.5em;
 }
 
-.Article-content > :first-child {
-  margin-top: 0;
-}
-
 .Article-content h1 {
   margin-top: 0;
 }
@@ -136,14 +132,27 @@
 
 .Article-content img {
   height: auto !important;
+  border-radius: 8px;
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.1);
+  margin: 2rem 0;
 }
 
-.Article-content > img {
-  margin: 1rem 0;
+.Article-content .image,
+.Article-content figure {
+  margin: 2rem 0;
+}
+
+.Article-content .image img,
+.Article-content figure img {
+  margin: 0;
 }
 
 .Article-content .feedflare {
   display: none;
+}
+
+.Article-content .center {
+  text-align: center;
 }
 
 /* from tor.com feeds */
