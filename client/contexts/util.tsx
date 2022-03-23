@@ -88,10 +88,9 @@ export function createPersistedContextValue<T>(
       contextSetter(value);
       storeValue(key, value ?? null);
       if (useCookie) {
-        const expires = new Date();
         // Safari caps cookie length at 7 days
+        const expires = new Date();
         expires.setDate(expires.getDate() + 7);
-
         document.cookie = `${key}=${
           value ?? ""
         }; expires=${expires.toUTCString()}; samesite=strict`;

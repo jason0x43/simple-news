@@ -27,7 +27,7 @@ import {
 import AppProvider from "./contexts/mod.tsx";
 import { useSelectedFeeds } from "./contexts/selectedFeeds.ts";
 
-const LoggedIn: React.FC = () => {
+const LoggedIn: React.VFC = () => {
   const [sidebarActive, setSidebarActive] = useStoredState(
     "sidebarActive",
     false,
@@ -40,6 +40,7 @@ const LoggedIn: React.FC = () => {
   const articleRef = useRef<ArticleRef>(null);
   const refresher = useRefreshFeeds();
   const selectedFeeds = useSelectedFeeds();
+  const selectedFeedsRef = useRef(selectedFeeds);
 
   const handleTitlePress = useCallback(() => {
     articleRef.current?.resetScroll();
@@ -62,8 +63,11 @@ const LoggedIn: React.FC = () => {
   }, [sidebarActive]);
 
   useEffect(() => {
-    setSidebarActive(false);
-  }, [selectedFeeds]);
+    if (selectedFeedsRef.current !== selectedFeeds) {
+      setSidebarActive(false);
+      selectedFeedsRef.current = selectedFeeds;
+    }
+  }, [selectedFeeds, sidebarActive]);
 
   return (
     <ContextMenuProvider>
@@ -117,7 +121,7 @@ const LoggedIn: React.FC = () => {
   );
 };
 
-const Login: React.FC = () => {
+const Login: React.VFC = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const { error } = useUser();
@@ -165,8 +169,6 @@ export type AppProps = {
 
 const App: React.VFC<AppProps> = ({ dehydratedState }) => {
   const [queryClient] = useState(() => new QueryClient());
-
-  console.log('hydrating with', dehydratedState);
 
   return (
     <QueryClientProvider client={queryClient}>

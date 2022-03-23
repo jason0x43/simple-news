@@ -13,9 +13,13 @@ import {
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import type { ArticleHeading } from "../../types.ts";
 import { useUpdatedArticlesSetter } from "../contexts/updatedArticles.ts";
+import { useSelectedFeedsSetter } from "../contexts/selectedFeeds.ts";
+import { useSelectedArticleSetter } from "../contexts/selectedArticle.ts";
 
 export function useSignin() {
   const queryClient = useQueryClient();
+  const setSelectedFeeds = useSelectedFeedsSetter();
+  const setSelectedArticle = useSelectedArticleSetter();
 
   return useMutation(async (variables: {
     username: string;
@@ -27,6 +31,8 @@ export function useSignin() {
       queryClient.setQueryData(["user"], data.user);
       queryClient.setQueryData(["feeds"], data.feeds);
       queryClient.setQueryData(["feedStats"], data.feedStats);
+      setSelectedArticle(undefined);
+      setSelectedFeeds(undefined);
     },
   });
 }
@@ -64,7 +70,11 @@ export function useFeedStats() {
 export function useArticle(articleId: number | undefined) {
   return useQuery(
     ["article", articleId] as const,
-    (context) => getArticle(context.queryKey[1] as number),
+    () => {
+      if (articleId != null) {
+        return getArticle(articleId);
+      }
+    },
     {
       enabled: articleId !== undefined,
       staleTime: 5000,
@@ -77,7 +87,11 @@ export function useArticleHeadings(feedIds: number[] | undefined, options?: {
 }) {
   return useQuery(
     ["articleHeadings", feedIds] as const,
-    (context) => getArticleHeadings(context.queryKey[1] as number[]),
+    () => {
+      if (feedIds) {
+        return getArticleHeadings(feedIds);
+      }
+    },
     {
       enabled: feedIds !== undefined,
       staleTime: 5000,
@@ -116,18 +130,14 @@ export function useSetArticlesRead() {
         throw new Error("Article not found");
       }
 
-      console.log(`marking articles older than ${articleId} as read`);
       articleIds = articles.slice(0, index).map(({ id }) => id);
     } else {
       articleIds = articles.map(({ id }) => id);
-      console.log(`marking ${JSON.stringify(articleIds)} as read`);
     }
 
     return await setRead(articleIds, read, false);
   }, {
     onSuccess: (data) => {
-      console.log("got data:", data);
-      console.log("invalidating queries");
       setUpdatedArticles((updated) => [
         ...updated,
         ...data.map(({ articleId }) => articleId),
@@ -145,7 +155,7 @@ export function useRefreshFeeds() {
   }, {
     onSuccess: () => {
       queryClient.invalidateQueries(["feedStats"]);
-      queryClient.invalidateQueries(["articles"]);
+      queryClient.invalidateQueries(["articleHeadings"]);
     },
   });
 }
