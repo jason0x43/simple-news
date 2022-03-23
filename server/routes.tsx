@@ -51,7 +51,7 @@ type RenderState = Partial<{
   feedStats: FeedStats | undefined;
   userArticles: UserArticle[] | undefined;
   selectedFeeds: number[] | undefined;
-  selectedArticle: number | undefined; 
+  selectedArticle: number | undefined;
 }>;
 
 function getUserFeedIds(user: User): number[] | undefined {
@@ -67,6 +67,8 @@ export function createRouter(
   const cookieOptions = {
     secure: !init.dev,
     httpOnly: true,
+    // assume we're being proxied through an SSL server
+    ignoreInsecure: true,
   };
 
   const getUserData = (userId: number): LoginResponse => {
