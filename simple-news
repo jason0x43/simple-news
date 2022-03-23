@@ -35,7 +35,7 @@ if [ "$mode" = "dev" ]; then
 	export SN_IMPORT_MAP="import_map_dev.json"
 	export SN_MODE="dev"
 else
-	cmd="$cmd --no-check"
+	cmd="$cmd --no-check --lock=lock.json"
 	echo "Using prod import map"
 	export SN_IMPORT_MAP="import_map.json"
 fi
