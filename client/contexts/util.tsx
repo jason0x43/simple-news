@@ -49,6 +49,8 @@ export function createPersistedContextValue<T>(
     useValue: useContextValue,
   } = context;
 
+  // We need to initialize the value in an effect so that the initial value
+  // won't conflict with SSR
   const ValueInitializer: React.FC = ({ children }) => {
     const setContextValue = useContextSetter();
 

@@ -12,7 +12,7 @@ import { useContextMenu } from "./ContextMenu.tsx";
 import Button from "./Button.tsx";
 import { className } from "../util.ts";
 import { unescapeHtml } from "../../util.ts";
-import { useWidthObserver } from "../hooks.ts";
+import { useStoredState, useWidthObserver } from "../hooks.ts";
 import {
   useArticleHeadings,
   useFeeds,
@@ -21,7 +21,6 @@ import {
 } from "../queries/mod.ts";
 import { useSelectedFeeds } from "../contexts/selectedFeeds.ts";
 import { useSettings } from "../contexts/settings.ts";
-import { useUpdatedArticles } from "../contexts/updatedArticles.ts";
 import {
   useSelectedArticle,
   useSelectedArticleSetter,
@@ -52,13 +51,13 @@ function getAge(timestamp: number | undefined): string {
 
 const Articles: FC = () => {
   const selectedFeeds = useSelectedFeeds();
+  const selectedFeedsRef = useRef(selectedFeeds);
   const { data: feeds } = useFeeds();
   const { data: articles = [] } = useArticleHeadings(selectedFeeds, {
     refetchInterval: 300_000,
   });
   const settings = useSettings();
   const { data: userArticles = [] } = useUserArticles(selectedFeeds);
-  const updatedArticles = useUpdatedArticles();
   const selectedArticle = useSelectedArticle();
   const setSelectedArticle = useSelectedArticleSetter();
   const { hideContextMenu, showContextMenu, contextMenuVisible } =
@@ -69,7 +68,16 @@ const Articles: FC = () => {
   const selectedArticleRef = useRef<HTMLElement | null>(null);
   const [width, setRef, listRef] = useWidthObserver();
   const [visibleCount, setVisibleCount] = useState(0);
-  const setArticlesRead = useSetArticlesRead();
+  const [updatedArticles, setUpdatedArticles] = useStoredState<number[]>(
+    "updatedArticles",
+    selectedArticle !== undefined ? [selectedArticle] : [],
+  );
+  const setArticlesRead = useSetArticlesRead((updated) => {
+    setUpdatedArticles((current) => [
+      ...current,
+      ...updated.map(({ articleId }) => articleId),
+    ]);
+  });
 
   const userArticlesMap = useMemo(
     () =>
@@ -101,22 +109,6 @@ const Articles: FC = () => {
     settings.articleFilter,
     updatedArticles,
   ]);
-
-  useEffect(() => {
-    const selectedIndex = filteredArticles.findIndex(({ id }) =>
-      id === selectedArticle
-    );
-    const targetIndex = Math.max(selectedIndex, 0) + 20;
-    setVisibleCount(Math.min(filteredArticles.length, targetIndex));
-  }, [filteredArticles, selectedArticle]);
-
-  const renderedArticles = filteredArticles.slice(0, visibleCount);
-
-  useEffect(() => {
-    if (!contextMenuVisible) {
-      setActiveArticle(undefined);
-    }
-  }, [contextMenuVisible]);
 
   const handleListScroll = (
     event: UIEvent<HTMLDivElement>,
@@ -195,12 +187,38 @@ const Articles: FC = () => {
     }
   };
 
+  const renderedArticles = filteredArticles.slice(0, visibleCount);
+
+  useEffect(() => {
+    const selectedIndex = filteredArticles.findIndex(({ id }) =>
+      id === selectedArticle
+    );
+    const targetIndex = Math.max(selectedIndex, 0) + 20;
+    setVisibleCount(Math.min(filteredArticles.length, targetIndex));
+  }, [filteredArticles, selectedArticle]);
+
+  useEffect(() => {
+    if (!contextMenuVisible) {
+      setActiveArticle(undefined);
+    }
+  }, [contextMenuVisible]);
+
   // Clear the updated articles list if the selected feed set is changed.
   useEffect(() => {
-    selectedArticleRef.current = null;
+    if (selectedFeeds) {
+      if (!selectedFeedsRef.current) {
+        // selectedFeeds was just initialized -- set the ref to this value
+        selectedFeedsRef.current = selectedFeeds;
+      } else {
+        // selectedFeeds changed
+        selectedFeedsRef.current = selectedFeeds;
+        selectedArticleRef.current = null;
+        setUpdatedArticles([]);
 
-    if (listRef.current) {
-      listRef.current.scrollTop = 0;
+        if (listRef.current) {
+          listRef.current.scrollTop = 0;
+        }
+      }
     }
   }, [selectedFeeds]);
 

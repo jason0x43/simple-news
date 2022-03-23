@@ -11,8 +11,7 @@ import {
   setRead,
 } from "./api.ts";
 import { useMutation, useQuery, useQueryClient } from "react-query";
-import type { ArticleHeading } from "../../types.ts";
-import { useUpdatedArticlesSetter } from "../contexts/updatedArticles.ts";
+import type { ArticleHeading, UserArticle } from "../../types.ts";
 import { useSelectedFeedsSetter } from "../contexts/selectedFeeds.ts";
 import { useSelectedArticleSetter } from "../contexts/selectedArticle.ts";
 
@@ -111,9 +110,10 @@ export function useUserArticles(feedIds: number[] | undefined) {
   );
 }
 
-export function useSetArticlesRead() {
+export function useSetArticlesRead(
+  onSuccess?: (updatedArticles: UserArticle[]) => void,
+) {
   const queryClient = useQueryClient();
-  const setUpdatedArticles = useUpdatedArticlesSetter();
 
   return useMutation(async (variables: {
     articles: ArticleHeading[];
@@ -138,10 +138,7 @@ export function useSetArticlesRead() {
     return await setRead(articleIds, read, false);
   }, {
     onSuccess: (data) => {
-      setUpdatedArticles((updated) => [
-        ...updated,
-        ...data.map(({ articleId }) => articleId),
-      ]);
+      onSuccess?.(data);
       queryClient.invalidateQueries(["userArticles"]);
     },
   });
