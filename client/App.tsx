@@ -17,7 +17,10 @@ import {
   useUser,
 } from "./queries/mod.ts";
 import { useSettings, useSettingsSetter } from "./contexts/settings.ts";
-import { useSelectedArticle } from "./contexts/selectedArticle.ts";
+import {
+  useSelectedArticle,
+  useSelectedArticleSetter,
+} from "./contexts/selectedArticle.ts";
 import {
   type DehydratedState,
   Hydrate,
@@ -25,7 +28,10 @@ import {
   QueryClientProvider,
 } from "react-query";
 import AppProvider from "./contexts/mod.tsx";
-import { useSelectedFeeds } from "./contexts/selectedFeeds.ts";
+import {
+  useSelectedFeeds,
+  useSelectedFeedsSetter,
+} from "./contexts/selectedFeeds.ts";
 
 const LoggedIn: React.VFC = () => {
   const [sidebarActive, setSidebarActive] = useStoredState(
@@ -124,9 +130,16 @@ const Login: React.VFC = () => {
   const [password, setPassword] = useState("");
   const { error } = useUser();
   const signin = useSignin();
+  const setSelectedFeeds = useSelectedFeedsSetter();
+  const setSelectedArticle = useSelectedArticleSetter();
 
   const doSignin = () => {
-    signin.mutate({ username, password });
+    signin.mutate({ username, password }, {
+      onSuccess: () => {
+        setSelectedArticle(undefined);
+        setSelectedFeeds(undefined);
+      },
+    });
   };
 
   const handleKey = (event: React.KeyboardEvent<HTMLFormElement>) => {
