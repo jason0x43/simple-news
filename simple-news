@@ -11,7 +11,9 @@ fi
 for arg in $@; do
 	if [ "$arg" = "-d" ] || [ "$arg" = "--dev" ]; then
 		mode=dev
-	elif [ "$args" = "" ]; then
+	fi
+
+	if [ "$args" = "" ]; then
 		args=$arg
 	else
 		args="$args $arg"
@@ -27,17 +29,12 @@ cmd="$cmd --unstable"
 
 if [ "$mode" = "dev" ]; then
 	if [ "$serve" ]; then
-		echo "Enabling watch mode"
 		cmd="$cmd --watch --no-clear-screen --allow-run=touch"
 	fi
-	cmd="$cmd --no-check=remote"
-	echo "Using dev import map"
-	export SN_IMPORT_MAP="import_map_dev.json"
-	export SN_MODE="dev"
+	cmd="$cmd --no-check=remote --import-map=import_map_dev.json"
 else
 	cmd="$cmd --no-check --lock=lock.json"
-	echo "Using prod import map"
 	export SN_IMPORT_MAP="import_map.json"
 fi
 
-eval $cmd --import-map ./$SN_IMPORT_MAP mod.ts $args
+eval $cmd mod.ts $args

@@ -34,7 +34,6 @@ import { requireUser } from "./middleware.ts";
 import {
   createSession,
   deleteSession,
-  selectedArticleCookie,
   selectedFeedsCookie,
 } from "./sessions.ts";
 import { dehydrate, QueryClient } from "react-query";
@@ -43,6 +42,12 @@ import { getDehydratedStateStatement } from "../global.ts";
 
 const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);
+
+export type RouterConfig = {
+  client: string;
+  styles: string;
+  dev: boolean | undefined;
+};
 
 type RenderState = Partial<{
   user: User | undefined;
@@ -61,11 +66,9 @@ function getUserFeedIds(user: User): number[] | undefined {
   }, [] as number[]);
 }
 
-export function createRouter(
-  init: { client: string; styles: string; dev: boolean | undefined },
-): Router<AppState> {
+export function createRouter(config: RouterConfig): Router<AppState> {
   const cookieOptions = {
-    secure: !init.dev,
+    secure: !config.dev,
     httpOnly: true,
     // assume we're being proxied through an SSL server
     ignoreInsecure: true,
@@ -114,7 +117,7 @@ export function createRouter(
 
   // Render the base HTML
   const render = (initialState: RenderState) => {
-    const devMode = `globalThis.__DEV__ = ${init.dev ? "true" : "false"};`;
+    const devMode = `globalThis.__DEV__ = ${config.dev ? "true" : "false"};`;
     const dehydratedState = toDehydratedState(initialState);
     const renderedApp = ReactDOMServer.renderToString(
       <App dehydratedState={dehydratedState} />,
@@ -168,12 +171,12 @@ export function createRouter(
 
   router.get("/client.js", ({ response }) => {
     response.type = "application/javascript";
-    response.body = init.client;
+    response.body = config.client;
   });
 
   router.get("/styles.css", ({ response }) => {
     response.type = "text/css";
-    response.body = init.styles;
+    response.body = config.styles;
   });
 
   router.get("/user", requireUser, ({ response, state }) => {
@@ -242,7 +245,7 @@ export function createRouter(
   router.patch(
     "/user_articles",
     requireUser,
-    async ({ cookies, request, response, state }) => {
+    async ({ request, response, state }) => {
       response.type = "application/json";
 
       if (!request.hasBody) {
@@ -297,7 +300,7 @@ export function createRouter(
   router.get(
     "/feeds",
     requireUser,
-    ({ cookies, request, response, state }) => {
+    ({ request, response, state }) => {
       const params = request.url.searchParams;
       const feedIdsList = params.get("feeds");
       const { userId } = state;

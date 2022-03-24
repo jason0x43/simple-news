@@ -3,10 +3,15 @@ import * as log from "std/log/mod.ts";
 import * as path from "std/path/mod.ts";
 import { expandGlob } from "std/fs/mod.ts";
 import type { AppState } from "./types.ts";
-import { createRouter } from "./routes.tsx";
+import { createRouter, type RouterConfig } from "./routes.tsx";
 import { refreshFeeds } from "./feed.ts";
 import { addLiveReloadMiddleware } from "./reload.ts";
 import { addSessionMiddleware, addUserDataMiddleware } from "./sessions.ts";
+
+export type ServerConfig = {
+  devMode?: boolean;
+  port?: number;
+};
 
 const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);
@@ -20,7 +25,7 @@ const refreshInterval = 600;
 // Connected websockets
 const sockets: Set<WebSocket> = new Set();
 
-let routerInit: { client: string; styles: string; dev: boolean | undefined };
+let routerConfig: RouterConfig;
 
 /**
  * Touch this file (to intiate a reload) if the styles change.
@@ -50,7 +55,7 @@ async function watchStyles() {
         } else {
           // If only styles were updated _and_ we have sockets, only rebuild and
           // reload the styles
-          routerInit.styles = await buildStyles();
+          routerConfig.styles = await buildStyles();
           for (const sock of sockets) {
             sock.send("refreshStyles");
           }
@@ -60,26 +65,25 @@ async function watchStyles() {
   }
 }
 
-async function buildClient(): Promise<string> {
+async function buildClient(config: ServerConfig): Promise<string> {
   const emitOptions: Deno.EmitOptions = {
     bundle: "module",
     check: false,
+    importMapPath: path.join(__dirname, "..", "import_map.json"),
     compilerOptions: {
       target: "esnext",
       lib: ["dom", "dom.iterable", "dom.asynciterable", "deno.ns"],
     },
   };
 
-  if (Deno.env.get("SN_MODE") == "dev") {
+  if (config.devMode) {
     emitOptions.compilerOptions!.inlineSourceMap = true;
+    emitOptions.importMapPath = path.join(
+      __dirname,
+      "..",
+      "import_map_dev.json",
+    );
   }
-
-  const importMap = Deno.env.get("SN_IMPORT_MAP");
-  if (importMap) {
-    emitOptions.importMapPath = path.join(__dirname, "..", importMap);
-  }
-
-  log.debug(`Bundling with import map ${importMap}`);
 
   // Build and cache the client code
   const { files, diagnostics } = await Deno.emit(
@@ -114,17 +118,18 @@ async function buildStyles(): Promise<string> {
   return styles;
 }
 
-export async function serve() {
-  const devMode = Deno.env.get("SN_MODE") === "dev";
+export async function serve(config: ServerConfig) {
+  const { devMode } = config;
 
-  const [styles, client] = await Promise.all([buildStyles(), buildClient()]);
-  routerInit = { styles, client, dev: devMode };
+  const [styles, client] = await Promise.all([
+    buildStyles(),
+    buildClient(config),
+  ]);
+  routerConfig = { styles, client, dev: devMode };
 
-  const router = createRouter(routerInit);
+  const router = createRouter(routerConfig);
   const app = new Application<AppState>();
-
-  const envPort = Deno.env.get("SN_PORT");
-  const port = envPort ? Number(envPort) : 8083;
+  const port = config.port ?? 8083;
 
   // Log requests
   app.use(async (ctx, next) => {
@@ -133,7 +138,7 @@ export async function serve() {
   });
 
   // Connect live-reload websockets
-  if (Deno.env.get("SN_MODE") === "dev") {
+  if (devMode) {
     addLiveReloadMiddleware(app);
   }
 
@@ -160,7 +165,7 @@ export async function serve() {
   log.info(`Listening on port ${port}`);
 
   const promises = [app.listen({ port })];
-  if (Deno.env.get("SN_MODE") === "dev") {
+  if (devMode) {
     promises.push(watchStyles());
   }
 

@@ -37,7 +37,7 @@ async function configureLogger(args: Arguments) {
 const parser = yargs(Deno.args)
   .strict()
   .version("0.1.0")
-  .scriptName('simple-news')
+  .scriptName("simple-news")
   .option("v", {
     alias: "verbose",
     describe: "Enable more verbose output",
@@ -50,8 +50,18 @@ const parser = yargs(Deno.args)
     configureLogger,
     () => openDatabase(),
   ])
-  .command("serve", "Start the RSS aggregator server", {}, async () => {
-    await serve();
+  .demandCommand(1, "")
+  .command("serve", "Start the RSS aggregator server", {
+    dev: {
+      alias: 'd',
+      type: 'boolean'
+    },
+    port: {
+      alias: 'p',
+      type: 'number'
+    }
+  }, async (args: Arguments & { dev?: boolean, port?: number }) => {
+    await serve({ devMode: args.dev, port: args.port });
   })
   .command("refresh [urls..]", "Refresh feeds", (yargs: Yargs) => {
     yargs.positional("urls", {
@@ -162,7 +172,10 @@ const parser = yargs(Deno.args)
     async (args: Arguments & { email: string; name: string }) => {
       const password = await promptSecret("Password: ");
       if (password) {
-        const user = addUser({ email: args.email, username: args.name }, password);
+        const user = addUser(
+          { email: args.email, username: args.name },
+          password,
+        );
         console.log(`Created user ${user.id}`);
       } else {
         console.log("Add cancelled");
@@ -209,8 +222,7 @@ const parser = yargs(Deno.args)
         }
       }
     },
-  )
-  .demandCommand(1, "");
+  );
 
 let code = 0;
 
