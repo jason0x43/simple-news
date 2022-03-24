@@ -2,9 +2,6 @@
   width: 100%;
   overflow-x: hidden;
   overflow-y: auto;
-}
-
-.App-articles-viewing .Articles {
   width: var(--sidebar-width);
   flex-shrink: 0;
   border-right: solid 1px var(--border);
@@ -29,9 +26,6 @@
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
-}
-
-.App-articles-viewing .Articles-article {
   grid-template-columns: 32px auto 3em;
 }
 
@@ -98,7 +92,7 @@
 
 /* Mobile */
 @media only screen and (max-width: 800px) {
-  .App-articles-viewing .Articles {
+  .Articles {
     width: 100%;
   }
 }

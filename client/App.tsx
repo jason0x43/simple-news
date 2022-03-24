@@ -112,11 +112,7 @@ const LoggedIn: React.VFC = () => {
             />
           </div>
         </div>
-        <div
-          className={className("App-articles", {
-            "App-articles-viewing": selectedArticle !== undefined,
-          })}
-        >
+        <div className="App-articles">
           <Articles />
           <Article ref={articleRef} />
         </div>
