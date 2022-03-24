@@ -27,11 +27,7 @@ export function useOrientiation(): "landscape" | "portrait" {
 
 export function useWidthObserver(): [
   number | undefined,
-  (
-    elem:
-      | HTMLElement
-      | null,
-  ) => void,
+  (elem: HTMLElement | null) => void,
   React.RefObject<HTMLElement>,
 ] {
   const observer = useRef<ResizeObserver | undefined>();

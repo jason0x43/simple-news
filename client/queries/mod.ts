@@ -12,13 +12,9 @@ import {
 } from "./api.ts";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import type { ArticleHeading, UserArticle } from "../../types.ts";
-import { useSelectedFeedsSetter } from "../contexts/selectedFeeds.ts";
-import { useSelectedArticleSetter } from "../contexts/selectedArticle.ts";
 
 export function useSignin() {
   const queryClient = useQueryClient();
-  const setSelectedFeeds = useSelectedFeedsSetter();
-  const setSelectedArticle = useSelectedArticleSetter();
 
   return useMutation(async (variables: {
     username: string;
@@ -30,8 +26,6 @@ export function useSignin() {
       queryClient.setQueryData(["user"], data.user);
       queryClient.setQueryData(["feeds"], data.feeds);
       queryClient.setQueryData(["feedStats"], data.feedStats);
-      setSelectedArticle(undefined);
-      setSelectedFeeds(undefined);
     },
   });
 }

@@ -40,7 +40,7 @@ const LoggedIn: React.VFC = () => {
   const articleRef = useRef<ArticleRef>(null);
   const refresher = useRefreshFeeds();
   const selectedFeeds = useSelectedFeeds();
-  const selectedFeedsRef = useRef(selectedFeeds);
+  const setSelectedArticle = useSelectedArticleSetter();
 
   const handleTitlePress = useCallback(() => {
     articleRef.current?.resetScroll();
@@ -63,11 +63,9 @@ const LoggedIn: React.VFC = () => {
   }, [sidebarActive]);
 
   useEffect(() => {
-    if (selectedFeedsRef.current !== selectedFeeds) {
-      setSidebarActive(false);
-      selectedFeedsRef.current = selectedFeeds;
-    }
-  }, [selectedFeeds, sidebarActive]);
+    setSidebarActive(false);
+    setSelectedArticle(undefined);
+  }, [selectedFeeds]);
 
   return (
     <ContextMenuProvider>
