@@ -34,7 +34,6 @@ if [ "$mode" = "dev" ]; then
 	cmd="$cmd --no-check=remote --import-map=import_map_dev.json"
 else
 	cmd="$cmd --no-check --lock=lock.json"
-	export SN_IMPORT_MAP="import_map.json"
 fi
 
 eval $cmd mod.ts $args
