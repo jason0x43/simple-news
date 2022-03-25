@@ -94,3 +94,21 @@ export function useStoredState<T>(key: string, initialValue: T) {
 
   return [value, setter] as const;
 }
+
+/**
+ * An effect that doesn't start paying attention to its dependencies until
+ * they've been initialized.
+ */
+export const useChangeEffect: typeof useEffect = (effect, deps) => {
+  // The effect should start ready if there are no dependencies
+  const ready = useRef(deps === undefined || deps.length === 0);
+
+  useEffect(() => {
+    if (!ready.current) {
+      ready.current = deps?.every((val) => val !== undefined) ?? false;
+    } else {
+      const cleanup = effect();
+      return () => cleanup?.();
+    }
+  }, deps);
+};

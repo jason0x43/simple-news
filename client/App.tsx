@@ -8,7 +8,7 @@ import Button from "./components/Button.tsx";
 import ButtonSelector from "./components/ButtonSelector.tsx";
 import Input from "./components/Input.tsx";
 import type { Settings } from "./types.ts";
-import { useStoredState } from "./hooks.ts";
+import { useChangeEffect, useStoredState } from "./hooks.ts";
 import {
   useFeeds,
   useRefreshFeeds,
@@ -41,9 +41,7 @@ const LoggedIn: React.VFC = () => {
   const articleRef = useRef<ArticleRef>(null);
   const refresher = useRefreshFeeds();
   const selectedFeeds = useSelectedFeeds();
-  const selectedFeedsRef = useRef(selectedFeeds);
   const setSelectedArticle = useSelectedArticleSetter();
-
 
   const handleTitlePress = useCallback(() => {
     articleRef.current?.resetScroll();
@@ -65,15 +63,9 @@ const LoggedIn: React.VFC = () => {
     };
   }, [sidebarActive]);
 
-  useEffect(() => {
-    // Don't run until selected feeds has been initialized
-    if (!selectedFeedsRef.current) {
-      selectedFeedsRef.current = selectedFeeds;
-    } else if (selectedFeedsRef.current !== selectedFeeds) {
-      setSidebarActive(false);
-      setSelectedArticle(undefined);
-      selectedFeedsRef.current = selectedFeeds;
-    }
+  useChangeEffect(() => {
+    setSidebarActive(false);
+    setSelectedArticle(undefined);
   }, [selectedFeeds]);
 
   return (
