@@ -3,6 +3,7 @@ import React, {
   type TouchEvent,
   type UIEvent,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -10,9 +11,9 @@ import React, {
 import * as datetime from "std/datetime/mod.ts";
 import { useContextMenu } from "./ContextMenu.tsx";
 import Button from "./Button.tsx";
-import { className } from "../util.ts";
+import { className, loadValue, storeValue } from "../util.ts";
 import { unescapeHtml } from "../../util.ts";
-import { useStoredState, useWidthObserver } from "../hooks.ts";
+import { useChangeEffect, useStoredState, useWidthObserver } from "../hooks.ts";
 import {
   useArticleHeadings,
   useFeeds,
@@ -49,6 +50,13 @@ function getAge(timestamp: number | undefined): string {
   return `${diff.minutes} m`;
 }
 
+const scrollDataKey = "scrollData";
+type ScrollData = { visibleCount: number; scrollTop: number };
+type InitState = {
+  scrollTop: number;
+  visibleCount: number;
+};
+
 const Articles: FC = () => {
   const selectedFeeds = useSelectedFeeds();
   const selectedFeedsRef = useRef(selectedFeeds);
@@ -65,9 +73,9 @@ const Articles: FC = () => {
   const [activeArticle, setActiveArticle] = useState<number | undefined>();
   const touchStartRef = useRef<number | undefined>();
   const touchTimerRef = useRef<number | undefined>();
-  const selectedArticleRef = useRef<HTMLElement | null>(null);
+  const selectedArticleRef = useRef<HTMLLIElement | null>(null);
   const [width, setRef, listRef] = useWidthObserver();
-  const [visibleCount, setVisibleCount] = useState(0);
+  const [visibleCount, setVisibleCount] = useState(40);
   const [updatedArticles, setUpdatedArticles] = useStoredState<number[]>(
     "updatedArticles",
     selectedArticle !== undefined ? [selectedArticle] : [],
@@ -78,6 +86,8 @@ const Articles: FC = () => {
       ...updated.map(({ articleId }) => articleId),
     ]);
   });
+  const [initState, setInitState] = useState<InitState>();
+  const scrollTimer = useRef<number>();
 
   const userArticlesMap = useMemo(
     () =>
@@ -98,14 +108,12 @@ const Articles: FC = () => {
     }
 
     return articles.filter((article) =>
-      article.id === selectedArticle ||
       !userArticlesMap[article.id]?.read ||
       updatedArticles.includes(article.id)
     );
   }, [
     articles,
     userArticlesMap,
-    selectedArticle,
     settings.articleFilter,
     updatedArticles,
   ]);
@@ -115,11 +123,20 @@ const Articles: FC = () => {
   ) => {
     const target = event.nativeEvent.currentTarget! as HTMLDivElement;
     const { clientHeight, scrollHeight, scrollTop } = target;
+    // Load 20 new articles when we've gotten within 500 pixels of the end of
+    // the list
     const remaining = scrollHeight - (scrollTop + clientHeight);
     if (remaining < 500 && visibleCount < filteredArticles.length) {
-      setVisibleCount(Math.min(visibleCount + 20, filteredArticles.length));
+      const newCount = Math.min(visibleCount + 20, filteredArticles.length);
+      setVisibleCount(newCount);
     }
     hideContextMenu();
+
+    clearTimeout(scrollTimer.current);
+    scrollTimer.current = setTimeout(() => {
+      const data: ScrollData = { visibleCount, scrollTop };
+      storeValue(scrollDataKey, data);
+    }, 100);
   };
 
   const handleMenuClick = (
@@ -180,22 +197,7 @@ const Articles: FC = () => {
     clearTimeout(touchTimerRef.current);
   };
 
-  const setArticleRef = (node: HTMLLIElement | null) => {
-    if (node && node !== selectedArticleRef.current) {
-      selectedArticleRef.current = node;
-      node.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    }
-  };
-
   const renderedArticles = filteredArticles.slice(0, visibleCount);
-
-  useEffect(() => {
-    const selectedIndex = filteredArticles.findIndex(({ id }) =>
-      id === selectedArticle
-    );
-    const targetIndex = Math.max(selectedIndex, 0) + 20;
-    setVisibleCount(Math.min(filteredArticles.length, targetIndex));
-  }, [filteredArticles, selectedArticle]);
 
   useEffect(() => {
     if (!contextMenuVisible) {
@@ -224,12 +226,30 @@ const Articles: FC = () => {
 
   // Ensure the selected article is scrolled into view if the width of the
   // Articles list changes
-  useEffect(() => {
+  useChangeEffect(() => {
     selectedArticleRef.current?.scrollIntoView({
       behavior: "smooth",
       block: "center",
     });
   }, [width]);
+
+  useEffect(() => {
+    const scrollData = loadValue<ScrollData>(scrollDataKey);
+    if (scrollData) {
+      setVisibleCount(scrollData.visibleCount);
+      setInitState(scrollData);
+    }
+  }, []);
+
+  useLayoutEffect(() => {
+    if (
+      initState && listRef.current && renderedArticles.length ===
+        initState.visibleCount
+    ) {
+      listRef.current.scrollTop = initState.scrollTop;
+      setInitState(undefined);
+    }
+  }, [initState, renderedArticles]);
 
   return (
     <div className="Articles" ref={setRef} onScroll={handleListScroll}>
@@ -268,7 +288,7 @@ const Articles: FC = () => {
                         });
                       }
                     }}
-                    ref={isSelected ? setArticleRef : undefined}
+                    ref={isSelected ? selectedArticleRef : undefined}
                     onTouchStart={handleTouchStart}
                     onTouchEnd={handleTouchEnd}
                     onTouchMove={handleTouchEnd}
