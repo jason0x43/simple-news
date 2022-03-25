@@ -1,4 +1,6 @@
 {
+  "https://cdn.esm.sh/@types/prop-types@15.7.4/index.d.ts": "f7b46d22a307739c145e5fddf537818038fdfffd580d79ed717f4d4d37249380",
+  "https://cdn.esm.sh/@types/scheduler@0.16.2/tracing.d.ts": "f5a8b384f182b3851cec3596ccc96cb7464f8d3469f48c74bf2befb782a19de5",
   "https://cdn.esm.sh/v68/@babel/runtime@7.17.8/deno/helpers/esm/extends.js": "ebfc7d8617f92e71e7e804cfe80e4d0bc2482d623a8c11bcc03d7be587fb6979",
   "https://cdn.esm.sh/v68/@babel/runtime@7.17.8/deno/helpers/esm/inheritsLoose.js": "7c0377a6181cdcd67f28869b58cf76a6e2bae1bc4c2fcd54ce9c32c627ac6d50",
   "https://cdn.esm.sh/v68/@types/prop-types@15.7.4/index.d.ts": "f7b46d22a307739c145e5fddf537818038fdfffd580d79ed717f4d4d37249380",
@@ -45,6 +47,9 @@
   "https://cdn.esm.sh/v68/react-query@3.34.16/types/react/useQuery.d.ts": "bb197d71a41dc7cbb50dc98a6d7e6e18f905136d3274b3b744648e84fa0982ec",
   "https://cdn.esm.sh/v68/react@17.0.2/deno/react.js": "9802f246547a2af9028031fc9edecc72f00e5cb4e15c4a9dfc9fa93dfdc152d6",
   "https://cdn.esm.sh/v68/scheduler@0.20.2/deno/scheduler.js": "b4cdd1b96d31eaba84e8d2c4cac10481597ca6d7b533ff859bcf1d5ba079cf27",
+  "https://cdn.esm.sh/v73/@types/react@17.0.42/global.d.ts": "ecf78e637f710f340ec08d5d92b3f31b134a46a4fcf2e758690d8c46ce62cba6",
+  "https://cdn.esm.sh/v73/@types/react@17.0.42/index.d.ts": "db3406148c9ff01244e963e5d46fb89784d4571054a3ca026ee92d905d699681",
+  "https://cdn.esm.sh/v73/csstype@3.0.11/index.d.ts": "ea0aa24a32c073b8639aa1f3130ba0add0f0f2f76b314d9ba988a5cb91d7e3c4",
   "https://deno.land/std@0.126.0/_util/assert.ts": "6396c1bd0361c4939e7f32f9b03efffcd04b640a1b206ed67058553d6cb59cc4",
   "https://deno.land/std@0.126.0/_util/os.ts": "49b92edea1e82ba295ec946de8ffd956ed123e2948d9bd1d3e901b04e4307617",
   "https://deno.land/std@0.126.0/bytes/bytes_list.ts": "cfe63225fc153a1ae8f18c1d68d979e131906487664719d92771642b6587b11c",
