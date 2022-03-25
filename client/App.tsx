@@ -8,7 +8,6 @@ import Button from "./components/Button.tsx";
 import ButtonSelector from "./components/ButtonSelector.tsx";
 import Input from "./components/Input.tsx";
 import type { Settings } from "./types.ts";
-import { className } from "./util.ts";
 import { useStoredState } from "./hooks.ts";
 import {
   useFeeds,
@@ -17,10 +16,7 @@ import {
   useUser,
 } from "./queries/mod.ts";
 import { useSettings, useSettingsSetter } from "./contexts/settings.ts";
-import {
-  useSelectedArticle,
-  useSelectedArticleSetter,
-} from "./contexts/selectedArticle.ts";
+import { useSelectedArticleSetter } from "./contexts/selectedArticle.ts";
 import {
   type DehydratedState,
   Hydrate,
@@ -41,12 +37,13 @@ const LoggedIn: React.VFC = () => {
   const { isLoading: feedsLoading } = useFeeds();
   const settings = useSettings();
   const setSettings = useSettingsSetter();
-  const selectedArticle = useSelectedArticle();
   const sidebarRef = useRef<HTMLDivElement>(null);
   const articleRef = useRef<ArticleRef>(null);
   const refresher = useRefreshFeeds();
   const selectedFeeds = useSelectedFeeds();
+  const selectedFeedsRef = useRef(selectedFeeds);
   const setSelectedArticle = useSelectedArticleSetter();
+
 
   const handleTitlePress = useCallback(() => {
     articleRef.current?.resetScroll();
@@ -69,8 +66,14 @@ const LoggedIn: React.VFC = () => {
   }, [sidebarActive]);
 
   useEffect(() => {
-    setSidebarActive(false);
-    setSelectedArticle(undefined);
+    // Don't run until selected feeds has been initialized
+    if (!selectedFeedsRef.current) {
+      selectedFeedsRef.current = selectedFeeds;
+    } else if (selectedFeedsRef.current !== selectedFeeds) {
+      setSidebarActive(false);
+      setSelectedArticle(undefined);
+      selectedFeedsRef.current = selectedFeeds;
+    }
   }, [selectedFeeds]);
 
   return (
