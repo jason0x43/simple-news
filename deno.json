@@ -13,6 +13,6 @@
     "start": "./simple-news serve",
     "dev": "./simple-news serve -d -v",
     "relock": "deno cache --lock=lock.json --lock-write mod.ts",
-    "publish": "git push && ssh $DEPLOY_HOST 'cd code/simple-news && git pull && systemctl --user restart simple-news'"
+    "publish": "git push && ssh $DEPLOY_HOST 'cd code/simple-news && git pull && systemctl --user restart simple-news && journalctl --user --unit simple-news -f'"
   }
 }
