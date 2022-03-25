@@ -134,6 +134,7 @@ export function useSetArticlesRead(
     onSuccess: (data) => {
       onSuccess?.(data);
       queryClient.invalidateQueries(["userArticles"]);
+      queryClient.invalidateQueries(["feedStats"]);
     },
   });
 }
