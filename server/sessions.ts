@@ -67,13 +67,21 @@ export function addUserDataMiddleware(app: Application<AppState>) {
     const selectedArticle = await cookies.get(selectedArticleCookie);
     if (selectedArticle) {
       log.debug(`selectedArticle: ${selectedArticle}`);
-      state.selectedArticle = JSON.parse(selectedArticle);
+      try {
+        state.selectedArticle = JSON.parse(selectedArticle);
+      } catch (error) {
+        log.warning(`Error parsing selectedArticle cookie: ${error}`);
+      }
     }
 
     const selectedFeeds = await cookies.get(selectedFeedsCookie);
     if (selectedFeeds) {
       log.debug(`selectedFeeds: ${selectedFeeds}`);
-      state.selectedFeeds = JSON.parse(selectedFeeds);
+      try {
+        state.selectedFeeds = JSON.parse(selectedFeeds);
+      } catch (error) {
+        log.warning(`Error parsing selectedFeeds cookie: ${error}`);
+      }
     }
 
     await next();
