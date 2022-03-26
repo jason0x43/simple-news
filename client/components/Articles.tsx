@@ -246,7 +246,7 @@ const Articles: FC = () => {
     }
   }, []);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (
       initState && listRef.current && renderedArticles.length ===
         initState.visibleCount
