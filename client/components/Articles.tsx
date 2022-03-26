@@ -27,6 +27,7 @@ import {
   useSelectedArticleSetter,
 } from "../contexts/selectedArticle.ts";
 import { UserArticle } from "../../types.ts";
+import { Activity } from "./Activity.tsx";
 
 function getAge(timestamp: number | undefined): string {
   if (timestamp === undefined) {
@@ -60,12 +61,14 @@ type InitState = {
 const Articles: FC = () => {
   const selectedFeeds = useSelectedFeeds();
   const selectedFeedsRef = useRef(selectedFeeds);
-  const { data: feeds } = useFeeds();
-  const { data: articles = [] } = useArticleHeadings(selectedFeeds, {
-    refetchInterval: 300_000,
-  });
+  const { data: feeds, isLoading: feedsLoading } = useFeeds();
+  const { data: articles = [], isLoading: articlesLoading } =
+    useArticleHeadings(selectedFeeds, {
+      refetchInterval: 300_000,
+    });
+  const { data: userArticles = [], isLoading: userArticlesLoading } =
+    useUserArticles(selectedFeeds);
   const settings = useSettings();
-  const { data: userArticles = [] } = useUserArticles(selectedFeeds);
   const selectedArticle = useSelectedArticle();
   const setSelectedArticle = useSelectedArticleSetter();
   const { hideContextMenu, showContextMenu, contextMenuVisible } =
@@ -88,6 +91,8 @@ const Articles: FC = () => {
   });
   const [initState, setInitState] = useState<InitState>();
   const scrollTimer = useRef<number>();
+
+  const loading = articlesLoading || userArticlesLoading || feedsLoading;
 
   const userArticlesMap = useMemo(
     () =>
@@ -251,95 +256,101 @@ const Articles: FC = () => {
     }
   }, [initState, renderedArticles]);
 
-  return (
-    <div className="Articles" ref={setRef} onScroll={handleListScroll}>
-      {renderedArticles.length > 0
-        ? (
-          <>
-            <ul className="Articles-list">
-              {renderedArticles.map((article) => {
-                const feed = feeds?.find(({ id }) => id === article.feedId);
-                const isActive = activeArticle === article.id;
-                const isSelected = selectedArticle === article.id;
-                const isRead = userArticlesMap?.[article.id]?.read;
+  let content: React.ReactNode;
 
-                return (
-                  <li
-                    className={className(
-                      "Articles-article",
-                      {
-                        "Articles-active": isActive,
-                        "Articles-selected": isSelected,
-                        "Articles-read": isRead,
-                      },
-                    )}
-                    data-id={article.id}
-                    key={article.id}
-                    onContextMenu={handleMenuClick}
-                    onClick={() => {
-                      hideContextMenu();
-                      if (isSelected) {
-                        setSelectedArticle(undefined);
-                      } else {
-                        setSelectedArticle(article.id);
-                        setArticlesRead.mutate({
-                          articles: [article],
-                          read: true,
-                        });
-                      }
-                    }}
-                    ref={isSelected ? selectedArticleRef : undefined}
-                    onTouchStart={handleTouchStart}
-                    onTouchEnd={handleTouchEnd}
-                    onTouchMove={handleTouchEnd}
-                  >
-                    <div className="Articles-icon">
-                      {feed?.icon
-                        ? <img src={feed.icon} title={feed?.title} />
-                        : (
-                          <div
-                            className="Articles-monogram"
-                            title={feed?.title}
-                          >
-                            {feed?.title[0]}
-                          </div>
-                        )}
-                    </div>
+  if (loading) {
+    content = <div className="Articles-loading">
+      <Activity />
+    </div>;
+  } else if (renderedArticles.length > 0) {
+    content = (
+      <>
+        <ul className="Articles-list">
+          {renderedArticles.map((article) => {
+            const feed = feeds?.find(({ id }) => id === article.feedId);
+            const isActive = activeArticle === article.id;
+            const isSelected = selectedArticle === article.id;
+            const isRead = userArticlesMap?.[article.id]?.read;
 
-                    <div
-                      className="Articles-title"
-                      dangerouslySetInnerHTML={{
-                        __html: unescapeHtml(article.title),
-                      }}
-                    />
-
-                    <div className="Articles-age">
-                      {getAge(article.published)}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-
-            {renderedArticles.length > 0 && (
-              <div className="Articles-controls">
-                <Button
-                  onClick={() => {
+            return (
+              <li
+                className={className(
+                  "Articles-article",
+                  {
+                    "Articles-active": isActive,
+                    "Articles-selected": isSelected,
+                    "Articles-read": isRead,
+                  },
+                )}
+                data-id={article.id}
+                key={article.id}
+                onContextMenu={handleMenuClick}
+                onClick={() => {
+                  hideContextMenu();
+                  if (isSelected) {
+                    setSelectedArticle(undefined);
+                  } else {
+                    setSelectedArticle(article.id);
                     setArticlesRead.mutate({
-                      articles: renderedArticles,
+                      articles: [article],
                       read: true,
                     });
+                  }
+                }}
+                ref={isSelected ? selectedArticleRef : undefined}
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+                onTouchMove={handleTouchEnd}
+              >
+                <div className="Articles-icon">
+                  {feed?.icon
+                    ? <img src={feed.icon} title={feed?.title} />
+                    : (
+                      <div
+                        className="Articles-monogram"
+                        title={feed?.title}
+                      >
+                        {feed?.title[0]}
+                      </div>
+                    )}
+                </div>
+
+                <div
+                  className="Articles-title"
+                  dangerouslySetInnerHTML={{
+                    __html: unescapeHtml(article.title),
                   }}
-                  label="Mark all read"
-                  size="large"
                 />
-              </div>
-            )}
-          </>
-        )
-        : filteredArticles.length > 0
-        ? undefined
-        : <h3 className="Articles-empty">Nothing to see here</h3>}
+
+                <div className="Articles-age">
+                  {getAge(article.published)}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+
+        <div className="Articles-controls">
+          <Button
+            onClick={() => {
+              setArticlesRead.mutate({
+                articles: renderedArticles,
+                read: true,
+              });
+            }}
+            label="Mark all read"
+            size="large"
+          />
+        </div>
+      </>
+    );
+  } else {
+    content = <h3 className="Articles-empty">Nothing to see here</h3>;
+  }
+
+  return (
+    <div className="Articles" ref={setRef} onScroll={handleListScroll}>
+      {content}
     </div>
   );
 };
