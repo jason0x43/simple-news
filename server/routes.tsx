@@ -38,7 +38,7 @@ import {
 } from "./sessions.ts";
 import { dehydrate, QueryClient } from "react-query";
 import { type AppState } from "./types.ts";
-import { getDehydratedStateStatement } from "../global.ts";
+import { getGlobalStateStatement } from "../global.ts";
 
 const __filename = new URL(import.meta.url).pathname;
 const __dirname = path.dirname(__filename);
@@ -118,11 +118,15 @@ export function createRouter(config: RouterConfig): Router<AppState> {
   // Render the base HTML
   const render = (initialState: RenderState) => {
     const devMode = `globalThis.__DEV__ = ${config.dev ? "true" : "false"};`;
-    const dehydratedState = toDehydratedState(initialState);
+    const queryState = toDehydratedState(initialState);
+    const appState = {
+      selectedFeeds: initialState.selectedFeeds,
+      selectedArticle: initialState.selectedArticle,
+    };
     const renderedApp = ReactDOMServer.renderToString(
-      <App dehydratedState={dehydratedState} />,
+      <App initialState={{ queryState, appState }} />,
     );
-    const globalState = getDehydratedStateStatement(dehydratedState);
+    const globalState = getGlobalStateStatement({ queryState, appState });
 
     log.debug(
       `rendering with selectedFeeds ${

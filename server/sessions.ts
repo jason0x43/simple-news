@@ -67,13 +67,13 @@ export function addUserDataMiddleware(app: Application<AppState>) {
     const selectedArticle = await cookies.get(selectedArticleCookie);
     if (selectedArticle) {
       log.debug(`selectedArticle: ${selectedArticle}`);
-      state.selectedArticle = Number(selectedArticle);
+      state.selectedArticle = JSON.parse(selectedArticle);
     }
 
     const selectedFeeds = await cookies.get(selectedFeedsCookie);
     if (selectedFeeds) {
       log.debug(`selectedFeeds: ${selectedFeeds}`);
-      state.selectedFeeds = selectedFeeds?.split(",").map(Number);
+      state.selectedFeeds = JSON.parse(selectedFeeds);
     }
 
     await next();

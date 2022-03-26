@@ -3,7 +3,6 @@ import React, {
   type TouchEvent,
   type UIEvent,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -13,7 +12,7 @@ import { useContextMenu } from "./ContextMenu.tsx";
 import Button from "./Button.tsx";
 import { className, loadValue, storeValue } from "../util.ts";
 import { unescapeHtml } from "../../util.ts";
-import { useChangeEffect, useStoredState, useWidthObserver } from "../hooks.ts";
+import { useChangeEffect, useWidthObserver } from "../hooks.ts";
 import {
   useArticleHeadings,
   useFeeds,
@@ -60,7 +59,6 @@ type InitState = {
 
 const Articles: FC = () => {
   const selectedFeeds = useSelectedFeeds();
-  const selectedFeedsRef = useRef(selectedFeeds);
   const { data: feeds, isLoading: feedsLoading } = useFeeds();
   const { data: articles = [], isLoading: articlesLoading } =
     useArticleHeadings(selectedFeeds, {
@@ -79,8 +77,7 @@ const Articles: FC = () => {
   const selectedArticleRef = useRef<HTMLLIElement | null>(null);
   const [width, setRef, listRef] = useWidthObserver();
   const [visibleCount, setVisibleCount] = useState(40);
-  const [updatedArticles, setUpdatedArticles] = useStoredState<number[]>(
-    "updatedArticles",
+  const [updatedArticles, setUpdatedArticles] = useState<number[]>(
     selectedArticle !== undefined ? [selectedArticle] : [],
   );
   const setArticlesRead = useSetArticlesRead((updated) => {
@@ -211,23 +208,14 @@ const Articles: FC = () => {
   }, [contextMenuVisible]);
 
   // Clear the updated articles list if the selected feed set is changed.
-  useEffect(() => {
-    if (selectedFeeds) {
-      if (!selectedFeedsRef.current) {
-        // selectedFeeds was just initialized -- set the ref to this value
-        selectedFeedsRef.current = selectedFeeds;
-      } else {
-        // selectedFeeds changed
-        selectedFeedsRef.current = selectedFeeds;
-        selectedArticleRef.current = null;
-        setUpdatedArticles([]);
+  useChangeEffect(() => {
+    selectedArticleRef.current = null;
+    setUpdatedArticles([]);
 
-        if (listRef.current) {
-          listRef.current.scrollTop = 0;
-        }
-      }
+    if (listRef.current) {
+      listRef.current.scrollTop = 0;
     }
-  }, [selectedFeeds]);
+  }, [selectedFeeds?.toString()]);
 
   // Ensure the selected article is scrolled into view if the width of the
   // Articles list changes
@@ -259,9 +247,11 @@ const Articles: FC = () => {
   let content: React.ReactNode;
 
   if (loading) {
-    content = <div className="Articles-loading">
-      <Activity />
-    </div>;
+    content = (
+      <div className="Articles-loading">
+        <Activity />
+      </div>
+    );
   } else if (renderedArticles.length > 0) {
     content = (
       <>

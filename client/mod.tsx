@@ -6,12 +6,12 @@ import "../global.ts";
 
 ReactDOM.hydrate(
   <React.StrictMode>
-    <App dehydratedState={globalThis.__DEHYDRATED_STATE__} />
+    <App initialState={globalThis.__INITIAL_STATE__} />
   </React.StrictMode>,
   document.getElementById("root"),
 );
 
-delete globalThis.__DEHYDRATED_STATE__;
+delete globalThis.__INITIAL_STATE__;
 
 if (globalThis.__DEV__) {
   initReloader();

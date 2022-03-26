@@ -10,8 +10,12 @@ export function createContextValue<T>(defaultValue: T | (() => T)) {
     () => undefined,
   );
 
-  const Provider: React.FC = ({ children }) => {
-    const [value, setValue] = useState<T>(defaultValue);
+  type ProviderProps = {
+    initialState?: T;
+  }
+
+  const Provider: React.FC<ProviderProps> = ({ children, initialState }) => {
+    const [value, setValue] = useState<T>(initialState ?? defaultValue);
 
     return (
       <SetterContext.Provider value={setValue}>
@@ -37,11 +41,41 @@ export function createContextValue<T>(defaultValue: T | (() => T)) {
   };
 }
 
+function getRawCookie(key: string): string | undefined {
+  if (!globalThis.document) {
+    return;
+  }
+
+  const cookiesStr = globalThis.document.cookie;
+  const cookies = cookiesStr.split(";").map((cookie) => cookie.trim());
+  for (const cookie of cookies) {
+    const [name, value] = cookie.split("=");
+    if (name === key) {
+      return value;
+    }
+  }
+}
+
 export function createPersistedContextValue<T>(
   key: string,
   defaultValue: T | (() => T),
-  useCookie = false,
+  options?: {
+    storageType: 'cookie' | 'localStore';
+  }
 ) {
+  const useCookie = options?.storageType === 'cookie';
+
+  if (useCookie && defaultValue === undefined) {
+    const cookie = getRawCookie(key);
+    if (cookie !== undefined) {
+      try {
+        defaultValue = JSON.parse(cookie);
+      } catch {
+        // ignore
+      }
+    }
+  }
+
   const context = createContextValue<T>(defaultValue);
   const {
     Provider: ContextProvider,
@@ -49,8 +83,6 @@ export function createPersistedContextValue<T>(
     useValue: useContextValue,
   } = context;
 
-  // We need to initialize the value in an effect so that the initial value
-  // won't conflict with SSR
   const ValueInitializer: React.FC = ({ children }) => {
     const setContextValue = useContextSetter();
 
@@ -68,12 +100,28 @@ export function createPersistedContextValue<T>(
     );
   };
 
-  const Provider: React.FC = ({ children }) => {
-    return (
-      <ContextProvider>
+  type ProviderProps = {
+    initialState?: T;
+  };
+
+  const Provider: React.FC<ProviderProps> = ({ children, initialState }) => {
+    let content: React.ReactNode;
+
+    // We need to initialize the value in an effect so that the initial value
+    // won't conflict with SSR
+    if (initialState === undefined) {
+      content = (
         <ValueInitializer>
           {children}
         </ValueInitializer>
+      );
+    } else {
+      content = children;
+    }
+
+    return (
+      <ContextProvider initialState={initialState}>
+        {content}
       </ContextProvider>
     );
   };
@@ -88,14 +136,15 @@ export function createPersistedContextValue<T>(
         ? valueOrSetter(contextValue)
         : valueOrSetter;
       contextSetter(value);
-      storeValue(key, value ?? null);
       if (useCookie) {
         // Safari caps cookie length at 7 days
         const expires = new Date();
         expires.setDate(expires.getDate() + 7);
         document.cookie = `${key}=${
-          value ?? ""
+          value !== undefined ? JSON.stringify(value) : ""
         }; expires=${expires.toUTCString()}; samesite=strict`;
+      } else {
+        storeValue(key, value ?? null);
       }
     };
   };

@@ -3,10 +3,21 @@ import { SelectedFeedsProvider } from "./selectedFeeds.ts";
 import { SelectedArticleProvider } from "./selectedArticle.ts";
 import { SettingsProvider } from "./settings.ts";
 
-const AppProvider: React.FC = ({ children }) => {
+export type AppState = {
+  selectedFeeds?: number[];
+  selectedArticle?: number;
+};
+
+type AppProviderProps = {
+  initialState?: AppState;
+};
+
+const AppProvider: React.FC<AppProviderProps> = (
+  { children, initialState },
+) => {
   return (
-    <SelectedFeedsProvider>
-      <SelectedArticleProvider>
+    <SelectedFeedsProvider initialState={initialState?.selectedFeeds}>
+      <SelectedArticleProvider initialState={initialState?.selectedArticle}>
         <SettingsProvider>
           {children}
         </SettingsProvider>

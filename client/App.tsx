@@ -23,7 +23,7 @@ import {
   QueryClient,
   QueryClientProvider,
 } from "react-query";
-import AppProvider from "./contexts/mod.tsx";
+import AppProvider, { AppState } from "./contexts/mod.tsx";
 import {
   useSelectedFeeds,
   useSelectedFeedsSetter,
@@ -166,16 +166,19 @@ const AuthRouter: React.VFC = () => {
 };
 
 export type AppProps = {
-  dehydratedState?: DehydratedState;
+  initialState?: {
+    queryState?: DehydratedState;
+    appState?: AppState;
+  }
 };
 
-const App: React.VFC<AppProps> = ({ dehydratedState }) => {
+const App: React.VFC<AppProps> = ({ initialState }) => {
   const [queryClient] = useState(() => new QueryClient());
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Hydrate state={dehydratedState}>
-        <AppProvider>
+      <Hydrate state={initialState?.queryState}>
+        <AppProvider initialState={initialState?.appState}>
           <AuthRouter />
         </AppProvider>
       </Hydrate>
