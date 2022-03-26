@@ -6,6 +6,8 @@ export function addLiveReloadMiddleware(app: Application<AppState>) {
   const sockets: Set<WebSocket> = new Set();
   let initialReloadSent = false;
 
+  app.state.sockets = sockets;
+
   app.use(async (ctx, next) => {
     if (ctx.request.url.pathname.endsWith("/livereload")) {
       const socket = ctx.upgrade();

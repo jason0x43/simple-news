@@ -2,6 +2,7 @@ export type AppState = {
   userId: number;
   selectedFeeds?: number[];
   selectedArticle?: number;
+  sockets?: Set<WebSocket>;
 };
 
 export type Session = {

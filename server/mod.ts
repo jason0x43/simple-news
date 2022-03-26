@@ -22,15 +22,12 @@ const clientDir = path.join(__dirname, "..", "client");
 // Refresh interval in seconds
 const refreshInterval = 600;
 
-// Connected websockets
-const sockets: Set<WebSocket> = new Set();
-
 let routerConfig: RouterConfig;
 
 /**
  * Touch this file (to intiate a reload) if the styles change.
  */
-async function watchStyles() {
+async function watchStyles(app: Application<AppState>) {
   const watcher = Deno.watchFs(clientDir);
   let timer: number | undefined;
   let updateStyles = false;
@@ -48,7 +45,8 @@ async function watchStyles() {
     if (updateStyles || updateApp) {
       clearTimeout(timer);
       timer = setTimeout(async () => {
-        if (updateApp || sockets.size === 0) {
+        const { sockets } = app.state;
+        if (updateApp || !sockets || sockets.size === 0) {
           // If the app code was updated or there are no connected sockets,
           // trigger a server reload
           Deno.run({ cmd: ["touch", __filename] });
@@ -166,7 +164,7 @@ export async function serve(config: ServerConfig) {
 
   const promises = [app.listen({ port })];
   if (devMode) {
-    promises.push(watchStyles());
+    promises.push(watchStyles(app));
   }
 
   await Promise.allSettled(promises);
