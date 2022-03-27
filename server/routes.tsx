@@ -22,6 +22,7 @@ import type {
   FeedStats,
   LoginRequest,
   LoginResponse,
+  ScrollData,
   UpdateUserArticleRequest,
   User,
   UserArticle,
@@ -57,6 +58,7 @@ type RenderState = Partial<{
   userArticles: UserArticle[] | undefined;
   selectedFeeds: number[] | undefined;
   selectedArticle: number | undefined;
+  scrollData: ScrollData | undefined;
 }>;
 
 function getUserFeedIds(user: User): number[] | undefined {
@@ -122,6 +124,7 @@ export function createRouter(config: RouterConfig): Router<AppState> {
     const appState = {
       selectedFeeds: initialState.selectedFeeds,
       selectedArticle: initialState.selectedArticle,
+      scrollData: initialState.scrollData,
     };
     const renderedApp = ReactDOMServer.renderToString(
       <App initialState={{ queryState, appState }} />,
@@ -381,7 +384,7 @@ export function createRouter(config: RouterConfig): Router<AppState> {
     response.body = { success: true };
   });
 
-  router.get("/", ({ response, state }) => {
+  router.get("/", async ({ cookies, response, state }) => {
     if (!state.userId) {
       response.redirect("/login");
       return;
@@ -396,6 +399,16 @@ export function createRouter(config: RouterConfig): Router<AppState> {
       !userArticles[article.id]?.read || article.id === selectedArticle
     );
 
+    const scrollDataCookie = await cookies.get("scrollData");
+    let scrollData: ScrollData | undefined;
+    if (scrollDataCookie) {
+      try {
+        scrollData = JSON.parse(scrollDataCookie);
+      } catch (error) {
+        log.warning("Invalid cookie value for scrollData");
+      }
+    }
+
     response.type = "text/html";
     response.body = render({
       user: data.user,
@@ -405,6 +418,7 @@ export function createRouter(config: RouterConfig): Router<AppState> {
       userArticles,
       selectedFeeds,
       selectedArticle,
+      scrollData,
     });
   });
 

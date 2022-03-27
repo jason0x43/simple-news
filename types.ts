@@ -76,3 +76,5 @@ export type LoginResponse = {
 export type UserArticlesResponse = {
   [articleId: string]: UserArticle;
 };
+
+export type ScrollData = { visibleCount: number; scrollTop: number };

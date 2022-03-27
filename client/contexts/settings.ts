@@ -1,7 +1,7 @@
 import { Settings } from "../types.ts";
-import { createPersistedContextValue } from "./util.tsx";
+import { createLocalStorageContextValue } from "./util.tsx";
 
-const context = createPersistedContextValue<Settings>("settings", {
+const context = createLocalStorageContextValue<Settings>("settings", {
   articleFilter: "unread",
 });
 export const SettingsProvider = context.Provider;

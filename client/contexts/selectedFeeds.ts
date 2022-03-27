@@ -1,9 +1,9 @@
-import { createPersistedContextValue } from "./util.tsx";
+import { createCookieContextValue } from "./util.tsx";
 
-const context = createPersistedContextValue<
+const context = createCookieContextValue<
   | number[]
   | undefined
->("selectedFeeds", undefined, { storageType: 'cookie' });
+>("selectedFeeds", undefined);
 export const SelectedFeedsProvider = context.Provider;
 export const useSelectedFeeds = context.useValue;
 export const useSelectedFeedsSetter = context.useSetter;

@@ -10,7 +10,7 @@ import React, {
 import * as datetime from "std/datetime/mod.ts";
 import { useContextMenu } from "./ContextMenu.tsx";
 import Button from "./Button.tsx";
-import { className, loadValue, storeValue } from "../util.ts";
+import { className } from "../util.ts";
 import { unescapeHtml } from "../../util.ts";
 import { useChangeEffect, useWidthObserver } from "../hooks.ts";
 import {
@@ -27,6 +27,7 @@ import {
 } from "../contexts/selectedArticle.ts";
 import { UserArticle } from "../../types.ts";
 import { Activity } from "./Activity.tsx";
+import { useScrollData, useScrollDataSetter } from "../contexts/scrollData.ts";
 
 function getAge(timestamp: number | undefined): string {
   if (timestamp === undefined) {
@@ -50,14 +51,8 @@ function getAge(timestamp: number | undefined): string {
   return `${diff.minutes} m`;
 }
 
-const scrollDataKey = "scrollData";
-type ScrollData = { visibleCount: number; scrollTop: number };
-type InitState = {
-  scrollTop: number;
-  visibleCount: number;
-};
-
 const Articles: FC = () => {
+  const [ready, setReady] = useState(false);
   const selectedFeeds = useSelectedFeeds();
   const { data: feeds, isLoading: feedsLoading } = useFeeds();
   const { data: articles = [], isLoading: articlesLoading } =
@@ -76,7 +71,6 @@ const Articles: FC = () => {
   const touchTimerRef = useRef<number | undefined>();
   const selectedArticleRef = useRef<HTMLLIElement | null>(null);
   const [width, setRef, listRef] = useWidthObserver();
-  const [visibleCount, setVisibleCount] = useState(40);
   const [updatedArticles, setUpdatedArticles] = useState<number[]>(
     selectedArticle !== undefined ? [selectedArticle] : [],
   );
@@ -86,10 +80,15 @@ const Articles: FC = () => {
       ...updated.map(({ articleId }) => articleId),
     ]);
   });
-  const [initState, setInitState] = useState<InitState>();
+  const scrollData = useScrollData();
+  const setScrollData = useScrollDataSetter();
   const scrollTimer = useRef<number>();
+  const [visibleCount, setVisibleCount] = useState(
+    scrollData?.visibleCount ?? 40,
+  );
 
-  const loading = articlesLoading || userArticlesLoading || feedsLoading;
+  const loading = articlesLoading || userArticlesLoading || feedsLoading ||
+    !ready;
 
   const userArticlesMap = useMemo(
     () =>
@@ -109,20 +108,14 @@ const Articles: FC = () => {
       return articles.filter((article) => userArticlesMap[article.id]?.saved);
     }
 
-    return articles.filter((article) =>
-      !userArticlesMap[article.id]?.read ||
-      updatedArticles.includes(article.id)
+    return articles.filter(
+      (article) =>
+        !userArticlesMap[article.id]?.read ||
+        updatedArticles.includes(article.id),
     );
-  }, [
-    articles,
-    userArticlesMap,
-    settings.articleFilter,
-    updatedArticles,
-  ]);
+  }, [articles, userArticlesMap, settings.articleFilter, updatedArticles]);
 
-  const handleListScroll = (
-    event: UIEvent<HTMLDivElement>,
-  ) => {
+  const handleListScroll = (event: UIEvent<HTMLDivElement>) => {
     const target = event.nativeEvent.currentTarget! as HTMLDivElement;
     const { clientHeight, scrollHeight, scrollTop } = target;
     // Load 20 new articles when we've gotten within 500 pixels of the end of
@@ -136,20 +129,17 @@ const Articles: FC = () => {
 
     clearTimeout(scrollTimer.current);
     scrollTimer.current = setTimeout(() => {
-      const data: ScrollData = { visibleCount, scrollTop };
-      storeValue(scrollDataKey, data);
+      setScrollData({ visibleCount, scrollTop });
     }, 100);
   };
 
-  const handleMenuClick = (
-    event: {
-      currentTarget: HTMLLIElement;
-      pageX: number;
-      pageY: number;
-      preventDefault?: () => void;
-      stopPropagation?: () => void;
-    },
-  ) => {
+  const handleMenuClick = (event: {
+    currentTarget: HTMLLIElement;
+    pageX: number;
+    pageY: number;
+    preventDefault?: () => void;
+    stopPropagation?: () => void;
+  }) => {
     const articleId = Number(event.currentTarget.getAttribute("data-id"));
 
     showContextMenu({
@@ -227,32 +217,18 @@ const Articles: FC = () => {
   }, [width]);
 
   useEffect(() => {
-    const scrollData = loadValue<ScrollData>(scrollDataKey);
     if (scrollData) {
       setVisibleCount(scrollData.visibleCount);
-      setInitState(scrollData);
+      if (listRef.current) {
+        listRef.current.scrollTop = scrollData.scrollTop;
+      }
     }
+    setReady(true);
   }, []);
-
-  useEffect(() => {
-    if (
-      initState && listRef.current && renderedArticles.length ===
-        initState.visibleCount
-    ) {
-      listRef.current.scrollTop = initState.scrollTop;
-      setInitState(undefined);
-    }
-  }, [initState, renderedArticles]);
 
   let content: React.ReactNode;
 
-  if (loading) {
-    content = (
-      <div className="Articles-loading">
-        <Activity />
-      </div>
-    );
-  } else if (renderedArticles.length > 0) {
+  if (renderedArticles.length > 0) {
     content = (
       <>
         <ul className="Articles-list">
@@ -264,22 +240,17 @@ const Articles: FC = () => {
 
             return (
               <li
-                className={className(
-                  "Articles-article",
-                  {
-                    "Articles-active": isActive,
-                    "Articles-selected": isSelected,
-                    "Articles-read": isRead,
-                  },
-                )}
+                className={className("Articles-article", {
+                  "Articles-active": isActive,
+                  "Articles-selected": isSelected,
+                  "Articles-read": isRead,
+                })}
                 data-id={article.id}
                 key={article.id}
                 onContextMenu={handleMenuClick}
                 onClick={() => {
                   hideContextMenu();
-                  if (isSelected) {
-                    setSelectedArticle(undefined);
-                  } else {
+                  if (!isSelected) {
                     setSelectedArticle(article.id);
                     setArticlesRead.mutate({
                       articles: [article],
@@ -296,10 +267,7 @@ const Articles: FC = () => {
                   {feed?.icon
                     ? <img src={feed.icon} title={feed?.title} />
                     : (
-                      <div
-                        className="Articles-monogram"
-                        title={feed?.title}
-                      >
+                      <div className="Articles-monogram" title={feed?.title}>
                         {feed?.title[0]}
                       </div>
                     )}
@@ -312,9 +280,7 @@ const Articles: FC = () => {
                   }}
                 />
 
-                <div className="Articles-age">
-                  {getAge(article.published)}
-                </div>
+                <div className="Articles-age">{getAge(article.published)}</div>
               </li>
             );
           })}
@@ -341,6 +307,11 @@ const Articles: FC = () => {
   return (
     <div className="Articles" ref={setRef} onScroll={handleListScroll}>
       {content}
+      {loading && (
+        <div className="Articles-loading">
+          <Activity />
+        </div>
+      )}
     </div>
   );
 };

@@ -12,7 +12,7 @@ export function createContextValue<T>(defaultValue: T | (() => T)) {
 
   type ProviderProps = {
     initialState?: T;
-  }
+  };
 
   const Provider: React.FC<ProviderProps> = ({ children, initialState }) => {
     const [value, setValue] = useState<T>(initialState ?? defaultValue);
@@ -41,41 +41,16 @@ export function createContextValue<T>(defaultValue: T | (() => T)) {
   };
 }
 
-function getRawCookie(key: string): string | undefined {
-  if (!globalThis.document) {
-    return;
-  }
-
-  const cookiesStr = globalThis.document.cookie;
-  const cookies = cookiesStr.split(";").map((cookie) => cookie.trim());
-  for (const cookie of cookies) {
-    const [name, value] = cookie.split("=");
-    if (name === key) {
-      return value;
-    }
-  }
-}
-
-export function createPersistedContextValue<T>(
+/**
+ * A context value that's persisted in a cookie
+ *
+ * This value doesn't self-restore when initialized. Any initialization will be
+ * handled by the server passing a cookie value back as initial state.
+ */
+export function createCookieContextValue<T>(
   key: string,
   defaultValue: T | (() => T),
-  options?: {
-    storageType: 'cookie' | 'localStore';
-  }
 ) {
-  const useCookie = options?.storageType === 'cookie';
-
-  if (useCookie && defaultValue === undefined) {
-    const cookie = getRawCookie(key);
-    if (cookie !== undefined) {
-      try {
-        defaultValue = JSON.parse(cookie);
-      } catch {
-        // ignore
-      }
-    }
-  }
-
   const context = createContextValue<T>(defaultValue);
   const {
     Provider: ContextProvider,
@@ -83,49 +58,21 @@ export function createPersistedContextValue<T>(
     useValue: useContextValue,
   } = context;
 
-  const ValueInitializer: React.FC = ({ children }) => {
-    const setContextValue = useContextSetter();
-
-    useEffect(() => {
-      const value = loadValue<T>(key);
-      if (value !== undefined) {
-        setContextValue(value);
-      }
-    }, []);
-
-    return (
-      <>
-        {children}
-      </>
-    );
-  };
-
   type ProviderProps = {
     initialState?: T;
   };
 
   const Provider: React.FC<ProviderProps> = ({ children, initialState }) => {
-    let content: React.ReactNode;
-
-    // We need to initialize the value in an effect so that the initial value
-    // won't conflict with SSR
-    if (initialState === undefined) {
-      content = (
-        <ValueInitializer>
-          {children}
-        </ValueInitializer>
-      );
-    } else {
-      content = children;
-    }
-
     return (
       <ContextProvider initialState={initialState}>
-        {content}
+        {children}
       </ContextProvider>
     );
   };
 
+  /**
+   * Wrap the default setter to persist the value
+   */
   const useSetter = () => {
     const contextSetter = useContextSetter();
     const contextValue = useContextValue();
@@ -136,16 +83,74 @@ export function createPersistedContextValue<T>(
         ? valueOrSetter(contextValue)
         : valueOrSetter;
       contextSetter(value);
-      if (useCookie) {
-        // Safari caps cookie length at 7 days
-        const expires = new Date();
-        expires.setDate(expires.getDate() + 7);
-        document.cookie = `${key}=${
-          value !== undefined ? JSON.stringify(value) : ""
-        }; expires=${expires.toUTCString()}; samesite=strict`;
-      } else {
-        storeValue(key, value ?? null);
+
+      // Safari caps cookie length at 7 days
+      const expires = new Date();
+      expires.setDate(expires.getDate() + 7);
+      document.cookie = `${key}=${
+        value !== undefined ? JSON.stringify(value) : ""
+      }; expires=${expires.toUTCString()}; samesite=strict`;
+    };
+  };
+
+  return {
+    Provider,
+    useValue: useContextValue,
+    useSetter,
+  };
+}
+
+/**
+ * A context value that's persisted in local storage
+ */
+export function createLocalStorageContextValue<T>(
+  key: string,
+  defaultValue: T | (() => T),
+) {
+  const context = createContextValue<T>(defaultValue);
+  const {
+    Provider: ContextProvider,
+    useSetter: useContextSetter,
+    useValue: useContextValue,
+  } = context;
+
+  type ProviderProps = {
+    initialState?: T;
+  };
+
+  const Provider: React.FC<ProviderProps> = ({ children, initialState }) => {
+    const setContextValue = useContextSetter();
+
+    // If we're loading a value from local storage, we need to do it in effect
+    // so the client won't initially disagree with whatever the server rendered
+    useEffect(() => {
+      const value = loadValue<T>(key);
+      if (value !== undefined) {
+        setContextValue(value);
       }
+    }, []);
+
+    return (
+      <ContextProvider initialState={initialState}>
+        {children}
+      </ContextProvider>
+    );
+  };
+
+  /**
+   * Wrap the default setter to persist the value
+   */
+  const useSetter = () => {
+    const contextSetter = useContextSetter();
+    const contextValue = useContextValue();
+    return (
+      valueOrSetter: T | ((oldArticle: T) => T),
+    ) => {
+      const value = valueOrSetter instanceof Function
+        ? valueOrSetter(contextValue)
+        : valueOrSetter;
+      contextSetter(value);
+      storeValue(key, value ?? null);
     };
   };
 

@@ -5,12 +5,18 @@
   width: var(--sidebar-width);
   flex-shrink: 0;
   border-right: solid 1px var(--border);
+  position: relative;
 }
 
 .Articles-loading {
-  height: 100%;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
   display: flex;
   align-items: center;
+  background: white;
 }
 
 .Articles-list {
