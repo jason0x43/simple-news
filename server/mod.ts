@@ -5,7 +5,6 @@ import { expandGlob } from "std/fs/mod.ts";
 import type { AppState } from "./types.ts";
 import { createRouter, type RouterConfig } from "./routes.tsx";
 import { refreshFeeds } from "./feed.ts";
-import { addLiveReloadMiddleware } from "./reload.ts";
 import { addSessionMiddleware, addUserDataMiddleware } from "./sessions.ts";
 
 export type ServerConfig = {
@@ -27,37 +26,18 @@ let routerConfig: RouterConfig;
 /**
  * Touch this file (to intiate a reload) if the styles change.
  */
-async function watchStyles(app: Application<AppState>) {
+async function watchStyles(
+  updateStyles: (newStyles: string) => void,
+) {
   const watcher = Deno.watchFs(clientDir);
   let timer: number | undefined;
-  let updateStyles = false;
-  let updateApp = false;
 
   for await (const event of watcher) {
     if (event.paths.some((p) => /\.css$/.test(p))) {
-      updateStyles = true;
-    }
-
-    if (event.paths.some((p) => /client\/mod.tsx$/.test(p))) {
-      updateApp = true;
-    }
-
-    if (updateStyles || updateApp) {
       clearTimeout(timer);
       timer = setTimeout(async () => {
-        const { sockets } = app.state;
-        if (updateApp || !sockets || sockets.size === 0) {
-          // If the app code was updated or there are no connected sockets,
-          // trigger a server reload
-          Deno.run({ cmd: ["touch", __filename] });
-        } else {
-          // If only styles were updated _and_ we have sockets, only rebuild and
-          // reload the styles
-          routerConfig.styles = await buildStyles();
-          for (const sock of sockets) {
-            sock.send("refreshStyles");
-          }
-        }
+        log.debug('Updating styles');
+        updateStyles(await buildStyles());
       }, 250);
     }
   }
@@ -125,7 +105,7 @@ export async function serve(config: ServerConfig) {
   ]);
   routerConfig = { styles, client, dev: devMode };
 
-  const router = createRouter(routerConfig);
+  const { router, updateStyles } = createRouter(routerConfig);
   const app = new Application<AppState>();
   const port = config.port ?? 8083;
 
@@ -134,11 +114,6 @@ export async function serve(config: ServerConfig) {
     log.info(`${ctx.request.method} ${ctx.request.url.pathname}`);
     await next();
   });
-
-  // Connect live-reload websockets
-  if (devMode) {
-    addLiveReloadMiddleware(app);
-  }
 
   // Add cookie data to the app state
   addSessionMiddleware(app);
@@ -164,7 +139,7 @@ export async function serve(config: ServerConfig) {
 
   const promises = [app.listen({ port })];
   if (devMode) {
-    promises.push(watchStyles(app));
+    promises.push(watchStyles(updateStyles));
   }
 
   await Promise.allSettled(promises);

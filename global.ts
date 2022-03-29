@@ -3,8 +3,6 @@ import { AppProps } from "./client/App.tsx";
 declare global {
   // deno-lint-ignore no-var
   var __INITIAL_STATE__: AppProps["initialState"] | undefined;
-  // deno-lint-ignore no-var
-  var __DEV__: boolean | undefined;
 }
 
 function toString(value: unknown): string {

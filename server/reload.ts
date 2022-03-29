@@ -1,41 +1,74 @@
 import { AppState } from "./types.ts";
-import { Application, Router } from "oak";
+import { Router } from "oak";
 
-export function addLiveReloadMiddleware(app: Application<AppState>) {
-  // Connected websockets
-  const sockets: Set<WebSocket> = new Set();
-  let initialReloadSent = false;
+export function addLiveReloadRoute(
+  router: Router<AppState>,
+  setStyles: (newStyles: styles) => void,
+) {
+  const buildId = crypto.randomUUID();
+  const sockets = new Set<WebSocket>();
 
-  app.state.sockets = sockets;
-
-  app.use(async (ctx, next) => {
-    if (ctx.request.url.pathname.endsWith("/livereload")) {
-      const socket = ctx.upgrade();
-      sockets.add(socket);
-      socket.onclose = () => {
-        sockets.delete(socket);
-      };
-
-      socket.onopen = () => {
-        if (!initialReloadSent) {
-          socket.send("reload");
-          initialReloadSent = true;
-        }
-      };
-    }
-
-    await next();
+  router.get("/livereload/:id", (ctx) => {
+    const id = ctx.params.id;
+    const socket = ctx.upgrade();
+    sockets.add(socket);
+    socket.onclose = () => {
+      sockets.delete(socket);
+    };
+    socket.onopen = () => {
+      if (id !== buildId) {
+        socket.send("reload");
+      }
+    };
   });
 
-  return (message: string) => {
-    for (const sock of sockets) {
-      sock.send(message);
+  // Injected into the client to allow live-reloading
+  const liveReloadSnippet = `
+    <script type="module">
+      function connect() {
+        const url = window.location.origin.replace("http", "ws")
+          + '/livereload/${buildId}';
+        const socket = new WebSocket(url);
+        let reconnectTimer;
+
+        socket.addEventListener("open", () => {
+          console.log("live-reload socket connected");
+        });
+
+        socket.addEventListener("message", (event) => {
+          if (event.data === "loadStyles") {
+            const link = document.createElement("link");
+            link.rel = "stylesheet";
+            link.href = "/styles.css";
+            const existing = document.head.querySelector('link[rel="stylesheet"]');
+            existing.replaceWith(link);
+          } else if (event.data === "reload") {
+            window.location.reload();
+          }
+        });
+
+        socket.addEventListener("close", () => {
+          console.log("reconnecting live-reload socket...");
+          clearTimeout(reconnectTimer);
+          reconnectTimer = setTimeout(() => {
+            connect();
+          }, 1000);
+        });
+      }
+
+      connect();
+    </script>
+  `;
+
+  const updateStyles = (newStyles: string) => {
+    setStyles(newStyles);
+    for (const socket of sockets) {
+      socket.send("refreshStyles");
     }
   };
-}
 
-export function addLiveReloadRoute(router: Router<AppState>) {
-  router.get("/livereload", ({ response }) => {
-    response.status = 200;
-  });
+  return {
+    liveReloadSnippet,
+    updateStyles
+  };
 }

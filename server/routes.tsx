@@ -30,7 +30,6 @@ import type {
 import App from "../client/App.tsx";
 import { formatArticles, refreshFeeds } from "./feed.ts";
 import { getUserByUsername } from "./database/users.ts";
-import { addLiveReloadRoute } from "./reload.ts";
 import { requireUser } from "./middleware.ts";
 import {
   createSession,
@@ -68,9 +67,56 @@ function getUserFeedIds(user: User): number[] | undefined {
   }, [] as number[]);
 }
 
-export function createRouter(config: RouterConfig): Router<AppState> {
+type RouterInfo = {
+  router: Router<AppState>;
+  updateStyles: (newStyles: string) => void;
+};
+
+const buildId = crypto.randomUUID();
+const sockets = new Set<WebSocket>();
+const liveReloadSnippet = `
+  <script type="module">
+    function connect() {
+      const url = window.location.origin.replace("http", "ws")
+        + '/livereload/${buildId}';
+      const socket = new WebSocket(url);
+      let reconnectTimer;
+
+      socket.addEventListener("open", () => {
+        console.log("live-reload socket connected");
+      });
+
+      socket.addEventListener("message", (event) => {
+        if (event.data === "loadStyles") {
+          const link = document.createElement("link");
+          link.rel = "stylesheet";
+          link.href = "/styles.css";
+          const existing = document.head.querySelector('link[rel="stylesheet"]');
+          existing.replaceWith(link);
+        } else if (event.data === "reload") {
+          window.location.reload();
+        }
+      });
+
+      socket.addEventListener("close", () => {
+        console.log("reconnecting live-reload socket...");
+        clearTimeout(reconnectTimer);
+        reconnectTimer = setTimeout(() => {
+          connect();
+        }, 1000);
+      });
+    }
+
+    connect();
+  </script>
+`;
+
+export function createRouter(config: RouterConfig): RouterInfo {
+  const { client, dev } = config;
+  let { styles } = config;
+
   const cookieOptions = {
-    secure: !config.dev,
+    secure: !dev,
     httpOnly: true,
     // assume we're being proxied through an SSL server
     ignoreInsecure: true,
@@ -117,9 +163,15 @@ export function createRouter(config: RouterConfig): Router<AppState> {
     return dehydrated;
   };
 
+  const updateStyles = (newStyles: string) => {
+    styles = newStyles;
+    for (const socket of sockets) {
+      socket.send("loadStyles");
+    }
+  };
+
   // Render the base HTML
   const render = (initialState: RenderState) => {
-    const devMode = `globalThis.__DEV__ = ${config.dev ? "true" : "false"};`;
     const queryState = toDehydratedState(initialState);
     const appState = {
       selectedFeeds: initialState.selectedFeeds,
@@ -130,12 +182,7 @@ export function createRouter(config: RouterConfig): Router<AppState> {
       <App initialState={{ queryState, appState }} />,
     );
     const globalState = getGlobalStateStatement({ queryState, appState });
-
-    log.debug(
-      `rendering with selectedFeeds ${
-        JSON.stringify(initialState.selectedFeeds)
-      }`,
-    );
+    const liveReload = dev ? liveReloadSnippet : "";
 
     const logo = Deno.readTextFileSync(
       path.join(__dirname, "..", "public", "favicon.svg"),
@@ -156,34 +203,42 @@ export function createRouter(config: RouterConfig): Router<AppState> {
 
         <link rel="stylesheet" href="/styles.css">
         <script type="module" async src="/client.js"></script>
+        ${liveReload}
       </head>
       <body>
         <svg style="display:none" version="2.0">
-          <defs>
-            ${logo}
-          </defs>
+          <defs>${logo}</defs>
         </svg>
         <div id="root">${renderedApp}</div>
-        <script>
-          ${globalState}
-          ${devMode}
-        </script>
+        <script>${globalState}</script>
       </body>
     </html>`;
   };
 
   const router = new Router<AppState>();
 
-  addLiveReloadRoute(router);
+  router.get("/livereload/:id", (ctx) => {
+    const id = ctx.params.id;
+    const socket = ctx.upgrade();
+    sockets.add(socket);
+    socket.onclose = () => {
+      sockets.delete(socket);
+    };
+    socket.onopen = () => {
+      if (id !== buildId) {
+        socket.send("reload");
+      }
+    };
+  });
 
   router.get("/client.js", ({ response }) => {
     response.type = "application/javascript";
-    response.body = config.client;
+    response.body = client;
   });
 
   router.get("/styles.css", ({ response }) => {
     response.type = "text/css";
-    response.body = config.styles;
+    response.body = styles;
   });
 
   router.get("/user", requireUser, ({ response, state }) => {
@@ -422,5 +477,8 @@ export function createRouter(config: RouterConfig): Router<AppState> {
     });
   });
 
-  return router;
+  return {
+    router,
+    updateStyles,
+  };
 }
