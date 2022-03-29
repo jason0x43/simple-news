@@ -45,18 +45,7 @@
 }
 
 .Article-close {
-  cursor: pointer;
-  background: var(--matte);
-  border: solid 1px var(--border);
-  border-radius: var(--border-radius);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: fixed;
-  width: 2rem;
-  height: 2rem;
-  bottom: 0.5rem;
-  right: 0.5rem;
+  display: none;
 }
 
 .Article-content {
@@ -199,5 +188,20 @@
 
   .Article-visible {
     transform: translate3d(0, 0, 0);
+  }
+
+  .Article-close {
+    cursor: pointer;
+    background: var(--matte);
+    border: solid 1px var(--border);
+    border-radius: var(--border-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    width: 2rem;
+    height: 2rem;
+    bottom: 0.5rem;
+    right: 0.5rem;
   }
 }
