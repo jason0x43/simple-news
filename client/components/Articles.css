@@ -68,6 +68,8 @@
 .Articles-icon {
   padding: var(--vertical-pad);
   width: 16px;
+  display: flex;
+  align-items: center;
 }
 
 .Articles-icon img {
