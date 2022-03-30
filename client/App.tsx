@@ -42,6 +42,7 @@ const LoggedIn: React.VFC = () => {
   const refresher = useRefreshFeeds();
   const selectedFeeds = useSelectedFeeds();
   const setSelectedArticle = useSelectedArticleSetter();
+  const setSelectedFeeds = useSelectedFeedsSetter();
 
   const handleTitlePress = useCallback(() => {
     articleRef.current?.resetScroll();
@@ -81,7 +82,10 @@ const LoggedIn: React.VFC = () => {
       <div className="App-content">
         <div className="App-sidebar" data-active={sidebarActive}>
           <div className="App-sidebar-feeds" ref={sidebarRef}>
-            <Feeds />
+            <Feeds onSelect={(feeds) => {
+              setSelectedFeeds(feeds);
+              setSidebarActive(false)
+            }}/>
           </div>
           <div className="App-sidebar-controls">
             <Button

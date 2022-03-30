@@ -1,9 +1,9 @@
-import React, { type FC, useState } from "react";
+import React, { useState } from "react";
 import { className } from "../util.ts";
 import type { FeedStats, UserConfig } from "../../types.ts";
 import type { Settings } from "../types.ts";
 import { useFeeds, useFeedStats, useUser } from "../queries/mod.ts";
-import { useSelectedFeeds, useSelectedFeedsSetter } from "../contexts/selectedFeeds.ts";
+import { useSelectedFeeds } from "../contexts/selectedFeeds.ts";
 import { useSettings } from "../contexts/settings.ts";
 
 function isSelected(feedIds: number[], selected: number[] | undefined) {
@@ -25,14 +25,17 @@ const getArticleCount = (
       : stats.total);
   }, 0);
 
-const Feeds: FC = () => {
+type FeedsProps = {
+  onSelect: (feeds: number[] | undefined) => void;
+};
+
+const Feeds: React.VFC<FeedsProps> = ({ onSelect }) => {
   const [expanded, setExpanded] = useState<{ [title: string]: boolean }>({});
   const { data: user } = useUser();
   const { data: feeds } = useFeeds();
   const { data: feedStats } = useFeedStats();
   const settings = useSettings();
   const selectedFeeds = useSelectedFeeds();
-  const setSelectedFeeds = useSelectedFeedsSetter();
 
   return (
     <ul className="Feeds">
@@ -61,7 +64,7 @@ const Feeds: FC = () => {
             />
             <span
               className="Feeds-title"
-              onClick={() => setSelectedFeeds(group.feeds)}
+              onClick={() => onSelect(group.feeds)}
             >
               {group.title}
             </span>
@@ -81,7 +84,7 @@ const Feeds: FC = () => {
                   "Feeds-selected": isSelected([feed], selectedFeeds),
                 })}
                 key={feed}
-                onClick={() => setSelectedFeeds([feed])}
+                onClick={() => onSelect([feed])}
               >
                 <div className="Feeds-title">
                   {feeds?.find((f) => f.id === feed)?.title}
