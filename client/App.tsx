@@ -50,9 +50,11 @@ const LoggedIn: React.VFC = () => {
 
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
+      console.log("checking if", sidebarRef.current, "contains", event.target);
       if (
         sidebarActive && !sidebarRef.current!.contains(event.target as Node)
       ) {
+        console.log("closing sidebar for click");
         setSidebarActive(false);
       }
     };
@@ -80,12 +82,18 @@ const LoggedIn: React.VFC = () => {
         />
       </div>
       <div className="App-content">
-        <div className="App-sidebar" data-active={sidebarActive}>
-          <div className="App-sidebar-feeds" ref={sidebarRef}>
-            <Feeds onSelect={(feeds) => {
-              setSelectedFeeds(feeds);
-              setSidebarActive(false)
-            }}/>
+        <div
+          className="App-sidebar"
+          data-active={sidebarActive}
+          ref={sidebarRef}
+        >
+          <div className="App-sidebar-feeds">
+            <Feeds
+              onSelect={(feeds) => {
+                setSelectedFeeds(feeds);
+                setSidebarActive(false);
+              }}
+            />
           </div>
           <div className="App-sidebar-controls">
             <Button
@@ -173,7 +181,7 @@ export type AppProps = {
   initialState?: {
     queryState?: DehydratedState;
     appState?: AppState;
-  }
+  };
 };
 
 const App: React.VFC<AppProps> = ({ initialState }) => {
