@@ -50,11 +50,9 @@ const LoggedIn: React.VFC = () => {
 
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
-      console.log("checking if", sidebarRef.current, "contains", event.target);
       if (
         sidebarActive && !sidebarRef.current!.contains(event.target as Node)
       ) {
-        console.log("closing sidebar for click");
         setSidebarActive(false);
       }
     };
