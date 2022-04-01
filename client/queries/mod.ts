@@ -43,19 +43,19 @@ export function useSignout() {
 }
 
 export function useFeeds() {
-  return useQuery("feeds", () => getFeeds(), {
+  return useQuery(["feeds"], () => getFeeds(), {
     staleTime: 5000,
   });
 }
 
 export function useUser() {
-  return useQuery("user", () => getUser(), {
+  return useQuery(["user"], () => getUser(), {
     staleTime: 5000,
   });
 }
 
 export function useFeedStats() {
-  return useQuery("feedStats", () => getFeedStats(), {
+  return useQuery(["feedStats"], () => getFeedStats(), {
     staleTime: 5000,
   });
 }
@@ -67,6 +67,7 @@ export function useArticle(articleId: number | undefined) {
       if (articleId != null) {
         return getArticle(articleId);
       }
+      return null;
     },
     {
       enabled: articleId !== undefined,
@@ -84,6 +85,7 @@ export function useArticleHeadings(feedIds: number[] | undefined, options?: {
       if (feedIds) {
         return getArticleHeadings(feedIds);
       }
+      return [];
     },
     {
       enabled: feedIds !== undefined,

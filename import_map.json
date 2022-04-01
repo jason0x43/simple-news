@@ -11,11 +11,9 @@
     "yargs": "https://deno.land/x/yargs@v17.3.1-deno/deno.ts",
     "yargs-types": "https://deno.land/x/yargs@v17.3.1-deno/deno-types.ts",
 
-    "react": "https://esm.sh/react@17.0.2?pin=v68",
-    "react-dom": "https://esm.sh/react-dom@17.0.2?pin=v68",
-    "react-dom-server": "https://esm.sh/react-dom@17.0.2/server?pin=v68",
-    "react-query": "https://esm.sh/react-query@3.34.16?pin=v68",
-
-    "https://cdn.esm.sh@types/": "https://cdn.esm.sh/@types/"
+    "react": "https://esm.sh/react@18",
+    "react-dom": "https://esm.sh/react-dom@18",
+    "react-dom/server": "https://esm.sh/react-dom@18/server",
+    "react-query": "https://esm.sh/react-query@4.0.0-alpha.23?deps=react@18"
   }
 }

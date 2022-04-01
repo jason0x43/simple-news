@@ -3,7 +3,7 @@ import "./raf.ts";
 import * as path from "std/path/mod.ts";
 import { Router } from "oak";
 import * as log from "std/log/mod.ts";
-import ReactDOMServer from "react-dom-server";
+import ReactDOMServer from "react-dom/server";
 import React from "react";
 import {
   getArticle,
@@ -137,9 +137,9 @@ export function createRouter(config: RouterConfig): RouterInfo {
 
   const toDehydratedState = (state: RenderState) => {
     const queryClient = new QueryClient();
-    queryClient.setQueryData("user", state.user);
-    queryClient.setQueryData("feeds", state.feeds);
-    queryClient.setQueryData("feedStats", state.feedStats);
+    queryClient.setQueryData(["user"], state.user);
+    queryClient.setQueryData(["feeds"], state.feeds);
+    queryClient.setQueryData(["feedStats"], state.feedStats);
 
     if (state.selectedFeeds?.length ?? 0 > 0) {
       queryClient.setQueryData(
