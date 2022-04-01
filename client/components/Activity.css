@@ -1,3 +1,4 @@
+/*
 .Activity {
   width: 40px;
   height: 40px;
@@ -31,5 +32,66 @@
   100% {
     transform: perspective(120px) rotateX(-180deg) rotateY(-179.9deg);
     -webkit-transform: perspective(120px) rotateX(-180deg) rotateY(-179.9deg);
+  }
+}
+*/
+
+.Activity {
+  --on: #fff;
+  --off: var(--matte);
+  --time: 2s;
+  width: 48px;
+  height: 48px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.Activity svg {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.Activity svg .inner {
+  fill: var(--off);
+  stroke: transparent;
+}
+
+.Activity svg .middle {
+  fill: var(--off);
+  stroke: transparent;
+}
+
+.Activity svg .outer {
+  fill: var(--off);
+  stroke: transparent;
+}
+
+.Activity svg .outer {
+  animation: cycle var(--time) ease 0.66s infinite;
+}
+
+.Activity svg .middle {
+  animation: cycle var(--time) ease 0.33s infinite;
+}
+
+.Activity svg .inner {
+  animation: cycle var(--time) ease 0s infinite;
+}
+
+@keyframes cycle {
+  0% {
+    fill: var(--off);
+  }
+
+  40% {
+    fill: var(--on);
+  }
+
+  80% {
+    fill: var(--off);
   }
 }
