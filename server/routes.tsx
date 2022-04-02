@@ -3,7 +3,7 @@ import "./raf.ts";
 import * as path from "std/path/mod.ts";
 import { Router } from "oak";
 import * as log from "std/log/mod.ts";
-import ReactDOMServer from "react-dom/server";
+import { renderToString } from "react-dom/server";
 import React from "react";
 import {
   getArticle,
@@ -178,7 +178,7 @@ export function createRouter(config: RouterConfig): RouterInfo {
       selectedArticle: initialState.selectedArticle,
       scrollData: initialState.scrollData,
     };
-    const renderedApp = ReactDOMServer.renderToString(
+    const renderedApp = renderToString(
       <App initialState={{ queryState, appState }} />,
     );
     const globalState = getGlobalStateStatement({ queryState, appState });
