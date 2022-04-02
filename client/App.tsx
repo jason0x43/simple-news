@@ -57,9 +57,14 @@ const LoggedIn: React.VFC = () => {
       }
     };
 
-    document.body.addEventListener("click", handleClick);
+    // Add the click handler in a timeout in case the effect run's synchronously
+    // with a click event
+    const timer = setTimeout(() =>
+      document.body.addEventListener("click", handleClick)
+    );
 
     return () => {
+      clearTimeout(timer);
       document.body.removeEventListener("click", handleClick);
     };
   }, [sidebarActive]);

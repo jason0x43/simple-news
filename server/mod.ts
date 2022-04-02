@@ -24,9 +24,9 @@ const refreshInterval = 600;
 let routerConfig: RouterConfig;
 
 /**
- * Touch this file (to intiate a reload) if the styles change.
+ * Watch for file changes
  */
-async function watchStyles(
+async function watchFiles(
   updateStyles: (newStyles: string) => void,
 ) {
   const watcher = Deno.watchFs(clientDir);
@@ -39,6 +39,10 @@ async function watchStyles(
         log.debug('Updating styles');
         updateStyles(await buildStyles());
       }, 250);
+    } else if (event.paths.some((p) => /client\/mod.tsx$/.test(p))) {
+      // client/mod.tsx isn't in the import graph of mod, so we need to manually
+      // trigger a restart if it changes
+      Deno.run({ cmd: ["touch", __filename] });
     }
   }
 }
@@ -139,7 +143,7 @@ export async function serve(config: ServerConfig) {
 
   const promises = [app.listen({ port })];
   if (devMode) {
-    promises.push(watchStyles(updateStyles));
+    promises.push(watchFiles(updateStyles));
   }
 
   await Promise.allSettled(promises);

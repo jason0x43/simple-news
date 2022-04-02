@@ -12,7 +12,7 @@
     "yargs-types": "https://deno.land/x/yargs@v17.3.1-deno/deno-types.ts",
 
     "react": "https://esm.sh/react@18?dev",
-    "react-dom": "https://esm.sh/react-dom@18?dev",
+    "react-dom/client": "https://esm.sh/react-dom@18/client?dev",
     "react-dom/server": "https://esm.sh/react-dom@18/server?dev",
     "react-query": "https://esm.sh/react-query@4.0.0-alpha.23?deps=react@18&dev"
   }
