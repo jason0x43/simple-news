@@ -3,8 +3,6 @@ import { className } from "../util.ts";
 import type { FeedStats, UserConfig } from "../../types.ts";
 import type { Settings } from "../types.ts";
 import { useFeeds, useFeedStats, useUser } from "../queries/mod.ts";
-import { useSelectedFeeds } from "../contexts/selectedFeeds.ts";
-import { useSettings } from "../contexts/settings.ts";
 
 function isSelected(feedIds: number[], selected: number[] | undefined) {
   if (!selected) {
@@ -26,16 +24,17 @@ const getArticleCount = (
   }, 0);
 
 type FeedsProps = {
+  selectedFeeds: number[] | undefined;
+  settings: Settings;
   onSelect: (feeds: number[] | undefined) => void;
 };
 
-const Feeds: React.VFC<FeedsProps> = ({ onSelect }) => {
+const Feeds: React.VFC<FeedsProps> = (props) => {
+  const { onSelect, settings, selectedFeeds } = props;
   const [expanded, setExpanded] = useState<{ [title: string]: boolean }>({});
   const { data: user } = useUser();
   const { data: feeds } = useFeeds();
   const { data: feedStats } = useFeedStats();
-  const settings = useSettings();
-  const selectedFeeds = useSelectedFeeds();
 
   return (
     <ul className="Feeds">

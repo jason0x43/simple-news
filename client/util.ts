@@ -80,3 +80,41 @@ export function preloadFeedIcons(feeds: Feed[]) {
     document.head.append(link);
   }
 }
+
+export function getCookie<T>(key: string): T | undefined {
+  if (!globalThis.document) {
+    return;
+  }
+
+  const cookie = globalThis.document.cookie;
+  const entries = cookie.split(";").map((entry) => entry.trim());
+  for (const entry of entries) {
+    const equals = entry.indexOf("=");
+    const name = entry.slice(0, equals);
+    if (name === key) {
+      const value = entry.slice(equals + 1);
+      if (!value) {
+        return undefined;
+      }
+
+      try {
+        return JSON.parse(entry.slice(equals + 1));
+      } catch (error) {
+        console.warn(`Error parsing cookie "${entry}": ${error}`);
+      }
+    }
+  }
+}
+
+export function setCookie(key: string, value: unknown) {
+  if (!globalThis.document) {
+    return;
+  }
+
+  // Safari caps cookie length at 7 days
+  const expires = new Date();
+  expires.setDate(expires.getDate() + 7);
+  globalThis.document.cookie = `${key}=${
+    value !== undefined ? JSON.stringify(value) : ""
+  }; expires=${expires.toUTCString()}; samesite=strict`;
+}

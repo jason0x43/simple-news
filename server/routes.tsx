@@ -171,16 +171,18 @@ export function createRouter(config: RouterConfig): RouterInfo {
   };
 
   // Render the base HTML
-  const render = (initialState: RenderState) => {
+  const render = (initialState: RenderState, cookie?: string) => {
     const queryState = toDehydratedState(initialState);
     const appState = {
       selectedFeeds: initialState.selectedFeeds,
       selectedArticle: initialState.selectedArticle,
       scrollData: initialState.scrollData,
     };
+
     const renderedApp = renderToString(
       <App initialState={{ queryState, appState }} />,
     );
+
     const globalState = getGlobalStateStatement({ queryState, appState });
     const liveReload = dev ? liveReloadSnippet : "";
 
@@ -464,6 +466,11 @@ export function createRouter(config: RouterConfig): RouterInfo {
       }
     }
 
+    const cookieEntries: string[] = [];
+    for await (const entry of cookies.entries()) {
+      cookieEntries.push(`${entry[0]}=${entry[1]}`);
+    }
+
     response.type = "text/html";
     response.body = render({
       user: data.user,
@@ -474,7 +481,7 @@ export function createRouter(config: RouterConfig): RouterInfo {
       selectedFeeds,
       selectedArticle,
       scrollData,
-    });
+    }, cookieEntries.join("; "));
   });
 
   return {

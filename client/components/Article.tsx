@@ -6,10 +6,6 @@ import React, {
   useState,
 } from "react";
 import { unescapeHtml } from "../../util.ts";
-import {
-  useSelectedArticle,
-  useSelectedArticleSetter,
-} from "../contexts/selectedArticle.ts";
 import { useArticle } from "../queries/mod.ts";
 
 const target = "SimpleNews_ArticleView";
@@ -18,9 +14,13 @@ export type ArticleRef = {
   resetScroll: () => void;
 };
 
-const Article = forwardRef((_, ref) => {
-  const selectedArticle = useSelectedArticle();
-  const setSelectedArticle = useSelectedArticleSetter();
+type ArticleProps = {
+  articleId: number | undefined;
+  onClose: () => void;
+}
+
+const Article = forwardRef<ArticleRef, ArticleProps>((props, ref) => {
+  const { articleId: selectedArticle, onClose } = props;
   const { data: article } = useArticle(selectedArticle);
   const articleRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -50,7 +50,7 @@ const Article = forwardRef((_, ref) => {
     if (className === "Article") {
       // If the className is Article at the end of a transition, it means
       // Article-visible was removed, so the article should be deselected.
-      setSelectedArticle(undefined);
+      onClose();
     }
   };
 

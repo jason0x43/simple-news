@@ -1,5 +1,4 @@
 import React, {
-  type FC,
   type TouchEvent,
   type UIEvent,
   useEffect,
@@ -12,22 +11,16 @@ import { useContextMenu } from "./ContextMenu.tsx";
 import Button from "./Button.tsx";
 import { className } from "../util.ts";
 import { unescapeHtml } from "../../util.ts";
-import { useChangeEffect, useWidthObserver } from "../hooks.ts";
+import { useChangeEffect, useCookieState, useWidthObserver } from "../hooks.ts";
 import {
   useArticleHeadings,
   useFeeds,
   useSetArticlesRead,
   useUserArticles,
 } from "../queries/mod.ts";
-import { useSelectedFeeds } from "../contexts/selectedFeeds.ts";
-import { useSettings } from "../contexts/settings.ts";
-import {
-  useSelectedArticle,
-  useSelectedArticleSetter,
-} from "../contexts/selectedArticle.ts";
-import { UserArticle } from "../../types.ts";
+import { ScrollData, UserArticle } from "../../types.ts";
 import { Activity } from "./Activity.tsx";
-import { useScrollData, useScrollDataSetter } from "../contexts/scrollData.ts";
+import { Settings } from "../types.ts";
 
 function getAge(timestamp: number | undefined): string {
   if (timestamp === undefined) {
@@ -51,9 +44,17 @@ function getAge(timestamp: number | undefined): string {
   return `${diff.minutes} m`;
 }
 
-const Articles: FC = () => {
+type ArticlesProps = {
+  selectedFeeds: number[] | undefined;
+  selectedArticle: number | undefined;
+  initialScrollData: ScrollData | undefined;
+  settings: Settings;
+  onSelect: (articleId: number) => void;
+};
+
+const Articles: React.VFC<ArticlesProps> = (props) => {
+  const { onSelect, selectedArticle, selectedFeeds, settings } = props;
   const [ready, setReady] = useState(false);
-  const selectedFeeds = useSelectedFeeds();
   const { data: feeds, isLoading: feedsLoading } = useFeeds();
   const { data: articles = [], isLoading: articlesLoading } =
     useArticleHeadings(selectedFeeds, {
@@ -61,9 +62,6 @@ const Articles: FC = () => {
     });
   const { data: userArticles = [], isLoading: userArticlesLoading } =
     useUserArticles(selectedFeeds);
-  const settings = useSettings();
-  const selectedArticle = useSelectedArticle();
-  const setSelectedArticle = useSelectedArticleSetter();
   const { hideContextMenu, showContextMenu, contextMenuVisible } =
     useContextMenu();
   const [activeArticle, setActiveArticle] = useState<number | undefined>();
@@ -80,8 +78,10 @@ const Articles: FC = () => {
       ...updated.map(({ articleId }) => articleId),
     ]);
   });
-  const scrollData = useScrollData();
-  const setScrollData = useScrollDataSetter();
+  const [scrollData, setScrollData] = useCookieState<ScrollData | undefined>(
+    "scrollData",
+    props.initialScrollData,
+  );
   const scrollTimer = useRef<number>();
   const [visibleCount, setVisibleCount] = useState(
     scrollData?.visibleCount ?? 40,
@@ -205,7 +205,7 @@ const Articles: FC = () => {
     if (listRef.current) {
       listRef.current.scrollTop = 0;
     }
-  }, [selectedFeeds?.toString()]);
+  }, [selectedFeeds]);
 
   // Ensure the selected article is scrolled into view if the width of the
   // Articles list changes
@@ -251,7 +251,7 @@ const Articles: FC = () => {
                 onClick={() => {
                   hideContextMenu();
                   if (!isSelected) {
-                    setSelectedArticle(article.id);
+                    onSelect(article.id);
                     setArticlesRead.mutate({
                       articles: [article],
                       read: true,

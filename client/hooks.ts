@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { loadValue, storeValue } from "./util.ts";
+import { getCookie, loadValue, setCookie, storeValue } from "./util.ts";
 
 export default function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(false);
@@ -81,8 +81,37 @@ export function useAppVisibility() {
   return visible;
 }
 
-export function useStoredState<T>(key: string, initialValue: T) {
-  const [value, setValue] = useState(() => loadValue<T>(key) ?? initialValue);
+/**
+ * Every update to the state value also updates a cookie
+ */
+export function useCookieState<T>(key: string, initialValue: T) {
+  const [value, setValue] = useState(() => getCookie<T>(key) ?? initialValue);
+
+  const setter = (newValue: T | ((oldVal: T) => T)) => {
+    const valueToStore = newValue instanceof Function
+      ? newValue(value)
+      : newValue;
+    setValue(valueToStore);
+    setCookie(key, valueToStore);
+  };
+
+  return [value, setter] as const;
+}
+
+/**
+ * Every update to the state value also updates localStorage
+ */
+export function useLocalStorageState<T>(key: string, initialValue: T) {
+  const [value, setValue] = useState(initialValue);
+
+  // If we're loading a value from local storage, we need to do it in effect so
+  // the client won't initially disagree with whatever the server rendered
+  useEffect(() => {
+    const value = loadValue<T>(key);
+    if (value !== undefined) {
+      setValue(value);
+    }
+  }, []);
 
   const setter = (newValue: T | ((oldVal: T) => T)) => {
     const valueToStore = newValue instanceof Function
@@ -102,13 +131,20 @@ export function useStoredState<T>(key: string, initialValue: T) {
 export const useChangeEffect: typeof useEffect = (effect, deps) => {
   // The effect should start ready if there are no dependencies
   const ready = useRef(deps === undefined || deps.length === 0);
+  const lastDeps = useRef<unknown[]>();
 
   useEffect(() => {
     if (!ready.current) {
       ready.current = deps?.every((val) => val !== undefined) ?? false;
+      lastDeps.current = deps?.slice();
     } else {
-      const cleanup = effect();
-      return () => cleanup?.();
+      // Only run the effect if the dependecy values have actually changed.
+      // Sometimes (dev mode + React.Strict?) the effect is called even when
+      // values haven't changed.
+      if (!deps || !deps.every((dep, i) => lastDeps.current?.[i] === dep)) {
+        const cleanup = effect();
+        return () => cleanup?.();
+      }
     }
   }, deps);
 };

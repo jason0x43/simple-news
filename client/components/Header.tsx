@@ -1,9 +1,9 @@
 import React, { type VFC } from "react";
 import { Feed, User } from "../../types.ts";
 import { useFeeds, useSignout, useUser } from "../queries/mod.ts";
-import { useSelectedFeeds } from "../contexts/selectedFeeds.ts";
 
 type HeaderProps = {
+  selectedFeeds: number[] | undefined;
   onTitlePress: () => void;
   toggleSidebar: () => void;
 };
@@ -39,10 +39,10 @@ const getFeedsTitle = (
   return undefined;
 };
 
-const Header: VFC<HeaderProps> = ({ onTitlePress, toggleSidebar }) => {
+const Header: VFC<HeaderProps> = (props) => {
+  const { onTitlePress, toggleSidebar, selectedFeeds } = props;
   const { data: user } = useUser();
   const { data: feeds } = useFeeds();
-  const selectedFeeds = useSelectedFeeds();
   const title = getFeedsTitle(user, feeds, selectedFeeds);
   const signout = useSignout();
 

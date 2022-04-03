@@ -7,39 +7,44 @@ import Article, { type ArticleRef } from "./components/Article.tsx";
 import Button from "./components/Button.tsx";
 import ButtonSelector from "./components/ButtonSelector.tsx";
 import Input from "./components/Input.tsx";
-import type { Settings } from "./types.ts";
-import { useChangeEffect, useStoredState } from "./hooks.ts";
+import type { AppState, Settings } from "./types.ts";
+import { useCookieState, useLocalStorageState } from "./hooks.ts";
 import {
   useFeeds,
   useRefreshFeeds,
   useSignin,
   useUser,
 } from "./queries/mod.ts";
-import { useSettings, useSettingsSetter } from "./contexts/settings.ts";
-import { useSelectedArticleSetter } from "./contexts/selectedArticle.ts";
 import {
   type DehydratedState,
   Hydrate,
   QueryClient,
   QueryClientProvider,
 } from "react-query";
-import AppProvider, { AppState } from "./contexts/mod.tsx";
-import {
-  useSelectedFeeds,
-  useSelectedFeedsSetter,
-} from "./contexts/selectedFeeds.ts";
 import { preloadFeedIcons } from "./util.ts";
 
-const LoggedIn: React.VFC = () => {
+type LoggedInProps = {
+  initialState: AppState | undefined;
+};
+
+const LoggedIn: React.VFC<LoggedInProps> = ({ initialState }) => {
   const { isLoading: feedsLoading, data: feeds } = useFeeds();
-  const settings = useSettings();
-  const setSettings = useSettingsSetter();
+  const [settings, setSettings] = useLocalStorageState<Settings>("settings", {
+    articleFilter: "unread",
+  });
   const sidebarRef = useRef<HTMLDivElement>(null);
   const articleRef = useRef<ArticleRef>(null);
   const refresher = useRefreshFeeds();
-  const selectedFeeds = useSelectedFeeds();
-  const setSelectedArticle = useSelectedArticleSetter();
-  const setSelectedFeeds = useSelectedFeedsSetter();
+  const [selectedFeeds, setSelectedFeeds] = useCookieState<
+    number[] | undefined
+  >(
+    "selectedFeeds",
+    initialState?.selectedFeeds,
+  );
+  const [selectedArticle, setSelectedArticle] = useCookieState<
+    | number
+    | undefined
+  >("selectedArticle", initialState?.selectedArticle);
   const [sidebarActive, setSidebarActive] = useState(!selectedFeeds);
   const loadedIcons = useRef(false);
 
@@ -68,10 +73,6 @@ const LoggedIn: React.VFC = () => {
     };
   }, [sidebarActive]);
 
-  useChangeEffect(() => {
-    setSelectedArticle(undefined);
-  }, [selectedFeeds]);
-
   useEffect(() => {
     if (feeds && !loadedIcons.current) {
       preloadFeedIcons(feeds);
@@ -83,6 +84,7 @@ const LoggedIn: React.VFC = () => {
     <ContextMenuProvider>
       <div className="App-header">
         <Header
+          selectedFeeds={selectedFeeds}
           onTitlePress={handleTitlePress}
           toggleSidebar={() => {
             setSidebarActive(!sidebarActive);
@@ -97,8 +99,11 @@ const LoggedIn: React.VFC = () => {
         >
           <div className="App-sidebar-feeds">
             <Feeds
+              selectedFeeds={selectedFeeds}
+              settings={settings}
               onSelect={(feedIds) => {
                 setSelectedFeeds(feedIds);
+                setSelectedArticle(undefined);
                 setSidebarActive(false);
               }}
             />
@@ -128,8 +133,18 @@ const LoggedIn: React.VFC = () => {
           </div>
         </div>
         <div className="App-articles">
-          <Articles />
-          <Article ref={articleRef} />
+          <Articles
+            selectedFeeds={selectedFeeds}
+            initialScrollData={initialState?.scrollData}
+            selectedArticle={selectedArticle}
+            settings={settings}
+            onSelect={setSelectedArticle}
+          />
+          <Article
+            ref={articleRef}
+            articleId={selectedArticle}
+            onClose={() => setSelectedArticle(undefined)}
+          />
         </div>
       </div>
     </ContextMenuProvider>
@@ -141,16 +156,9 @@ const Login: React.VFC = () => {
   const [password, setPassword] = useState("");
   const { error } = useUser();
   const signin = useSignin();
-  const setSelectedFeeds = useSelectedFeedsSetter();
-  const setSelectedArticle = useSelectedArticleSetter();
 
   const doSignin = () => {
-    signin.mutate({ username, password }, {
-      onSuccess: () => {
-        setSelectedArticle(undefined);
-        setSelectedFeeds(undefined);
-      },
-    });
+    signin.mutate({ username, password });
   };
 
   const handleKey = (event: React.KeyboardEvent<HTMLFormElement>) => {
@@ -175,12 +183,12 @@ const Login: React.VFC = () => {
   );
 };
 
-const AuthRouter: React.VFC = () => {
+const AuthRouter: React.VFC<LoggedInProps> = ({ initialState }) => {
   const { data: user } = useUser();
 
   return (
     <div className="App">
-      {user ? <LoggedIn /> : <Login />}
+      {user ? <LoggedIn initialState={initialState} /> : <Login />}
     </div>
   );
 };
@@ -198,9 +206,7 @@ const App: React.VFC<AppProps> = ({ initialState }) => {
   return (
     <QueryClientProvider client={queryClient}>
       <Hydrate state={initialState?.queryState}>
-        <AppProvider initialState={initialState?.appState}>
-          <AuthRouter />
-        </AppProvider>
+        <AuthRouter initialState={initialState?.appState} />
       </Hydrate>
     </QueryClientProvider>
   );
