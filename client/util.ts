@@ -1,3 +1,5 @@
+import { Feed } from "../types.ts";
+
 export type ClassName =
   | string
   | { [name: string]: boolean | undefined }
@@ -55,4 +57,26 @@ export function storeValue(name: string, value: unknown) {
 export function removeValue(name: string) {
   const store = globalThis.localStorage;
   store.removeItem(name);
+}
+
+export function preloadFeedIcons(feeds: Feed[]) {
+  const preloadIds: string[] = [];
+  for (const link of document.head.querySelectorAll("link[data-preload-id]")) {
+    preloadIds.push(link.getAttribute("data-preload-id") as string);
+  }
+  const faviconLinks = feeds?.filter((feed) =>
+    feed.icon &&
+    !preloadIds.includes(`${feed.id}`)
+  ).map(({ id, icon }) => {
+    const link = document.createElement("link");
+    link.rel = "preload";
+    link.as = "image";
+    link.href = icon as string;
+    link.setAttribute("data-preload-id", `${id}`);
+    return link;
+  });
+
+  for (const link of faviconLinks) {
+    document.head.append(link);
+  }
 }

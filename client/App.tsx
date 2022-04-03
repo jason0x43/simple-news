@@ -28,9 +28,10 @@ import {
   useSelectedFeeds,
   useSelectedFeedsSetter,
 } from "./contexts/selectedFeeds.ts";
+import { preloadFeedIcons } from "./util.ts";
 
 const LoggedIn: React.VFC = () => {
-  const { isLoading: feedsLoading } = useFeeds();
+  const { isLoading: feedsLoading, data: feeds } = useFeeds();
   const settings = useSettings();
   const setSettings = useSettingsSetter();
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -40,6 +41,7 @@ const LoggedIn: React.VFC = () => {
   const setSelectedArticle = useSelectedArticleSetter();
   const setSelectedFeeds = useSelectedFeedsSetter();
   const [sidebarActive, setSidebarActive] = useState(!selectedFeeds);
+  const loadedIcons = useRef(false);
 
   const handleTitlePress = useCallback(() => {
     articleRef.current?.resetScroll();
@@ -70,6 +72,13 @@ const LoggedIn: React.VFC = () => {
     setSelectedArticle(undefined);
   }, [selectedFeeds]);
 
+  useEffect(() => {
+    if (feeds && !loadedIcons.current) {
+      preloadFeedIcons(feeds);
+      loadedIcons.current = true;
+    }
+  }, [feeds]);
+
   return (
     <ContextMenuProvider>
       <div className="App-header">
@@ -88,8 +97,8 @@ const LoggedIn: React.VFC = () => {
         >
           <div className="App-sidebar-feeds">
             <Feeds
-              onSelect={(feeds) => {
-                setSelectedFeeds(feeds);
+              onSelect={(feedIds) => {
+                setSelectedFeeds(feedIds);
                 setSidebarActive(false);
               }}
             />
