@@ -7,7 +7,6 @@ import {
   UpdateUserArticleRequest,
   User,
   UserArticle,
-  UserArticlesResponse,
 } from "../../types.ts";
 
 /**
@@ -112,9 +111,11 @@ export async function setRead(
 /**
  * Return data for the current user
  */
-export async function getUser(): Promise<User> {
+export async function getUser(): Promise<User | null> {
   const response = await fetch("/user");
-  await assertSuccess(response, "getting current user");
+  if (response.status >= 400) {
+    return null;
+  }
   return await response.json();
 }
 

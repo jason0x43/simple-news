@@ -9,7 +9,7 @@ type HeaderProps = {
 };
 
 const getFeedsTitle = (
-  user: User | undefined,
+  user: User | null | undefined,
   feeds: Feed[] | undefined,
   selectedFeeds: number[] | undefined,
 ) => {
