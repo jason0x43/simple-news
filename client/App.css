@@ -100,7 +100,7 @@ html {
 }
 
 .App {
-  font-family: -apple-system, 'Helvetica Neue', Helvetica, sans-serif;
+  font-family: sans-serif;
   font-size: 14px;
   display: flex;
   flex-direction: column;

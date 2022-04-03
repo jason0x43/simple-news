@@ -91,6 +91,7 @@
 
 .Articles-title {
   padding: var(--vertical-pad);
+  line-height: 1.4em;
 }
 
 .Articles-age {
