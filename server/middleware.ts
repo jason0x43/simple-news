@@ -1,6 +1,5 @@
 import type { Middleware } from "oak";
 import type { AppState } from "./types.ts";
-import * as log from "std/log/mod.ts";
 
 export const requireUser: Middleware<AppState> = async (
   { response, state },
