@@ -53,7 +53,6 @@ html {
   margin: 0;
   min-height: 100vh;
   min-height: -webkit-fill-available;
-  background: black;
 }
 
 #root {
@@ -77,10 +76,15 @@ html {
   --border-radius: 4px;
   --sidebar-width: 300px;
   --side-pad: 1rem;
+  /* like ease-in */
+  --slide-in: transition-timing-function: cubic-bezier(0.75, 0, 1, 1);
+  /* like ease-out */
+  --slide-out: transition-timing-function: cubic-bezier(0, 0, 0.1, 1);
 }
 
 @media (prefers-color-scheme: dark) {
   #root {
+    --background: black;
     --matte: #222;
     --hover-matte: #444;
     --surface: #666;
@@ -109,6 +113,7 @@ html {
   color: var(--foreground);
   position: fixed;
   width: 100%;
+  background: var(--background);
 }
 
 .App a {
@@ -144,15 +149,13 @@ html {
   transform: translate3d(calc(-1 * var(--sidebar-width)), 0, 0);
   transition-property: transform;
   transition-duration: 200ms;
-  /* like ease-in */
-  transition-timing-function: cubic-bezier(0.75, 0, 1, 1);
+  transition-timing-function: var(--slide-in);
 }
 
 .App-sidebar[data-active='true'] {
   transform: translate3d(0, 0, 0);
   transition-duration: 200ms;
-  /* like ease-out */
-  transition-timing-function: cubic-bezier(0, 0, 0.1, 1);
+  transition-timing-function: var(--slide-out);
 }
 
 .App-sidebar-feeds {
@@ -195,3 +198,11 @@ html {
   background: var(--surface);
   width: 15rem;
 }
+
+/* Mobile */
+@media only screen and (max-width: 800px) {
+  #root {
+    --sidebar-width: 100%;
+  }
+}
+

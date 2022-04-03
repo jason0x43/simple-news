@@ -182,12 +182,19 @@
     width: 100vw;
     transform: translate3d(100vw, 0, 0);
     transition-property: transform;
-    transition-duration: 150ms;
-    transition-timing-function: ease-in-out;
+    transition-duration: 100ms;
+    transition-timing-function: var(--slide-out);
   }
 
   .Article-visible {
     transform: translate3d(0, 0, 0);
+    transition-duration: 150ms;
+    transition-timing-function: var(--slide-in);
+  }
+
+  /* ensure article text renders behind close button */
+  .Article-scroller {
+    z-index: -1;
   }
 
   .Article-close {
@@ -198,7 +205,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    position: fixed;
+    position: absolute;
     width: 2rem;
     height: 2rem;
     bottom: 0.5rem;

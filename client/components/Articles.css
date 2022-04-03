@@ -108,13 +108,6 @@
   }
 }
 
-/* Mobile */
-@media only screen and (max-width: 800px) {
-  .Articles {
-    width: 100%;
-  }
-}
-
 /* Narrow desktop */
 @media only screen and (max-width: 1000px) {
   .Articles-title {
