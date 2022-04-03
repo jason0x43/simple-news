@@ -70,7 +70,6 @@ const LoggedIn: React.VFC = () => {
   }, [sidebarActive]);
 
   useChangeEffect(() => {
-    setSidebarActive(false);
     setSelectedArticle(undefined);
   }, [selectedFeeds]);
 
