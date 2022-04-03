@@ -37,7 +37,7 @@ export function useSignout() {
     await logout();
   }, {
     onSuccess: () => {
-      queryClient.setQueryData(["user"], undefined);
+      queryClient.invalidateQueries(["user"]);
     },
   });
 }
