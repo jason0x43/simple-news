@@ -39,10 +39,7 @@ const LoggedIn: React.VFC = () => {
   const selectedFeeds = useSelectedFeeds();
   const setSelectedArticle = useSelectedArticleSetter();
   const setSelectedFeeds = useSelectedFeedsSetter();
-  const [sidebarActive, setSidebarActive] = useStoredState(
-    "sidebarActive",
-    !selectedFeeds,
-  );
+  const [sidebarActive, setSidebarActive] = useState(!selectedFeeds);
 
   const handleTitlePress = useCallback(() => {
     articleRef.current?.resetScroll();
