@@ -10,7 +10,7 @@
     "start": "remix-serve build",
     "download-feeds": "ts-node --transpile-only ./scripts/download-feeds.ts",
     "prepare": "husky install",
-    "migrate": "prisma migration deploy"
+    "migrate": "prisma migrate deploy"
   },
   "dependencies": {
     "@prisma/client": "~3.14.0",
