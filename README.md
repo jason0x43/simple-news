@@ -18,15 +18,19 @@ This starts your app in development mode, rebuilding assets on file changes.
    ```js
    $ npm install
    ```
-3. Build for production:
+3. Init/update the database
+   ```sh
+   $ npm run migrate
+   ```
+4. Build for production:
    ```sh
    $ npm run build
    ```
-4. Init/update the database
-   ```sh
-   $ npm db-migrate
-   ```
-5. Start the app server
+5. Setup the required environment variables using a systemd unit or `.envrc`:
+   * `DATABASE_URL`
+   * `SESSION_SECRET`
+   * `PORT` (optional)
+6. Start the app server
    ```
    $ npm start
    ```
