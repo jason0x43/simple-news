@@ -1,0 +1,13 @@
+.Login {
+  border: solid 1px var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin: 0 auto;
+  margin-top: 30vh;
+  padding: 1rem 2rem;
+  border-radius: var(--border-radius);
+  background: var(--surface);
+  width: 15rem;
+}

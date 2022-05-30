@@ -1,0 +1,47 @@
+{
+  "name": "simple-news-remix",
+  "private": true,
+  "description": "A very simple RSS reader",
+  "license": "MIT",
+  "sideEffects": false,
+  "scripts": {
+    "build": "remix build",
+    "dev": "concurrently --kill-others-on-fail -n remix,feeds \"remix dev\" \"npm:download-feeds\"",
+    "start": "remix-serve build",
+    "download-feeds": "ts-node --transpile-only ./scripts/download-feeds.ts",
+    "prepare": "husky install",
+    "migrate": "prisma migration deploy"
+  },
+  "dependencies": {
+    "@prisma/client": "~3.14.0",
+    "@remix-run/node": "^1.5.1",
+    "@remix-run/react": "^1.5.1",
+    "@remix-run/serve": "^1.5.1",
+    "bcryptjs": "~2.4.3",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2"
+  },
+  "devDependencies": {
+    "@remix-run/dev": "^1.5.1",
+    "@remix-run/eslint-config": "^1.5.1",
+    "@types/bcryptjs": "~2.4.2",
+    "@types/jsdom": "~16.2.14",
+    "@types/react": "^17.0.45",
+    "@types/react-dom": "^17.0.17",
+    "@types/xml2js": "~0.4.11",
+    "@types/yargs": "~17.0.10",
+    "concurrently": "~7.2.1",
+    "eslint": "^8.15.0",
+    "husky": "^7.0.0",
+    "jsdom": "~19.0.0",
+    "lint-staged": "~12.4.2",
+    "prisma": "~3.14.0",
+    "rss-parser": "~3.12.0",
+    "ts-node": "~10.8.0",
+    "typescript": "^4.6.4",
+    "yargs": "~17.5.1"
+  },
+  "engines": {
+    "node": ">=14"
+  }
+}
