@@ -11,7 +11,8 @@
     "download-feeds": "ts-node ./scripts/download-feeds.ts",
     "prepare": "husky install",
     "migrate": "prisma migrate deploy",
-    "deploy": "ts-node ./scripts/deploy.ts"
+    "deploy": "ts-node ./scripts/deploy.ts",
+    "db": "ts-node ./scripts/db.ts"
   },
   "dependencies": {
     "@prisma/client": "~3.14.0",
