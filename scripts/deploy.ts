@@ -23,7 +23,7 @@ async function main() {
   const commands = [
     `cd ${deployRepo}`,
     'git pull origin main',
-    'npm ci',
+    'npm install',
     'npm run migrate',
   ].join(' && ');
 

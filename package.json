@@ -8,9 +8,10 @@
     "build": "remix build",
     "dev": "concurrently --kill-others-on-fail -n remix,feeds \"remix dev\" \"npm:download-feeds\"",
     "start": "remix-serve build",
-    "download-feeds": "ts-node --transpile-only ./scripts/download-feeds.ts",
+    "download-feeds": "ts-node ./scripts/download-feeds.ts",
     "prepare": "husky install",
-    "migrate": "prisma migrate deploy"
+    "migrate": "prisma migrate deploy",
+    "deploy": "ts-node ./scripts/deploy.ts"
   },
   "dependencies": {
     "@prisma/client": "~3.14.0",
@@ -24,6 +25,7 @@
   "devDependencies": {
     "@remix-run/dev": "^1.5.1",
     "@remix-run/eslint-config": "^1.5.1",
+    "@swc/core": "~1.2.194",
     "@types/bcryptjs": "~2.4.2",
     "@types/jsdom": "~16.2.14",
     "@types/react": "^17.0.45",
