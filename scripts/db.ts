@@ -1,10 +1,11 @@
-import { Feed } from '@prisma/client';
+import { Feed, FeedGroup, FeedGroupFeed } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { readFileSync, writeFileSync } from 'fs';
 import readline from 'readline';
 import { Writable } from 'stream';
 import yargs from 'yargs';
 import { prisma } from '../app/lib/db';
+import { inspect } from 'util';
 
 type MutableWritable = Writable & { muted?: boolean };
 
@@ -16,6 +17,10 @@ const mutableStdout: MutableWritable = new Writable({
     callback();
   },
 });
+
+type ExportedFeedGroup = FeedGroup & {
+  feeds: (FeedGroupFeed & { feed: Feed })[];
+};
 
 async function getUser(username: string) {
   return await prisma.user.findUnique({
@@ -538,11 +543,18 @@ yargs
         where: {
           userId: user.id,
         },
+        include: {
+          feeds: {
+            include: {
+              feed: true,
+            },
+          },
+        },
       });
       if (argv.file) {
         writeFileSync(argv.file, JSON.stringify(groups, null, '  '));
       } else {
-        console.log(groups);
+        console.log(inspect(groups, false, null, true));
       }
     }
   )
@@ -574,6 +586,57 @@ yargs
             title: feed.title,
             icon: feed.icon,
             htmlUrl: feed.htmlUrl,
+          },
+        });
+      }
+    }
+  )
+
+  .command(
+    'import-feed-groups <username> <file>',
+    'Import feed groups from a JSON file for a user',
+    (yargs) => {
+      return yargs
+        .positional('username', {
+          describe: 'A username',
+          demandOption: true,
+          type: 'string',
+        })
+        .positional('file', {
+          describe: 'A file to export to',
+          demandOption: true,
+          type: 'string',
+        });
+    },
+    async (argv) => {
+      const user = await getUser(argv.username);
+      const groupData = JSON.parse(
+        readFileSync(argv.file, { encoding: 'utf8' })
+      ) as ExportedFeedGroup[];
+
+      for (const group of groupData) {
+        const feedUrls = group.feeds.map((f) => f.feed.url);
+        const feeds: Feed[] = [];
+        for (const url of feedUrls) {
+          feeds.push(
+            await prisma.feed.findUnique({
+              where: {
+                url,
+              },
+              rejectOnNotFound: true,
+            })
+          );
+        }
+
+        await prisma.feedGroup.create({
+          data: {
+            userId: user.id,
+            name: group.name,
+            feeds: {
+              create: feeds.map((feed) => ({
+                feedId: feed.id,
+              })),
+            },
           },
         });
       }
