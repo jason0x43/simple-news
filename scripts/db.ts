@@ -1,3 +1,4 @@
+import { Feed } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { readFileSync, writeFileSync } from 'fs';
 import readline from 'readline';
@@ -16,12 +17,32 @@ const mutableStdout: MutableWritable = new Writable({
   },
 });
 
+async function getUser(username: string) {
+  return await prisma.user.findUnique({
+    where: {
+      username,
+    },
+    include: {
+      feedGroups: {
+        include: {
+          feeds: {
+            include: {
+              feed: true,
+            },
+          },
+        },
+      },
+    },
+    rejectOnNotFound: true,
+  });
+}
+
 yargs
   .scriptName('db')
   .strict()
 
   .command(
-    'add-user',
+    'add-user <username> <email>',
     'Add a user',
     (yargs) => {
       return yargs
@@ -67,7 +88,7 @@ yargs
   )
 
   .command(
-    'add-feed',
+    'add-feed <url> <title> [options]',
     'Add a feed',
     (yargs) => {
       return yargs
@@ -108,7 +129,132 @@ yargs
   )
 
   .command(
-    'add-feed-group',
+    'add-feed-group <username> <name>',
+    'Add a feed group for a user',
+    (yargs) => {
+      return yargs
+        .positional('username', {
+          describe: 'The user to add the group to',
+          demandOption: true,
+          type: 'string',
+        })
+        .positional('name', {
+          describe: 'The name of the feed group',
+          demandOption: true,
+          type: 'string',
+        });
+    },
+    async (argv) => {
+      const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+        terminal: true,
+      });
+
+      const user = await getUser(argv.username);
+      const feeds = await prisma.feed.findMany();
+      const groupFeeds: string[] = [];
+
+      while (true) {
+        rl.write(`Feeds in ${argv.name}:\n`);
+        for (const id of groupFeeds) {
+          const feed = feeds.find((f) => f.id === id) as Feed;
+          rl.write(`  * ${id}: ${feed.title}\n`);
+        }
+        rl.write('\n');
+
+        rl.write('1. Add feed\n');
+        rl.write('2. Remove feed\n');
+        rl.write('3. Save and quit\n');
+        rl.write('\n');
+
+        const answer = await new Promise<string>((resolve) => {
+          rl.question('> ', resolve);
+        });
+        rl.write('\n');
+
+        if (answer === '1') {
+          const otherFeeds = feeds.filter((f) => !groupFeeds.includes(f.id));
+          for (let i = 0; i < otherFeeds.length; i++) {
+            const f = otherFeeds[i];
+            rl.write(`${i + 1}. ${f.id}: ${f.title}\n`);
+          }
+          rl.write('\n');
+
+          const fid = await new Promise<string>((resolve) => {
+            rl.question('Feed to add> ', resolve);
+          });
+          rl.write('\n');
+
+          if (fid) {
+            groupFeeds.push(otherFeeds[Number(fid) - 1].id);
+          }
+        } else if (answer === '2') {
+          for (let i = 0; i < groupFeeds.length; i++) {
+            const f = feeds.find((f) => f.id === groupFeeds[i]) as Feed;
+            rl.write(`${i + 1}. ${f.id}: ${f.title}\n`);
+          }
+          rl.write('\n');
+
+          const idx = await new Promise<string>((resolve) => {
+            rl.question('Feed to remove> ', resolve);
+          });
+          rl.write('\n');
+
+          if (idx) {
+            groupFeeds.splice(Number(idx) - 1, 1);
+          }
+        } else if (answer === '3') {
+          await prisma.feedGroup.create({
+            data: {
+              userId: user.id,
+              name: argv.name,
+              feeds: {
+                create: groupFeeds.map((feedId) => ({
+                  feedId,
+                })),
+              },
+            },
+          });
+          rl.close();
+          break;
+        }
+      }
+    }
+  )
+
+  .command(
+    'del-feed-group <username> <name>',
+    'Delete a user feed group',
+    (yargs) => {
+      return yargs
+        .positional('username', {
+          describe: 'The user to add the group to',
+          demandOption: true,
+          type: 'string',
+        })
+        .positional('name', {
+          describe: 'The name of the feed group',
+          demandOption: true,
+          type: 'string',
+        });
+    },
+    async (argv) => {
+      const user = await getUser(argv.username);
+
+      await prisma.feedGroup.delete({
+        where: {
+          userId_name: {
+            userId: user.id,
+            name: argv.name,
+          },
+        },
+      });
+    }
+  )
+
+  .command(
+    'add-feed-group <username> <name> [feeds..]',
     'Add a feed group for a user',
     (yargs) => {
       return yargs
@@ -129,32 +275,231 @@ yargs
         });
     },
     async (argv) => {
-      const user = await prisma.user.findUnique({
-        where: {
-          username: argv.username,
-        },
+      const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+        terminal: true,
       });
 
-      if (!user) {
-        throw new Error(`Unknown user ${argv.username}`);
+      const user = await getUser(argv.username);
+      const feeds = await prisma.feed.findMany();
+      const groups = user.feedGroups;
+      const alreadyGrouped: Set<string> = new Set();
+      for (const group of groups) {
+        for (const feed of group.feeds) {
+          alreadyGrouped.add(feed.feedId);
+        }
       }
 
-      await prisma.feedGroup.create({
-        data: {
-          userId: user.id,
-          name: argv.name,
-          feeds: {
-            create: argv.feeds.map((feedId) => ({
-              feedId,
-            })),
-          },
-        },
-      });
+      const groupFeeds: string[] = [];
+
+      while (true) {
+        rl.write(`Feeds in ${argv.name}:\n`);
+        for (const id of groupFeeds) {
+          const feed = feeds.find((f) => f.id === id) as Feed;
+          rl.write(`  * ${id}: ${feed.title}\n`);
+        }
+        rl.write('\n');
+
+        rl.write('1. Add feed\n');
+        rl.write('2. Remove feed\n');
+        rl.write('3. Save and quit\n');
+        rl.write('\n');
+
+        const answer = await new Promise<string>((resolve) => {
+          rl.question('> ', resolve);
+        });
+        rl.write('\n');
+
+        if (answer === '1') {
+          const otherFeeds = feeds.filter(
+            (f) => !groupFeeds.includes(f.id) && !alreadyGrouped.has(f.id)
+          );
+          for (let i = 0; i < otherFeeds.length; i++) {
+            const f = otherFeeds[i];
+            rl.write(`${i + 1}. ${f.id}: ${f.title}\n`);
+          }
+          rl.write('\n');
+
+          const fid = await new Promise<string>((resolve) => {
+            rl.question('Feed to add> ', resolve);
+          });
+          rl.write('\n');
+
+          if (fid) {
+            groupFeeds.push(otherFeeds[Number(fid) - 1].id);
+          }
+        } else if (answer === '2') {
+          for (let i = 0; i < groupFeeds.length; i++) {
+            const f = feeds.find((f) => f.id === groupFeeds[i]) as Feed;
+            rl.write(`${i + 1}. ${f.id}: ${f.title}\n`);
+          }
+          rl.write('\n');
+
+          const idx = await new Promise<string>((resolve) => {
+            rl.question('Feed to remove> ', resolve);
+          });
+          rl.write('\n');
+
+          if (idx) {
+            groupFeeds.splice(Number(idx) - 1, 1);
+          }
+        } else if (answer === '3') {
+          await prisma.feedGroup.create({
+            data: {
+              userId: user.id,
+              name: argv.name,
+              feeds: {
+                create: groupFeeds.map((feedId) => ({
+                  feedId,
+                })),
+              },
+            },
+          });
+          rl.close();
+          break;
+        }
+      }
     }
   )
 
   .command(
-    'export-feeds',
+    'mod-feed-group <username> <name> [feeds..]',
+    'Modify a user feed group',
+    (yargs) => {
+      return yargs
+        .positional('username', {
+          describe: 'The user to add the group to',
+          demandOption: true,
+          type: 'string',
+        })
+        .positional('name', {
+          describe: 'The name of the feed group',
+          demandOption: true,
+          type: 'string',
+        });
+    },
+    async (argv) => {
+      const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+        terminal: true,
+      });
+
+      const user = await getUser(argv.username);
+      const group = user.feedGroups.find((g) => g.name === argv.name);
+
+      if (!group) {
+        throw new Error(`Unknown group name ${argv.name}`);
+      }
+
+      const feeds = await prisma.feed.findMany();
+      const groups = user.feedGroups;
+      const alreadyGrouped: Set<string> = new Set();
+      for (const group of groups) {
+        for (const feed of group.feeds) {
+          alreadyGrouped.add(feed.feedId);
+        }
+      }
+
+      const existingGroupFeeds: string[] = group.feeds.map(
+        (feed) => feed.feedId
+      );
+      const groupFeeds: string[] = existingGroupFeeds.slice();
+
+      while (true) {
+        rl.write(`Feeds in ${argv.name}:\n`);
+        for (const id of groupFeeds) {
+          const feed = feeds.find((f) => f.id === id) as Feed;
+          rl.write(`  * ${id}: ${feed.title}\n`);
+        }
+        rl.write('\n');
+
+        rl.write('1. Add feed\n');
+        rl.write('2. Remove feed\n');
+        rl.write('3. Save and quit\n');
+        rl.write('\n');
+
+        const answer = await new Promise<string>((resolve) => {
+          rl.question('> ', resolve);
+        });
+        rl.write('\n');
+
+        if (answer === '1') {
+          const otherFeeds = feeds.filter(
+            (f) => !groupFeeds.includes(f.id) && !alreadyGrouped.has(f.id)
+          );
+          for (let i = 0; i < otherFeeds.length; i++) {
+            const f = otherFeeds[i];
+            rl.write(`${i + 1}. ${f.id}: ${f.title}\n`);
+          }
+          rl.write('\n');
+
+          const fid = await new Promise<string>((resolve) => {
+            rl.question('Feed to add> ', resolve);
+          });
+          rl.write('\n');
+
+          if (fid) {
+            groupFeeds.push(otherFeeds[Number(fid) - 1].id);
+          }
+        } else if (answer === '2') {
+          for (let i = 0; i < groupFeeds.length; i++) {
+            const f = feeds.find((f) => f.id === groupFeeds[i]) as Feed;
+            rl.write(`${i + 1}. ${f.id}: ${f.title}\n`);
+          }
+          rl.write('\n');
+
+          const idx = await new Promise<string>((resolve) => {
+            rl.question('Feed to remove> ', resolve);
+          });
+          rl.write('\n');
+
+          if (idx) {
+            groupFeeds.splice(Number(idx) - 1, 1);
+          }
+        } else if (answer === '3') {
+          const toRemove: string[] = [];
+          for (const id of existingGroupFeeds) {
+            if (!groupFeeds.includes(id)) {
+              toRemove.push(id);
+            }
+          }
+
+          const toAdd: string[] = [];
+          for (const id of groupFeeds) {
+            if (!existingGroupFeeds.includes(id)) {
+              toAdd.push(id);
+            }
+          }
+
+          await prisma.feedGroup.update({
+            where: {
+              userId_name: {
+                userId: user.id,
+                name: argv.name,
+              },
+            },
+            data: {
+              feeds: {
+                create: toAdd.map((feedId) => ({
+                  feedId,
+                })),
+                deleteMany: toRemove.map((feedId) => ({
+                  feedId,
+                })),
+              },
+            },
+          });
+          rl.close();
+          break;
+        }
+      }
+    }
+  )
+
+  .command(
+    'export-feeds [file]',
     'Export feeds to JSON',
     (yargs) => {
       return yargs.positional('file', {
@@ -173,7 +518,37 @@ yargs
   )
 
   .command(
-    'import-feeds',
+    'export-feed-groups <username> [file]',
+    "Export a user's feed groups to JSON",
+    (yargs) => {
+      return yargs
+        .positional('username', {
+          describe: 'A username',
+          demandOption: true,
+          type: 'string',
+        })
+        .positional('file', {
+          describe: 'A file to export to',
+          type: 'string',
+        });
+    },
+    async (argv) => {
+      const user = await getUser(argv.username);
+      const groups = await prisma.feedGroup.findMany({
+        where: {
+          userId: user.id,
+        },
+      });
+      if (argv.file) {
+        writeFileSync(argv.file, JSON.stringify(groups, null, '  '));
+      } else {
+        console.log(groups);
+      }
+    }
+  )
+
+  .command(
+    'import-feeds <file>',
     'Import feeds from a JSON file',
     (yargs) => {
       return yargs.positional('file', {
@@ -205,4 +580,5 @@ yargs
     }
   )
 
+  .demandCommand()
   .help().argv;
