@@ -6,6 +6,7 @@ import type { Feed } from '@prisma/client';
 import { prisma } from '../app/lib/db';
 import Parser, { type Item } from 'rss-parser';
 import { JSDOM } from 'jsdom';
+import fetch from 'node-fetch';
 
 type ParsedFeed = Parser.Output<unknown>;
 
