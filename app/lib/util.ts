@@ -11,29 +11,6 @@ import type {
 import type { LoaderData as FeedLoaderData } from '~/routes/reader/$feedId';
 import type { LoaderData as ArticleLoaderData } from '~/routes/reader/$feedId/$articleId';
 
-export type ClassName =
-  | string
-  | { [name: string]: boolean | undefined }
-  | undefined;
-
-export function className(...args: ClassName[]) {
-  const names = new Set<string>();
-  for (const arg of args) {
-    if (arg) {
-      if (typeof arg === 'string') {
-        names.add(arg);
-      } else {
-        for (const argName in arg) {
-          if (arg[argName]) {
-            names.add(argName);
-          }
-        }
-      }
-    }
-  }
-  return Array.from(names.values()).join(' ');
-}
-
 export function toObject<T, K extends keyof T>(objArr: T[], key: K) {
   const obj: { [prop: string]: T } = {};
   for (const entry of objArr) {
@@ -93,24 +70,6 @@ export function preloadFeedIcons(feeds: Feed[]) {
 
 export function validateEmail(email: unknown): email is string {
   return typeof email === 'string' && email.length > 3 && email.includes('@');
-}
-
-const invariantPrefix = 'Invariant failed';
-
-export function invariant(
-  condition: unknown,
-  message?: string
-): asserts condition {
-  if (condition) {
-    return;
-  }
-
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error(invariantPrefix);
-  }
-
-  const msg = message ? `${invariantPrefix}: ${message}` : invariantPrefix;
-  throw new Error(msg);
 }
 
 export function useMatchesData<T = unknown>(id: string): T | undefined {

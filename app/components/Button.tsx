@@ -1,5 +1,5 @@
+import classNames from 'classnames';
 import type { ButtonHTMLAttributes, DetailedHTMLProps } from 'react';
-import { className } from '~/lib/util';
 
 type ButtonProps = DetailedHTMLProps<
   ButtonHTMLAttributes<HTMLButtonElement>,
@@ -14,7 +14,7 @@ export default function Button(props: ButtonProps) {
   const { className: extraClass, label, size, ...buttonProps } = props;
   return (
     <button
-      className={className(
+      className={classNames(
         'Button',
         {
           'Button-large': size === 'large',

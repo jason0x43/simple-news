@@ -1,5 +1,6 @@
 import type { Article } from '@prisma/client';
 import { Link } from '@remix-run/react';
+import classNames from 'classnames';
 import {
   useEffect,
   useMemo,
@@ -11,7 +12,6 @@ import {
 import { diffDates } from '~/lib/date';
 import { useWidthObserver } from '~/lib/hooks';
 import {
-  className,
   unescapeHtml,
   useArticleFilter,
   useArticles,
@@ -197,7 +197,7 @@ export default function ArticlesList(props: ArticlesProps) {
 
               return (
                 <li
-                  className={className('Articles-article', {
+                  className={classNames('Articles-article', {
                     'Articles-active': isActive,
                     'Articles-selected': isSelected,
                     'Articles-read': isRead,

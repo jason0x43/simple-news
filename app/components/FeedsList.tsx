@@ -1,8 +1,8 @@
 import type { Feed } from '@prisma/client';
 import { Link } from '@remix-run/react';
+import classNames from 'classnames';
 import { useState } from 'react';
 import {
-  className,
   getFeedsFromGroup,
   getFeedsFromUser,
   useSelectedFeedIds,
@@ -59,12 +59,12 @@ export default function Feeds(props: FeedsProps) {
         .map((group) => (
           <li
             key={group.name}
-            className={className({
+            className={classNames({
               'Feeds-expanded': expanded[group.name],
             })}
           >
             <div
-              className={className('Feeds-group', {
+              className={classNames('Feeds-group', {
                 'Feeds-selected': isSelected(
                   getFeedsFromGroup(group),
                   selectedFeedIds
@@ -111,7 +111,7 @@ export default function Feeds(props: FeedsProps) {
                 )
                 .map((feed) => (
                   <li
-                    className={className('Feeds-feed', {
+                    className={classNames('Feeds-feed', {
                       'Feeds-selected': isSelected([feed], selectedFeedIds),
                     })}
                     key={feed.id}

@@ -1,3 +1,4 @@
+import classNames from 'classnames';
 import {
   createContext,
   ReactNode,
@@ -8,7 +9,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import { className } from '~/lib/util';
 
 export type ContextMenuProps = {
   items: string[];
@@ -98,7 +98,7 @@ export default function ContextMenu(props: ContextMenuProps) {
   return (
     <div
       ref={ref}
-      className={className('ContextMenu', {
+      className={classNames('ContextMenu', {
         'ContextMenu-visible': visible,
       })}
       style={{ top: `${pos.y}px`, left: `${pos.x}px` }}

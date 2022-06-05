@@ -1,7 +1,7 @@
 import type { User } from '@prisma/client';
 import { createSessionStorage, redirect, type Session } from '@remix-run/node';
 import { prisma } from './lib/db';
-import { invariant } from './lib/util';
+import invariant from 'tiny-invariant';
 import { getUserById, type UserWithFeeds } from './models/user.server';
 
 invariant(process.env.SESSION_SECRET, 'SESSION_SECRET must be set');

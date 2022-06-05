@@ -1,8 +1,5 @@
-import type {
-    DetailedHTMLProps,
-    InputHTMLAttributes
-} from 'react';
-import { className } from '~/lib/util';
+import classNames from 'classnames';
+import type { DetailedHTMLProps, InputHTMLAttributes } from 'react';
 
 type InputProps = DetailedHTMLProps<
   InputHTMLAttributes<HTMLInputElement>,
@@ -11,5 +8,5 @@ type InputProps = DetailedHTMLProps<
 
 export default function Input(props: InputProps) {
   const { className: extraClass, ...inputProps } = props;
-  return <input className={className('Input', extraClass)} {...inputProps} />;
+  return <input className={classNames('Input', extraClass)} {...inputProps} />;
 }
