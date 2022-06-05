@@ -666,8 +666,10 @@ a.Feeds-title {
   padding: calc(var(--side-pad) / 2) var(--side-pad);
 }
 
-.Header-user {
+.Header .Header-user {
   cursor: pointer;
+  text-decoration: none;
+  color: inherit;
 }
 
 @media only screen and (max-width: 1000px) {
