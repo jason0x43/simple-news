@@ -1,6 +1,6 @@
 import type { Feed } from '@prisma/client';
 import { Link } from '@remix-run/react';
-import User from '~/icons/User';
+import { TbUserCircle } from 'react-icons/tb';
 import { getFeedsFromUser, useUser } from '~/lib/util';
 import type { FeedGroupWithFeeds } from '~/models/feedGroup.server';
 
@@ -62,7 +62,7 @@ export default function Header(props: HeaderProps) {
       </div>
       <div className="Header-right">
         <Link className="Header-user" to="/login">
-          <User width={22} />
+          <TbUserCircle size={20} />
         </Link>
       </div>
     </header>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import Close from '~/icons/Close';
+import { MdOutlineClose } from 'react-icons/md';
 import { unescapeHtml } from '~/lib/util';
 import type { ArticleWithUserData } from '~/models/article.server';
 
@@ -56,7 +56,7 @@ export default function ArticleView(props: ArticleProps) {
         />
       </div>
       <div className="Article-close" onClick={() => setClassName('Article')}>
-        <Close width={22} />
+        <MdOutlineClose width={22} />
       </div>
     </div>
   );
