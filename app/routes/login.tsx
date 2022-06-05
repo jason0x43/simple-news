@@ -7,6 +7,8 @@ import {
 } from '@remix-run/node';
 import { Form, useActionData } from '@remix-run/react';
 import { useEffect, useRef } from 'react';
+import Button from '~/components/Button';
+import Input from '~/components/Input';
 import { verifyLogin } from '~/models/user.server';
 import {
   createUserSession,
@@ -103,9 +105,9 @@ export default function LoginPage() {
 
   return (
     <Form method="post" className="Login">
-      <input name="username" placeholder="Username" />
-      <input name="password" placeholder="Password" type="password" />
-      <button type="submit">Login</button>
+      <Input name="username" placeholder="Username" />
+      <Input name="password" placeholder="Password" type="password" />
+      <Button type="submit" label="Login" />
       {actionData?.errors?.username && (
         <div id="username-error">{actionData.errors.username}</div>
       )}

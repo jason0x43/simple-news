@@ -1,29 +1,30 @@
-import { type FC, type MouseEvent } from "react";
-import { className } from "~/lib/util";
+import type { ButtonHTMLAttributes, DetailedHTMLProps } from 'react';
+import { className } from '~/lib/util';
 
-export type ButtonProps = {
+type ButtonProps = DetailedHTMLProps<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  HTMLButtonElement
+> & {
+  size?: 'small' | 'normal' | 'large';
   label: string;
-  disabled?: boolean;
-  onClick?: (event: MouseEvent) => void;
-  size?: "small" | "normal" | "large";
-  className?: string;
+  children?: never;
 };
 
-const Button: FC<ButtonProps> = (props) => {
-  const { className: extraClass, label, onClick, disabled, size } = props;
+export default function Button(props: ButtonProps) {
+  const { className: extraClass, label, size, ...buttonProps } = props;
   return (
     <button
-      className={className("Button", {
-        "Button-large": size === "large",
-        "Button-small": size === "small",
-      }, extraClass)}
-      disabled={disabled}
-      onClick={onClick}
-      type="button"
+      className={className(
+        'Button',
+        {
+          'Button-large': size === 'large',
+          'Button-small': size === 'small',
+        },
+        extraClass
+      )}
+      {...buttonProps}
     >
       {label}
     </button>
   );
-};
-
-export default Button;
+}

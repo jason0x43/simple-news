@@ -1,6 +1,6 @@
 import Button from './Button';
 
-export type ButtonSelectorProps = {
+type ButtonSelectorProps = {
   options: { label: string; value: string }[];
   selected: string;
   size?: 'small' | 'normal' | 'large';
