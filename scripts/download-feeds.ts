@@ -78,7 +78,7 @@ async function downloadFeed(feed: Feed) {
             published: Number(
               entry.pubDate ? new Date(entry.pubDate) : new Date()
             ),
-            content: entry.content ?? null,
+            content: entry['content:encoded'] ?? entry.content ?? null,
           },
         });
       })
