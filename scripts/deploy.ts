@@ -15,10 +15,15 @@ if (!deployRepo) {
 }
 
 async function main() {
-  const argv = await yargs
+  await yargs
     .scriptName('deploy')
     .usage('$0', 'deploy to a server')
     .help().argv;
+
+  console.log('>>> Pushing main branch...');
+  execSync(`git push origin main`, {
+    stdio: 'inherit',
+  });
 
   const commands = [
     `cd ${deployRepo}`,
