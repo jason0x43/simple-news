@@ -134,6 +134,26 @@ yargs
   )
 
   .command(
+    'clear-feed <id>',
+    'Clear all download articles from a feed',
+    (yargs) => {
+      return yargs
+        .positional('id', {
+          describe: 'A feed ID',
+          demandOption: true,
+          type: 'string',
+        })
+    },
+    async (argv) => {
+      await prisma.article.deleteMany({
+        where: {
+          feedId: argv.id
+        }
+      });
+    }
+  )
+
+  .command(
     'add-feed-group <username> <name>',
     'Add a feed group for a user',
     (yargs) => {
@@ -518,6 +538,17 @@ yargs
         writeFileSync(argv.file, JSON.stringify(feeds, null, '  '));
       } else {
         console.log(feeds);
+      }
+    }
+  )
+
+  .command(
+    'list-feeds',
+    'List feeds',
+    {},
+    async () => {
+      for (const feed of await prisma.feed.findMany()) {
+        console.log(`${feed.id}: ${feed.title}`);
       }
     }
   )
