@@ -49,7 +49,11 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 export default function Reader() {
-  const { user, feedStats, articleFilter } = useLoaderData<LoaderData>();
+  const {
+    user,
+    feedStats,
+    articleFilter = 'unread',
+  } = useLoaderData<LoaderData>();
   const selectedFeedIds = useSelectedFeedIds();
   const [sidebarVisible, setSidebarVisible] = useState(
     selectedFeedIds.length === 0
@@ -59,18 +63,18 @@ export default function Reader() {
 
   const handleTitlePress = useCallback(() => {}, []);
 
-   // Fetch updated data in the background every few minutes
+  // Fetch updated data in the background every few minutes
   useEffect(() => {
     const interval = setInterval(() => {
       // TODO: replace with useRevalidate
       fetcher.submit({}, { method: 'post' });
     }, 600000);
- 
+
     return () => {
       clearInterval(interval);
     };
   }, []);
- 
+
   // Fetch updated data when the app becomes visible
   useEffect(() => {
     if (visible) {
@@ -96,7 +100,7 @@ export default function Reader() {
             <FeedsList
               user={user}
               feedStats={feedStats}
-              articleFilter={articleFilter ?? 'all'}
+              articleFilter={articleFilter}
               onSelect={() => {
                 setSidebarVisible(false);
               }}
@@ -113,7 +117,7 @@ export default function Reader() {
                 { value: 'saved', label: 'Saved' },
               ]}
               size="small"
-              selected={articleFilter ?? 'unread'}
+              selected={articleFilter}
               onSelect={(value) => {
                 const articleFilter = value as ArticleFilter;
                 fetcher.submit({ articleFilter }, { method: 'post' });
