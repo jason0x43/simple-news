@@ -15,26 +15,25 @@ if (!deployRepo) {
 }
 
 async function main() {
-  await yargs
-    .scriptName('deploy')
-    .usage('$0', 'deploy to a server')
-    .help().argv;
+  await yargs.scriptName('deploy').usage('$0', 'deploy to a server').help()
+    .argv;
 
   console.log('>>> Pushing main branch...');
   execSync(`git push origin main`, {
     stdio: 'inherit',
   });
 
-  const commands = [
-    `cd ${deployRepo}`,
-    'git pull origin main',
-    'npm install',
-    'npm run migrate',
-  ].join(' && ');
-
-  console.log('>>> Updating code and database...');
-  execSync(`ssh ${deployHost} ${commands}`, {
-    stdio: 'inherit',
+  execSync(`ssh ${deployHost} 'bash -s'`, {
+    stdio: ['pipe', 'inherit', 'inherit'],
+    input: [
+      `cd ${deployRepo}`,
+      'echo ">>> Pulling changes into remote repo..."',
+      'git pull origin main',
+      'echo ">>> Installing updated npm packages..."',
+      'npm install',
+      'echo ">>> Running migrations..."',
+      'npm run migrate',
+    ].join('\n'),
   });
 
   console.log('>>> Restarting app server...');
