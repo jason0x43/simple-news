@@ -55,6 +55,8 @@ html {
   min-height: -webkit-fill-available;
   background: black;
   color: white;
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
 }
 
 .App {
@@ -107,13 +109,6 @@ html {
     --border: rgba(255, 255, 255, 0.2);
     --selected: rgba(255, 2550, 255, 0.2);
     --link: #77f;
-  }
-}
-
-@supports (padding: max(0px)) {
-  .App {
-    padding-left: max(0vmin, env(safe-area-inset-left));
-    padding-right: max(0vmin, env(safe-area-inset-right));
   }
 }
 
