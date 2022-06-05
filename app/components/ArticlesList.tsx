@@ -244,10 +244,10 @@ export default function ArticlesList(props: ArticlesProps) {
           <div className="Articles-controls">
             <Button
               onClick={() => {
-                // setArticlesRead.mutate({
-                //   articles: renderedArticles,
-                //   read: true,
-                // });
+                onMarkAsRead(
+                  filteredArticles.map(({ id }) => id),
+                  true
+                );
               }}
               label="Mark all read"
               size="large"
