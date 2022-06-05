@@ -1,5 +1,6 @@
 import type { Feed } from '@prisma/client';
 import { Link } from '@remix-run/react';
+import User from '~/icons/User';
 import { getFeedsFromUser, useUser } from '~/lib/util';
 import type { FeedGroupWithFeeds } from '~/models/feedGroup.server';
 
@@ -61,7 +62,7 @@ export default function Header(props: HeaderProps) {
       </div>
       <div className="Header-right">
         <Link className="Header-user" to="/login">
-          {user?.username}
+          <User width={22} />
         </Link>
       </div>
     </header>

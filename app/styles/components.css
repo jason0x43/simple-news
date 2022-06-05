@@ -670,6 +670,8 @@ a.Feeds-title {
   cursor: pointer;
   text-decoration: none;
   color: inherit;
+  display: flex;
+  align-items: center;
 }
 
 @media only screen and (max-width: 1000px) {
