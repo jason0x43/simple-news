@@ -1,5 +1,5 @@
 import { json, type LoaderFunction } from '@remix-run/node';
-import { useLoaderData } from '@remix-run/react';
+import { useLoaderData, useNavigate, useParams } from '@remix-run/react';
 import ArticleView from '~/components/ArticleView';
 import { getUserArticle } from '~/models/article.server';
 import { getUser } from '~/session.server';
@@ -19,5 +19,10 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 
 export default function ArticleRoute() {
   const { article } = useLoaderData<LoaderData>();
-  return <ArticleView article={article} />;
+  const params = useParams();
+  const navigate = useNavigate();
+
+  return <ArticleView article={article} onClose={() => {
+    navigate(`/reader/${params.feedId}`);
+  }} />;
 }
