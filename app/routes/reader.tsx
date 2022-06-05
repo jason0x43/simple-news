@@ -4,12 +4,13 @@ import {
   type LoaderFunction,
 } from '@remix-run/node';
 import { Outlet, useFetcher, useLoaderData } from '@remix-run/react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Button from '~/components/Button';
 import ButtonSelector from '~/components/ButtonSelector';
 import { ContextMenuProvider } from '~/components/ContextMenu';
 import FeedsList from '~/components/FeedsList';
 import Header from '~/components/Header';
+import { useAppVisibility } from '~/lib/hooks';
 import { getFeedsFromUser, useSelectedFeedIds } from '~/lib/util';
 import { getFeedStats } from '~/models/feed.server';
 import { commitSession, getSession, getUser } from '~/session.server';
@@ -53,9 +54,30 @@ export default function Reader() {
   const [sidebarVisible, setSidebarVisible] = useState(
     selectedFeedIds.length === 0
   );
+  const visible = useAppVisibility();
   const fetcher = useFetcher();
 
   const handleTitlePress = useCallback(() => {}, []);
+
+   // Fetch updated data in the background every few minutes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // TODO: replace with useRevalidate
+      fetcher.submit({}, { method: 'post' });
+    }, 600000);
+ 
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
+ 
+  // Fetch updated data when the app becomes visible
+  useEffect(() => {
+    if (visible) {
+      // TODO: replace with useRevalidate
+      fetcher.submit({}, { method: 'post' });
+    }
+  }, [visible]);
 
   return (
     <ContextMenuProvider>
@@ -77,7 +99,6 @@ export default function Reader() {
               articleFilter={articleFilter ?? 'all'}
               onSelect={() => {
                 setSidebarVisible(false);
-                // setSelectedArticle(undefined);
               }}
             />
           </div>
