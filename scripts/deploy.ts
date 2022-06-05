@@ -33,6 +33,8 @@ async function main() {
       'npm install',
       'echo ">>> Running migrations..."',
       'npm run migrate',
+      'echo ">>> Building production app..."',
+      'npm run build',
     ].join('\n'),
   });
 
