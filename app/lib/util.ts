@@ -167,7 +167,7 @@ export function useSelectedArticle(): ArticleLoaderData['article'] {
 
 export function useArticleFilter(): ArticleFilter {
   const data = useMatchesData<ReaderLoaderData>('routes/reader');
-  return data?.articleFilter ?? 'all';
+  return data?.articleFilter ?? 'unread';
 }
 
 export function unescapeHtml(text: string): string {

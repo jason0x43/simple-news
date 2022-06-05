@@ -92,7 +92,7 @@ export default function Reader() {
                 { value: 'saved', label: 'Saved' },
               ]}
               size="small"
-              selected={articleFilter ?? 'all'}
+              selected={articleFilter ?? 'unread'}
               onSelect={(value) => {
                 const articleFilter = value as ArticleFilter;
                 fetcher.submit({ articleFilter }, { method: 'post' });
