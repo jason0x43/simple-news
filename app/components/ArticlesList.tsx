@@ -107,13 +107,16 @@ export default function ArticlesList(props: ArticlesProps) {
   };
 
   const handleMenuClick = (event: {
-    currentTarget: HTMLLIElement;
+    currentTarget: HTMLElement;
     pageX: number;
     pageY: number;
     preventDefault?: () => void;
     stopPropagation?: () => void;
   }) => {
-    const articleId = event.currentTarget.getAttribute('data-id');
+    const articleId = event.currentTarget?.getAttribute('data-id');
+    if (!articleId) {
+      return;
+    }
 
     showContextMenu({
       anchor: { x: event.pageX, y: event.pageY },
@@ -202,9 +205,6 @@ export default function ArticlesList(props: ArticlesProps) {
                   data-id={article.id}
                   key={article.id}
                   onContextMenu={handleMenuClick}
-                  onClick={() => {
-                    hideContextMenu();
-                  }}
                   ref={isSelected ? selectedArticleRef : undefined}
                   onTouchStart={handleTouchStart}
                   onTouchEnd={handleTouchEnd}

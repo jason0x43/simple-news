@@ -1,13 +1,14 @@
-import React, { createContext, useCallback, type FC } from "react";
-import { className } from "~/lib/util";
-
-const {
+import {
+  createContext,
+  ReactNode,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
   useRef,
   useState,
-} = React;
+} from 'react';
+import { className } from '~/lib/util';
 
 export type ContextMenuProps = {
   items: string[];
@@ -18,7 +19,7 @@ export type ContextMenuProps = {
 
 const defaultPos = { x: 0, y: 0 };
 
-const ContextMenu: FC<ContextMenuProps> = (props) => {
+export default function ContextMenu(props: ContextMenuProps) {
   const { items, anchor, onSelect, onClose } = props;
   const [visible, setVisible] = useState(false);
   const [pos, setPos] = useState(defaultPos);
@@ -46,17 +47,17 @@ const ContextMenu: FC<ContextMenuProps> = (props) => {
 
         // make the menu act a bit like a modal; any clicks that aren't in the
         // menu will cause the menu to close and will then be silently discarded
-        event.stopPropagation();
+        event.preventDefault();
       }
     };
-    document.body.addEventListener("click", clickListener, { capture: true });
+    document.body.addEventListener('click', clickListener, { capture: true });
 
     const escListener = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
+      if (event.key === 'Escape') {
         closeMenu();
       }
     };
-    document.body.addEventListener("keydown", escListener);
+    document.body.addEventListener('keydown', escListener);
 
     if (!visible) {
       let x: number;
@@ -87,18 +88,18 @@ const ContextMenu: FC<ContextMenuProps> = (props) => {
     }
 
     return () => {
-      document.body.removeEventListener("click", clickListener, {
+      document.body.removeEventListener('click', clickListener, {
         capture: true,
       });
-      document.body.removeEventListener("keydown", escListener);
+      document.body.removeEventListener('keydown', escListener);
     };
   }, [anchor, closeMenu, pos, visible]);
 
   return (
     <div
       ref={ref}
-      className={className("ContextMenu", {
-        "ContextMenu-visible": visible,
+      className={className('ContextMenu', {
+        'ContextMenu-visible': visible,
       })}
       style={{ top: `${pos.y}px`, left: `${pos.x}px` }}
     >
@@ -117,9 +118,7 @@ const ContextMenu: FC<ContextMenuProps> = (props) => {
       </ul>
     </div>
   );
-};
-
-export default ContextMenu;
+}
 
 const ContextMenuContext = createContext<{
   showContextMenu: (props: ContextMenuProps) => void;
@@ -131,17 +130,24 @@ const ContextMenuContext = createContext<{
   contextMenuVisible: false,
 });
 
-export const ContextMenuProvider: FC = (props) => {
+type ContextMenuProviderProps = {
+  children: ReactNode;
+};
+
+export function ContextMenuProvider(props: ContextMenuProviderProps) {
   const [cmProps, setCmProps] = useState<ContextMenuProps | undefined>();
 
-  const value = useMemo(() => ({
-    showContextMenu: (newCmProps: ContextMenuProps) => {
-      cmProps?.onClose?.();
-      setCmProps(newCmProps);
-    },
-    hideContextMenu: () => setCmProps(undefined),
-    contextMenuVisible: cmProps !== undefined,
-  }), [cmProps]);
+  const value = useMemo(
+    () => ({
+      showContextMenu: (newCmProps: ContextMenuProps) => {
+        cmProps?.onClose?.();
+        setCmProps(newCmProps);
+      },
+      hideContextMenu: () => setCmProps(undefined),
+      contextMenuVisible: cmProps !== undefined,
+    }),
+    [cmProps]
+  );
 
   return (
     <ContextMenuContext.Provider value={value}>
@@ -157,7 +163,7 @@ export const ContextMenuProvider: FC = (props) => {
       )}
     </ContextMenuContext.Provider>
   );
-};
+}
 
 export function useContextMenu() {
   return useContext(ContextMenuContext);

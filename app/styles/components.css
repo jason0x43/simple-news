@@ -315,18 +315,15 @@
   padding: 0 calc(var(--vertical-pad));
   min-height: 2.25rem;
   cursor: pointer;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
 }
 
 .Articles-article a {
   text-decoration: none;
   color: inherit;
+  width: 100%;
   display: flex;
   flex-direction: row;
   align-items: top;
-  width: 100%;
   gap: var(--vertical-pad);
   padding-top: var(--vertical-pad);
   padding-bottom: var(--vertical-pad);
@@ -334,6 +331,8 @@
   -webkit-user-select: none;
   -moz-user-select: none;
   -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .Articles-controls,
@@ -359,7 +358,7 @@
 }
 
 .Articles-icon {
-  margin-top: 2px;
+  margin-top: calc(var(--font-size) * 0.25);
   flex-grow: 0;
   flex-shrink: 0;
   display: flex;
