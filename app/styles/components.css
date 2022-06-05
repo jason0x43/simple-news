@@ -330,6 +330,8 @@
   gap: var(--vertical-pad);
   padding-top: var(--vertical-pad);
   padding-bottom: var(--vertical-pad);
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .Articles-controls,
