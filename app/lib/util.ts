@@ -72,7 +72,7 @@ export function validateEmail(email: unknown): email is string {
   return typeof email === 'string' && email.length > 3 && email.includes('@');
 }
 
-export function useMatchesData<T = unknown>(id: string): T | undefined {
+function useMatchesData<T = unknown>(id: string): T | undefined {
   const matchingRoutes = useMatches();
   const route = useMemo(
     () => matchingRoutes.find((route) => route.id === id),
