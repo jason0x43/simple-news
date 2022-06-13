@@ -1,4 +1,4 @@
-import { Feed, FeedGroup, FeedGroupFeed } from '@prisma/client';
+import type { Feed, FeedGroup, FeedGroupFeed } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { readFileSync, writeFileSync } from 'fs';
 import readline from 'readline';
@@ -45,6 +45,8 @@ async function getUser(username: string) {
 yargs
   .scriptName('db')
   .strict()
+  .demandCommand()
+  .help()
 
   .command(
     'add-user <username> <email>',
@@ -137,18 +139,17 @@ yargs
     'clear-feed <id>',
     'Clear all download articles from a feed',
     (yargs) => {
-      return yargs
-        .positional('id', {
-          describe: 'A feed ID',
-          demandOption: true,
-          type: 'string',
-        })
+      return yargs.positional('id', {
+        describe: 'A feed ID',
+        demandOption: true,
+        type: 'string',
+      });
     },
     async (argv) => {
       await prisma.article.deleteMany({
         where: {
-          feedId: argv.id
-        }
+          feedId: argv.id,
+        },
       });
     }
   )
@@ -542,16 +543,11 @@ yargs
     }
   )
 
-  .command(
-    'list-feeds',
-    'List feeds',
-    {},
-    async () => {
-      for (const feed of await prisma.feed.findMany()) {
-        console.log(`${feed.id}: ${feed.title}`);
-      }
+  .command('list-feeds', 'List feeds', {}, async () => {
+    for (const feed of await prisma.feed.findMany()) {
+      console.log(`${feed.id}: ${feed.title}`);
     }
-  )
+  })
 
   .command(
     'export-feed-groups <username> [file]',
@@ -674,5 +670,4 @@ yargs
     }
   )
 
-  .demandCommand()
-  .help().argv;
+  .parse();
