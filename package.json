@@ -20,11 +20,11 @@
     "@remix-run/react": "^1.5.1",
     "@remix-run/serve": "^1.5.1",
     "bcryptjs": "^2.4.3",
-    "classnames": "~2.3.1",
+    "classnames": "^2.3.1",
     "react": "^18.0.1",
     "react-dom": "^18.0.1",
-    "react-icons": "~4.4.0",
-    "tiny-invariant": "~1.2.0"
+    "react-icons": "^4.4.0",
+    "tiny-invariant": "^1.2.0"
   },
   "devDependencies": {
     "@remix-run/dev": "^1.5.1",
