@@ -7,6 +7,7 @@
   import type { ArticleHeadingWithUserData } from '$lib/db/article';
   import {
     getFeedsFromUser,
+    loadValue,
     put,
     storeValue,
     unescapeHtml,
@@ -18,6 +19,7 @@
     ArticleUpdateRequest,
     ArticleUpdateResponse
   } from 'src/routes/api/articles';
+  import { onMount } from 'svelte';
 
   type ScrollData = { visibleCount: number; scrollTop: number };
   const updatedArticleIds = new Set<Article['id']>();
@@ -196,6 +198,16 @@
       console.warn(`Error marking articles as read: ${error}`);
     }
   }
+
+  onMount(() => {
+    const scrollData = loadValue<ScrollData>('scrollData');
+    if (scrollData) {
+      visibleCount = scrollData.visibleCount;
+      setTimeout(() => {
+        scrollBox?.scrollTo({ top: scrollData.scrollTop });
+      });
+    }
+  });
 </script>
 
 <svelte:head>
