@@ -23,6 +23,9 @@ async function main() {
     .help()
     .parse();
 
+  console.log(`>>> Deploying to ${deployHost}`);
+  console.log(`>>> Deploying ${deployRepo}`);
+
   console.log('>>> Pushing main branch...');
   execSync(`git push origin main`, {
     stdio: 'inherit'
