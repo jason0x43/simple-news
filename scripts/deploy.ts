@@ -1,6 +1,7 @@
-import yargs from 'yargs';
 import { execSync } from 'child_process';
 import 'dotenv/config';
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 
 const deployHost = process.env.DEPLOY_HOST;
 const deployRepo = process.env.DEPLOY_REPO;
@@ -16,8 +17,11 @@ if (!deployRepo) {
 }
 
 async function main() {
-  await yargs.scriptName('deploy').usage('$0', 'deploy to a server').help()
-    .argv;
+  await yargs(hideBin(process.argv))
+    .scriptName('deploy')
+    .usage('$0', 'deploy to a server')
+    .help()
+    .parse();
 
   console.log('>>> Pushing main branch...');
   execSync(`git push origin main`, {
