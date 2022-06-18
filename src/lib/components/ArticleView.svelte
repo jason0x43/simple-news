@@ -56,16 +56,14 @@
 
 <style>
   .article {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+    width: 100%;
     background-color: var(--background);
-    flex-grow: 1;
   }
 
   .scroller {
     overflow-y: auto;
     flex-grow: 1;
+    height: 100%;
   }
 
   .header {

@@ -37,11 +37,13 @@
 
 <style>
   .article {
-    width: 100%;
     height: 100%;
+    width: 100%;
     display: flex;
-    flex-direction: column;
     position: relative;
+    flex-basis: 0;
+    flex-grow: 1;
+    overflow: hidden;
   }
 
   @media screen and (max-width: 800px) {

@@ -26,6 +26,15 @@
   $: $articles = articleHeadings;
 </script>
 
-<ArticlesList />
+<div class="feed-layout">
+  <ArticlesList />
+  <slot />
+</div>
 
-<slot />
+<style>
+  .feed-layout {
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+  }
+</style>

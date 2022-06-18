@@ -106,6 +106,7 @@
 <div class="header">
   <Header {selectedFeedIds} onTitlePress={handleTitlePress} {toggleSidebar} />
 </div>
+
 <div class="content">
   {#if sbVisible}
     <div
@@ -141,9 +142,7 @@
     </div>
   {/if}
 
-  <div class="articles">
-    <slot />
-  </div>
+  <slot />
 </div>
 
 <style>
@@ -192,12 +191,5 @@
     justify-content: center;
     margin: 1rem;
     margin-top: 0.5rem;
-  }
-
-  .articles {
-    height: 100%;
-    overflow: hidden;
-    display: flex;
-    flex-direction: row;
   }
 </style>
