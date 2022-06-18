@@ -31,7 +31,7 @@ async function main() {
       'echo ">>> Pulling changes into remote repo..."',
       'git pull origin main',
       'echo ">>> Installing updated npm packages..."',
-      'npm install',
+      'npm ci',
       'echo ">>> Running migrations..."',
       'npm run migrate',
       'echo ">>> Building production app..."',
