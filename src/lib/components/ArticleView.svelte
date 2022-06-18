@@ -111,6 +111,7 @@
 
   .content :global(h1) {
     margin-top: 0;
+    line-height: 1.3em;
   }
 
   .content :global(figure) {
