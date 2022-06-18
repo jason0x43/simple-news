@@ -1,5 +1,6 @@
 import yargs from 'yargs';
 import { execSync } from 'child_process';
+import 'dotenv/config';
 
 const deployHost = process.env.DEPLOY_HOST;
 const deployRepo = process.env.DEPLOY_REPO;
