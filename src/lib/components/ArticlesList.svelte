@@ -2,6 +2,7 @@
   import { session, page } from '$app/stores';
   import type { Article, Feed } from '@prisma/client';
   import Button from './Button.svelte';
+  import ContextMenu from './ContextMenu.svelte';
   import { getAge } from '$lib/date';
   import type { ArticleHeadingWithUserData } from '$lib/db/article';
   import {
@@ -11,12 +12,7 @@
     unescapeHtml,
     uniquify
   } from '$lib/util';
-  import {
-    articleFilter,
-    articles,
-    sidebarVisible,
-    updatedArticleIds
-  } from '$lib/stores';
+  import { articleFilter, articles, sidebarVisible } from '$lib/stores';
   import { invalidate } from '$app/navigation';
   import type {
     ArticleUpdateRequest,
@@ -24,6 +20,7 @@
   } from 'src/routes/api/articles';
 
   type ScrollData = { visibleCount: number; scrollTop: number };
+  const updatedArticleIds = new Set<Article['id']>();
 
   $: user = $session.user;
   $: feeds = getFeedsFromUser(user);
@@ -50,14 +47,15 @@
 
   $: {
     if (selectedArticleId) {
-      $updatedArticleIds.add(selectedArticleId);
+      updatedArticleIds.add(selectedArticleId);
       if (!$articles?.find(({ id }) => id === selectedArticleId)?.read) {
         markAsRead([selectedArticleId], true);
       }
     }
   }
 
-  let activeArticle: Article['id'] | undefined;
+  let menuAnchor: { x: number; y: number } | undefined;
+  let activeArticleId: Article['id'] | undefined;
   let filteredArticles: ArticleHeadingWithUserData[] = [];
   let renderedArticles: (ArticleHeadingWithUserData & {
     feed: Feed | undefined;
@@ -84,7 +82,7 @@
         filteredArticles =
           $articles?.filter(
             ({ id, read }) =>
-              !read || $updatedArticleIds.has(id) || id === selectedArticleId
+              !read || updatedArticleIds.has(id) || id === selectedArticleId
           ) ?? [];
       }
     }
@@ -96,7 +94,7 @@
       .map((article) => ({
         ...article,
         feed: feeds.find(({ id }) => id === article.feedId),
-        isActive: activeArticle === article.id,
+        isActive: activeArticleId === article.id,
         isSelected: selectedArticleId === article.id,
         isRead: article.read ?? false
       }));
@@ -124,14 +122,54 @@
     }, 500);
   }
 
-  function handleMenuClick() {}
+  function handleContextMenu(event: MouseEvent) {
+    let target = event.target as HTMLElement | null;
+    while (target && !target.hasAttribute('data-id')) {
+      target = target.parentElement;
+    }
+
+    if (target) {
+      activeArticleId = target.getAttribute('data-id') as string;
+      menuAnchor = { x: event.x, y: event.y };
+      event.preventDefault();
+    }
+  }
+
   function handleTouchStart() {}
   function handleTouchEnd() {}
+
+  function handleContextSelect(value: string) {
+    const read = !/unread/.test(value);
+    let ids: Article['id'][] | undefined;
+
+    if (/above/.test(value)) {
+      const idx = renderedArticles.findIndex(
+        ({ id }) => id === activeArticleId
+      );
+      ids = renderedArticles.slice(0, idx).map(({ id }) => id);
+    } else if (/below/.test(value)) {
+      const idx = renderedArticles.findIndex(
+        ({ id }) => id === activeArticleId
+      );
+      ids = renderedArticles.slice(idx + 1).map(({ id }) => id);
+    } else if (activeArticleId) {
+      ids = [activeArticleId];
+    }
+
+    if (ids) {
+      markAsRead(ids, read);
+    }
+  }
+
+  function handleContextClose() {
+    menuAnchor = undefined;
+    activeArticleId = undefined;
+  }
 
   async function markAsRead(articleIds: Article['id'][], read: boolean) {
     try {
       for (const id of articleIds) {
-        $updatedArticleIds.add(id);
+        updatedArticleIds.add(id);
       }
 
       const data = await put<ArticleUpdateRequest, ArticleUpdateResponse>(
@@ -168,7 +206,7 @@
 
 <div class="articles" on:scroll={handleListScroll} bind:this={scrollBox}>
   {#if renderedArticles.length > 0}
-    <ul class="list">
+    <ul class="list" on:contextmenu={handleContextMenu}>
       {#each renderedArticles as article (article.id)}
         <li
           class="article"
@@ -176,7 +214,6 @@
           class:selected={article.isSelected}
           class:read={article.isRead}
           data-id={article.id}
-          on:contextmenu={handleMenuClick}
           on:touchstart={handleTouchStart}
           on:touchend={handleTouchEnd}
           on:touchmove={handleTouchEnd}
@@ -227,6 +264,22 @@
     <h3 class="empty">Nothing to see here</h3>
   {/if}
 </div>
+
+{#if menuAnchor}
+  <ContextMenu
+    items={[
+      { label: 'Mark read', value: 'item-read' },
+      { label: 'Mark as unread', value: 'item-unread' },
+      { label: 'Mark above as read', value: 'above-read' },
+      { label: 'Mark above as unread', value: 'above-unread' },
+      { label: 'Mark below as read', value: 'below-read' },
+      { label: 'Mark below as unread', value: 'below-unread' }
+    ]}
+    anchor={menuAnchor}
+    onSelect={handleContextSelect}
+    onClose={handleContextClose}
+  />
+{/if}
 
 <style>
   .articles {
