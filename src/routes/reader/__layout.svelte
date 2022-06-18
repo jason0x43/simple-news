@@ -53,12 +53,14 @@
   import { onMount } from 'svelte';
   import { invalidate } from '$app/navigation';
   import { setReaderContext } from '$lib/contexts';
+  import AddFeed from '$lib/components/AddFeed.svelte';
 
   export let user: UserWithFeeds;
   export let selectedFeedIds: Feed['id'][] | undefined;
   export let feedStats: FeedStats;
 
   let sbVisible = !selectedFeedIds;
+  let addFeedVisible = false;
   const titleListeners = new Set<() => void>();
 
   function handleTitlePress() {
@@ -125,7 +127,9 @@
         />
       </div>
       <div class="sidebar-controls">
-        <Button size="small">Update feeds</Button>
+        <Button size="small" on:click={() => (addFeedVisible = true)}
+          >Add feed</Button
+        >
       </div>
       <div class="sidebar-settings">
         <ButtonSelector
@@ -143,6 +147,10 @@
   {/if}
 
   <slot />
+
+  {#if addFeedVisible}
+    <AddFeed onClose={() => (addFeedVisible = false)} />
+  {/if}
 </div>
 
 <style>

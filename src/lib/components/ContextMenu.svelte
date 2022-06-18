@@ -1,5 +1,6 @@
 <script type="ts">
   import Portal from './Portal.svelte';
+  import Dialog from './Dialog.svelte';
 
   export let items: { label?: string; value: string }[];
   export let anchor: { x: number; y: number };
@@ -25,24 +26,21 @@
 
 <svelte:window on:click={handleClick} />
 
-<Portal x={anchor.x} y={anchor.y}>
-  <ul class="contextmenu" bind:this={ref}>
-    {#each items as item}
-      <li on:click={handleItemClick} data-value={item.value}>
-        {item.label ?? item.value}
-      </li>
-    {/each}
-  </ul>
+<Portal {anchor}>
+  <Dialog>
+    <ul class="contextmenu" bind:this={ref}>
+      {#each items as item}
+        <li on:click={handleItemClick} data-value={item.value}>
+          {item.label ?? item.value}
+        </li>
+      {/each}
+    </ul>
+  </Dialog>
 </Portal>
 
 <style>
   .contextmenu {
-    font-family: sans-serif;
-    position: absolute;
-    background: var(--background);
     color: var(--foreground);
-    border: solid 1px var(--border);
-    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
     list-style-type: none;
     padding: 0;
     margin: 0;
