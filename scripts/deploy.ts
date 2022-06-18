@@ -20,7 +20,7 @@ async function main() {
 
   console.log('>>> Pushing main branch...');
   execSync(`git push origin main`, {
-    stdio: 'inherit',
+    stdio: 'inherit'
   });
 
   execSync(`ssh ${deployHost} 'bash -s'`, {
@@ -34,20 +34,20 @@ async function main() {
       'echo ">>> Running migrations..."',
       'npm run migrate',
       'echo ">>> Building production app..."',
-      'npm run build',
-    ].join('\n'),
+      'npm run build'
+    ].join('\n')
   });
 
   console.log('>>> Restarting app server...');
   execSync(`ssh ${deployHost} systemctl --user restart --now simple-news`, {
-    stdio: 'inherit',
+    stdio: 'inherit'
   });
 
   console.log('>>> Restarting feed downloader...');
   execSync(
     `ssh ${deployHost} systemctl --user restart --now simple-news-downloader`,
     {
-      stdio: 'inherit',
+      stdio: 'inherit'
     }
   );
 

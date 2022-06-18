@@ -3,7 +3,7 @@
 //
 
 import type { Feed } from '@prisma/client';
-import { prisma } from '../app/lib/db';
+import { prisma } from '../src/lib/db.js';
 import Parser, { type Item } from 'rss-parser';
 import { JSDOM } from 'jsdom';
 
@@ -51,11 +51,11 @@ async function downloadFeed(feed: Feed) {
       const icon = await getIcon(parsedFeed);
       await prisma.feed.update({
         where: {
-          id: feed.id,
+          id: feed.id
         },
         data: {
-          icon,
-        },
+          icon
+        }
       });
     }
 
@@ -66,8 +66,8 @@ async function downloadFeed(feed: Feed) {
           where: {
             feedId_articleId: {
               articleId,
-              feedId: feed.id,
-            },
+              feedId: feed.id
+            }
           },
           update: {},
           create: {
@@ -78,8 +78,8 @@ async function downloadFeed(feed: Feed) {
             published: Number(
               entry.pubDate ? new Date(entry.pubDate) : new Date()
             ),
-            content: entry['content:encoded'] ?? entry.content ?? null,
-          },
+            content: entry['content:encoded'] ?? entry.content ?? null
+          }
         });
       })
     );
@@ -93,13 +93,13 @@ async function downloadFeed(feed: Feed) {
 /**
  * Return some sort of unique ID for an article
  */
-function getArticleId(article: Item & { [key: string]: any }): string {
+function getArticleId(article: Item & { [key: string]: unknown }): string {
   if (article.guid) {
     return article.guid;
   }
 
   if (article.id) {
-    return article.id;
+    return article.id as string;
   }
 
   if (article.link) {
@@ -129,7 +129,7 @@ async function getIcon(feed: ParsedFeed): Promise<string | null> {
       dom.window.document.head.querySelector('link[rel*="icon"]');
 
     if (iconLink) {
-      const iconHref = iconLink.getAttribute('href')!;
+      const iconHref = iconLink.getAttribute('href') as string;
       const iconUrl = new URL(iconHref, feedBase);
 
       // Try https by default

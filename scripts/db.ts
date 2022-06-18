@@ -3,9 +3,10 @@ import bcrypt from 'bcryptjs';
 import { readFileSync, writeFileSync } from 'fs';
 import readline from 'readline';
 import { Writable } from 'stream';
-import yargs from 'yargs';
-import { prisma } from '../app/lib/db';
 import { inspect } from 'util';
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
+import { prisma } from '../src/lib/db.js';
 
 type MutableWritable = Writable & { muted?: boolean };
 
@@ -15,7 +16,7 @@ const mutableStdout: MutableWritable = new Writable({
       process.stdout.write(chunk, encoding);
     }
     callback();
-  },
+  }
 });
 
 type ExportedFeedGroup = FeedGroup & {
@@ -25,24 +26,24 @@ type ExportedFeedGroup = FeedGroup & {
 async function getUser(username: string) {
   return await prisma.user.findUnique({
     where: {
-      username,
+      username
     },
     include: {
       feedGroups: {
         include: {
           feeds: {
             include: {
-              feed: true,
-            },
-          },
-        },
-      },
+              feed: true
+            }
+          }
+        }
+      }
     },
-    rejectOnNotFound: true,
+    rejectOnNotFound: true
   });
 }
 
-yargs
+yargs(hideBin(process.argv))
   .scriptName('db')
   .strict()
   .demandCommand()
@@ -56,19 +57,19 @@ yargs
         .positional('username', {
           describe: 'A username',
           demandOption: true,
-          type: 'string',
+          type: 'string'
         })
         .positional('email', {
           describe: "User's email address",
           demandOption: true,
-          type: 'string',
+          type: 'string'
         });
     },
     async (argv) => {
       const rl = readline.createInterface({
         input: process.stdin,
         output: mutableStdout,
-        terminal: true,
+        terminal: true
       });
 
       const password = await new Promise<string>((resolve) => {
@@ -86,10 +87,10 @@ yargs
           email: argv.email,
           password: {
             create: {
-              hash: await bcrypt.hash(password, 7),
-            },
-          },
-        },
+              hash: await bcrypt.hash(password, 7)
+            }
+          }
+        }
       });
     }
   )
@@ -102,25 +103,25 @@ yargs
         .positional('url', {
           describe: 'A feed URL',
           demandOption: true,
-          type: 'string',
+          type: 'string'
         })
         .positional('title', {
           describe: 'The title of the feed',
           demandOption: true,
-          type: 'string',
+          type: 'string'
         })
         .options({
           icon: {
             alias: 'i',
             type: 'string',
             describe: 'The feed icon URL',
-            default: null,
+            default: null
           },
           'html-url': {
             type: 'string',
             describe: 'An associated HTML URL for the feed',
-            default: null,
-          },
+            default: null
+          }
         });
     },
     async (argv) => {
@@ -129,8 +130,8 @@ yargs
           url: argv.url,
           title: argv.title,
           icon: argv.icon,
-          htmlUrl: argv.htmlUrl,
-        },
+          htmlUrl: argv.htmlUrl
+        }
       });
     }
   )
@@ -142,14 +143,14 @@ yargs
       return yargs.positional('id', {
         describe: 'A feed ID',
         demandOption: true,
-        type: 'string',
+        type: 'string'
       });
     },
     async (argv) => {
       await prisma.article.deleteMany({
         where: {
-          feedId: argv.id,
-        },
+          feedId: argv.id
+        }
       });
     }
   )
@@ -162,26 +163,26 @@ yargs
         .positional('username', {
           describe: 'The user to add the group to',
           demandOption: true,
-          type: 'string',
+          type: 'string'
         })
         .positional('name', {
           describe: 'The name of the feed group',
           demandOption: true,
-          type: 'string',
+          type: 'string'
         });
     },
     async (argv) => {
       const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
-        terminal: true,
+        terminal: true
       });
 
       const user = await getUser(argv.username);
       const feeds = await prisma.feed.findMany();
       const groupFeeds: string[] = [];
 
-      while (true) {
+      for (;;) {
         rl.write(`Feeds in ${argv.name}:\n`);
         for (const id of groupFeeds) {
           const feed = feeds.find((f) => f.id === id) as Feed;
@@ -237,10 +238,10 @@ yargs
               name: argv.name,
               feeds: {
                 create: groupFeeds.map((feedId) => ({
-                  feedId,
-                })),
-              },
-            },
+                  feedId
+                }))
+              }
+            }
           });
           rl.close();
           break;
@@ -257,12 +258,12 @@ yargs
         .positional('username', {
           describe: 'The user to add the group to',
           demandOption: true,
-          type: 'string',
+          type: 'string'
         })
         .positional('name', {
           describe: 'The name of the feed group',
           demandOption: true,
-          type: 'string',
+          type: 'string'
         });
     },
     async (argv) => {
@@ -272,9 +273,9 @@ yargs
         where: {
           userId_name: {
             userId: user.id,
-            name: argv.name,
-          },
-        },
+            name: argv.name
+          }
+        }
       });
     }
   )
@@ -287,24 +288,24 @@ yargs
         .positional('username', {
           describe: 'The user to add the group to',
           demandOption: true,
-          type: 'string',
+          type: 'string'
         })
         .positional('name', {
           describe: 'The name of the feed group',
           demandOption: true,
-          type: 'string',
+          type: 'string'
         })
         .positional('feeds', {
           describe: 'The feed IDs to include in the group',
           type: 'string',
-          default: [],
+          default: []
         });
     },
     async (argv) => {
       const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
-        terminal: true,
+        terminal: true
       });
 
       const user = await getUser(argv.username);
@@ -319,7 +320,7 @@ yargs
 
       const groupFeeds: string[] = [];
 
-      while (true) {
+      for (;;) {
         rl.write(`Feeds in ${argv.name}:\n`);
         for (const id of groupFeeds) {
           const feed = feeds.find((f) => f.id === id) as Feed;
@@ -377,10 +378,10 @@ yargs
               name: argv.name,
               feeds: {
                 create: groupFeeds.map((feedId) => ({
-                  feedId,
-                })),
-              },
-            },
+                  feedId
+                }))
+              }
+            }
           });
           rl.close();
           break;
@@ -397,19 +398,19 @@ yargs
         .positional('username', {
           describe: 'The user to add the group to',
           demandOption: true,
-          type: 'string',
+          type: 'string'
         })
         .positional('name', {
           describe: 'The name of the feed group',
           demandOption: true,
-          type: 'string',
+          type: 'string'
         });
     },
     async (argv) => {
       const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
-        terminal: true,
+        terminal: true
       });
 
       const user = await getUser(argv.username);
@@ -433,7 +434,7 @@ yargs
       );
       const groupFeeds: string[] = existingGroupFeeds.slice();
 
-      while (true) {
+      for (;;) {
         rl.write(`Feeds in ${argv.name}:\n`);
         for (const id of groupFeeds) {
           const feed = feeds.find((f) => f.id === id) as Feed;
@@ -503,19 +504,19 @@ yargs
             where: {
               userId_name: {
                 userId: user.id,
-                name: argv.name,
-              },
+                name: argv.name
+              }
             },
             data: {
               feeds: {
                 create: toAdd.map((feedId) => ({
-                  feedId,
+                  feedId
                 })),
                 deleteMany: toRemove.map((feedId) => ({
-                  feedId,
-                })),
-              },
-            },
+                  feedId
+                }))
+              }
+            }
           });
           rl.close();
           break;
@@ -530,7 +531,7 @@ yargs
     (yargs) => {
       return yargs.positional('file', {
         describe: 'A file to export to',
-        type: 'string',
+        type: 'string'
       });
     },
     async (argv) => {
@@ -557,26 +558,26 @@ yargs
         .positional('username', {
           describe: 'A username',
           demandOption: true,
-          type: 'string',
+          type: 'string'
         })
         .positional('file', {
           describe: 'A file to export to',
-          type: 'string',
+          type: 'string'
         });
     },
     async (argv) => {
       const user = await getUser(argv.username);
       const groups = await prisma.feedGroup.findMany({
         where: {
-          userId: user.id,
+          userId: user.id
         },
         include: {
           feeds: {
             include: {
-              feed: true,
-            },
-          },
-        },
+              feed: true
+            }
+          }
+        }
       });
       if (argv.file) {
         writeFileSync(argv.file, JSON.stringify(groups, null, '  '));
@@ -593,7 +594,7 @@ yargs
       return yargs.positional('file', {
         describe: 'A file to export to',
         demandOption: true,
-        type: 'string',
+        type: 'string'
       });
     },
     async (argv) => {
@@ -604,7 +605,7 @@ yargs
       for (const feed of feedData) {
         await prisma.feed.upsert({
           where: {
-            url: feed.url,
+            url: feed.url
           },
           update: {},
           create: {
@@ -612,8 +613,8 @@ yargs
             url: feed.url,
             title: feed.title,
             icon: feed.icon,
-            htmlUrl: feed.htmlUrl,
-          },
+            htmlUrl: feed.htmlUrl
+          }
         });
       }
     }
@@ -627,12 +628,12 @@ yargs
         .positional('username', {
           describe: 'A username',
           demandOption: true,
-          type: 'string',
+          type: 'string'
         })
         .positional('file', {
           describe: 'A file to export to',
           demandOption: true,
-          type: 'string',
+          type: 'string'
         });
     },
     async (argv) => {
@@ -648,9 +649,9 @@ yargs
           feeds.push(
             await prisma.feed.findUnique({
               where: {
-                url,
+                url
               },
-              rejectOnNotFound: true,
+              rejectOnNotFound: true
             })
           );
         }
@@ -661,10 +662,10 @@ yargs
             name: group.name,
             feeds: {
               create: feeds.map((feed) => ({
-                feedId: feed.id,
-              })),
-            },
-          },
+                feedId: feed.id
+              }))
+            }
+          }
         });
       }
     }
