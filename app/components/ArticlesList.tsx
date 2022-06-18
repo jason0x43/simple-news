@@ -9,7 +9,7 @@ import {
   type TouchEvent,
   type UIEvent,
 } from 'react';
-import { diffDates } from '~/lib/date';
+import { getAge } from '~/lib/date';
 import { useWidthObserver } from '~/lib/hooks';
 import {
   unescapeHtml,
@@ -22,32 +22,12 @@ import type { ArticleHeadingWithUserData } from '~/models/article.server';
 import Button from './Button';
 import { useContextMenu } from './ContextMenu';
 
-function getAge(timestamp: number | undefined | null): string {
-  if (!timestamp) {
-    return '?';
-  }
-
-  const date0 = new Date();
-  const date1 = new Date(timestamp);
-  const diff = diffDates(date0, date1);
-  if (diff.weeks) {
-    return `${diff.weeks} w`;
-  }
-  if (diff.days) {
-    return `${diff.days} d`;
-  }
-  if (diff.hours) {
-    return `${diff.hours} h`;
-  }
-  return `${diff.minutes} m`;
-}
+type TimerRef = ReturnType<typeof setTimeout>;
 
 type ArticlesProps = {
   updatedArticles: Record<Article['id'], boolean>;
   onMarkAsRead: (articleIds: string[], read: boolean) => void;
 };
-
-type TimerRef = ReturnType<typeof setTimeout>;
 
 export default function ArticlesList(props: ArticlesProps) {
   const articles = useArticles();

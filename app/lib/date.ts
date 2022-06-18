@@ -26,3 +26,23 @@ export function diffDates(date1: Date, date2: Date) {
     years,
   };
 }
+
+export function getAge(timestamp: number | undefined | null): string {
+  if (!timestamp) {
+    return '?';
+  }
+
+  const date0 = new Date();
+  const date1 = new Date(timestamp);
+  const diff = diffDates(date0, date1);
+  if (diff.weeks) {
+    return `${diff.weeks} w`;
+  }
+  if (diff.days) {
+    return `${diff.days} d`;
+  }
+  if (diff.hours) {
+    return `${diff.hours} h`;
+  }
+  return `${diff.minutes} m`;
+}
