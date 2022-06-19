@@ -138,7 +138,6 @@
             { value: 'all', label: 'All' },
             { value: 'saved', label: 'Saved' }
           ]}
-          size="small"
           selected={$articleFilter}
           onSelect={selectArticleFilter}
         />
