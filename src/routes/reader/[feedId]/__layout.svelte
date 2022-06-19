@@ -1,10 +1,10 @@
 <script context="module" type="ts">
+  // TODO: replace this with a layout endpoint when available
   import type { Load } from './__types/__layout';
 
   export const load: Load = async ({ fetch, params }) => {
     const feedId = params.feedId;
 
-    // TODO: replace this with a layout endpoint when available
     const resp = await fetch(`/api/articles?feedId=${feedId}`);
     const articleHeadings = await resp.json();
 
