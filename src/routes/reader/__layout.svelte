@@ -39,13 +39,10 @@
 </script>
 
 <script type="ts">
-  import Button from '$lib/components/Button.svelte';
-  import ButtonSelector from '$lib/components/ButtonSelector.svelte';
   import Header from '$lib/components/Header.svelte';
   import FeedsList from '$lib/components/FeedsList.svelte';
   import type { Feed } from '@prisma/client';
   import type { UserWithFeeds } from '$lib/db/user';
-  import type { ArticleFilter } from '$lib/types';
   import { getFeedsFromUser } from '$lib/util';
   import type { FeedStats } from '$lib/db/feed';
   import { slide } from '$lib/transition';
@@ -53,14 +50,14 @@
   import { onMount } from 'svelte';
   import { invalidate } from '$app/navigation';
   import { setReaderContext } from '$lib/contexts';
-  import AddFeed from '$lib/components/AddFeed.svelte';
+  import ManageFeeds from '$lib/components/ManageFeeds.svelte';
 
   export let user: UserWithFeeds;
   export let selectedFeedIds: Feed['id'][] | undefined;
   export let feedStats: FeedStats;
 
   let sbVisible = !selectedFeedIds;
-  let addFeedVisible = false;
+  let managingFeeds = false;
   const titleListeners = new Set<() => void>();
 
   function handleTitlePress() {
@@ -83,10 +80,6 @@
     return () => {
       titleListeners.delete(listener);
     };
-  }
-
-  function selectArticleFilter(value: string) {
-    $articleFilter = value as ArticleFilter;
   }
 
   setReaderContext({
@@ -127,28 +120,20 @@
         />
       </div>
       <div class="sidebar-controls">
-        <Button size="small" on:click={() => (addFeedVisible = true)}
-          >Add feed</Button
-        >
-      </div>
-      <div class="sidebar-settings">
-        <ButtonSelector
-          options={[
-            { value: 'unread', label: 'Unread' },
-            { value: 'all', label: 'All' },
-            { value: 'saved', label: 'Saved' }
-          ]}
-          selected={$articleFilter}
-          onSelect={selectArticleFilter}
-        />
+        <button on:click={() => (managingFeeds = true)}>Manage Feeds</button>
+        <select bind:value={$articleFilter}>
+          <option value="unread">Unread</option>
+          <option value="all">All</option>
+          <option value="saved">Saved</option>
+        </select>
       </div>
     </div>
   {/if}
 
   <slot />
 
-  {#if addFeedVisible}
-    <AddFeed onClose={() => (addFeedVisible = false)} />
+  {#if managingFeeds}
+    <ManageFeeds onClose={() => (managingFeeds = false)} />
   {/if}
 </div>
 
@@ -187,16 +172,12 @@
   }
 
   .sidebar-controls {
-    display: flex;
-    justify-content: center;
-  }
-
-  .sidebar-settings {
     flex-grow: 0;
     flex-shrink: 0;
     display: flex;
     justify-content: center;
     margin: 1rem;
     margin-top: 0.5rem;
+    gap: var(--gap);
   }
 </style>

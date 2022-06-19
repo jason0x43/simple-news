@@ -1,7 +1,6 @@
 <script type="ts">
   import { session, page } from '$app/stores';
   import type { Article, Feed } from '@prisma/client';
-  import Button from './Button.svelte';
   import ContextMenu from './ContextMenu.svelte';
   import { getAge } from '$lib/date';
   import type { ArticleHeadingWithUserData } from '$lib/db/article';
@@ -259,7 +258,7 @@
     </ul>
 
     <div class="controls">
-      <Button
+      <button
         on:click={() => {
           if ($articles) {
             markAsRead(
@@ -267,8 +266,7 @@
               true
             );
           }
-        }}
-        size="large">Mark all read</Button
+        }}>Mark all read</button
       >
     </div>
   {/if}

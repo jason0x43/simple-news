@@ -35,17 +35,13 @@
     --background: white;
     --selected: rgba(0, 0, 0, 0.1);
     --foreground: #666;
-    --border: rgba(0, 0, 0, 0.05);
+    --border: rgba(0, 0, 0, 0.15);
     --highlight: #555;
     --highlight-text: #eee;
     --link: #00f;
     --border-radius: 4px;
     --sidebar-width: 300px;
     --side-pad: 1rem;
-    /* like ease-in */
-    --slide-in: transition-timing-function: cubic-bezier(0.75, 0, 1, 1);
-    /* like ease-out */
-    --slide-out: transition-timing-function: cubic-bezier(0, 0, 0.1, 1);
     --font-size: 14px;
 
     position: absolute;
@@ -81,6 +77,34 @@
 
   :global(a) {
     color: var(--link);
+  }
+
+  :global(input) {
+    border: solid 1px var(--border);
+    border-radius: var(--border-radius);
+    font-size: var(--font-size);
+    padding: 4px;
+  }
+
+  :global(select) {
+    appearance: none;
+    background: white;
+    border: solid 1px var(--border);
+    border-radius: var(--border-radius);
+    font-size: var(--font-size);
+    padding: 4px;
+  }
+
+  :global(button) {
+    border: solid 1px var(--border);
+    border-radius: var(--border-radius);
+    background: var(--hover-matte);
+    font-size: var(--font-size);
+    padding: 4px 6px;
+  }
+
+  :global(button:active) {
+    background: var(--active-matte);
   }
 
   /* Mobile */
