@@ -38,11 +38,11 @@ async function main() {
       'echo ">>> Pulling changes into remote repo..."',
       'git pull origin main',
       'echo ">>> Installing updated npm packages..."',
-      'npm ci',
+      'pnpm install --frozen-lockfile',
       'echo ">>> Running migrations..."',
-      'npm run migrate',
+      'pnpm migrate',
       'echo ">>> Building production app..."',
-      'npm run build'
+      'pnpm build'
     ].join('\n')
   });
 
