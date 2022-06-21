@@ -1,21 +1,18 @@
 <script type="ts">
   import { session } from '$app/stores';
-  import { getFeedsFromUser } from '$lib/util';
+  import { post } from '$lib/util';
   import Dialog from './Dialog.svelte';
   import Portal from './Portal.svelte';
+  import Select from './Select.svelte';
+  import type { Feed } from '@prisma/client';
+  import { onMount } from 'svelte';
 
   export let onClose: (() => void) | undefined = undefined;
 
   const user = $session.user;
-  const feeds = getFeedsFromUser(user).sort((a, b) => {
-    if (a.title === b.title) {
-      return 0;
-    }
-    if (a.title > b.title) {
-      return 1;
-    }
-    return -1;
-  });
+
+  let feeds: Feed[] = [];
+
   const groups = user.feedGroups;
   const feedGroups: { [feedId: string]: string } = {};
   for (const group of groups) {
@@ -23,10 +20,39 @@
       feedGroups[feedGroup.feed.id] = group.id;
     }
   }
+
+  let busy = false;
+  let feedUrl: string = '';
+
+  async function addFeed() {
+    busy = true;
+    try {
+      await post('/api/feeds', { url: feedUrl });
+    } catch (error) {
+      console.warn(error);
+    }
+    busy = false;
+  }
+
+  onMount(() => {
+    fetch('/api/feeds')
+      .then((resp) => resp.json())
+      .then((allFeeds: Feed[]) => {
+        feeds = allFeeds.sort((a, b) => {
+          if (a.title === b.title) {
+            return 0;
+          }
+          if (a.title > b.title) {
+            return 1;
+          }
+          return -1;
+        });
+      });
+  });
 </script>
 
 <Portal anchor="modal">
-  <Dialog title="Manage Feeds" {onClose}>
+  <Dialog title="Manage Feeds" {onClose} {busy}>
     <div class="manage-feeds">
       <div class="scroller">
         <section>
@@ -40,12 +66,12 @@
                     <div class="feed-url">{feed.url}</div>
                   </div>
                   <div>
-                    <select value={feedGroups[feed.id]}>
+                    <Select value={feedGroups[feed.id] ?? 'not subscribed'}>
                       <option value="not subscribed">Not subscribed</option>
                       {#each groups as group (group.id)}
                         <option value={group.id}>{group.name}</option>
                       {/each}
-                    </select>
+                    </Select>
                   </div>
                 </div>
               {/each}
@@ -55,8 +81,8 @@
 
         <section>
           <h3>Add Feed</h3>
-          <form>
-            <input name="feed-url" placeholder="https://..." />
+          <form on:submit|preventDefault={addFeed}>
+            <input bind:value={feedUrl} placeholder="https://..." />
             <button>Save</button>
           </form>
 
@@ -68,11 +94,11 @@
 
           <h3>Rename Group</h3>
           <form>
-            <select>
+            <Select value={groups[0].id}>
               {#each groups as group (group.id)}
                 <option value={group.id}>{group.name}</option>
               {/each}
-            </select>
+            </Select>
             <input name="group-name" placeholder="Applications" />
             <button>Save</button>
           </form>
@@ -90,20 +116,26 @@
   .scroller {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1em;
     padding: 1em;
     flex-grow: 1;
   }
 
   section {
-    border: solid 1px #eee;
-    border-radius: var(--border-radius);
     box-sizing: border-box;
     padding: 1em;
     display: flex;
     flex-direction: column;
     gap: 1em;
     overflow: auto;
+  }
+
+  section:first-child {
+    border-right: solid 1px var(--border);
+    padding-right: 2em;
+  }
+
+  section:last-child {
+    padding-left: 2em;
   }
 
   h3 {
@@ -170,10 +202,18 @@
       overflow: auto;
     }
 
+    section:first-child {
+      border-right: none;
+      padding-right: 1em;
+    }
+
+    section:last-child {
+      padding-left: 1em;
+    }
+
     .scroller {
       display: flex;
       flex-direction: column;
-      gap: 1em;
       flex-grow: 1;
       flex-shrink: 0;
       padding: 1em;

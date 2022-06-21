@@ -3,6 +3,7 @@
 
   export let title: string | undefined = undefined;
   export let onClose: (() => void) | undefined = undefined;
+  export let busy: boolean = false;
 </script>
 
 <div class="dialog">
@@ -18,6 +19,9 @@
   {/if}
   <div class="content">
     <slot />
+    {#if busy}
+      <div class="overlay" />
+    {/if}
   </div>
 </div>
 
@@ -46,6 +50,18 @@
   .content {
     display: flex;
     overflow: hidden;
+    position: relative;
+  }
+
+  .overlay {
+    position: absolute;
+    z-index: 10;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: var(--background);
+    opacity: 0.75;
   }
 
   /* Mobile */

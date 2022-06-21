@@ -66,6 +66,7 @@
       --background: black;
       --matte: #222;
       --hover-matte: #444;
+      --active-matte: #555;
       --surface: #666;
       --background: black;
       --foreground: #ddd;
@@ -84,19 +85,9 @@
   }
 
   :global(input) {
+    background: var(--hover-matte);
     border: solid 1px var(--border);
     border-radius: var(--border-radius);
-    box-sizing: border-box;
-    font-size: var(--font-size);
-    padding: 4px;
-  }
-
-  :global(select) {
-    appearance: none;
-    background: white;
-    border: solid 1px var(--border);
-    border-radius: var(--border-radius);
-    box-sizing: border-box;
     font-size: var(--font-size);
     margin: 0;
     padding: 4px;
@@ -106,9 +97,10 @@
     background: var(--hover-matte);
     border: solid 1px var(--border);
     border-radius: var(--border-radius);
-    box-sizing: border-box;
+    color: var(--foreground);
     font-size: var(--font-size);
     padding: 4px 6px;
+    margin: 0;
   }
 
   :global(button:active) {

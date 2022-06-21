@@ -41,6 +41,7 @@
 <script type="ts">
   import Header from '$lib/components/Header.svelte';
   import FeedsList from '$lib/components/FeedsList.svelte';
+  import Select from '$lib/components/Select.svelte';
   import type { Feed } from '@prisma/client';
   import type { UserWithFeeds } from '$lib/db/user';
   import { getFeedsFromUser } from '$lib/util';
@@ -121,11 +122,11 @@
       </div>
       <div class="sidebar-controls">
         <button on:click={() => (managingFeeds = true)}>Manage Feeds</button>
-        <select bind:value={$articleFilter}>
+        <Select bind:value={$articleFilter}>
           <option value="unread">Unread</option>
           <option value="all">All</option>
           <option value="saved">Saved</option>
-        </select>
+        </Select>
       </div>
     </div>
   {/if}

@@ -6,6 +6,7 @@ import type { Feed } from '@prisma/client';
 import { prisma } from '../src/lib/db.js';
 import Parser, { type Item } from 'rss-parser';
 import { JSDOM } from 'jsdom';
+import { downloadFeed as getFeed } from '../src/lib/feed.js';
 
 type ParsedFeed = Parser.Output<unknown>;
 
@@ -17,35 +18,13 @@ async function downloadFeeds() {
 }
 
 async function downloadFeed(feed: Feed) {
-  let xml: string | undefined;
-
   try {
     if (feed.disabled) {
       console.debug(`>>> Skipping disabled feed ${feed.id}`);
       return;
     }
 
-    const parser = new Parser();
-
-    const aborter = new AbortController();
-    const abortTimer = setTimeout(() => aborter.abort(), 10000);
-    const response = await fetch(feed.url, { signal: aborter.signal });
-    clearTimeout(abortTimer);
-
-    if (response.status !== 200) {
-      console.warn(
-        `>>> Error downloading feed ${feed.title}: ${response.status}`
-      );
-      return;
-    }
-
-    xml = await response.text();
-    if (xml.length === 0) {
-      console.warn(`>>> Empty document for feed ${feed.id}`);
-      return;
-    }
-
-    const parsedFeed = await parser.parseString(xml);
+    const parsedFeed = await getFeed(feed.url);
 
     if (!feed.icon) {
       const icon = await getIcon(parsedFeed);
