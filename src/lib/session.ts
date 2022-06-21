@@ -51,13 +51,7 @@ function setHeader<T extends Headers | Record<string, string>>(
   return headers;
 }
 
-export function getSessionUser(locals: App.Locals): UserWithFeeds {
+export function getSessionUser(locals: App.Locals): UserWithFeeds | undefined {
   const { session } = locals;
-  if (!session) {
-    throw new Error('Missing session');
-  }
-  if (!session.user) {
-    throw new Error('Missing user');
-  }
-  return session.user;
+  return session?.user;
 }

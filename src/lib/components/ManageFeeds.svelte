@@ -1,11 +1,16 @@
 <script type="ts">
   import { session } from '$app/stores';
-  import { post } from '$lib/util';
+  import { post, put } from '$lib/util';
   import Dialog from './Dialog.svelte';
   import Portal from './Portal.svelte';
   import Select from './Select.svelte';
-  import type { Feed } from '@prisma/client';
+  import type { Feed, FeedGroup } from '@prisma/client';
   import { onMount } from 'svelte';
+  import type {
+    AddGroupFeedRequest,
+    AddGroupFeedResponse
+  } from 'src/routes/api/feedgroups';
+  import { invalidate } from '$app/navigation';
 
   export let onClose: (() => void) | undefined = undefined;
 
@@ -28,6 +33,29 @@
     busy = true;
     try {
       await post('/api/feeds', { url: feedUrl });
+    } catch (error) {
+      console.warn(error);
+    }
+    busy = false;
+  }
+
+  async function updateGroup({
+    feedId,
+    groupId
+  }: {
+    feedId: Feed['id'];
+    groupId: FeedGroup['id'];
+  }) {
+    busy = true;
+    try {
+      await put<AddGroupFeedRequest, AddGroupFeedResponse>('/api/feedgroups', {
+        feedId,
+        groupId
+      });
+      console.log('invalidating feedstats');
+      invalidate('/api/feedstats');
+      // TODO: don't store so much in the session user; we want to be able to
+      // invalidate things like the list of user feeds and feed groups
     } catch (error) {
       console.warn(error);
     }
@@ -66,7 +94,12 @@
                     <div class="feed-url">{feed.url}</div>
                   </div>
                   <div>
-                    <Select value={feedGroups[feed.id] ?? 'not subscribed'}>
+                    <Select
+                      value={feedGroups[feed.id] ?? 'not subscribed'}
+                      on:change={({ detail: { value } }) => {
+                        updateGroup({ feedId: feed.id, groupId: value });
+                      }}
+                    >
                       <option value="not subscribed">Not subscribed</option>
                       {#each groups as group (group.id)}
                         <option value={group.id}>{group.name}</option>

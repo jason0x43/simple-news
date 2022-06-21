@@ -4,6 +4,7 @@ import {
   type ArticleHeadingWithUserData,
   type ArticleUserData
 } from '$lib/db/article';
+import { unauthResponse, type ErrorResponse } from '$lib/request';
 import { getSessionUser } from '$lib/session';
 import { getFeedsFromUser, getQueryParam } from '$lib/util';
 import type { Article, Feed } from '@prisma/client';
@@ -14,9 +15,12 @@ import type { RequestHandler } from '@sveltejs/kit';
  */
 export const get: RequestHandler<
   Record<string, string>,
-  ArticleHeadingWithUserData[] | null
+  ArticleHeadingWithUserData[] | ErrorResponse
 > = async function ({ url, locals }) {
   const user = getSessionUser(locals);
+  if (!user) {
+    return unauthResponse();
+  }
 
   let feedIds: Feed['id'][] | undefined;
 
@@ -65,6 +69,9 @@ export const put: RequestHandler<
   ArticleUpdateResponse
 > = async function ({ request, locals }) {
   const user = getSessionUser(locals);
+  if (!user) {
+    return unauthResponse();
+  }
 
   const data: ArticleUpdateRequest = await request.json();
 

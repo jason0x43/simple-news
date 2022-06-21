@@ -43,8 +43,6 @@ export const post: RequestHandler<
   }
 
   const parsedFeed = await downloadFeed(data.url);
-  console.log(`parsed feed for ${data.url}: ${parsedFeed.title}`);
-
   const feed = await prisma.feed.upsert({
     where: {
       url: data.url

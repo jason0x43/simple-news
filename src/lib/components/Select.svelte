@@ -1,9 +1,16 @@
 <script type="ts">
+  import { createEventDispatcher } from 'svelte';
+
   export let value: string;
+  const dispatch = createEventDispatcher();
+
+  function handleChange(event: Event & { currentTarget: HTMLSelectElement }) {
+    dispatch('change', { value: event.currentTarget.value });
+  }
 </script>
 
 <div class="select">
-  <select bind:value>
+  <select bind:value on:change={handleChange}>
     <slot />
   </select>
 </div>
