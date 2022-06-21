@@ -29,6 +29,9 @@
     box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+    max-width: 80%;
+    max-height: 80%;
   }
 
   .title {
@@ -38,5 +41,21 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+  }
+
+  .content {
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* Mobile */
+  @media only screen and (max-width: 800px) {
+    .dialog {
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      min-width: 100%;
+      min-height: 100%;
+    }
   }
 </style>

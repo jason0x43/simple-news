@@ -75,6 +75,10 @@
     }
   }
 
+  :global(*:focus) {
+    outline: none;
+  }
+
   :global(a) {
     color: var(--link);
   }
@@ -82,6 +86,7 @@
   :global(input) {
     border: solid 1px var(--border);
     border-radius: var(--border-radius);
+    box-sizing: border-box;
     font-size: var(--font-size);
     padding: 4px;
   }
@@ -91,14 +96,17 @@
     background: white;
     border: solid 1px var(--border);
     border-radius: var(--border-radius);
+    box-sizing: border-box;
     font-size: var(--font-size);
+    margin: 0;
     padding: 4px;
   }
 
   :global(button) {
+    background: var(--hover-matte);
     border: solid 1px var(--border);
     border-radius: var(--border-radius);
-    background: var(--hover-matte);
+    box-sizing: border-box;
     font-size: var(--font-size);
     padding: 4px 6px;
   }

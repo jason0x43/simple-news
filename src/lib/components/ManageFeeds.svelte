@@ -28,74 +28,82 @@
 <Portal anchor="modal">
   <Dialog title="Manage Feeds" {onClose}>
     <div class="manage-feeds">
-      <section>
-        <h3>Subscribed feeds</h3>
-        <div class="list-wrapper">
-          <table>
-            <tbody>
+      <div class="scroller">
+        <section>
+          <h3>Feeds</h3>
+          <div class="list-wrapper">
+            <div class="table">
               {#each feeds as feed (feed.id)}
-                <tr>
-                  <td>{feed.title}</td>
-                  <td>
-                    <select>
+                <div class="row">
+                  <div class="feed">
+                    {feed.title}
+                    <div class="feed-url">{feed.url}</div>
+                  </div>
+                  <div>
+                    <select value={feedGroups[feed.id]}>
+                      <option value="not subscribed">Not subscribed</option>
                       {#each groups as group (group.id)}
-                        <option
-                          value={group.id}
-                          selected={feedGroups[feed.id] === group.id}
-                          >{group.name}</option
-                        >
+                        <option value={group.id}>{group.name}</option>
                       {/each}
                     </select>
-                  </td>
-                </tr>
+                  </div>
+                </div>
               {/each}
-            </tbody><tbody />
-          </table>
-        </div>
-      </section>
+            </div>
+          </div>
+        </section>
 
-      <section>
-        <h3>Add Feed</h3>
-        <form>
-          <input name="feed-url" placeholder="https://..." />
-          <button>Save</button>
-        </form>
+        <section>
+          <h3>Add Feed</h3>
+          <form>
+            <input name="feed-url" placeholder="https://..." />
+            <button>Save</button>
+          </form>
 
-        <h3>Add Group</h3>
-        <form>
-          <input name="group-name" placeholder="Applications" />
-        </form>
+          <h3>Add Group</h3>
+          <form>
+            <input name="group-name" placeholder="Applications" />
+            <button>Save</button>
+          </form>
 
-        <h3>Rename Group</h3>
-        <form>
-          <select>
-            {#each groups as group (group.id)}
-              <option value={group.id}>{group.name}</option>
-            {/each}
-          </select>
-          <input name="group-name" placeholder="Applications" />
-        </form>
-      </section>
+          <h3>Rename Group</h3>
+          <form>
+            <select>
+              {#each groups as group (group.id)}
+                <option value={group.id}>{group.name}</option>
+              {/each}
+            </select>
+            <input name="group-name" placeholder="Applications" />
+            <button>Save</button>
+          </form>
+        </section>
+      </div>
     </div>
   </Dialog>
 </Portal>
 
 <style>
   .manage-feeds {
-    padding: 1em;
     display: flex;
-    flex-direction: row;
+  }
+
+  .scroller {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 1em;
-    max-height: 75vh;
+    padding: 1em;
+    flex-grow: 1;
   }
 
   section {
     border: solid 1px #eee;
     border-radius: var(--border-radius);
+    box-sizing: border-box;
     padding: 1em;
     display: flex;
     flex-direction: column;
     gap: 1em;
+    overflow: auto;
   }
 
   h3 {
@@ -104,9 +112,71 @@
 
   .list-wrapper {
     overflow: auto;
+    display: flex;
   }
 
-  input[name='feed-url'] {
-    width: 20em;
+  form {
+    display: flex;
+    gap: var(--gap);
+  }
+
+  input {
+    flex-grow: 1;
+    min-width: 1em;
+  }
+
+  .feed-url {
+    font-style: italic;
+    font-size: 90%;
+    margin-top: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .table {
+    display: grid;
+    grid-template-columns: 1fr min-content;
+    grid-auto-rows: min-content;
+    width: 100%;
+  }
+
+  .row {
+    display: contents;
+  }
+
+  .row > * {
+    border-bottom: solid 1px var(--border);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    padding: 0.5em 0;
+  }
+
+  .row:last-child > * {
+    border-bottom: none;
+    padding-bottom: none;
+  }
+
+  .feed {
+    overflow: hidden;
+    padding-right: 1em;
+  }
+
+  /* Mobile */
+  @media only screen and (max-width: 800px) {
+    .manage-feeds {
+      display: flex;
+      flex-direction: column;
+      overflow: auto;
+    }
+
+    .scroller {
+      display: flex;
+      flex-direction: column;
+      gap: 1em;
+      flex-grow: 1;
+      flex-shrink: 0;
+      padding: 1em;
+    }
   }
 </style>
