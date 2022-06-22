@@ -1,7 +1,6 @@
 <script type="ts">
   import type { Feed } from '@prisma/client';
-  import { session } from '$app/stores';
-  import { getFeedsFromUser } from '$lib/util';
+  import { page } from '$app/stores';
   import type { FeedGroupWithFeeds } from '$lib/db/feedgroup';
   import UserIcon from '$lib/icons/User.svelte';
   import RssIcon from '$lib/icons/Rss.svelte';
@@ -13,9 +12,8 @@
   let title = '';
 
   $: {
-    const user = $session.user;
-    const feeds = getFeedsFromUser(user);
-    title = getFeedsTitle(user.feedGroups, feeds, selectedFeedIds);
+    const { feeds, feedGroups } = $page.stuff;
+    title = getFeedsTitle(feedGroups, feeds, selectedFeedIds);
   }
 
   function getFeedsTitle(

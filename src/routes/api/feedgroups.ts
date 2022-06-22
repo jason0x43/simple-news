@@ -4,15 +4,26 @@ import {
   unauthResponse,
   type ErrorResponse
 } from '$lib/request';
-import type { Feed, FeedGroup, PrismaPromise } from '@prisma/client';
+import type {
+  Feed,
+  FeedGroup,
+  FeedGroupFeed,
+  PrismaPromise
+} from '@prisma/client';
 import type { RequestHandler } from '@sveltejs/kit';
+
+export type FeedGroupWithFeeds = FeedGroup & {
+  feeds: FeedGroupFeed[];
+};
+
+export type GetFeedGroupsResponse = FeedGroupWithFeeds[] | ErrorResponse;
 
 /**
  * Get all feeds
  */
 export const get: RequestHandler<
   Record<string, string>,
-  FeedGroup[] | ErrorResponse
+  GetFeedGroupsResponse
 > = async ({ locals }) => {
   const user = locals.session?.user;
   if (!user) {
@@ -23,6 +34,9 @@ export const get: RequestHandler<
     body: await prisma.feedGroup.findMany({
       where: {
         userId: user.id
+      },
+      include: {
+        feeds: true
       }
     })
   };
@@ -33,7 +47,7 @@ export type AddGroupFeedRequest = {
   groupId: FeedGroup['id'];
 };
 
-export type AddGroupFeedResponse = ErrorResponse;
+export type AddGroupFeedResponse = Record<string, never> | ErrorResponse;
 
 /**
  * Add a feed to a feed group

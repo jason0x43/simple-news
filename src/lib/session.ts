@@ -1,6 +1,5 @@
-import type { Session } from '@prisma/client';
+import type { Session, User } from '@prisma/client';
 import * as cookie from 'cookie';
-import type { UserWithFeeds } from './db/user';
 
 const options = {
   path: '/',
@@ -51,7 +50,7 @@ function setHeader<T extends Headers | Record<string, string>>(
   return headers;
 }
 
-export function getSessionUser(locals: App.Locals): UserWithFeeds | undefined {
+export function getSessionUser(locals: App.Locals): User | undefined {
   const { session } = locals;
   return session?.user;
 }

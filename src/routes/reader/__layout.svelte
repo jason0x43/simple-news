@@ -1,5 +1,12 @@
 <script context="module" type="ts">
+  import type { GetFeedStatsResponse } from '../api/feedstats';
+  import type {
+    FeedGroupWithFeeds,
+    GetFeedGroupsResponse
+  } from '../api/feedgroups';
   import type { Load } from '@sveltejs/kit';
+  import { errorResponse, isErrorResponse } from '$lib/request';
+  import type { GetFeedsResponse } from '../api/feeds';
 
   export const load: Load = async ({ session, params, fetch }) => {
     const user = session.user;
@@ -11,7 +18,22 @@
     }
 
     const feedStatsResp = await fetch('/api/feedstats');
-    const feedStats: FeedStats = await feedStatsResp.json();
+    const feedStats = (await feedStatsResp.json()) as GetFeedStatsResponse;
+    if (isErrorResponse(feedStats)) {
+      return errorResponse(feedStats.errors);
+    }
+
+    const feedGroupsResp = await fetch('/api/feedgroups');
+    const feedGroups = (await feedGroupsResp.json()) as GetFeedGroupsResponse;
+    if (isErrorResponse(feedGroups)) {
+      return errorResponse(feedGroups.errors);
+    }
+
+    const feedsResp = await fetch('/api/feeds');
+    const feeds = (await feedsResp.json()) as GetFeedsResponse;
+    if (isErrorResponse(feeds)) {
+      return errorResponse(feeds.errors);
+    }
 
     let selectedFeedIds: Feed['id'][] | undefined;
 
@@ -19,10 +41,9 @@
     if (feedOrGroupId) {
       const [type, id] = feedOrGroupId.split('-');
       if (type === 'group') {
-        const group = user.feedGroups.find((group) => group.id === id);
-        selectedFeedIds = group?.feeds.map(({ feed: { id } }) => id) ?? [];
+        const group = feedGroups.find((group) => group.id === id);
+        selectedFeedIds = group?.feeds.map(({ feedId }) => feedId) ?? [];
       } else {
-        const feeds = getFeedsFromUser(user);
         const feed = feeds.find((feed) => feed.id === id);
         selectedFeedIds = feed ? [feed.id] : [];
       }
@@ -30,9 +51,14 @@
 
     return {
       props: {
-        user,
         selectedFeedIds,
-        feedStats
+        feedStats,
+        feeds,
+        feedGroups
+      },
+      stuff: {
+        feeds,
+        feedGroups
       }
     };
   };
@@ -43,8 +69,6 @@
   import FeedsList from '$lib/components/FeedsList.svelte';
   import Select from '$lib/components/Select.svelte';
   import type { Feed } from '@prisma/client';
-  import type { UserWithFeeds } from '$lib/db/user';
-  import { getFeedsFromUser } from '$lib/util';
   import type { FeedStats } from '$lib/db/feed';
   import { slide } from '$lib/transition';
   import { articleFilter, sidebarVisible } from '$lib/stores';
@@ -53,9 +77,10 @@
   import { setReaderContext } from '$lib/contexts';
   import ManageFeeds from '$lib/components/ManageFeeds.svelte';
 
-  export let user: UserWithFeeds;
   export let selectedFeedIds: Feed['id'][] | undefined;
   export let feedStats: FeedStats;
+  export let feeds: Feed[];
+  export let feedGroups: FeedGroupWithFeeds[];
 
   let sbVisible = !selectedFeedIds;
   let managingFeeds = false;
@@ -113,8 +138,9 @@
     >
       <div class="sidebar-feeds">
         <FeedsList
-          {user}
+          {feeds}
           {feedStats}
+          {feedGroups}
           articleFilter={$articleFilter}
           {selectedFeedIds}
           onSelect={() => (sbVisible = false)}

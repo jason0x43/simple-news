@@ -1,18 +1,17 @@
 <script type="ts">
   import type { Feed } from '@prisma/client';
   import type { FeedStats } from '$lib/db/feed';
-  import type { UserWithFeeds } from '$lib/db/user';
   import type { ArticleFilter } from '$lib/types';
-  import { getFeedsFromGroup, getFeedsFromUser } from '$lib/util';
+  import type { FeedGroupWithFeeds } from 'src/routes/api/feedgroups';
 
-  export let user: UserWithFeeds;
+  export let feeds: Feed[];
+  export let feedGroups: FeedGroupWithFeeds[];
   export let feedStats: FeedStats;
   export let articleFilter: ArticleFilter;
   export let selectedFeedIds: Feed['id'][] | undefined;
   export let onSelect: () => void;
 
   let expanded: { [title: string]: boolean } = {};
-  const feeds = getFeedsFromUser(user);
 
   function getArticleCount(
     feeds: Feed[],
@@ -34,15 +33,27 @@
     }
     return feeds.every(({ id }) => selected.includes(id));
   }
+
+  function getGroupFeeds(group: FeedGroupWithFeeds, feeds: Feed[]): Feed[] {
+    const groupFeeds: Feed[] = [];
+    for (const feedGroupFeed of group.feeds) {
+      const feed = feeds.find(({ id }) => id === feedGroupFeed.feedId);
+      if (feed) {
+        groupFeeds.push(feed);
+      }
+    }
+    return groupFeeds;
+  }
 </script>
 
 <ul class="feeds">
-  {#each user.feedGroups as group (group.name)}
-    {#if getArticleCount(getFeedsFromGroup(group), feedStats, articleFilter) > 0}
+  {#each feedGroups as group (group.name)}
+    {@const groupFeeds = getGroupFeeds(group, feeds)}
+    {#if getArticleCount(groupFeeds, feedStats, articleFilter) > 0}
       <li class:expanded={expanded[group.name]}>
         <div
           class="group"
-          class:selected={isSelected(getFeedsFromGroup(group), selectedFeedIds)}
+          class:selected={isSelected(groupFeeds, selectedFeedIds)}
         >
           <span
             class="expander"
@@ -67,17 +78,13 @@
           </a>
           {#if feedStats}
             <span class="Feeds-unread">
-              {getArticleCount(
-                getFeedsFromGroup(group),
-                feedStats,
-                articleFilter
-              )}
+              {getArticleCount(groupFeeds, feedStats, articleFilter)}
             </span>
           {/if}
         </div>
 
         <ul>
-          {#each getFeedsFromGroup(group) as feed (feed.id)}
+          {#each groupFeeds as feed (feed.id)}
             {#if getArticleCount([feed], feedStats, articleFilter) > 0}
               <li
                 class="feed"

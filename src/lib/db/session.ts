@@ -1,9 +1,8 @@
 import { prisma } from '$lib/db';
 import type { Session, User } from '@prisma/client';
-import type { UserWithFeeds } from './user';
 
 export type SessionWithUser = Session & {
-  user: UserWithFeeds;
+  user: User;
 };
 
 export async function createUserSession(userId: User['id']): Promise<Session> {

@@ -1,9 +1,14 @@
-import { getFeedStats, getUserFeeds } from '$lib/db/feed';
-import { unauthResponse } from '$lib/request';
+import { getFeedStats, getUserFeeds, type FeedStats } from '$lib/db/feed';
+import { unauthResponse, type ErrorResponse } from '$lib/request';
 import { getSessionUser } from '$lib/session';
 import type { RequestHandler } from '@sveltejs/kit';
 
-export const get: RequestHandler = async ({ locals }) => {
+export type GetFeedStatsResponse = FeedStats | ErrorResponse;
+
+export const get: RequestHandler<
+  Record<string, string>,
+  GetFeedStatsResponse
+> = async ({ locals }) => {
   const user = getSessionUser(locals);
   if (!user) {
     return unauthResponse();

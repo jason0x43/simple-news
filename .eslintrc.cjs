@@ -22,6 +22,9 @@ module.exports = {
     node: true
   },
   rules: {
-    '@typescript-eslint/no-unused-vars': ['warn', { varsIgnorePattern: '^_' }]
+    '@typescript-eslint/no-unused-vars': [
+      'warn',
+      { varsIgnorePattern: '^_', ignoreRestSiblings: true }
+    ]
   }
 };

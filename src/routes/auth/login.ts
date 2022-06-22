@@ -1,6 +1,8 @@
 import { createUserSession } from '$lib/db/session';
-import { getUserById, verifyLogin, type UserWithFeeds } from '$lib/db/user';
+import { verifyLogin } from '$lib/db/user';
+import type { ErrorResponse } from '$lib/request';
 import { setSessionCookie } from '$lib/session';
+import type { User } from '@prisma/client';
 import type { RequestHandler } from '@sveltejs/kit';
 
 export type LoginRequest = {
@@ -8,10 +10,11 @@ export type LoginRequest = {
   password: string;
 };
 
-export type LoginResponse = {
-  user?: UserWithFeeds;
-  errors?: { username?: string; password?: string };
-};
+export type LoginResponse =
+  | {
+      user?: User;
+    }
+  | ErrorResponse<{ username?: string; password?: string }>;
 
 export const post: RequestHandler<
   Record<string, string>,
@@ -28,12 +31,11 @@ export const post: RequestHandler<
   }
 
   const session = await createUserSession(user.id);
-  const userWithFeeds = (await getUserById(user.id)) as UserWithFeeds;
 
   return {
     headers: setSessionCookie(session),
     body: {
-      user: userWithFeeds
+      user
     }
   };
 };

@@ -1,17 +1,10 @@
 <script type="ts">
-  import { session, page } from '$app/stores';
+  import { page } from '$app/stores';
   import type { Article, Feed } from '@prisma/client';
   import ContextMenu from './ContextMenu.svelte';
   import { getAge } from '$lib/date';
   import type { ArticleHeadingWithUserData } from '$lib/db/article';
-  import {
-    getFeedsFromUser,
-    loadValue,
-    put,
-    storeValue,
-    unescapeHtml,
-    uniquify
-  } from '$lib/util';
+  import { loadValue, storeValue, unescapeHtml, uniquify } from '$lib/util';
   import { articleFilter, articles, sidebarVisible } from '$lib/stores';
   import { invalidate } from '$app/navigation';
   import type {
@@ -19,18 +12,19 @@
     ArticleUpdateResponse
   } from 'src/routes/api/articles';
   import { onMount } from 'svelte';
+  import { put } from '$lib/request';
 
   type ScrollData = { visibleCount: number; scrollTop: number };
   const updatedArticleIds = new Set<Article['id']>();
 
-  $: user = $session.user;
-  $: feeds = getFeedsFromUser(user);
+  export let feeds: Feed[];
+
   $: selectedFeed = $page.params.feedId;
   $: selectedArticleId = $page.params.articleId;
   $: articleFeedIds = uniquify(
     $articles?.slice(0, 40).map(({ feedId }) => feedId) ?? []
   );
-  $: icons = getFeedsFromUser(user)
+  $: icons = feeds
     .filter(({ id }) => articleFeedIds.includes(id))
     .map(({ icon }) => icon);
 

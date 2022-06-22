@@ -1,6 +1,6 @@
 <script type="ts">
   import { session } from '$app/stores';
-  import { post, put } from '$lib/util';
+  import { post, put } from '$lib/request';
   import Dialog from './Dialog.svelte';
   import Portal from './Portal.svelte';
   import Select from './Select.svelte';
@@ -54,8 +54,7 @@
       });
       console.log('invalidating feedstats');
       invalidate('/api/feedstats');
-      // TODO: don't store so much in the session user; we want to be able to
-      // invalidate things like the list of user feeds and feed groups
+      invalidate('/api/feedgroups');
     } catch (error) {
       console.warn(error);
     }

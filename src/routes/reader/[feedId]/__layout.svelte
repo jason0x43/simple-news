@@ -20,6 +20,7 @@
   import ArticlesList from '$lib/components/ArticlesList.svelte';
   import type { ArticleHeadingWithUserData } from '$lib/db/article';
   import { articles } from '$lib/stores';
+  import { page } from '$app/stores';
 
   export let articleHeadings: ArticleHeadingWithUserData[];
 
@@ -27,7 +28,7 @@
 </script>
 
 <div class="feed-layout">
-  <ArticlesList />
+  <ArticlesList feeds={$page.stuff.feeds ?? []} />
   <slot />
 </div>
 

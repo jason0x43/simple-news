@@ -1,10 +1,10 @@
 <script type="ts">
   import { goto } from '$app/navigation';
   import { session } from '$app/stores';
-  import { post } from '$lib/util';
+  import { isErrorResponse, post } from '$lib/request';
   import type { LoginRequest, LoginResponse } from './auth/login';
 
-  let errors: LoginResponse['errors'] | null = null;
+  let errors: Record<string, string> | null = null;
   let username = '';
   let password = '';
 
@@ -13,8 +13,10 @@
       username,
       password
     });
-    errors = response.errors;
-    if (response.user) {
+
+    if (isErrorResponse(response)) {
+      errors = response.errors;
+    } else {
       $session.user = response.user;
       goto('/');
     }

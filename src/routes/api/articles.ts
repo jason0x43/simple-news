@@ -1,12 +1,16 @@
+import { prisma } from '$lib/db';
 import {
   getArticleHeadings,
   updateArticlesUserData,
   type ArticleHeadingWithUserData,
   type ArticleUserData
 } from '$lib/db/article';
-import { unauthResponse, type ErrorResponse } from '$lib/request';
+import {
+  getQueryParam,
+  unauthResponse,
+  type ErrorResponse
+} from '$lib/request';
 import { getSessionUser } from '$lib/session';
-import { getFeedsFromUser, getQueryParam } from '$lib/util';
 import type { Article, Feed } from '@prisma/client';
 import type { RequestHandler } from '@sveltejs/kit';
 
@@ -28,11 +32,21 @@ export const get: RequestHandler<
   if (feedOrGroupId) {
     const [type, id] = feedOrGroupId.split('-');
     if (type === 'group') {
-      const group = user.feedGroups.find((group) => group.id === id);
-      feedIds = group?.feeds.map(({ feed: { id } }) => id) ?? [];
+      const group = await prisma.feedGroup.findUnique({
+        where: {
+          id
+        },
+        include: {
+          feeds: true
+        }
+      });
+      feedIds = group?.feeds.map(({ feedId }) => feedId) ?? [];
     } else {
-      const feeds = getFeedsFromUser(user);
-      const feed = feeds.find((feed) => feed.id === id);
+      const feed = await prisma.feed.findUnique({
+        where: {
+          id
+        }
+      });
       feedIds = feed ? [feed.id] : [];
     }
   }
