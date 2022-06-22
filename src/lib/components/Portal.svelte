@@ -1,6 +1,7 @@
 <script lang="ts">
   import { getAppContext } from '$lib/contexts';
   import { onMount } from 'svelte';
+  import { fade } from 'svelte/transition';
 
   const context = getAppContext();
 
@@ -26,7 +27,14 @@
   });
 </script>
 
-<div class="portal" class:modal={anchor === 'modal'} bind:this={ref} {style}>
+<div
+  class="portal"
+  class:modal={anchor === 'modal'}
+  bind:this={ref}
+  {style}
+  in:fade={{ duration: anchor === 'modal' ? 150 : 0 }}
+  out:fade={{ duration: anchor === 'modal' ? 150 : 0 }}
+>
   <slot />
 </div>
 
