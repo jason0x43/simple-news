@@ -48,7 +48,10 @@ async function downloadFeed(feed: Feed) {
               feedId: feed.id
             }
           },
-          update: {},
+          update: {
+            content:
+              entry['content:encoded'] ?? entry.content ?? entry.summary ?? null
+          },
           create: {
             articleId,
             feedId: feed.id,
@@ -57,7 +60,8 @@ async function downloadFeed(feed: Feed) {
             published: Number(
               entry.pubDate ? new Date(entry.pubDate) : new Date()
             ),
-            content: entry['content:encoded'] ?? entry.content ?? null
+            content:
+              entry['content:encoded'] ?? entry.content ?? entry.summary ?? null
           }
         });
       })

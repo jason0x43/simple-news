@@ -39,7 +39,7 @@
     } else if (selectedFeedIds.length > 1) {
       for (const group of feedGroups) {
         for (const groupFeed of group.feeds) {
-          if (groupFeed.feed.id === selectedFeedIds[0]) {
+          if (groupFeed.feedId === selectedFeedIds[0]) {
             return group.name;
           }
         }

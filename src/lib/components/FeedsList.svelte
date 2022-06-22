@@ -93,7 +93,7 @@
                   onSelect?.();
                 }}
               >
-                <a href={`reader/feed-${feed.id}`} class="title">
+                <a href={`/reader/feed-${feed.id}`} class="title">
                   {feeds?.find((f) => f.id === feed.id)?.title}
                 </a>
                 <div class="unread">

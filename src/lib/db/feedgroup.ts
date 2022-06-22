@@ -1,10 +1,8 @@
-import type { Feed, FeedGroup, FeedGroupFeed } from '@prisma/client';
+import type { FeedGroup, FeedGroupFeed } from '@prisma/client';
 import { prisma } from '../db';
 
 export type FeedGroupWithFeeds = FeedGroup & {
-  feeds: (FeedGroupFeed & {
-    feed: Feed;
-  })[];
+  feeds: FeedGroupFeed[];
 };
 
 export async function getUserFeedGroupById(
