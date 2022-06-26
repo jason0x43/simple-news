@@ -119,4 +119,11 @@
     display: flex;
     align-items: center;
   }
+
+  /* Mobile */
+  @media only screen and (max-width: 800px) {
+    h1 {
+      display: none;
+    }
+  }
 </style>
