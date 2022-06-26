@@ -1,8 +1,9 @@
 <script type="ts">
   import { page } from '$app/stores';
   import type { ArticleWithUserData } from '$lib/db/article';
-  import { unescapeHtml } from '$lib/util';
+  import { loadValue, storeValue, unescapeHtml } from '$lib/util';
   import CloseIcon from '$lib/icons/Close.svelte';
+  import { onMount } from 'svelte';
 
   export let article: ArticleWithUserData | null;
 
@@ -16,6 +17,7 @@
   $: {
     if (prevArticle !== article) {
       scrollBox?.scrollTo({ top: 0 });
+      prevArticle = article;
     }
   }
 
@@ -28,17 +30,42 @@
     }
   }
 
-  export function resetScroll() {
-    if (scrollBox) {
-      const header = scrollBox.querySelector('.scroller > .header');
-      header?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+  type ScrollData = { articleId: string; scrollTop: number };
+  let scrollTimer: ReturnType<typeof setTimeout>;
+
+  function handleScroll(event: Event) {
+    const target = event.target as HTMLDivElement;
+    const { scrollTop } = target;
+
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => {
+      if (article) {
+        storeValue<ScrollData>('articleScrollData', {
+          articleId: article.id,
+          scrollTop
+        });
+      }
+    }, 500);
   }
+
+  export function resetScroll() {
+    const header = scrollBox?.querySelector('.scroller > .header');
+    header?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  onMount(() => {
+    const scrollData = loadValue<ScrollData>('articleScrollData');
+    if (scrollData && article && scrollData.articleId === article.id) {
+      setTimeout(() => {
+        scrollBox?.scrollTo({ top: scrollData.scrollTop });
+      });
+    }
+  });
 </script>
 
 {#if visible}
   <div class="article">
-    <div class="scroller" bind:this={scrollBox}>
+    <div class="scroller" bind:this={scrollBox} on:scroll={handleScroll}>
       <div class="header">
         <a href={article?.link ?? undefined} {target}>
           <h2>{article?.title}</h2>
