@@ -4,7 +4,13 @@
   import ContextMenu from './ContextMenu.svelte';
   import { getAge } from '$lib/date';
   import type { ArticleHeadingWithUserData } from '$lib/db/article';
-  import { loadValue, storeValue, unescapeHtml, uniquify } from '$lib/util';
+  import {
+    clearValue,
+    loadValue,
+    storeValue,
+    unescapeHtml,
+    uniquify
+  } from '$lib/util';
   import { articleFilter, articles, sidebarVisible } from '$lib/stores';
   import { invalidate } from '$app/navigation';
   import type {
@@ -16,6 +22,7 @@
 
   type ScrollData = { visibleCount: number; scrollTop: number };
   const updatedArticleIds = new Set<Article['id']>();
+  const scrollDataKey = 'scrollData';
 
   export let feeds: Feed[];
 
@@ -31,12 +38,22 @@
   let visibleCount = 40;
   let scrollBox: HTMLElement | undefined;
   let prevArticles = articles;
+  let prevFeeds = feeds;
 
   $: {
     if (prevArticles !== articles) {
       visibleCount = 40;
       scrollBox?.scrollTo(0, 0);
       prevArticles = articles;
+    }
+  }
+
+  $: {
+    // reset state when feeds change
+    if (feeds !== prevFeeds) {
+      updatedArticleIds.clear();
+      clearValue(scrollDataKey);
+      visibleCount = 40;
     }
   }
 
@@ -111,7 +128,7 @@
 
     clearTimeout(scrollTimer);
     scrollTimer = setTimeout(() => {
-      storeValue<ScrollData>('scrollData', {
+      storeValue<ScrollData>(scrollDataKey, {
         visibleCount,
         scrollTop
       });
@@ -136,12 +153,10 @@
     }
   }
 
-  let touchStart: number;
   let touchTimer: ReturnType<typeof setTimeout>;
 
   function handleTouchStart(event: TouchEvent) {
     const { pageX, pageY } = event.touches[0];
-    touchStart = Date.now();
     touchTimer = setTimeout(() => {
       handleContextMenu({
         target: event.target,
@@ -214,7 +229,7 @@
   }
 
   onMount(() => {
-    const scrollData = loadValue<ScrollData>('scrollData');
+    const scrollData = loadValue<ScrollData>(scrollDataKey);
     if (scrollData) {
       visibleCount = scrollData.visibleCount;
       setTimeout(() => {

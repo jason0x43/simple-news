@@ -26,3 +26,7 @@ export function loadValue<T>(key: string): T | undefined {
 export function storeValue<T>(key: string, value: T): void {
   localStorage.setItem(key, JSON.stringify(value));
 }
+
+export function clearValue(key: string): void {
+  localStorage.removeItem(key);
+}
