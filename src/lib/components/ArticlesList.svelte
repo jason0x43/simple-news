@@ -54,6 +54,7 @@
       updatedArticleIds.clear();
       clearValue(scrollDataKey);
       visibleCount = 40;
+      scrollBox?.scrollTo(0, 0);
     }
   }
 
