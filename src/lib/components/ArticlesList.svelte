@@ -45,6 +45,7 @@
       updatedArticleIds.add(selectedArticleId);
       if (!$articles?.find(({ id }) => id === selectedArticleId)?.read) {
         markAsRead([selectedArticleId], true);
+        updatedArticleIds.add(selectedArticleId);
       }
     }
   }
@@ -174,6 +175,9 @@
 
     if (ids) {
       markAsRead(ids, read);
+      for (const id of ids) {
+        updatedArticleIds.add(id);
+      }
     }
   }
 
@@ -184,10 +188,6 @@
 
   async function markAsRead(articleIds: Article['id'][], read: boolean) {
     try {
-      for (const id of articleIds) {
-        updatedArticleIds.add(id);
-      }
-
       const data = await put<ArticleUpdateRequest, ArticleUpdateResponse>(
         '/api/articles',
         {
@@ -276,10 +276,11 @@
       <button
         on:click={() => {
           if ($articles) {
-            markAsRead(
-              $articles.map(({ id }) => id),
-              true
-            );
+            const ids = $articles.map(({ id }) => id);
+            markAsRead(ids, true);
+            for (const id of ids) {
+              updatedArticleIds.delete(id);
+            }
           }
         }}>Mark all read</button
       >
