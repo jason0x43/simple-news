@@ -117,7 +117,12 @@
     }, 500);
   }
 
-  function handleContextMenu(event: MouseEvent) {
+  function handleContextMenu(event: {
+    target: EventTarget | null;
+    x: number;
+    y: number;
+    preventDefault?: () => void;
+  }) {
     let target = event.target as HTMLElement | null;
     while (target && !target.hasAttribute('data-id')) {
       target = target.parentElement;
@@ -126,12 +131,28 @@
     if (target) {
       activeArticleId = target.getAttribute('data-id') as string;
       menuAnchor = { x: event.x, y: event.y };
-      event.preventDefault();
+      event.preventDefault?.();
     }
   }
 
-  function handleTouchStart() {}
-  function handleTouchEnd() {}
+  let touchStart: number;
+  let touchTimer: ReturnType<typeof setTimeout>;
+
+  function handleTouchStart(event: TouchEvent) {
+    const { pageX, pageY } = event.touches[0];
+    touchStart = Date.now();
+    touchTimer = setTimeout(() => {
+      handleContextMenu({
+        target: event.target,
+        x: pageX,
+        y: pageY
+      });
+    }, 500);
+  }
+
+  function handleTouchEnd() {
+    clearTimeout(touchTimer);
+  }
 
   function handleContextSelect(value: string) {
     const read = !/unread/.test(value);
