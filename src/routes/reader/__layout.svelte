@@ -189,7 +189,7 @@
     flex-direction: column;
     position: absolute;
     left: 0;
-    z-index: 2;
+    z-index: 30;
   }
 
   .sidebar-feeds {
