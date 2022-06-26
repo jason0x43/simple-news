@@ -27,19 +27,21 @@
 <svelte:window on:click={handleClick} />
 
 <Portal {anchor}>
-  <Dialog>
-    <ul class="contextmenu" bind:this={ref}>
-      {#each items as item}
-        <li on:click={handleItemClick} data-value={item.value}>
-          {item.label ?? item.value}
-        </li>
-      {/each}
-    </ul>
-  </Dialog>
+  <ul class="contextmenu" bind:this={ref}>
+    {#each items as item}
+      <li on:click={handleItemClick} data-value={item.value}>
+        {item.label ?? item.value}
+      </li>
+    {/each}
+  </ul>
 </Portal>
 
 <style>
   .contextmenu {
+    background: var(--background);
+    border: solid 1px var(--border);
+    border-radius: var(--border-radius);
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
     color: var(--foreground);
     list-style-type: none;
     padding: 0;
