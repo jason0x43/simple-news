@@ -37,16 +37,7 @@
 
   let visibleCount = 40;
   let scrollBox: HTMLElement | undefined;
-  let prevArticles = articles;
   let prevFeeds = feeds;
-
-  $: {
-    if (prevArticles !== articles) {
-      visibleCount = 40;
-      scrollBox?.scrollTo(0, 0);
-      prevArticles = articles;
-    }
-  }
 
   $: {
     // reset state when feeds change
