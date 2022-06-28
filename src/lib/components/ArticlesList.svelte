@@ -37,15 +37,19 @@
 
   let visibleCount = 40;
   let scrollBox: HTMLElement | undefined;
-  let prevFeeds = feeds;
+  let prevFeed = selectedFeed;
 
   $: {
-    // reset state when feeds change
-    if (feeds !== prevFeeds) {
-      updatedArticleIds.clear();
-      clearValue(scrollDataKey);
-      visibleCount = 40;
-      scrollBox?.scrollTo(0, 0);
+    if (prevFeed !== selectedFeed) {
+      // reset state when selected feed changes (but not when it's first
+      // initialized)
+      if (prevFeed && selectedFeed) {
+        updatedArticleIds.clear();
+        clearValue(scrollDataKey);
+        visibleCount = 40;
+        scrollBox?.scrollTo(0, 0);
+      }
+      prevFeed = selectedFeed;
     }
   }
 
@@ -54,7 +58,6 @@
       updatedArticleIds.add(selectedArticleId);
       if (!$articles?.find(({ id }) => id === selectedArticleId)?.read) {
         markAsRead([selectedArticleId], true);
-        updatedArticleIds.add(selectedArticleId);
       }
     }
   }
@@ -181,10 +184,10 @@
     }
 
     if (ids) {
-      markAsRead(ids, read);
       for (const id of ids) {
         updatedArticleIds.add(id);
       }
+      markAsRead(ids, read);
     }
   }
 
@@ -284,10 +287,10 @@
         on:click={() => {
           if ($articles) {
             const ids = $articles.map(({ id }) => id);
-            markAsRead(ids, true);
             for (const id of ids) {
               updatedArticleIds.delete(id);
             }
+            markAsRead(ids, true);
           }
         }}>Mark all read</button
       >
