@@ -28,7 +28,6 @@ This starts your app in development mode, rebuilding assets on file changes.
    ```
 5. Setup the required environment variables using a systemd unit or `.envrc`:
    * `DATABASE_URL`
-   * `SESSION_SECRET`
    * `PORT` (optional)
 6. Start the app server
    ```

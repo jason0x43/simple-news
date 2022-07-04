@@ -1,6 +1,5 @@
 <script type="ts">
   import Portal from './Portal.svelte';
-  import Dialog from './Dialog.svelte';
 
   export let items: { label?: string; value: string }[];
   export let anchor: { x: number; y: number };
