@@ -63,7 +63,6 @@
 
   @media (prefers-color-scheme: dark) {
     #root {
-      --background: black;
       --matte: #222;
       --hover-matte: #444;
       --active-matte: #555;
@@ -89,6 +88,7 @@
     border: solid 1px var(--border);
     border-radius: var(--border-radius);
     font-size: var(--font-size);
+    color: var(--foreground);
     margin: 0;
     padding: 4px;
   }
