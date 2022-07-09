@@ -2,7 +2,7 @@
   "name": "simple-news",
   "version": "0.1.0",
   "scripts": {
-    "dev": "vite dev",
+    "dev": "vite dev --port=3001",
     "build": "vite build",
     "package": "svelte-kit package",
     "preview": "svelte-kit preview",
