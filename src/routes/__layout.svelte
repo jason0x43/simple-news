@@ -26,6 +26,67 @@
 </div>
 
 <style>
+  @font-face {
+    font-family: 'Merriweather';
+    src: url('/fonts/Merriweather-Black.woff2') format('woff2');
+    font-weight: 900;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'Merriweather';
+    src: url('/fonts/Merriweather-BlackItalic.woff2') format('woff2');
+    font-weight: 900;
+    font-style: italic;
+  }
+  @font-face {
+    font-family: 'Merriweather';
+    src: url('/fonts/Merriweather-Bold.woff2') format('woff2');
+    font-weight: bold;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'Merriweather';
+    src: url('/fonts/Merriweather-BoldItalic.woff2') format('woff2');
+    font-weight: bold;
+    font-style: italic;
+  }
+  @font-face {
+    font-family: 'Merriweather';
+    src: url('/fonts/Merriweather-Italic.woff2') format('woff2');
+    font-weight: normal;
+    font-style: italic;
+  }
+  @font-face {
+    font-family: 'Merriweather';
+    src: url('/fonts/Merriweather-Light.woff2') format('woff2');
+    font-weight: 300;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'Merriweather';
+    src: url('/fonts/Merriweather-LightItalic.woff2') format('woff2');
+    font-weight: 300;
+    font-style: italic;
+  }
+  @font-face {
+    font-family: 'Merriweather';
+    src: url('/fonts/Merriweather-Regular.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+  }
+
+  :global(body),
+  :global(html) {
+    padding: 0;
+    margin: 0;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    background: black;
+    color: white;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+  }
+
   #root {
     --gap: 8px;
     --matte: #f7f7f7;
