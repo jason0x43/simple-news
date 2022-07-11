@@ -1,10 +1,12 @@
-import type { Load } from '@sveltejs/kit';
+import type { RequestHandler } from '@sveltejs/kit';
 
-export const load: Load = async ({ session }) => {
-  if (session.user) {
+export const get: RequestHandler = async ({ locals }) => {
+  if (locals.session?.user) {
     return {
       status: 302,
-      redirect: '/reader'
+      headers: {
+        location: '/reader'
+      }
     };
   }
   return {};
