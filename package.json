@@ -17,9 +17,9 @@
     "download-feeds": "ts-node ./scripts/download-feeds.ts"
   },
   "devDependencies": {
-    "@sveltejs/adapter-node": "^1.0.0-next.79",
+    "@sveltejs/adapter-node": "1.0.0-next.78",
     "@sveltejs/kit": "next",
-    "@swc/core": "^1.2.210",
+    "@swc/core": "^1.2.211",
     "@types/bcryptjs": "^2.4.2",
     "@types/cookie": "^0.5.1",
     "@types/jsdom": "^16.2.14",
