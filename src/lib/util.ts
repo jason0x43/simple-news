@@ -16,7 +16,7 @@ export function uniquify<T>(val: T[]): T[] {
 }
 
 export function loadValue<T>(key: string): T | undefined {
-  const val = localStorage.getItem(key);
+  const val = window.sessionStorage.getItem(key);
   if (val) {
     return JSON.parse(val);
   }
@@ -24,9 +24,20 @@ export function loadValue<T>(key: string): T | undefined {
 }
 
 export function storeValue<T>(key: string, value: T): void {
-  localStorage.setItem(key, JSON.stringify(value));
+  window.sessionStorage.setItem(`simple-news:${key}`, JSON.stringify(value));
 }
 
 export function clearValue(key: string): void {
-  localStorage.removeItem(key);
+  window.sessionStorage.removeItem(`simple-news:${key}`);
+}
+
+export function clearStorage(): void {
+  const keys: string[] = [];
+  for (let i = 0; i < window.sessionStorage.length; i++) {
+    keys.push(window.sessionStorage.key(i) as string);
+  }
+  const appKeys = keys.filter((k) => /^simple-news:/.test(k));
+  for (const key of appKeys) {
+    window.sessionStorage.removeItem(key);
+  }
 }

@@ -76,6 +76,8 @@
   import { invalidate } from '$app/navigation';
   import { setReaderContext } from '$lib/contexts';
   import ManageFeeds from '$lib/components/ManageFeeds.svelte';
+  import { session } from '$app/stores';
+  import { clearStorage, loadValue, storeValue } from '$lib/util';
 
   export let selectedFeedIds: Feed['id'][] | undefined;
   export let feedStats: FeedStats;
@@ -116,7 +118,13 @@
     const interval = setInterval(() => {
       invalidate('/api/feedstats');
       invalidate((url) => /^\/reader\/[^/]+/.test(url));
-    }, 600000);
+    }, 600_000);
+
+    const activeSession = loadValue<string>('activeSession');
+    if (activeSession !== $session.id) {
+      clearStorage();
+      storeValue('activeSession', $session.id);
+    }
 
     return () => {
       clearInterval(interval);
