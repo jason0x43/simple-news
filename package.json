@@ -2,7 +2,7 @@
   "name": "simple-news",
   "version": "0.1.0",
   "scripts": {
-    "dev": "vite dev --port=3001",
+    "dev": "vite dev",
     "build": "vite build",
     "package": "svelte-kit package",
     "preview": "svelte-kit preview",
@@ -17,13 +17,13 @@
     "download-feeds": "ts-node ./scripts/download-feeds.ts"
   },
   "devDependencies": {
-    "@sveltejs/adapter-node": "1.0.0-next.78",
+    "@sveltejs/adapter-node": "^1.0.0-next.81",
     "@sveltejs/kit": "next",
-    "@swc/core": "^1.2.213",
+    "@swc/core": "^1.2.215",
     "@types/bcryptjs": "^2.4.2",
     "@types/cookie": "^0.5.1",
     "@types/jsdom": "^16.2.14",
-    "@types/node": "^18.0.3",
+    "@types/node": "^18.0.4",
     "@types/yargs": "^17.0.10",
     "@typescript-eslint/eslint-plugin": "^5.30.6",
     "@typescript-eslint/parser": "^5.30.6",
@@ -43,10 +43,10 @@
     "svelte": "^3.49.0",
     "svelte-check": "^2.8.0",
     "svelte-preprocess": "^4.10.7",
-    "ts-node": "^10.8.2",
+    "ts-node": "^10.9.1",
     "tslib": "^2.4.0",
     "typescript": "^4.7.4",
-    "vite": "^2.9.14",
+    "vite": "^3.0.0",
     "yargs": "^17.5.1"
   },
   "type": "module",
