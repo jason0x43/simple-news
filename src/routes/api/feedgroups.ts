@@ -21,7 +21,7 @@ export type GetFeedGroupsResponse = FeedGroupWithFeeds[] | ErrorResponse;
 /**
  * Get all feeds
  */
-export const get: RequestHandler<
+export const GET: RequestHandler<
   Record<string, string>,
   GetFeedGroupsResponse
 > = async ({ locals }) => {
@@ -54,7 +54,7 @@ export type AddGroupFeedResponse = Record<string, never> | ErrorResponse;
  *
  * The feed will be removed from any existing feed group
  */
-export const put: RequestHandler<
+export const PUT: RequestHandler<
   Record<string, string>,
   AddGroupFeedResponse
 > = async ({ locals, request }) => {

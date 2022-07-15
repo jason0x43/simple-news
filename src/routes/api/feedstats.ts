@@ -5,7 +5,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 
 export type GetFeedStatsResponse = FeedStats | ErrorResponse;
 
-export const get: RequestHandler<
+export const GET: RequestHandler<
   Record<string, string>,
   GetFeedStatsResponse
 > = async ({ locals }) => {

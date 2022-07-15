@@ -8,7 +8,7 @@ export type GetFeedsResponse = Feed[];
 /**
  * Get all feeds
  */
-export const get: RequestHandler<
+export const GET: RequestHandler<
   Record<string, string>,
   GetFeedsResponse
 > = async () => {
@@ -30,7 +30,7 @@ export type AddFeedResponse = {
 /**
  * Add a new feed
  */
-export const post: RequestHandler<
+export const POST: RequestHandler<
   Record<string, string>,
   AddFeedResponse
 > = async ({ request }) => {

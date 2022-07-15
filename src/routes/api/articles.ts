@@ -17,7 +17,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 /**
  * Get article headings for articles from a given set of feed IDs
  */
-export const get: RequestHandler<
+export const GET: RequestHandler<
   Record<string, string>,
   ArticleHeadingWithUserData[] | ErrorResponse
 > = async function ({ url, locals }) {
@@ -78,7 +78,7 @@ export type ArticleUpdateResponse = {
 /**
  * Update user data for a set of articles
  */
-export const put: RequestHandler<
+export const PUT: RequestHandler<
   Record<string, string>,
   ArticleUpdateResponse
 > = async function ({ request, locals }) {

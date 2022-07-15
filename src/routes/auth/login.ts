@@ -16,7 +16,7 @@ export type LoginResponse =
     }
   | ErrorResponse<{ username?: string; password?: string }>;
 
-export const post: RequestHandler<
+export const POST: RequestHandler<
   Record<string, string>,
   LoginResponse
 > = async function ({ request }) {
