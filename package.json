@@ -13,7 +13,7 @@
     "format": "prettier --write --plugin-search-dir=. .",
     "db": "ts-node ./scripts/db.ts",
     "migrate": "prisma migrate deploy",
-    "deploy": "ts-node ./scripts/deploy.ts",
+    "push": "ts-node ./scripts/deploy.ts",
     "download-feeds": "ts-node ./scripts/download-feeds.ts"
   },
   "devDependencies": {
