@@ -44,7 +44,7 @@ export const GET: RequestHandler<
 
 export type AddGroupFeedRequest = {
   feedId: Feed['id'];
-  groupId: FeedGroup['id'];
+  groupId: FeedGroup['id'] | 'not subscribed';
 };
 
 export type AddGroupFeedResponse = Record<string, never> | ErrorResponse;
@@ -102,14 +102,16 @@ export const PUT: RequestHandler<
     );
   }
 
-  queries.push(
-    prisma.feedGroupFeed.create({
-      data: {
-        feedId: data.feedId,
-        feedGroupId: data.groupId
-      }
-    })
-  );
+  if (data.groupId !== 'not subscribed') {
+    queries.push(
+      prisma.feedGroupFeed.create({
+        data: {
+          feedId: data.feedId,
+          feedGroupId: data.groupId
+        }
+      })
+    );
+  }
 
   try {
     await prisma.$transaction(queries);
