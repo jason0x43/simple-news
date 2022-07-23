@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { displayType } from '$lib/stores';
   import { setAppContext } from '$lib/contexts';
+  import Toast from '$lib/components/Toast.svelte';
 
   let ref: HTMLElement;
 
@@ -23,6 +24,8 @@
 
 <div id="root" bind:this={ref}>
   <slot />
+
+  <Toast />
 </div>
 
 <style>

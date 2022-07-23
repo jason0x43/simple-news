@@ -1,5 +1,7 @@
 <script type="ts">
   import CloseIcon from '$lib/icons/Close.svelte';
+  import Activity from '$lib/components/Activity.svelte';
+  import { fade } from 'svelte/transition';
 
   export let title: string | undefined = undefined;
   export let onClose: (() => void) | undefined = undefined;
@@ -20,7 +22,13 @@
   <div class="content">
     <slot />
     {#if busy}
-      <div class="overlay" />
+      <div
+        class="overlay"
+        in:fade={{ duration: 150 }}
+        out:fade={{ duration: 150 }}
+      >
+        <Activity />
+      </div>
     {/if}
   </div>
 </div>
@@ -62,6 +70,9 @@
     right: 0;
     background: var(--background);
     opacity: 0.75;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   /* Mobile */

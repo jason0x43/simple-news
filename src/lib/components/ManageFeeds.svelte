@@ -11,6 +11,7 @@
     AddGroupFeedResponse
   } from 'src/routes/api/feedgroups';
   import { invalidate } from '$app/navigation';
+  import { showToast } from '$lib/toast';
 
   export let onClose: (() => void) | undefined = undefined;
 
@@ -31,12 +32,24 @@
 
   async function addFeed() {
     busy = true;
+    let err: unknown | undefined;
+
     try {
       await post('/api/feeds', { url: feedUrl });
+      feedUrl = '';
     } catch (error) {
+      err = error;
       console.warn(error);
     }
-    busy = false;
+
+    setTimeout(() => {
+      busy = false;
+      if (err) {
+        showToast('Unable to add feed', { type: 'bad', duration: 2000 });
+      } else {
+        showToast('Feed added', { type: 'good', duration: 2000 });
+      }
+    }, 500);
   }
 
   async function updateGroup({
@@ -47,18 +60,28 @@
     groupId: FeedGroup['id'];
   }) {
     busy = true;
+    let err: unknown | undefined;
+
     try {
       await put<AddGroupFeedRequest, AddGroupFeedResponse>('/api/feedgroups', {
         feedId,
         groupId
       });
-      console.log('invalidating feedstats');
       invalidate('/api/feedstats');
       invalidate('/api/feedgroups');
     } catch (error) {
+      err = error;
       console.warn(error);
     }
-    busy = false;
+
+    setTimeout(() => {
+      busy = false;
+      if (err) {
+        showToast('Unable to update feed', { type: 'bad', duration: 2000 });
+      } else {
+        showToast('Feed updated', { type: 'good', duration: 2000 });
+      }
+    }, 500);
   }
 
   onMount(() => {
