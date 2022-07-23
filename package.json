@@ -17,16 +17,16 @@
     "download-feeds": "ts-node ./scripts/download-feeds.ts"
   },
   "devDependencies": {
-    "@sveltejs/adapter-node": "^1.0.0-next.81",
+    "@sveltejs/adapter-node": "^1.0.0-next.83",
     "@sveltejs/kit": "next",
     "@swc/core": "^1.2.218",
     "@types/bcryptjs": "^2.4.2",
     "@types/cookie": "^0.5.1",
-    "@types/jsdom": "^16.2.14",
+    "@types/jsdom": "^16.2.15",
     "@types/node": "^18.0.6",
     "@types/yargs": "^17.0.10",
-    "@typescript-eslint/eslint-plugin": "^5.30.6",
-    "@typescript-eslint/parser": "^5.30.6",
+    "@typescript-eslint/eslint-plugin": "^5.30.7",
+    "@typescript-eslint/parser": "^5.30.7",
     "bcryptjs": "^2.4.3",
     "cookie": "^0.5.0",
     "dotenv": "^16.0.1",
@@ -38,7 +38,7 @@
     "lint-staged": "^13.0.3",
     "prettier": "^2.7.1",
     "prettier-plugin-svelte": "^2.7.0",
-    "prisma": "^4.0.0",
+    "prisma": "^4.1.0",
     "rss-parser": "^3.12.0",
     "svelte": "^3.49.0",
     "svelte-check": "^2.8.0",
@@ -51,6 +51,6 @@
   },
   "type": "module",
   "dependencies": {
-    "@prisma/client": "^4.0.0"
+    "@prisma/client": "^4.1.0"
   }
 }
