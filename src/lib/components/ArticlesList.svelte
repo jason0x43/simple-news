@@ -197,29 +197,54 @@
   }
 
   async function markAsRead(articleIds: Article['id'][], read: boolean) {
+    const updated: Article['id'][] = [];
+    let data: ArticleUpdateResponse | undefined;
+
+    // optimistically update articles
+    if ($articles) {
+      for (const id of articleIds) {
+        const idx = $articles.findIndex((article) => article.id === id);
+        if (idx !== -1 && $articles[idx].read !== read) {
+          $articles[idx] = { ...$articles[idx], read };
+          updated.push(id);
+        }
+      }
+    }
+
     try {
-      const data = await put<ArticleUpdateRequest, ArticleUpdateResponse>(
+      data = await put<ArticleUpdateRequest, ArticleUpdateResponse>(
         '/api/articles',
         {
           articleIds,
           userData: { read }
         }
       );
+    } catch (error) {
+      console.warn(`Error marking articles as read: ${error}`);
 
-      if (data.articles) {
-        invalidate('/api/feedstats');
-
-        if ($articles) {
-          for (const article of data.articles) {
-            const idx = $articles.findIndex(({ id }) => id === article.id);
-            if (idx !== -1) {
-              $articles[idx] = article;
-            }
+      // revert the optimistic update if the request failed
+      if ($articles) {
+        for (const id of updated) {
+          const idx = $articles.findIndex((article) => article.id === id);
+          if (idx !== -1) {
+            $articles[idx] = { ...$articles[idx], read: !read };
           }
         }
       }
-    } catch (error) {
-      console.warn(`Error marking articles as read: ${error}`);
+    }
+
+    if (data?.articles) {
+      invalidate('/api/feedstats');
+
+      // update articles from returned data
+      if ($articles) {
+        for (const article of data.articles) {
+          const idx = $articles.findIndex(({ id }) => id === article.id);
+          if (idx !== -1) {
+            $articles[idx] = article;
+          }
+        }
+      }
     }
   }
 
