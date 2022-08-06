@@ -4,26 +4,26 @@ type ReaderContext = {
   onTitlePress(listener: () => void): () => void;
 };
 
-const readerContext = Symbol('reader');
+export const readerContextKey = Symbol('reader');
 
 export function getReaderContext() {
-  return getContext<ReaderContext>(readerContext);
+  return getContext<ReaderContext>(readerContextKey);
 }
 
 export function setReaderContext(value: ReaderContext) {
-  return setContext<ReaderContext>(readerContext, value);
+  return setContext<ReaderContext>(readerContextKey, value);
 }
 
 type AppContext = {
   getRoot(): HTMLElement;
 };
 
-const appContext = Symbol('app');
+export const appContextKey = Symbol('app');
 
 export function getAppContext() {
-  return getContext<AppContext>(appContext);
+  return getContext<AppContext>(appContextKey);
 }
 
 export function setAppContext(value: AppContext) {
-  return setContext<AppContext>(appContext, value);
+  return setContext<AppContext>(appContextKey, value);
 }

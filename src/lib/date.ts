@@ -26,6 +26,7 @@ export function diffDates(date1: Date, date2: Date) {
     years
   };
 }
+
 export function getAge(timestamp: Date | number | undefined | null): string {
   if (!timestamp) {
     return '?';
