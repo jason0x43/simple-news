@@ -6,6 +6,9 @@ on:
 jobs:
   test_and_deploy:
     runs-on: ubuntu-latest
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_REPO: ${{ secrets.DEPLOY_REPO }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v3
