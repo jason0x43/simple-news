@@ -1,12 +1,12 @@
 # Simple News
 
 A very simple RSS news aggregator and reader written with
-[Remix](https://remix.run)
+[SvelteKit](https://kit.svelte.dev)
 
 ## Development
 
 ```sh
-$ npm run dev
+$ pnpm dev
 ```
 
 This starts your app in development mode, rebuilding assets on file changes.
@@ -16,20 +16,20 @@ This starts your app in development mode, rebuilding assets on file changes.
 1. Clone the repository to the deployment host
 2. Setup the repo
    ```js
-   $ npm install
+   $ pnpm install
    ```
 3. Init/update the database
    ```sh
-   $ npm run migrate
+   $ pnpm migrate
    ```
 4. Build for production:
    ```sh
-   $ npm run build
+   $ pnpm build
    ```
 5. Setup the required environment variables using a systemd unit or `.envrc`:
    * `DATABASE_URL`
    * `PORT` (optional)
 6. Start the app server
    ```
-   $ npm start
+   $ pnpm start
    ```
