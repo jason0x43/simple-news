@@ -41,3 +41,13 @@ export function clearStorage(): void {
     window.sessionStorage.removeItem(key);
   }
 }
+
+export function getEventValue(event: Event): string | undefined {
+  const target = event.currentTarget;
+  if (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLSelectElement
+  ) {
+    return target.value;
+  }
+}

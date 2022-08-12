@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, type Mock } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { diffDates, getAge } from './date';
 
 describe('diffDates', () => {

@@ -12,6 +12,7 @@
   } from 'src/routes/api/feedgroups';
   import { invalidate } from '$app/navigation';
   import { showToast } from '$lib/toast';
+  import { getEventValue } from '$lib/util';
 
   export let onClose: (() => void) | undefined = undefined;
 
@@ -118,8 +119,11 @@
                   <div>
                     <Select
                       value={feedGroups[feed.id] ?? 'not subscribed'}
-                      on:change={({ detail: { value } }) => {
-                        updateGroup({ feedId: feed.id, groupId: value });
+                      on:change={(event) => {
+                        const value = getEventValue(event);
+                        if (value) {
+                          updateGroup({ feedId: feed.id, groupId: value });
+                        }
                       }}
                     >
                       <option value="not subscribed">Not subscribed</option>
