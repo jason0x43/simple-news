@@ -3,10 +3,8 @@
   import type { FeedStats } from '$lib/db/feed';
   import type { ArticleFilter } from '$lib/types';
   import type { FeedGroupWithFeeds } from 'src/routes/api/feedgroups';
+  import { feeds, feedGroups, feedStats } from '$lib/stores';
 
-  export let feeds: Feed[];
-  export let feedGroups: FeedGroupWithFeeds[];
-  export let feedStats: FeedStats;
   export let articleFilter: ArticleFilter;
   export let selectedFeedIds: Feed['id'][] | undefined;
   export let onSelect: () => void;
@@ -47,9 +45,9 @@
 </script>
 
 <ul class="feeds">
-  {#each feedGroups as group (group.name)}
-    {@const groupFeeds = getGroupFeeds(group, feeds)}
-    {#if getArticleCount(groupFeeds, feedStats, articleFilter) > 0}
+  {#each $feedGroups as group (group.name)}
+    {@const groupFeeds = getGroupFeeds(group, $feeds)}
+    {#if getArticleCount(groupFeeds, $feedStats, articleFilter) > 0}
       <li class:expanded={expanded[group.name]}>
         <div
           class="group"
@@ -78,14 +76,14 @@
           </a>
           {#if feedStats}
             <span class="Feeds-unread">
-              {getArticleCount(groupFeeds, feedStats, articleFilter)}
+              {getArticleCount(groupFeeds, $feedStats, articleFilter)}
             </span>
           {/if}
         </div>
 
         <ul>
           {#each groupFeeds as feed (feed.id)}
-            {#if getArticleCount([feed], feedStats, articleFilter) > 0}
+            {#if getArticleCount([feed], $feedStats, articleFilter) > 0}
               <li
                 class="feed"
                 class:selected={isSelected([feed], selectedFeedIds)}
@@ -94,11 +92,11 @@
                 }}
               >
                 <a href={`/reader/feed-${feed.id}`} class="title">
-                  {feeds?.find((f) => f.id === feed.id)?.title}
+                  {$feeds.find((f) => f.id === feed.id)?.title}
                 </a>
                 <div class="unread">
-                  {(feedStats?.[feed.id].total ?? 0) -
-                    (feedStats?.[feed.id].read ?? 0)}
+                  {($feedStats[feed.id].total ?? 0) -
+                    ($feedStats[feed.id].read ?? 0)}
                 </div>
               </li>
             {/if}

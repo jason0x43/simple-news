@@ -51,10 +51,12 @@
 
     return {
       props: {
-        selectedFeedIds,
-        feedStats,
-        feeds,
-        feedGroups
+        data: {
+          selectedFeedIds,
+          feedStats,
+          feeds,
+          feedGroups
+        }
       },
       stuff: {
         feeds,
@@ -71,7 +73,13 @@
   import type { Feed } from '@prisma/client';
   import type { FeedStats } from '$lib/db/feed';
   import { slide } from '$lib/transition';
-  import { articleFilter, sidebarVisible } from '$lib/stores';
+  import {
+    articleFilter,
+    sidebarVisible,
+    feeds,
+    feedGroups,
+    feedStats
+  } from '$lib/stores';
   import { onMount } from 'svelte';
   import { invalidate } from '$app/navigation';
   import { setReaderContext } from '$lib/contexts';
@@ -79,10 +87,20 @@
   import { session } from '$app/stores';
   import { clearStorage, loadValue, storeValue } from '$lib/util';
 
-  export let selectedFeedIds: Feed['id'][] | undefined;
-  export let feedStats: FeedStats;
-  export let feeds: Feed[];
-  export let feedGroups: FeedGroupWithFeeds[];
+  export let data: {
+    selectedFeedIds: Feed['id'][] | undefined;
+    feedStats: FeedStats;
+    feeds: Feed[];
+    feedGroups: FeedGroupWithFeeds[];
+  };
+
+  $: selectedFeedIds = data.selectedFeedIds;
+
+  $: {
+    $feeds = data.feeds;
+    $feedStats = data.feedStats;
+    $feedGroups = data.feedGroups;
+  }
 
   let sbVisible = !selectedFeedIds;
   let managingFeeds = false;
@@ -147,9 +165,6 @@
     >
       <div class="sidebar-feeds">
         <FeedsList
-          {feeds}
-          {feedStats}
-          {feedGroups}
           articleFilter={$articleFilter}
           {selectedFeedIds}
           onSelect={() => (sbVisible = false)}
@@ -169,7 +184,7 @@
   <slot />
 
   {#if managingFeeds}
-    <ManageFeeds onClose={() => (managingFeeds = false)} {feeds} {feedGroups} />
+    <ManageFeeds onClose={() => (managingFeeds = false)} />
   {/if}
 </div>
 

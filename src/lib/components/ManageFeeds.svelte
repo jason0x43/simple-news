@@ -11,16 +11,14 @@
   import { invalidate } from '$app/navigation';
   import { showToast } from '$lib/toast';
   import { getEventValue } from '$lib/util';
-  import type { FeedGroupWithFeeds } from '$lib/db/feedgroup';
+  import { feeds, feedGroups } from '$lib/stores';
 
   export let onClose: (() => void) | undefined = undefined;
-  export let feeds: Feed[];
-  export let feedGroups: FeedGroupWithFeeds[];
 
   const groups: { [feedId: string]: string } = {};
 
-  $: {
-    for (const group of feedGroups) {
+  if ($feedGroups) {
+    for (const group of $feedGroups) {
       for (const feedGroup of group.feeds) {
         groups[feedGroup.feedId] = group.id;
       }
@@ -85,7 +83,7 @@
     }, 500);
   }
 
-  $: sortedFeeds = (feeds ?? []).sort((a, b) => {
+  $: sortedFeeds = $feeds.sort((a, b) => {
     if (a.title === b.title) {
       return 0;
     }
@@ -121,7 +119,7 @@
                       }}
                     >
                       <option value="not subscribed">Not subscribed</option>
-                      {#each feedGroups as group (group.id)}
+                      {#each $feedGroups as group (group.id)}
                         <option value={group.id}>{group.name}</option>
                       {/each}
                     </Select>
@@ -147,8 +145,8 @@
 
           <h3>Rename Group</h3>
           <form>
-            <Select value={feedGroups[0].id}>
-              {#each feedGroups as group (group.id)}
+            <Select value={$feedGroups[0]?.id}>
+              {#each $feedGroups as group (group.id)}
                 <option value={group.id}>{group.name}</option>
               {/each}
             </Select>
