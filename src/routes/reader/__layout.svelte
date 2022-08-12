@@ -169,7 +169,7 @@
   <slot />
 
   {#if managingFeeds}
-    <ManageFeeds onClose={() => (managingFeeds = false)} />
+    <ManageFeeds onClose={() => (managingFeeds = false)} {feeds} {feedGroups} />
   {/if}
 </div>
 

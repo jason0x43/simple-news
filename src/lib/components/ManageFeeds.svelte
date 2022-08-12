@@ -1,11 +1,9 @@
 <script type="ts">
-  import { session } from '$app/stores';
   import { post, put } from '$lib/request';
   import Dialog from './Dialog.svelte';
   import Portal from './Portal.svelte';
   import Select from './Select.svelte';
   import type { Feed, FeedGroup } from '@prisma/client';
-  import { onMount } from 'svelte';
   import type {
     AddGroupFeedRequest,
     AddGroupFeedResponse
@@ -13,18 +11,19 @@
   import { invalidate } from '$app/navigation';
   import { showToast } from '$lib/toast';
   import { getEventValue } from '$lib/util';
+  import type { FeedGroupWithFeeds } from '$lib/db/feedgroup';
 
   export let onClose: (() => void) | undefined = undefined;
+  export let feeds: Feed[];
+  export let feedGroups: FeedGroupWithFeeds[];
 
-  const user = $session.user;
+  const groups: { [feedId: string]: string } = {};
 
-  let feeds: Feed[] = [];
-
-  const groups = user.feedGroups;
-  const feedGroups: { [feedId: string]: string } = {};
-  for (const group of groups) {
-    for (const feedGroup of group.feeds) {
-      feedGroups[feedGroup.feed.id] = group.id;
+  $: {
+    for (const group of feedGroups) {
+      for (const feedGroup of group.feeds) {
+        groups[feedGroup.feedId] = group.id;
+      }
     }
   }
 
@@ -38,6 +37,7 @@
     try {
       await post('/api/feeds', { url: feedUrl });
       feedUrl = '';
+      invalidate('/api/feeds');
     } catch (error) {
       err = error;
       console.warn(error);
@@ -85,20 +85,14 @@
     }, 500);
   }
 
-  onMount(() => {
-    fetch('/api/feeds')
-      .then((resp) => resp.json())
-      .then((allFeeds: Feed[]) => {
-        feeds = allFeeds.sort((a, b) => {
-          if (a.title === b.title) {
-            return 0;
-          }
-          if (a.title > b.title) {
-            return 1;
-          }
-          return -1;
-        });
-      });
+  $: sortedFeeds = (feeds ?? []).sort((a, b) => {
+    if (a.title === b.title) {
+      return 0;
+    }
+    if (a.title > b.title) {
+      return 1;
+    }
+    return -1;
   });
 </script>
 
@@ -110,7 +104,7 @@
           <h3>Feeds</h3>
           <div class="list-wrapper">
             <div class="table">
-              {#each feeds as feed (feed.id)}
+              {#each sortedFeeds as feed (feed.id)}
                 <div class="row">
                   <div class="feed">
                     {feed.title}
@@ -118,7 +112,7 @@
                   </div>
                   <div>
                     <Select
-                      value={feedGroups[feed.id] ?? 'not subscribed'}
+                      value={groups[feed.id] ?? 'not subscribed'}
                       on:change={(event) => {
                         const value = getEventValue(event);
                         if (value) {
@@ -127,7 +121,7 @@
                       }}
                     >
                       <option value="not subscribed">Not subscribed</option>
-                      {#each groups as group (group.id)}
+                      {#each feedGroups as group (group.id)}
                         <option value={group.id}>{group.name}</option>
                       {/each}
                     </Select>
@@ -153,8 +147,8 @@
 
           <h3>Rename Group</h3>
           <form>
-            <Select value={groups[0].id}>
-              {#each groups as group (group.id)}
+            <Select value={feedGroups[0].id}>
+              {#each feedGroups as group (group.id)}
                 <option value={group.id}>{group.name}</option>
               {/each}
             </Select>
