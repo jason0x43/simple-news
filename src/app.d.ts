@@ -2,8 +2,8 @@
 
 declare namespace App {
   interface Session {
-    id: import('$lib/db/session').Session['id'];
-    user: import('$lib/db/user').User;
+    id: import('@prisma/client').Session['id'];
+    user: import('@prisma/client').User;
   }
 
   interface Locals {

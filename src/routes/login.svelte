@@ -16,6 +16,10 @@
 
     if (isErrorResponse(response)) {
       errors = response.errors;
+    } else if (!response.user) {
+      errors = {
+        user: 'No user data in response'
+      };
     } else {
       $session.user = response.user;
       goto('/');
