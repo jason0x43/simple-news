@@ -11,7 +11,6 @@
     unescapeHtml,
     uniquify
   } from '$lib/util';
-  import { articles, feeds, sidebarVisible } from '$lib/stores';
   import { invalidate } from '$app/navigation';
   import type {
     ArticleUpdateRequest,
@@ -19,6 +18,9 @@
   } from 'src/routes/api/articles';
   import { onMount } from 'svelte';
   import { put } from '$lib/request';
+  import { getAppContext } from '$lib/contexts';
+
+  const { articles, feeds, sidebarVisible } = getAppContext().stores;
 
   type ScrollData = { visibleCount: number; scrollTop: number };
   const updatedArticleIds = new Set<Article['id']>();

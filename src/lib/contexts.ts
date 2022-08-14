@@ -1,4 +1,5 @@
 import { getContext, setContext } from 'svelte';
+import type { AppStores } from './stores';
 
 type ReaderContext = {
   onTitlePress(listener: () => void): () => void;
@@ -16,6 +17,7 @@ export function setReaderContext(value: ReaderContext) {
 
 type AppContext = {
   getRoot(): HTMLElement;
+  stores: AppStores;
 };
 
 export const appContextKey = Symbol('app');

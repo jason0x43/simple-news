@@ -21,10 +21,13 @@
 <script type="ts">
   import ArticlesList from '$lib/components/ArticlesList.svelte';
   import type { ArticleHeadingWithUserData } from '$lib/db/article';
-  import { articles, feeds, feedGroups, selectedFeedIds } from '$lib/stores';
+  import { getAppContext } from '$lib/contexts';
 
   export let articleHeadings: ArticleHeadingWithUserData[];
   export let feedId: string;
+
+  const { articles, feeds, feedGroups, selectedFeedIds } =
+    getAppContext().stores;
 
   $: $articles = articleHeadings;
 

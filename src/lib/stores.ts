@@ -4,11 +4,17 @@ import type { ArticleHeadingWithUserData } from './db/article';
 import type { FeedStats } from './db/feed';
 import type { FeedGroupWithFeeds } from './db/feedgroup';
 
-export const sidebarVisible = writable<boolean>(false);
-export const displayType = writable<'mobile' | 'desktop'>('desktop');
-export const updatedArticleIds = writable<Set<Article['id']>>(new Set());
-export const articles = writable<ArticleHeadingWithUserData[] | undefined>();
-export const feeds = writable<Feed[]>([]);
-export const feedGroups = writable<FeedGroupWithFeeds[]>([]);
-export const feedStats = writable<FeedStats>({});
-export const selectedFeedIds = writable<Feed['id'][]>([]);
+export function createStores() {
+  return {
+    sidebarVisible: writable<boolean>(false),
+    displayType: writable<'mobile' | 'desktop'>('desktop'),
+    updatedArticleIds: writable<Set<Article['id']>>(new Set()),
+    articles: writable<ArticleHeadingWithUserData[] | undefined>(),
+    feeds: writable<Feed[]>([]),
+    feedGroups: writable<FeedGroupWithFeeds[]>([]),
+    feedStats: writable<FeedStats>({}),
+    selectedFeedIds: writable<Feed['id'][]>([])
+  };
+}
+
+export type AppStores = ReturnType<typeof createStores>;

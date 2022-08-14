@@ -1,13 +1,19 @@
 <script type="ts">
   import '../app.css';
   import { onMount } from 'svelte';
-  import { displayType } from '$lib/stores';
+  import { createStores } from '$lib/stores';
   import { setAppContext } from '$lib/contexts';
   import Toast from '$lib/components/Toast.svelte';
 
   let ref: HTMLElement;
+  const stores = createStores();
 
-  setAppContext({ getRoot: () => ref });
+  setAppContext({
+    getRoot: () => ref,
+    stores
+  });
+
+  const { displayType } = stores;
 
   onMount(() => {
     const matcher = globalThis.matchMedia('(max-width: 800px)');

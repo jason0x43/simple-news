@@ -3,11 +3,13 @@
   import type { FeedStats } from '$lib/db/feed';
   import type { ArticleFilter } from '$lib/types';
   import type { FeedGroupWithFeeds } from 'src/routes/api/feedgroups';
-  import { feeds, feedGroups, feedStats, selectedFeedIds } from '$lib/stores';
+  import { getAppContext } from '$lib/contexts';
 
   export let articleFilter: ArticleFilter;
   export let onSelect: () => void;
 
+  const { feeds, feedGroups, feedStats, selectedFeedIds } =
+    getAppContext().stores;
   let expanded: { [title: string]: boolean } = {};
 
   function getArticleCount(

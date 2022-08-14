@@ -11,10 +11,11 @@
   import { invalidate } from '$app/navigation';
   import { showToast } from '$lib/toast';
   import { getEventValue } from '$lib/util';
-  import { feeds, feedGroups } from '$lib/stores';
+  import { getAppContext } from '$lib/contexts';
 
   export let onClose: (() => void) | undefined = undefined;
 
+  const { feeds, feedGroups } = getAppContext().stores;
   const groups: { [feedId: string]: string } = {};
 
   if ($feedGroups) {

@@ -2,15 +2,14 @@
   import type { ArticleWithUserData } from '$lib/db/article';
   import ArticleView from '$lib/components/ArticleView.svelte';
   import { slide } from '$lib/transition';
-  import { displayType } from '$lib/stores';
   import { onMount } from 'svelte';
-  import { getReaderContext } from '$lib/contexts';
+  import { getAppContext, getReaderContext } from '$lib/contexts';
 
   export let article: ArticleWithUserData | null;
 
-  let articleView: ArticleView;
-
   const context = getReaderContext();
+  const { displayType } = getAppContext().stores;
+  let articleView: ArticleView;
 
   onMount(() => {
     const remove = context.onTitlePress(() => {

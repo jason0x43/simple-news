@@ -3,10 +3,12 @@
   import type { FeedGroupWithFeeds } from '$lib/db/feedgroup';
   import UserIcon from '$lib/icons/User.svelte';
   import RssIcon from '$lib/icons/Rss.svelte';
-  import { feeds, feedGroups, selectedFeedIds } from '$lib/stores';
+  import { getAppContext } from '$lib/contexts';
 
   export let onTitlePress: () => void;
   export let toggleSidebar: () => void;
+
+  const { feeds, feedGroups, selectedFeedIds } = getAppContext().stores;
 
   $: title = getFeedsTitle($feedGroups, $feeds, $selectedFeedIds);
 

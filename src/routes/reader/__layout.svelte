@@ -54,16 +54,9 @@
   import type { Feed } from '@prisma/client';
   import type { FeedStats } from '$lib/db/feed';
   import { slide } from '$lib/transition';
-  import {
-    sidebarVisible,
-    feeds,
-    feedGroups,
-    feedStats,
-    selectedFeedIds
-  } from '$lib/stores';
   import { onMount } from 'svelte';
   import { invalidate } from '$app/navigation';
-  import { setReaderContext } from '$lib/contexts';
+  import { getAppContext, setReaderContext } from '$lib/contexts';
   import ManageFeeds from '$lib/components/ManageFeeds.svelte';
   import { session } from '$app/stores';
   import { clearStorage, loadValue, storeValue } from '$lib/util';
@@ -77,6 +70,9 @@
     feeds: Feed[];
     feedGroups: FeedGroupWithFeeds[];
   };
+
+  const { sidebarVisible, feeds, feedGroups, feedStats, selectedFeedIds } =
+    getAppContext().stores;
 
   $: {
     $feeds = data.feeds;
