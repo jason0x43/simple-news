@@ -18,7 +18,10 @@ vi.mock('$lib/db/session', () => {
   return {
     getSessionWithUser: vi.fn(async () => {
       return { sessionId: 'foo' };
-    })
+    }),
+    defaultSessionData: {
+      articleFilter: 'unread'
+    }
   };
 });
 
