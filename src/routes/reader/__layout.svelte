@@ -125,7 +125,7 @@
   onMount(() => {
     const interval = setInterval(() => {
       invalidate('/api/feedstats');
-      invalidate((url) => /^\/api\/articles\?+/.test(url));
+      invalidate((url) => /^\/api\/articles\?/.test(url));
       invalidate((url) => /^\/reader\/[^/]+/.test(url));
     }, 600_000);
 
