@@ -1,9 +1,7 @@
 <script type="ts">
-  import type { Feed } from '@prisma/client';
-  import type { FeedStats } from '$lib/db/feed';
   import type { ArticleFilter } from '$lib/types';
-  import type { FeedGroupWithFeeds } from 'src/routes/api/feedgroups';
   import { getAppContext } from '$lib/contexts';
+  import { areIdentified, getArticleCount, getGroupFeeds } from '$lib/feedUtil';
 
   export let articleFilter: ArticleFilter;
   export let onSelect: () => void;
@@ -11,38 +9,6 @@
   const { feeds, feedGroups, feedStats, selectedFeedIds } =
     getAppContext().stores;
   let expanded: { [title: string]: boolean } = {};
-
-  function getArticleCount(
-    feeds: Feed[],
-    feedStats: FeedStats,
-    articleFilter: ArticleFilter
-  ): number {
-    return feeds.reduce((acc, feed) => {
-      const stats = feedStats[feed.id] ?? {};
-      return (
-        acc +
-        (articleFilter === 'unread' ? stats.total - stats.read : stats.total)
-      );
-    }, 0);
-  }
-
-  function isSelected(feeds: Feed[], selected: Feed['id'][] | undefined) {
-    if (!selected) {
-      return false;
-    }
-    return feeds.every(({ id }) => selected.includes(id));
-  }
-
-  function getGroupFeeds(group: FeedGroupWithFeeds, feeds: Feed[]): Feed[] {
-    const groupFeeds: Feed[] = [];
-    for (const feedGroupFeed of group.feeds) {
-      const feed = feeds.find(({ id }) => id === feedGroupFeed.feedId);
-      if (feed) {
-        groupFeeds.push(feed);
-      }
-    }
-    return groupFeeds;
-  }
 </script>
 
 <ul class="feeds">
@@ -52,7 +18,7 @@
       <li class:expanded={expanded[group.name]}>
         <div
           class="group"
-          class:selected={isSelected(groupFeeds, $selectedFeedIds)}
+          class:selected={areIdentified(groupFeeds, $selectedFeedIds)}
         >
           <span
             class="expander"
@@ -87,7 +53,7 @@
             {#if getArticleCount([feed], $feedStats, articleFilter) > 0}
               <li
                 class="feed"
-                class:selected={isSelected([feed], $selectedFeedIds)}
+                class:selected={areIdentified([feed], $selectedFeedIds)}
                 on:click={() => {
                   onSelect?.();
                 }}
