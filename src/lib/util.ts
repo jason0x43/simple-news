@@ -16,7 +16,7 @@ export function uniquify<T>(val: T[]): T[] {
 }
 
 export function loadValue<T>(key: string): T | undefined {
-  const val = window.sessionStorage.getItem(key);
+  const val = window.sessionStorage.getItem(`simple-news:${key}`);
   if (val) {
     return JSON.parse(val);
   }

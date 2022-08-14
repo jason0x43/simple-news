@@ -127,7 +127,10 @@
 
     const activeSession = loadValue<string>('activeSession');
     if (activeSession !== $session.id) {
-      clearStorage();
+      // Clear storage if there's data from an old session
+      if (activeSession) {
+        clearStorage();
+      }
       storeValue('activeSession', $session.id);
     }
 
