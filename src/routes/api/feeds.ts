@@ -1,17 +1,14 @@
 import { prisma } from '$lib/db';
 import { downloadFeed } from '$lib/feed';
 import type { Feed } from '@prisma/client';
-import type { RequestHandler } from '@sveltejs/kit';
+import type { RequestHandler } from './__types/feeds';
 
 export type GetFeedsResponse = Feed[];
 
 /**
  * Get all feeds
  */
-export const GET: RequestHandler<
-  Record<string, string>,
-  GetFeedsResponse
-> = async () => {
+export const GET: RequestHandler = async () => {
   return {
     status: 200,
     body: await prisma.feed.findMany()
@@ -30,10 +27,7 @@ export type AddFeedResponse = {
 /**
  * Add a new feed
  */
-export const POST: RequestHandler<
-  Record<string, string>,
-  AddFeedResponse
-> = async ({ request }) => {
+export const POST: RequestHandler = async ({ request }) => {
   const data: AddFeedRequest = await request.json();
 
   if (typeof data.url !== 'string') {

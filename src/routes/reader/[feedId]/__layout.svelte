@@ -4,13 +4,15 @@
 
   export const load: Load = async ({ fetch, params }) => {
     const feedId = params.feedId;
-
-    const resp = await fetch(`/api/articles?feedId=${feedId}`);
+    const query = new URLSearchParams();
+    query.append('feedId', feedId);
+    const resp = await fetch(`/api/articles?${query}`);
     const articleHeadings = await resp.json();
 
     return {
       props: {
-        articleHeadings
+        articleHeadings,
+        feedId
       }
     };
   };
@@ -19,16 +21,27 @@
 <script type="ts">
   import ArticlesList from '$lib/components/ArticlesList.svelte';
   import type { ArticleHeadingWithUserData } from '$lib/db/article';
-  import { articles } from '$lib/stores';
-  import { page } from '$app/stores';
+  import { articles, feeds, feedGroups, selectedFeedIds } from '$lib/stores';
 
   export let articleHeadings: ArticleHeadingWithUserData[];
+  export let feedId: string;
 
   $: $articles = articleHeadings;
+
+  $: {
+    const [type, id] = feedId.split('-');
+    if (type === 'group') {
+      const group = $feedGroups.find((group) => group.id === id);
+      $selectedFeedIds = group?.feeds.map(({ feedId }) => feedId) ?? [];
+    } else {
+      const feed = $feeds.find((feed) => feed.id === id);
+      $selectedFeedIds = feed ? [feed.id] : [];
+    }
+  }
 </script>
 
 <div class="feed-layout">
-  <ArticlesList feeds={$page.stuff.feeds ?? []} />
+  <ArticlesList />
   <slot />
 </div>
 

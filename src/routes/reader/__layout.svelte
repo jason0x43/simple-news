@@ -4,11 +4,11 @@
     FeedGroupWithFeeds,
     GetFeedGroupsResponse
   } from '../api/feedgroups';
-  import type { Load } from '@sveltejs/kit';
+  import type { Load } from './__types/__layout';
   import { errorResponse, isErrorResponse } from '$lib/request';
   import type { GetFeedsResponse } from '../api/feeds';
 
-  export const load: Load = async ({ session, params, fetch }) => {
+  export const load: Load = async ({ session, fetch }) => {
     const user = session.user;
     if (!user) {
       return {
@@ -35,32 +35,13 @@
       return errorResponse(feeds.errors);
     }
 
-    let selectedFeedIds: Feed['id'][] | undefined;
-
-    const feedOrGroupId = params.feedId;
-    if (feedOrGroupId) {
-      const [type, id] = feedOrGroupId.split('-');
-      if (type === 'group') {
-        const group = feedGroups.find((group) => group.id === id);
-        selectedFeedIds = group?.feeds.map(({ feedId }) => feedId) ?? [];
-      } else {
-        const feed = feeds.find((feed) => feed.id === id);
-        selectedFeedIds = feed ? [feed.id] : [];
-      }
-    }
-
     return {
       props: {
         data: {
-          selectedFeedIds,
           feedStats,
           feeds,
           feedGroups
         }
-      },
-      stuff: {
-        feeds,
-        feedGroups
       }
     };
   };
@@ -74,11 +55,11 @@
   import type { FeedStats } from '$lib/db/feed';
   import { slide } from '$lib/transition';
   import {
-    articleFilter,
     sidebarVisible,
     feeds,
     feedGroups,
-    feedStats
+    feedStats,
+    selectedFeedIds
   } from '$lib/stores';
   import { onMount } from 'svelte';
   import { invalidate } from '$app/navigation';
@@ -86,15 +67,16 @@
   import ManageFeeds from '$lib/components/ManageFeeds.svelte';
   import { session } from '$app/stores';
   import { clearStorage, loadValue, storeValue } from '$lib/util';
+  import type { UpdateSessionRequest } from '../api/session';
+  import { browser } from '$app/env';
+  import { put } from '$lib/request';
 
   export let data: {
-    selectedFeedIds: Feed['id'][] | undefined;
+    // selectedFeedIds: Feed['id'][] | undefined;
     feedStats: FeedStats;
     feeds: Feed[];
     feedGroups: FeedGroupWithFeeds[];
   };
-
-  $: selectedFeedIds = data.selectedFeedIds;
 
   $: {
     $feeds = data.feeds;
@@ -132,6 +114,14 @@
     onTitlePress
   });
 
+  if (browser) {
+    session.subscribe(({ data }) => {
+      put<UpdateSessionRequest>('/api/session', data).catch((error) => {
+        console.warn('Error updating session data:', error);
+      });
+    });
+  }
+
   onMount(() => {
     const interval = setInterval(() => {
       invalidate('/api/feedstats');
@@ -152,7 +142,7 @@
 </script>
 
 <div class="header">
-  <Header {selectedFeedIds} onTitlePress={handleTitlePress} {toggleSidebar} />
+  <Header onTitlePress={handleTitlePress} {toggleSidebar} />
 </div>
 
 <div class="content">
@@ -165,14 +155,13 @@
     >
       <div class="sidebar-feeds">
         <FeedsList
-          articleFilter={$articleFilter}
-          {selectedFeedIds}
+          articleFilter={$session.data.articleFilter}
           onSelect={() => (sbVisible = false)}
         />
       </div>
       <div class="sidebar-controls">
         <button on:click={() => (managingFeeds = true)}>Manage Feeds</button>
-        <Select bind:value={$articleFilter}>
+        <Select bind:value={$session.data.articleFilter}>
           <option value="unread">Unread</option>
           <option value="all">All</option>
           <option value="saved">Saved</option>

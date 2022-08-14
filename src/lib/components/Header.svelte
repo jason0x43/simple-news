@@ -3,13 +3,12 @@
   import type { FeedGroupWithFeeds } from '$lib/db/feedgroup';
   import UserIcon from '$lib/icons/User.svelte';
   import RssIcon from '$lib/icons/Rss.svelte';
-  import { feeds, feedGroups } from '$lib/stores';
+  import { feeds, feedGroups, selectedFeedIds } from '$lib/stores';
 
-  export let selectedFeedIds: Feed['id'][] | undefined;
   export let onTitlePress: () => void;
   export let toggleSidebar: () => void;
 
-  $: title = getFeedsTitle($feedGroups, $feeds, selectedFeedIds);
+  $: title = getFeedsTitle($feedGroups, $feeds, $selectedFeedIds);
 
   function getFeedsTitle(
     feedGroups: FeedGroupWithFeeds[] | undefined,

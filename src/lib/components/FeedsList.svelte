@@ -3,10 +3,9 @@
   import type { FeedStats } from '$lib/db/feed';
   import type { ArticleFilter } from '$lib/types';
   import type { FeedGroupWithFeeds } from 'src/routes/api/feedgroups';
-  import { feeds, feedGroups, feedStats } from '$lib/stores';
+  import { feeds, feedGroups, feedStats, selectedFeedIds } from '$lib/stores';
 
   export let articleFilter: ArticleFilter;
-  export let selectedFeedIds: Feed['id'][] | undefined;
   export let onSelect: () => void;
 
   let expanded: { [title: string]: boolean } = {};
@@ -51,7 +50,7 @@
       <li class:expanded={expanded[group.name]}>
         <div
           class="group"
-          class:selected={isSelected(groupFeeds, selectedFeedIds)}
+          class:selected={isSelected(groupFeeds, $selectedFeedIds)}
         >
           <span
             class="expander"
@@ -86,7 +85,7 @@
             {#if getArticleCount([feed], $feedStats, articleFilter) > 0}
               <li
                 class="feed"
-                class:selected={isSelected([feed], selectedFeedIds)}
+                class:selected={isSelected([feed], $selectedFeedIds)}
                 on:click={() => {
                   onSelect?.();
                 }}

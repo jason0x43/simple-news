@@ -10,7 +10,7 @@ import type {
   FeedGroupFeed,
   PrismaPromise
 } from '@prisma/client';
-import type { RequestHandler } from '@sveltejs/kit';
+import type { RequestHandler } from './__types/feedgroups';
 
 export type FeedGroupWithFeeds = FeedGroup & {
   feeds: FeedGroupFeed[];
@@ -21,10 +21,7 @@ export type GetFeedGroupsResponse = FeedGroupWithFeeds[] | ErrorResponse;
 /**
  * Get all feeds
  */
-export const GET: RequestHandler<
-  Record<string, string>,
-  GetFeedGroupsResponse
-> = async ({ locals }) => {
+export const GET: RequestHandler = async ({ locals }) => {
   const user = locals.session?.user;
   if (!user) {
     return unauthResponse();
@@ -54,10 +51,7 @@ export type AddGroupFeedResponse = Record<string, never> | ErrorResponse;
  *
  * The feed will be removed from any existing feed group
  */
-export const PUT: RequestHandler<
-  Record<string, string>,
-  AddGroupFeedResponse
-> = async ({ locals, request }) => {
+export const PUT: RequestHandler = async ({ locals, request }) => {
   const user = locals.session?.user;
   if (!user) {
     return unauthResponse();

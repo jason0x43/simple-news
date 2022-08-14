@@ -49,11 +49,13 @@ export async function getArticle({
 export async function getArticleHeadings({
   feedIds,
   articleIds,
-  userId
+  userId,
+  filter
 }: {
   feedIds?: Feed['id'][];
   articleIds?: Article['id'][];
   userId: User['id'];
+  filter?: string;
 }): Promise<ArticleHeadingWithUserData[]> {
   const articles = await prisma.article.findMany({
     where: {
@@ -86,13 +88,24 @@ export async function getArticleHeadings({
     }
   });
 
-  return articles.map((article) => {
+  const userArticles = articles.map((article) => {
     const { users, ...other } = article;
     return {
       ...other,
       ...users[0]
     };
   });
+
+  // TODO: perform filtering in db query
+  if (filter === 'unread') {
+    return userArticles.filter((ua) => !ua.read);
+  }
+
+  if (filter === 'read') {
+    return userArticles.filter((ua) => ua.read);
+  }
+
+  return userArticles;
 }
 
 export function updateArticleUserData({

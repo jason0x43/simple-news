@@ -11,7 +11,7 @@
     unescapeHtml,
     uniquify
   } from '$lib/util';
-  import { articleFilter, articles, sidebarVisible } from '$lib/stores';
+  import { articleFilter, articles, feeds, sidebarVisible } from '$lib/stores';
   import { invalidate } from '$app/navigation';
   import type {
     ArticleUpdateRequest,
@@ -24,14 +24,12 @@
   const updatedArticleIds = new Set<Article['id']>();
   const scrollDataKey = 'scrollData';
 
-  export let feeds: Feed[];
-
   $: selectedFeed = $page.params.feedId;
   $: selectedArticleId = $page.params.articleId;
   $: articleFeedIds = uniquify(
     $articles?.slice(0, 40).map(({ feedId }) => feedId) ?? []
   );
-  $: icons = feeds
+  $: icons = $feeds
     .filter(({ id }) => articleFeedIds.includes(id))
     .map(({ icon }) => icon);
 
@@ -101,7 +99,7 @@
       .slice(0, visibleCount)
       .map((article) => ({
         ...article,
-        feed: feeds.find(({ id }) => id === article.feedId),
+        feed: $feeds.find(({ id }) => id === article.feedId),
         isActive: activeArticleId === article.id,
         isSelected: selectedArticleId === article.id,
         isRead: article.read ?? false

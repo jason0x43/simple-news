@@ -5,30 +5,22 @@ import {
   type ArticleHeadingWithUserData,
   type ArticleUserData
 } from '$lib/db/article';
-import {
-  getQueryParam,
-  unauthResponse,
-  type ErrorResponse
-} from '$lib/request';
-import { getSessionUser } from '$lib/session';
+import { unauthResponse } from '$lib/request';
 import type { Article, Feed } from '@prisma/client';
-import type { RequestHandler } from '@sveltejs/kit';
+import type { RequestHandler } from './__types/articles';
 
 /**
  * Get article headings for articles from a given set of feed IDs
  */
-export const GET: RequestHandler<
-  Record<string, string>,
-  ArticleHeadingWithUserData[] | ErrorResponse
-> = async function ({ url, locals }) {
-  const user = getSessionUser(locals);
+export const GET: RequestHandler = async function ({ url, locals }) {
+  const user = locals.session?.user;
   if (!user) {
     return unauthResponse();
   }
 
   let feedIds: Feed['id'][] | undefined;
 
-  const feedOrGroupId = getQueryParam(url.searchParams, 'feedId');
+  const feedOrGroupId = url.searchParams.get('feedId');
   if (feedOrGroupId) {
     const [type, id] = feedOrGroupId.split('-');
     if (type === 'group') {
@@ -51,9 +43,11 @@ export const GET: RequestHandler<
     }
   }
 
+  const { articleFilter } = locals.sessionData;
   const articles = await getArticleHeadings({
     userId: user.id,
-    feedIds
+    feedIds,
+    filter: articleFilter
   });
 
   return {
@@ -78,11 +72,8 @@ export type ArticleUpdateResponse = {
 /**
  * Update user data for a set of articles
  */
-export const PUT: RequestHandler<
-  Record<string, string>,
-  ArticleUpdateResponse
-> = async function ({ request, locals }) {
-  const user = getSessionUser(locals);
+export const PUT: RequestHandler = async function ({ request, locals }) {
+  const user = locals.session?.user;
   if (!user) {
     return unauthResponse();
   }

@@ -13,3 +13,4 @@ export const articles = writable<ArticleHeadingWithUserData[] | undefined>();
 export const feeds = writable<Feed[]>([]);
 export const feedGroups = writable<FeedGroupWithFeeds[]>([]);
 export const feedStats = writable<FeedStats>({});
+export const selectedFeedIds = writable<Feed['id'][]>([]);
