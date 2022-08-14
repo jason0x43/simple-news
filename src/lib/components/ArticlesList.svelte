@@ -1,5 +1,5 @@
 <script type="ts">
-  import { page } from '$app/stores';
+  import { page, session } from '$app/stores';
   import type { Article, Feed } from '@prisma/client';
   import ContextMenu from './ContextMenu.svelte';
   import { getAge } from '$lib/date';
@@ -11,7 +11,7 @@
     unescapeHtml,
     uniquify
   } from '$lib/util';
-  import { articleFilter, articles, feeds, sidebarVisible } from '$lib/stores';
+  import { articles, feeds, sidebarVisible } from '$lib/stores';
   import { invalidate } from '$app/navigation';
   import type {
     ArticleUpdateRequest,
@@ -77,10 +77,10 @@
       if (!articles) {
         // there are no articles
         filteredArticles = [];
-      } else if ($articleFilter === 'all') {
+      } else if ($session.data.articleFilter === 'all') {
         // show all articles
         filteredArticles = $articles ?? [];
-      } else if ($articleFilter === 'saved') {
+      } else if ($session.data.articleFilter === 'saved') {
         // show saved articles
         filteredArticles = $articles?.filter(({ saved }) => saved) ?? [];
       } else {
