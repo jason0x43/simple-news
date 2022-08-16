@@ -6,7 +6,7 @@ import type { Feed } from '@prisma/client';
 import { prisma } from '../src/lib/db.js';
 import Parser, { type Item } from 'rss-parser';
 import { JSDOM } from 'jsdom';
-import { downloadFeed as getFeed } from '../src/lib/feed.js';
+import { downloadFeed as getFeed, FeedItem } from '../src/lib/feed.js';
 
 type ParsedFeed = Parser.Output<unknown>;
 
@@ -41,6 +41,8 @@ async function downloadFeed(feed: Feed) {
     await prisma.$transaction(
       parsedFeed.items.map((entry) => {
         const articleId = getArticleId(entry);
+        const content = getContent(entry);
+
         return prisma.article.upsert({
           where: {
             feedId_articleId: {
@@ -49,8 +51,7 @@ async function downloadFeed(feed: Feed) {
             }
           },
           update: {
-            content:
-              entry['content:encoded'] ?? entry.content ?? entry.summary ?? null
+            content
           },
           create: {
             articleId,
@@ -58,8 +59,7 @@ async function downloadFeed(feed: Feed) {
             title: entry.title ?? 'Untitled',
             link: entry.link ?? null,
             published: entry.pubDate ? new Date(entry.pubDate) : new Date(),
-            content:
-              entry['content:encoded'] ?? entry.content ?? entry.summary ?? null
+            content
           }
         });
       })
@@ -69,6 +69,26 @@ async function downloadFeed(feed: Feed) {
   } catch (error) {
     console.error(`>>> Error updating ${feed.url}: ${error}`);
   }
+}
+
+/**
+ * Get the content of a feed item
+ */
+function getContent(entry: FeedItem): string {
+  let content =
+    entry['content:encoded'] ?? entry.content ?? entry.summary ?? null;
+  if (content) {
+    try {
+      const dom = new JSDOM(content);
+      dom.window.document.querySelectorAll('a').forEach((a) => {
+        a.removeAttribute('style');
+      });
+      content = dom.window.document.body.innerHTML;
+    } catch (error) {
+      console.warn('Error processing document content');
+    }
+  }
+  return content;
 }
 
 /**

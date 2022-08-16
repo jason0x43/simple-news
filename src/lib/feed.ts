@@ -1,5 +1,8 @@
 import Parser from 'rss-parser';
 
+export type ParsedFeed = Parser.Output<Record<string, unknown>>;
+export type FeedItem = Parser.Item;
+
 export async function downloadFeed(url: string) {
   const aborter = new AbortController();
   const abortTimer = setTimeout(() => aborter.abort(), 10000);
