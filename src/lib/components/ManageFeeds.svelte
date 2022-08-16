@@ -13,9 +13,7 @@
   import { getEventValue } from '$lib/util';
   import { getAppContext } from '$lib/contexts';
 
-  export let onClose: (() => void) | undefined = undefined;
-
-  const { feeds, feedGroups } = getAppContext().stores;
+  const { feeds, feedGroups, managingFeeds } = getAppContext().stores;
   const groups: { [feedId: string]: string } = {};
 
   if ($feedGroups) {
@@ -96,7 +94,13 @@
 </script>
 
 <Portal anchor="modal">
-  <Dialog title="Manage Feeds" {onClose} {busy}>
+  <Dialog
+    title="Manage Feeds"
+    onClose={() => {
+      $managingFeeds = false;
+    }}
+    {busy}
+  >
     <div class="manage-feeds">
       <div class="scroller">
         <section>

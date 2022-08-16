@@ -63,6 +63,7 @@
   import type { UpdateSessionRequest } from '../api/session';
   import { browser } from '$app/env';
   import { put } from '$lib/request';
+  import Sidebar from '$lib/components/Sidebar.svelte';
 
   export let data: {
     // selectedFeedIds: Feed['id'][] | undefined;
@@ -71,8 +72,14 @@
     feedGroups: FeedGroupWithFeeds[];
   };
 
-  const { sidebarVisible, feeds, feedGroups, feedStats, selectedFeedIds } =
-    getAppContext().stores;
+  const {
+    sidebarVisible,
+    feeds,
+    feedGroups,
+    feedStats,
+    managingFeeds,
+    selectedFeedIds
+  } = getAppContext().stores;
 
   $: {
     $feeds = data.feeds;
@@ -80,23 +87,10 @@
     $feedGroups = data.feedGroups;
   }
 
-  let sbVisible = !selectedFeedIds;
-  let managingFeeds = false;
   const titleListeners = new Set<() => void>();
 
   function handleTitlePress() {
     titleListeners.forEach((listener) => listener());
-  }
-
-  function toggleSidebar() {
-    sbVisible = !sbVisible;
-    if (sbVisible) {
-      $sidebarVisible = true;
-    }
-  }
-
-  function handleSidebarClose() {
-    $sidebarVisible = false;
   }
 
   function onTitlePress(listener: () => void) {
@@ -141,38 +135,18 @@
 </script>
 
 <div class="header">
-  <Header onTitlePress={handleTitlePress} {toggleSidebar} />
+  <Header onTitlePress={handleTitlePress} />
 </div>
 
 <div class="content">
-  {#if sbVisible}
-    <div
-      class="sidebar"
-      in:slide={{ direction: 'right' }}
-      out:slide={{ direction: 'right' }}
-      on:outroend={handleSidebarClose}
-    >
-      <div class="sidebar-feeds">
-        <FeedsList
-          articleFilter={$session.data.articleFilter}
-          onSelect={() => (sbVisible = false)}
-        />
-      </div>
-      <div class="sidebar-controls">
-        <button on:click={() => (managingFeeds = true)}>Manage Feeds</button>
-        <Select bind:value={$session.data.articleFilter}>
-          <option value="unread">Unread</option>
-          <option value="all">All</option>
-          <option value="saved">Saved</option>
-        </Select>
-      </div>
-    </div>
+  {#if $sidebarVisible}
+    <Sidebar />
   {/if}
 
   <slot />
 
-  {#if managingFeeds}
-    <ManageFeeds onClose={() => (managingFeeds = false)} />
+  {#if $managingFeeds}
+    <ManageFeeds />
   {/if}
 </div>
 
@@ -190,33 +164,5 @@
     overflow-x: hidden;
     position: relative;
     background: var(--background);
-  }
-
-  .sidebar {
-    background: var(--highlight);
-    color: var(--highlight-text);
-    width: var(--sidebar-width);
-    display: flex;
-    height: 100%;
-    flex-direction: column;
-    position: absolute;
-    left: 0;
-    z-index: 30;
-  }
-
-  .sidebar-feeds {
-    flex-grow: 1;
-    flex-shrink: 1;
-    overflow: auto;
-  }
-
-  .sidebar-controls {
-    flex-grow: 0;
-    flex-shrink: 0;
-    display: flex;
-    justify-content: center;
-    margin: 1rem;
-    margin-top: 0.5rem;
-    gap: var(--gap);
   }
 </style>

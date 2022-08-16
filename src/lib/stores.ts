@@ -13,6 +13,7 @@ export function createStores() {
     feeds: writable<Feed[]>([]),
     feedGroups: writable<FeedGroupWithFeeds[]>([]),
     feedStats: writable<FeedStats>({}),
+    managingFeeds: writable<boolean>(false),
     selectedFeedIds: writable<Feed['id'][]>([])
   };
 }

@@ -13,7 +13,13 @@
     <div class="title">
       {title}
       {#if onClose}
-        <div class="close" on:click={onClose}>
+        <div
+          class="close"
+          on:click={(event) => {
+            event.stopPropagation();
+            onClose?.();
+          }}
+        >
           <CloseIcon size="22px" />
         </div>
       {/if}

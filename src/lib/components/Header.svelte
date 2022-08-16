@@ -6,9 +6,9 @@
   import { getAppContext } from '$lib/contexts';
 
   export let onTitlePress: () => void;
-  export let toggleSidebar: () => void;
 
-  const { feeds, feedGroups, selectedFeedIds } = getAppContext().stores;
+  const { feeds, feedGroups, selectedFeedIds, sidebarVisible } =
+    getAppContext().stores;
 
   $: title = getFeedsTitle($feedGroups, $feeds, $selectedFeedIds);
 
@@ -47,7 +47,13 @@
 </script>
 
 <header class="header">
-  <div class="left" on:click={toggleSidebar}>
+  <div
+    class="left"
+    on:click={(event) => {
+      $sidebarVisible = !$sidebarVisible;
+      event.stopPropagation();
+    }}
+  >
     <RssIcon size="22px" />
     <h1>Simple News</h1>
   </div>

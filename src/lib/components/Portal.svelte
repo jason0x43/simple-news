@@ -57,6 +57,13 @@
     }
   }
 
+  function handleClick(event: MouseEvent) {
+    // If this is a modal, consume click events on the background
+    if (anchor === 'modal') {
+      event.stopPropagation();
+    }
+  }
+
   onMount(() => {
     const elem = target ?? context.getRoot() ?? globalThis.document?.body;
     elem?.append(ref);
@@ -66,6 +73,7 @@
 <div
   class="portal"
   class:modal={anchor === 'modal'}
+  on:click={handleClick}
   bind:this={ref}
   style={style.join(';')}
   in:fade={{ duration: inDuration }}
