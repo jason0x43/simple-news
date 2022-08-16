@@ -1,12 +1,8 @@
 <script context="module" type="ts">
-  import type { GetFeedStatsResponse } from '../api/feedstats';
-  import type {
-    FeedGroupWithFeeds,
-    GetFeedGroupsResponse
-  } from '../api/feedgroups';
+  import type { FeedGroupWithFeeds } from '../api/feedgroups';
   import type { Load } from './__types/__layout';
-  import { errorResponse, isErrorResponse } from '$lib/request';
-  import type { GetFeedsResponse } from '../api/feeds';
+  import { isRequestOutput } from '$lib/request';
+  import { loadData } from './_util';
 
   export const load: Load = async ({ session, fetch }) => {
     const user = session.user;
@@ -17,23 +13,13 @@
       };
     }
 
-    const feedStatsResp = await fetch('/api/feedstats');
-    const feedStats = (await feedStatsResp.json()) as GetFeedStatsResponse;
-    if (isErrorResponse(feedStats)) {
-      return errorResponse(feedStats.errors);
+    const result = await loadData(fetch);
+
+    if (isRequestOutput(result)) {
+      return result;
     }
 
-    const feedGroupsResp = await fetch('/api/feedgroups');
-    const feedGroups = (await feedGroupsResp.json()) as GetFeedGroupsResponse;
-    if (isErrorResponse(feedGroups)) {
-      return errorResponse(feedGroups.errors);
-    }
-
-    const feedsResp = await fetch('/api/feeds');
-    const feeds = (await feedsResp.json()) as GetFeedsResponse;
-    if (isErrorResponse(feeds)) {
-      return errorResponse(feeds.errors);
-    }
+    const { feedGroups, feedStats, feeds } = result;
 
     return {
       props: {

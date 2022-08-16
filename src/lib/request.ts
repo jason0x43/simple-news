@@ -32,6 +32,15 @@ export function isErrorResponse(value: unknown): value is ErrorResponse {
   );
 }
 
+export function isRequestOutput(value: unknown): value is RequestHandlerOutput {
+  return (
+    (value != null &&
+      typeof value === 'object' &&
+      typeof (value as Record<string, unknown>).status === 'number') ||
+    typeof (value as Record<string, unknown>).body === 'object'
+  );
+}
+
 export function unauthResponse() {
   return errorResponse('Missing session or user', 403);
 }
