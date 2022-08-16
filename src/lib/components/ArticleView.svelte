@@ -170,10 +170,6 @@
     margin: 0.5em 0;
   }
 
-  .content :global(table) {
-    margin: 1em auto;
-  }
-
   .content :global(table td) {
     padding: 0 0.5em;
   }
