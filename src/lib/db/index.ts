@@ -6,7 +6,11 @@ let db: Database | undefined;
 
 export function getDb() {
   if (!db) {
-    const d = sqlite3('data.db');
+    if (!process.env.VITE_DB) {
+      throw new Error('The VITE_DB env var must be defined');
+    }
+    const d = sqlite3(process.env.VITE_DB);
+
     let version = getVersion(d);
     if (typeof version !== 'number') {
       initDb(d);

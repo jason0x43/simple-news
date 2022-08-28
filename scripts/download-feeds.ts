@@ -9,6 +9,9 @@ import { getFeeds, updateFeedIcon } from '../src/lib/db/feed.js';
 import { transaction } from '../src/lib/db/index.js';
 import { Feed } from '../src/lib/db/schema.js';
 import { downloadFeed as getFeed, FeedItem } from '../src/lib/feed.js';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 type ParsedFeed = Parser.Output<unknown>;
 
