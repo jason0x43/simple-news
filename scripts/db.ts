@@ -4,22 +4,26 @@ import { Writable } from 'stream';
 import { inspect } from 'util';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { Feed, FeedGroup, FeedGroupFeed } from '../src/lib/db/schema';
-import { createUser, getUserByUsername } from '../src/lib/db/user';
-import { createFeed, getFeedByUrl, getFeeds } from '../src/lib/db/feed';
-import {
-  addFeedsToGroup,
-  getGroupFeeds,
-  getUserFeeds,
-  removeFeedsFromGroup
-} from '../src/lib/db/feedgroupfeed';
+import { deleteFeedArticles } from '../src/lib/db/article.js';
+import { createFeed, getFeedByUrl, getFeeds } from '../src/lib/db/feed.js';
 import {
   createFeedGroup,
   deleteFeedGroup,
-  getFeedGroup,
   getUserFeedGroups
-} from '../src/lib/db/feedgroup';
-import { deleteFeedArticles } from '../src/lib/db/article';
+} from '../src/lib/db/feedgroup.js';
+import {
+  addFeedsToGroup,
+  getGroupFeeds,
+  getUserFeedGroup,
+  getUserFeeds,
+  removeFeedsFromGroup
+} from '../src/lib/db/feedgroup.js';
+import type { Feed, FeedGroup, FeedGroupFeed } from '../src/lib/db/schema';
+import { createUser, getUserByUsername } from '../src/lib/db/user.js';
+import 'zx/globals';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 type MutableWritable = Writable & { muted?: boolean };
 
@@ -457,7 +461,7 @@ yargs(hideBin(process.argv))
             }
           }
 
-          const group = getFeedGroup(user.id, argv.name);
+          const group = getUserFeedGroup(user.id, argv.name);
           addFeedsToGroup(group.id, toAdd);
           removeFeedsFromGroup(group.id, toRemove);
 
@@ -581,6 +585,34 @@ yargs(hideBin(process.argv))
           feeds: feeds.map(({ id }) => id)
         });
       }
+    }
+  )
+
+  .command(
+    'schema [outfile]',
+    'write the database schema to a file',
+    (yargs) => {
+      yargs.positional('outfile', {
+        describe: 'Optional name for the output file',
+        type: 'string'
+      });
+    },
+    async (argv) => {
+      let outfile = argv.outfile ?? '';
+      if (!outfile) {
+        const dt = new Date();
+        const y = `${dt.getFullYear()}`;
+        const m = `${dt.getMonth() + 1}`.padStart(2, '0');
+        const d = `${dt.getDate()}`.padStart(2, '0');
+        const hr = `${dt.getHours()}`.padStart(2, '0');
+        const mn = `${dt.getMinutes()}`.padStart(2, '0');
+        const sc = `${dt.getSeconds()}`.padStart(2, '0');
+        outfile = `schema/schema_${y}${m}${d}${hr}${mn}${sc}.sql`;
+      }
+      echo`db: ${process.env.VITE_DB}`;
+      const dir = await $`dirname ${outfile}`;
+      await $`mkdir -p ${dir}`;
+      await $`echo .schema | sqlite3 ${process.env.VITE_DB} > ${outfile}`;
     }
   )
 

@@ -12,7 +12,7 @@ export type FeedStats = {
 type CreateFeedData = Omit<Feed, 'id' | 'type' | 'lastUpdate'> &
   Partial<Pick<Feed, 'type' | 'lastUpdate' | 'id'>>;
 
-export function addFeed(data: CreateFeedData): Feed {
+export function createFeed(data: CreateFeedData): Feed {
   const db = getDb();
   const feed: Feed = db
     .prepare<CreateFeedData & { id: Feed['id'] }>(
@@ -23,7 +23,7 @@ export function addFeed(data: CreateFeedData): Feed {
   return feed;
 }
 
-export function addOrGetFeed(data: CreateFeedData): Feed {
+export function createOrGetFeed(data: CreateFeedData): Feed {
   const db = getDb();
   const feed: Feed = db
     .prepare<CreateFeedData & { id?: Feed['id'] }>(

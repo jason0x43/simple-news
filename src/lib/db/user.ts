@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import cuid from 'cuid';
-import { getDb } from '.';
-import { getPasswordHash } from './password';
+import { getDb } from './index.js';
+import { getPasswordHash } from './password.js';
 import type { Password, User } from './schema';
 
 export function createUser(userData: Omit<User, 'id'>, password: string) {

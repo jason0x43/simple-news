@@ -1,4 +1,4 @@
-import { addOrGetFeed, getFeeds } from '$lib/db/feed';
+import { createOrGetFeed, getFeeds } from '$lib/db/feed';
 import type { Feed } from '$lib/db/schema';
 import { downloadFeed } from '$lib/feed';
 import { error, json } from '@sveltejs/kit';
@@ -33,7 +33,7 @@ export const POST: RequestHandler = async ({ request }) => {
   }
 
   const parsedFeed = await downloadFeed(data.url);
-  const feed = addOrGetFeed({
+  const feed = createOrGetFeed({
     url: data.url,
     title: parsedFeed.title ?? data.url
   });

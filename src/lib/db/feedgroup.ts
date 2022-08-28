@@ -1,5 +1,5 @@
 import cuid from 'cuid';
-import { getDb } from '.';
+import { getDb } from './index.js';
 import type { Feed, FeedGroup, FeedGroupFeed, User } from './schema';
 
 export type FeedGroupWithFeeds = FeedGroup & {
