@@ -5,15 +5,14 @@
 
   export let data: PageData;
 
-  const { articleHeadings, feedId } = data;
   const { articles, feeds, feedGroups, selectedFeedIds } =
     getAppContext().stores;
 
-  $: $articles = articleHeadings;
+  $: $articles = data.articleHeadings;
 
   $: {
-    if (feedId) {
-      const [type, id] = feedId.split('-');
+    if (data.feedId) {
+      const [type, id] = data.feedId.split('-');
       if (type === 'group') {
         const group = $feedGroups.find((group) => group.id === id);
         $selectedFeedIds = group?.feeds.map(({ id }) => id) ?? [];
