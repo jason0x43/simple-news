@@ -5,30 +5,75 @@ on:
 
 jobs:
   test_and_deploy:
+    name: Test and deploy
+
     runs-on: ubuntu-latest
+
     env:
       DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
       DEPLOY_REPO: ${{ secrets.DEPLOY_REPO }}
+
     steps:
       - name: Checkout the app repo
         uses: actions/checkout@v2
+
       - name: Setup node
         uses: actions/setup-node@v3
         with:
           node-version: 18
+
       - name: Install pnpm
         uses: pnpm/action-setup@v2.2.2
         with:
           version: 7.8.0
+
+      - name: Get pnpm store
+        id: pnpm-cache
+        run: |
+          echo "::set-output name=pnpm_cache_dir::$(pnpm store path)"
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.pnpm-cache.outputs.pnpm_cache_dir }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
       - name: Install app dependencies
         run: pnpm install --frozen-lockfile
+
       - name: Run tests
         run: pnpm test
-      - name: Setup SSH agent
-        uses: webfactory/ssh-agent@v0.5.4
-        with:
-          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
-      - name: Add the deploy host key
-        run: echo "${{ secrets.DEPLOY_HOST_KEY }}" >> ~/.ssh/known_hosts
-      - name: Deploy
-        run: pnpm push
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/staging.key
+          echo "$SSH_HOST_KEY" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/staging.key
+          cat >>~/.ssh/config <<END
+          Host staging
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/staging.key
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: ${{ secrets.DEPLOY_USER }}
+          SSH_KEY: ${{ secrets.DEPLOY_KEY }}
+          SSH_HOST: ${{ secrets.DEPLOY_HOST }}
+          SSH_HOST_KEY: ${{ secrets.DEPLOY_HOST_KEY }}
+
+      - name: Update app source
+        run: ssh staging "cd $REPO && git fetch && git reset --hard origin/main"
+        env:
+          REPO: ${{ secrets.DEPLOY_REPO }}
+
+      - name: Rebuild app
+        run: ssh staging "cd $REPO && pnpm install && pnpm build"
+        env:
+          REPO: ${{ secrets.DEPLOY_REPO }}
+
+      - name: Restart app
+        run: ssh staging "systemctl --user restart --now simple-news"

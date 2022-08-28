@@ -14,7 +14,6 @@
     "db": "ts-node ./scripts/db.ts",
     "test": "vitest run",
     "coverage": "vitest run --coverage",
-    "push": "ts-node ./scripts/deploy.ts",
     "download-feeds": "ts-node ./scripts/download-feeds.ts"
   },
   "devDependencies": {
