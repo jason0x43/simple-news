@@ -1,40 +1,55 @@
-import type { Password, User } from '@prisma/client';
 import bcrypt from 'bcryptjs';
-import { prisma } from '../db';
+import cuid from 'cuid';
+import { getDb } from '.';
+import { getPasswordHash } from './password';
+import type { Password, User } from './schema';
 
-export async function verifyLogin({
+export function createUser(userData: Omit<User, 'id'>, password: string) {
+  const db = getDb();
+  const user: User = db
+    .prepare<[User['id'], User['username'], User['email']]>(
+      'INSERT INTO User (id, username, email) VALUES (?, ?, ?) RETURNING *'
+    )
+    .get(cuid(), userData.username, userData.email);
+  db.prepare<[Password['hash'], User['id']]>(
+    'INSERT INTO Password (hash, userId) VALUES (?, ?)'
+  ).run(bcrypt.hashSync(password, 7), user.id);
+  return user;
+}
+
+export function verifyLogin({
   username,
   password
 }: {
   username: User['username'];
   password: Password['hash'];
-}): Promise<User | null> {
-  const user = await prisma.user.findUnique({
-    where: { username },
-    include: {
-      password: true
-    }
-  });
+}): User | null {
+  const db = getDb();
+  const hash = getPasswordHash(username);
 
-  if (!user || !user.password) {
+  if (!hash || !bcrypt.compareSync(password, hash)) {
     return null;
   }
 
-  const isValid = await bcrypt.compare(password, user.password.hash);
+  const user: User = db
+    .prepare<User['username']>('SELECT * from User WHERE username = ?')
+    .get(username);
 
-  if (!isValid) {
-    return null;
-  }
-
-  const { password: _, ...userWithoutPassword } = user;
-  return userWithoutPassword;
+  return user;
 }
 
-export async function getUserById(userId: User['id']): Promise<User | null> {
-  return await prisma.user.findUnique({
-    where: { id: userId },
-    include: {
-      password: false
-    }
-  });
+export function getUserById(userId: User['id']): User | null {
+  const db = getDb();
+  const user: User = db
+    .prepare<User['id']>('SELECT * FROM User WHERE id = ?')
+    .get(userId);
+  return user;
+}
+
+export function getUserByUsername(username: User['username']): User | null {
+  const db = getDb();
+  const user: User = db
+    .prepare<User['username']>('SELECT * FROM User WHERE username = ?')
+    .get(username);
+  return user;
 }

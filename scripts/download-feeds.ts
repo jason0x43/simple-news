@@ -2,17 +2,22 @@
 // Download feeds
 //
 
-import type { Feed } from '@prisma/client';
-import { prisma } from '../src/lib/db.js';
-import Parser, { type Item } from 'rss-parser';
 import { JSDOM } from 'jsdom';
+import Parser, { type Item } from 'rss-parser';
+import { upsertArticle } from '../src/lib/db/article.js';
+import { getFeeds, updateFeedIcon } from '../src/lib/db/feed.js';
+import { transaction } from '../src/lib/db/index.js';
+import { Feed } from '../src/lib/db/schema.js';
 import { downloadFeed as getFeed, FeedItem } from '../src/lib/feed.js';
 
 type ParsedFeed = Parser.Output<unknown>;
 
+let feedCount = 0;
+
 async function downloadFeeds() {
   console.log('>>> Downloading feeds...');
-  const feeds = await prisma.feed.findMany();
+  const feeds = getFeeds();
+  feedCount = feeds.length;
   await Promise.all(feeds.map(downloadFeed));
   console.log('>>> Finished downloading');
 }
@@ -28,46 +33,35 @@ async function downloadFeed(feed: Feed) {
 
     if (!feed.icon) {
       const icon = await getIcon(parsedFeed);
-      await prisma.feed.update({
-        where: {
-          id: feed.id
-        },
-        data: {
-          icon
-        }
+      updateFeedIcon({
+        feedId: feed.id,
+        icon
       });
     }
 
-    await prisma.$transaction(
-      parsedFeed.items.map((entry) => {
+    transaction(() => {
+      for (const entry of parsedFeed.items) {
         const articleId = getArticleId(entry);
         const content = getContent(entry);
 
-        return prisma.article.upsert({
-          where: {
-            feedId_articleId: {
-              articleId,
-              feedId: feed.id
-            }
-          },
-          update: {
-            content
-          },
-          create: {
-            articleId,
-            feedId: feed.id,
-            title: entry.title ?? 'Untitled',
-            link: entry.link ?? null,
-            published: entry.pubDate ? new Date(entry.pubDate) : new Date(),
-            content
-          }
+        upsertArticle({
+          articleId,
+          feedId: feed.id,
+          content,
+          title: entry.title ?? 'Untitled',
+          link: entry.link ?? null,
+          published: entry.pubDate
+            ? Number(new Date(entry.pubDate))
+            : Date.now()
         });
-      })
-    );
+      }
+    });
 
-    console.debug(`>>> Processed feed ${feed.title}`);
+    console.debug(`>>> Processed feed ${feed.title} (${feedCount} left)`);
   } catch (error) {
     console.error(`>>> Error updating ${feed.url}: ${error}`);
+  } finally {
+    feedCount--;
   }
 }
 

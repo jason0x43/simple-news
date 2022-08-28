@@ -1,4 +1,3 @@
-import type { Feed } from '@prisma/client';
 import type { LoadEvent, RequestHandlerOutput } from '@sveltejs/kit';
 import type { GetFeedGroupsResponse } from 'src/routes/api/feedgroups';
 import type { GetFeedsResponse } from 'src/routes/api/feeds';
@@ -10,6 +9,7 @@ import {
   errorResponse,
   isErrorResponse
 } from '$lib/request';
+import type { Feed } from '$lib/db/schema';
 
 async function loadFeedStats(fetch: LoadEvent['fetch']) {
   const feedStatsResp = await fetch('/api/feedstats');

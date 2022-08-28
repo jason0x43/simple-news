@@ -1,20 +1,17 @@
-import { prisma } from '$lib/db';
+import {
+  addFeedsToGroup,
+  findUserFeedGroupContainingFeed,
+  getUserFeedGroupsWithFeeds,
+  removeFeedsFromGroup,
+  type FeedGroupWithFeeds
+} from '$lib/db/feedgroup';
+import type { Feed, FeedGroup } from '$lib/db/schema';
 import {
   errorResponse,
   unauthResponse,
   type ErrorResponse
 } from '$lib/request';
-import type {
-  Feed,
-  FeedGroup,
-  FeedGroupFeed,
-  PrismaPromise
-} from '@prisma/client';
 import type { RequestHandler } from './__types/feedgroups';
-
-export type FeedGroupWithFeeds = FeedGroup & {
-  feeds: FeedGroupFeed[];
-};
 
 export type GetFeedGroupsResponse = FeedGroupWithFeeds[] | ErrorResponse;
 
@@ -28,14 +25,7 @@ export const GET: RequestHandler = async ({ locals }) => {
   }
 
   return {
-    body: await prisma.feedGroup.findMany({
-      where: {
-        userId: user.id
-      },
-      include: {
-        feeds: true
-      }
-    })
+    body: getUserFeedGroupsWithFeeds(user.id)
   };
 };
 
@@ -71,46 +61,17 @@ export const PUT: RequestHandler = async ({ locals, request }) => {
     });
   }
 
-  const existingGroup = await prisma.feedGroup.findFirst({
-    where: {
-      feeds: {
-        some: {
-          feedId: data.feedId
-        }
-      }
-    }
+  const existingGroup = findUserFeedGroupContainingFeed({
+    userId: user.id,
+    feedId: data.feedId
   });
 
-  const queries: PrismaPromise<unknown>[] = [];
-
   if (existingGroup) {
-    queries.push(
-      prisma.feedGroupFeed.delete({
-        where: {
-          feedGroupId_feedId: {
-            feedId: data.feedId,
-            feedGroupId: existingGroup?.id
-          }
-        }
-      })
-    );
+    removeFeedsFromGroup(existingGroup.id, [data.feedId]);
   }
 
   if (data.groupId !== 'not subscribed') {
-    queries.push(
-      prisma.feedGroupFeed.create({
-        data: {
-          feedId: data.feedId,
-          feedGroupId: data.groupId
-        }
-      })
-    );
-  }
-
-  try {
-    await prisma.$transaction(queries);
-  } catch (error) {
-    return errorResponse(`${error}`, 500);
+    addFeedsToGroup(data.groupId, [data.feedId]);
   }
 
   return {};

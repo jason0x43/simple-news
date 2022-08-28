@@ -9,8 +9,8 @@ export const GET: RequestHandler = async ({ locals, params }) => {
     return unauthResponse();
   }
 
-  const article = await getArticle({
-    id: params.articleId,
+  const article = getArticle({
+    id: params.articleId as string,
     userId: user.id
   });
 

@@ -1,5 +1,5 @@
-import type { Session, User } from '@prisma/client';
 import * as cookie from 'cookie';
+import type { Session, User } from './db/schema';
 
 const options = {
   path: '/',

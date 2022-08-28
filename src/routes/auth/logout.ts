@@ -1,14 +1,10 @@
-import { prisma } from '$lib/db';
+import { deleteSession } from '$lib/db/session';
 import { clearSessionCookie } from '$lib/session';
 import type { RequestHandler } from '@sveltejs/kit';
 
 export const GET: RequestHandler = async function ({ locals }) {
   if (locals.session) {
-    await prisma.session.delete({
-      where: {
-        id: locals.session.id
-      }
-    });
+    deleteSession(locals.session.id);
 
     return {
       status: 302,

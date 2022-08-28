@@ -4,7 +4,7 @@ import * as cookie from 'cookie';
 
 export const handle: Handle = async ({ event, resolve }) => {
   const cookies = cookie.parse(event.request.headers.get('cookie') ?? '');
-  const session = (await getSessionWithUser(cookies.session)) ?? undefined;
+  const session = getSessionWithUser(cookies.session) ?? undefined;
   event.locals.session = session;
   event.locals.sessionData = session?.data
     ? JSON.parse(session.data)

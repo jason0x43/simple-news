@@ -1,12 +1,25 @@
-import type { Feed, FeedGroup, FeedGroupFeed } from '@prisma/client';
-import bcrypt from 'bcryptjs';
 import { readFileSync, writeFileSync } from 'fs';
 import readline from 'readline';
 import { Writable } from 'stream';
 import { inspect } from 'util';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { prisma } from '../src/lib/db.js';
+import { Feed, FeedGroup, FeedGroupFeed } from '../src/lib/db/schema';
+import { createUser, getUserByUsername } from '../src/lib/db/user';
+import { createFeed, getFeedByUrl, getFeeds } from '../src/lib/db/feed';
+import {
+  addFeedsToGroup,
+  getGroupFeeds,
+  getUserFeeds,
+  removeFeedsFromGroup
+} from '../src/lib/db/feedgroupfeed';
+import {
+  createFeedGroup,
+  deleteFeedGroup,
+  getFeedGroup,
+  getUserFeedGroups
+} from '../src/lib/db/feedgroup';
+import { deleteFeedArticles } from '../src/lib/db/article';
 
 type MutableWritable = Writable & { muted?: boolean };
 
@@ -22,26 +35,6 @@ const mutableStdout: MutableWritable = new Writable({
 type ExportedFeedGroup = FeedGroup & {
   feeds: (FeedGroupFeed & { feed: Feed })[];
 };
-
-async function getUser(username: string) {
-  return await prisma.user.findUnique({
-    where: {
-      username
-    },
-    include: {
-      feedGroups: {
-        include: {
-          feeds: {
-            include: {
-              feed: true
-            }
-          }
-        }
-      }
-    },
-    rejectOnNotFound: true
-  });
-}
 
 yargs(hideBin(process.argv))
   .scriptName('db')
@@ -81,17 +74,7 @@ yargs(hideBin(process.argv))
         mutableStdout.muted = true;
       });
 
-      await prisma.user.create({
-        data: {
-          username: argv.username,
-          email: argv.email,
-          password: {
-            create: {
-              hash: await bcrypt.hash(password, 7)
-            }
-          }
-        }
-      });
+      createUser(argv, password);
     }
   )
 
@@ -124,14 +107,12 @@ yargs(hideBin(process.argv))
           }
         });
     },
-    async (argv) => {
-      await prisma.feed.create({
-        data: {
-          url: argv.url,
-          title: argv.title,
-          icon: argv.icon,
-          htmlUrl: argv.htmlUrl
-        }
+    (argv) => {
+      createFeed({
+        url: argv.url,
+        title: argv.title,
+        icon: argv.icon,
+        htmlUrl: argv.htmlUrl
       });
     }
   )
@@ -146,12 +127,8 @@ yargs(hideBin(process.argv))
         type: 'string'
       });
     },
-    async (argv) => {
-      await prisma.article.deleteMany({
-        where: {
-          feedId: argv.id
-        }
-      });
+    (argv) => {
+      deleteFeedArticles(argv.id);
     }
   )
 
@@ -178,8 +155,8 @@ yargs(hideBin(process.argv))
         terminal: true
       });
 
-      const user = await getUser(argv.username);
-      const feeds = await prisma.feed.findMany();
+      const user = getUserByUsername(argv.username);
+      const feeds = getFeeds();
       const groupFeeds: string[] = [];
 
       for (;;) {
@@ -232,16 +209,10 @@ yargs(hideBin(process.argv))
             groupFeeds.splice(Number(idx) - 1, 1);
           }
         } else if (answer === '3') {
-          await prisma.feedGroup.create({
-            data: {
-              userId: user.id,
-              name: argv.name,
-              feeds: {
-                create: groupFeeds.map((feedId) => ({
-                  feedId
-                }))
-              }
-            }
+          createFeedGroup({
+            userId: user.id,
+            name: argv.name,
+            feeds: groupFeeds
           });
           rl.close();
           break;
@@ -266,16 +237,11 @@ yargs(hideBin(process.argv))
           type: 'string'
         });
     },
-    async (argv) => {
-      const user = await getUser(argv.username);
-
-      await prisma.feedGroup.delete({
-        where: {
-          userId_name: {
-            userId: user.id,
-            name: argv.name
-          }
-        }
+    (argv) => {
+      const user = getUserByUsername(argv.username);
+      deleteFeedGroup({
+        userId: user.id,
+        name: argv.name
       });
     }
   )
@@ -308,17 +274,15 @@ yargs(hideBin(process.argv))
         terminal: true
       });
 
-      const user = await getUser(argv.username);
-      const feeds = await prisma.feed.findMany();
-      const groups = user.feedGroups;
+      const user = getUserByUsername(argv.username);
+      const userFeeds = getUserFeeds(user.id);
       const alreadyGrouped: Set<string> = new Set();
-      for (const group of groups) {
-        for (const feed of group.feeds) {
-          alreadyGrouped.add(feed.feedId);
-        }
+      for (const feed of userFeeds) {
+        alreadyGrouped.add(feed.id);
       }
 
       const groupFeeds: string[] = [];
+      const feeds = getFeeds();
 
       for (;;) {
         rl.write(`Feeds in ${argv.name}:\n`);
@@ -372,16 +336,10 @@ yargs(hideBin(process.argv))
             groupFeeds.splice(Number(idx) - 1, 1);
           }
         } else if (answer === '3') {
-          await prisma.feedGroup.create({
-            data: {
-              userId: user.id,
-              name: argv.name,
-              feeds: {
-                create: groupFeeds.map((feedId) => ({
-                  feedId
-                }))
-              }
-            }
+          createFeedGroup({
+            userId: user.id,
+            name: argv.name,
+            feeds: groupFeeds
           });
           rl.close();
           break;
@@ -413,24 +371,23 @@ yargs(hideBin(process.argv))
         terminal: true
       });
 
-      const user = await getUser(argv.username);
-      const group = user.feedGroups.find((g) => g.name === argv.name);
+      const user = getUserByUsername(argv.username);
+      const groups = getUserFeedGroups(user.id);
+      const group = groups.find((g) => g.name === argv.name);
 
       if (!group) {
         throw new Error(`Unknown group name ${argv.name}`);
       }
 
-      const feeds = await prisma.feed.findMany();
-      const groups = user.feedGroups;
+      const feeds = getFeeds();
+      const userFeeds = getUserFeeds(user.id);
       const alreadyGrouped: Set<string> = new Set();
-      for (const group of groups) {
-        for (const feed of group.feeds) {
-          alreadyGrouped.add(feed.feedId);
-        }
+      for (const feed of userFeeds) {
+        alreadyGrouped.add(feed.id);
       }
 
-      const existingGroupFeeds: string[] = group.feeds.map(
-        (feed) => feed.feedId
+      const existingGroupFeeds: string[] = getGroupFeeds(group.id).map(
+        (feed) => feed.id
       );
       const groupFeeds: string[] = existingGroupFeeds.slice();
 
@@ -500,24 +457,10 @@ yargs(hideBin(process.argv))
             }
           }
 
-          await prisma.feedGroup.update({
-            where: {
-              userId_name: {
-                userId: user.id,
-                name: argv.name
-              }
-            },
-            data: {
-              feeds: {
-                create: toAdd.map((feedId) => ({
-                  feedId
-                })),
-                deleteMany: toRemove.map((feedId) => ({
-                  feedId
-                }))
-              }
-            }
-          });
+          const group = getFeedGroup(user.id, argv.name);
+          addFeedsToGroup(group.id, toAdd);
+          removeFeedsFromGroup(group.id, toRemove);
+
           rl.close();
           break;
         }
@@ -535,7 +478,7 @@ yargs(hideBin(process.argv))
       });
     },
     async (argv) => {
-      const feeds = await prisma.feed.findMany();
+      const feeds = getFeeds();
       if (argv.file) {
         writeFileSync(argv.file, JSON.stringify(feeds, null, '  '));
       } else {
@@ -545,7 +488,7 @@ yargs(hideBin(process.argv))
   )
 
   .command('list-feeds', 'List feeds', {}, async () => {
-    for (const feed of await prisma.feed.findMany()) {
+    for (const feed of getFeeds()) {
       console.log(`${feed.id}: ${feed.title}`);
     }
   })
@@ -566,19 +509,8 @@ yargs(hideBin(process.argv))
         });
     },
     async (argv) => {
-      const user = await getUser(argv.username);
-      const groups = await prisma.feedGroup.findMany({
-        where: {
-          userId: user.id
-        },
-        include: {
-          feeds: {
-            include: {
-              feed: true
-            }
-          }
-        }
-      });
+      const user = getUserByUsername(argv.username);
+      const groups = getUserFeedGroups(user.id);
       if (argv.file) {
         writeFileSync(argv.file, JSON.stringify(groups, null, '  '));
       } else {
@@ -603,18 +535,12 @@ yargs(hideBin(process.argv))
       );
 
       for (const feed of feedData) {
-        await prisma.feed.upsert({
-          where: {
-            url: feed.url
-          },
-          update: {},
-          create: {
-            id: feed.id,
-            url: feed.url,
-            title: feed.title,
-            icon: feed.icon,
-            htmlUrl: feed.htmlUrl
-          }
+        createFeed({
+          id: feed.id,
+          url: feed.url,
+          title: feed.title,
+          icon: feed.icon,
+          htmlUrl: feed.htmlUrl
         });
       }
     }
@@ -637,7 +563,7 @@ yargs(hideBin(process.argv))
         });
     },
     async (argv) => {
-      const user = await getUser(argv.username);
+      const user = getUserByUsername(argv.username);
       const groupData = JSON.parse(
         readFileSync(argv.file, { encoding: 'utf8' })
       ) as ExportedFeedGroup[];
@@ -646,26 +572,13 @@ yargs(hideBin(process.argv))
         const feedUrls = group.feeds.map((f) => f.feed.url);
         const feeds: Feed[] = [];
         for (const url of feedUrls) {
-          feeds.push(
-            await prisma.feed.findUnique({
-              where: {
-                url
-              },
-              rejectOnNotFound: true
-            })
-          );
+          feeds.push(getFeedByUrl(url));
         }
 
-        await prisma.feedGroup.create({
-          data: {
-            userId: user.id,
-            name: group.name,
-            feeds: {
-              create: feeds.map((feed) => ({
-                feedId: feed.id
-              }))
-            }
-          }
+        createFeedGroup({
+          userId: user.id,
+          name: group.name,
+          feeds: feeds.map(({ id }) => id)
         });
       }
     }

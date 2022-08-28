@@ -1,5 +1,5 @@
+import type { User } from '$lib/db/schema.js';
 import type { SessionWithUser } from '$lib/db/session.js';
-import type { User } from '@prisma/client';
 import type { RequestEvent } from '@sveltejs/kit';
 import { describe, expect, it, vi } from 'vitest';
 import { handle, getSession } from './hooks.js';
@@ -16,7 +16,7 @@ vi.mock('cookie', () => {
 
 vi.mock('$lib/db/session', () => {
   return {
-    getSessionWithUser: vi.fn(async () => {
+    getSessionWithUser: vi.fn(() => {
       return { sessionId: 'foo' };
     }),
     defaultSessionData: {

@@ -1,8 +1,8 @@
-import type { Article, Feed } from '@prisma/client';
 import { writable } from 'svelte/store';
 import type { ArticleHeadingWithUserData } from './db/article';
 import type { FeedStats } from './db/feed';
 import type { FeedGroupWithFeeds } from './db/feedgroup';
+import type { Article, Feed } from './db/schema';
 
 export function createStores() {
   return {

@@ -1,9 +1,9 @@
 <script type="ts">
-  import type { Feed } from '@prisma/client';
   import type { FeedGroupWithFeeds } from '$lib/db/feedgroup';
   import UserIcon from '$lib/icons/User.svelte';
   import RssIcon from '$lib/icons/Rss.svelte';
   import { getAppContext } from '$lib/contexts';
+  import type { Feed } from '$lib/db/schema';
 
   export let onTitlePress: () => void;
 
@@ -35,7 +35,7 @@
     } else if (selectedFeedIds.length > 1) {
       for (const group of feedGroups) {
         for (const groupFeed of group.feeds) {
-          if (groupFeed.feedId === selectedFeedIds[0]) {
+          if (groupFeed.id === selectedFeedIds[0]) {
             return group.name;
           }
         }

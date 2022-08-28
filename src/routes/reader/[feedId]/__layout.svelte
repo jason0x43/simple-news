@@ -35,7 +35,7 @@
     const [type, id] = feedId.split('-');
     if (type === 'group') {
       const group = $feedGroups.find((group) => group.id === id);
-      $selectedFeedIds = group?.feeds.map(({ feedId }) => feedId) ?? [];
+      $selectedFeedIds = group?.feeds.map(({ id }) => id) ?? [];
     } else {
       const feed = $feeds.find((feed) => feed.id === id);
       $selectedFeedIds = feed ? [feed.id] : [];

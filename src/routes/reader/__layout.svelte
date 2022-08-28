@@ -1,5 +1,4 @@
 <script context="module" type="ts">
-  import type { FeedGroupWithFeeds } from '../api/feedgroups';
   import type { Load } from './__types/__layout';
   import { isRequestOutput } from '$lib/request';
   import { loadData } from './_util';
@@ -35,21 +34,19 @@
 
 <script type="ts">
   import Header from '$lib/components/Header.svelte';
-  import FeedsList from '$lib/components/FeedsList.svelte';
-  import Select from '$lib/components/Select.svelte';
-  import type { Feed } from '@prisma/client';
   import type { FeedStats } from '$lib/db/feed';
-  import { slide } from '$lib/transition';
   import { onMount } from 'svelte';
   import { invalidate } from '$app/navigation';
   import { getAppContext, setReaderContext } from '$lib/contexts';
   import ManageFeeds from '$lib/components/ManageFeeds.svelte';
-  import { session } from '$app/stores';
   import { clearStorage, loadValue, storeValue } from '$lib/util';
   import type { UpdateSessionRequest } from '../api/session';
   import { browser } from '$app/env';
+  import { session } from '$app/stores';
   import { put } from '$lib/request';
   import Sidebar from '$lib/components/Sidebar.svelte';
+  import type { Feed } from '$lib/db/schema';
+  import type { FeedGroupWithFeeds } from '$lib/db/feedgroup';
 
   export let data: {
     // selectedFeedIds: Feed['id'][] | undefined;
@@ -58,14 +55,8 @@
     feedGroups: FeedGroupWithFeeds[];
   };
 
-  const {
-    sidebarVisible,
-    feeds,
-    feedGroups,
-    feedStats,
-    managingFeeds,
-    selectedFeedIds
-  } = getAppContext().stores;
+  const { sidebarVisible, feeds, feedGroups, feedStats, managingFeeds } =
+    getAppContext().stores;
 
   $: {
     $feeds = data.feeds;

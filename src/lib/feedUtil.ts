@@ -1,7 +1,7 @@
-import type { Feed } from '@prisma/client';
 import type { FeedStats } from './db/feed';
 import type { FeedGroupWithFeeds } from './db/feedgroup';
-import type { ArticleFilter } from './types';
+import type { Feed } from './db/schema';
+import type { ArticleFilter } from './db/session';
 
 /**
  * Get the number of articles from a list of feeds that match a filter
@@ -11,13 +11,14 @@ export function getArticleCount(
   feedStats: FeedStats,
   articleFilter: ArticleFilter
 ): number {
-  return feeds.reduce((acc, feed) => {
+  const count = feeds.reduce((acc, feed) => {
     const stats = feedStats[feed.id] ?? {};
     return (
       acc +
       (articleFilter === 'unread' ? stats.total - stats.read : stats.total)
     );
   }, 0);
+  return count;
 }
 
 /**
@@ -29,7 +30,7 @@ export function getGroupFeeds(
 ): Feed[] {
   const groupFeeds: Feed[] = [];
   for (const feedGroupFeed of group.feeds) {
-    const feed = feeds.find(({ id }) => id === feedGroupFeed.feedId);
+    const feed = feeds.find(({ id }) => id === feedGroupFeed.id);
     if (feed) {
       groupFeeds.push(feed);
     }

@@ -1,6 +1,6 @@
 <script type="ts">
-  import type { ArticleFilter } from '$lib/types';
   import { getAppContext } from '$lib/contexts';
+  import type { ArticleFilter } from '$lib/db/session';
   import { areIdentified, getArticleCount, getGroupFeeds } from '$lib/feedUtil';
 
   export let articleFilter: ArticleFilter;

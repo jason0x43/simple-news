@@ -3,7 +3,6 @@
   import Dialog from './Dialog.svelte';
   import Portal from './Portal.svelte';
   import Select from './Select.svelte';
-  import type { Feed, FeedGroup } from '@prisma/client';
   import type {
     AddGroupFeedRequest,
     AddGroupFeedResponse
@@ -12,6 +11,7 @@
   import { showToast } from '$lib/toast';
   import { getEventValue } from '$lib/util';
   import { getAppContext } from '$lib/contexts';
+  import type { Feed, FeedGroup } from '$lib/db/schema';
 
   const { feeds, feedGroups, managingFeeds } = getAppContext().stores;
   const groups: { [feedId: string]: string } = {};
@@ -19,7 +19,7 @@
   if ($feedGroups) {
     for (const group of $feedGroups) {
       for (const feedGroup of group.feeds) {
-        groups[feedGroup.feedId] = group.id;
+        groups[feedGroup.id] = group.id;
       }
     }
   }
@@ -56,7 +56,7 @@
   }: {
     feedId: Feed['id'];
     groupId: FeedGroup['id'];
-  }) {
+  }): Promise<void> {
     busy = true;
     let err: unknown | undefined;
 

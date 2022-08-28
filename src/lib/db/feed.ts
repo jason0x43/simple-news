@@ -1,5 +1,6 @@
-import type { Feed, User } from '@prisma/client';
-import { prisma } from '../db';
+import cuid from 'cuid';
+import { getDb } from './index.js';
+import type { Article, Feed, User } from './schema';
 
 export type FeedStats = {
   [feedId: Feed['id']]: {
@@ -8,57 +9,97 @@ export type FeedStats = {
   };
 };
 
-export async function getFeed(id: string): Promise<Feed | null> {
-  return prisma.feed.findUnique({
-    where: { id }
-  });
+type CreateFeedData = Omit<Feed, 'id' | 'type' | 'lastUpdate'> &
+  Partial<Pick<Feed, 'type' | 'lastUpdate' | 'id'>>;
+
+export function addFeed(data: CreateFeedData): Feed {
+  const db = getDb();
+  const feed: Feed = db
+    .prepare<CreateFeedData & { id: Feed['id'] }>(
+      `INSERT INTO Feed (id, url, title, icon, htmlUrl)
+    VALUES (@id, @url, @title, @icon, @htmlUrl)`
+    )
+    .get({ id: cuid(), ...data });
+  return feed;
 }
 
-export async function getUserFeeds(userId: User['id']): Promise<Feed[]> {
-  const feedGroups = await prisma.feedGroup.findMany({
-    where: { userId },
-    include: {
-      feeds: {
-        include: {
-          feed: true
-        }
-      }
-    }
-  });
-  const feeds: Feed[] = [];
-  for (const group of feedGroups) {
-    feeds.push(...group.feeds.map(({ feed }) => feed));
-  }
+export function addOrGetFeed(data: CreateFeedData): Feed {
+  const db = getDb();
+  const feed: Feed = db
+    .prepare<CreateFeedData & { id?: Feed['id'] }>(
+      `INSERT INTO Feed (id, url, title, icon, htmlUrl)
+    VALUES (@id, @url, @title, @icon, @htmlUrl)
+    ON CONFLICT (url) DO NOTHING`
+    )
+    .get({ id: cuid(), ...data });
+  return feed;
+}
+
+export function getFeeds(): Feed[] {
+  const db = getDb();
+  const feeds: Feed[] = db.prepare('SELECT * FROM Feed').all();
   return feeds;
 }
 
-export async function getFeedStats(feeds: Feed[]): Promise<FeedStats> {
+export function getFeed(id: string): Feed {
+  const db = getDb();
+  const feed: Feed = db
+    .prepare<Feed['id']>('SELECT * FROM Feed WHERE id = ?')
+    .get(id);
+  if (!feed) {
+    throw new Error(`No feed with id "${id}"`);
+  }
+  return feed;
+}
+
+export function getFeedByUrl(url: string): Feed {
+  const db = getDb();
+  const feed: Feed = db
+    .prepare<Feed['url']>('SELECT * FROM Feed WHERE url = ?')
+    .get(url);
+  if (!feed) {
+    throw new Error(`No feed with url "${url}"`);
+  }
+  return feed;
+}
+
+export function getFeedStats(data: {
+  userId: User['id'];
+  feeds: Feed[];
+}): FeedStats {
   const stats: FeedStats = {};
+  const db = getDb();
+  const feedIds = data.feeds.map(({ id }) => id);
 
-  for (const id of feeds.map(({ id }) => id)) {
-    const articleIds = await prisma.article.findMany({
-      select: {
-        id: true
-      },
-      where: {
-        feedId: id
-      }
-    });
+  for (const feedId of feedIds) {
+    const articleIds: Article['id'][] = db
+      .prepare<Article['feedId']>('SELECT id FROM Article WHERE feedId = ?')
+      .all(feedId)
+      .map(({ id }) => id);
 
-    const numRead = await prisma.userArticle.count({
-      where: {
-        articleId: {
-          in: articleIds.map(({ id }) => id)
-        },
-        read: true
-      }
-    });
+    const numRead: number = db
+      .prepare<Article['id'][]>(
+        `SELECT COUNT(*) FROM UserArticle WHERE articleId IN (${articleIds
+          .map(() => '?')
+          .join()}) AND read = true`
+      )
+      .get(...articleIds)['COUNT(*)'];
 
-    stats[id] = {
+    stats[feedId] = {
       total: articleIds.length,
       read: numRead
     };
   }
 
   return stats;
+}
+
+export function updateFeedIcon(data: {
+  feedId: Feed['id'];
+  icon: string;
+}): void {
+  const db = getDb();
+  db.prepare<[Feed['icon'], Feed['id']]>(
+    'UPDATE Feed SET icon = ? WHERE id = ?'
+  ).run(data.icon, data.feedId);
 }

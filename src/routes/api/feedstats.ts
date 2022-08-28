@@ -1,18 +1,19 @@
-import { getFeedStats, getUserFeeds, type FeedStats } from '$lib/db/feed';
+import { getFeedStats, type FeedStats } from '$lib/db/feed';
+import { getUserFeeds } from '$lib/db/feedgroup';
 import { unauthResponse, type ErrorResponse } from '$lib/request';
 import { getSessionUser } from '$lib/session';
 import type { RequestHandler } from './__types/feedstats';
 
 export type GetFeedStatsResponse = FeedStats | ErrorResponse;
 
-export const GET: RequestHandler = async ({ locals }) => {
+export const GET: RequestHandler = ({ locals }) => {
   const user = getSessionUser(locals);
   if (!user) {
     return unauthResponse();
   }
 
-  const feeds = await getUserFeeds(user.id);
-  const feedStats = await getFeedStats(feeds);
+  const feeds = getUserFeeds(user.id);
+  const feedStats = getFeedStats({ userId: user.id, feeds });
 
   return {
     status: 200,

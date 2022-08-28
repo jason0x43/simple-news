@@ -1,8 +1,8 @@
+import type { User } from '$lib/db/schema';
 import { createUserSession } from '$lib/db/session';
 import { verifyLogin } from '$lib/db/user';
 import type { ErrorResponse } from '$lib/request';
 import { setSessionCookie } from '$lib/session';
-import type { User } from '@prisma/client';
 import type { RequestHandler } from '@sveltejs/kit';
 
 export type LoginRequest = {
@@ -21,7 +21,7 @@ export const POST: RequestHandler<
   LoginResponse
 > = async function ({ request }) {
   const data: LoginRequest = await request.json();
-  const user = await verifyLogin(data);
+  const user = verifyLogin(data);
 
   if (!user) {
     return {
@@ -30,7 +30,7 @@ export const POST: RequestHandler<
     };
   }
 
-  const session = await createUserSession(user.id);
+  const session = createUserSession(user.id);
 
   return {
     headers: setSessionCookie(session),

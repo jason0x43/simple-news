@@ -1,5 +1,6 @@
-import type { Article, Feed, User, UserArticle } from '@prisma/client';
-import { prisma } from '$lib/db';
+import cuid from 'cuid';
+import { getDb } from './index.js';
+import type { Article, Feed, User, UserArticle } from './schema';
 
 export type ArticleHeading = Pick<
   Article,
@@ -11,38 +12,32 @@ export type ArticleUserData = Omit<UserArticle, 'userId' | 'articleId'>;
 export type ArticleHeadingWithUserData = Omit<Article, 'content'> &
   ArticleUserData;
 
-export type ArticleWithUserData = Article & ArticleUserData;
+export type ArticleWithUserData = Article & Partial<ArticleUserData>;
 
-export async function getArticle({
+export function getArticle({
   id,
   userId
 }: {
   id: Article['id'];
   userId: User['id'];
-}): Promise<ArticleWithUserData | null> {
-  const article = await prisma.article.findUnique({
-    where: { id },
-    include: {
-      users: {
-        where: {
-          userId
-        },
-        select: {
-          read: true,
-          saved: true
-        }
-      }
-    }
-  });
+}): ArticleWithUserData | null {
+  const db = getDb();
+  const article: Article = db
+    .prepare<Article['id']>('SELECT * FROM Article WHERE id = ?')
+    .get(id);
+  const userArticle: Pick<UserArticle, 'read' | 'saved'> | null = db
+    .prepare<[User['id'], Article['id']]>(
+      'SELECT read, saved FROM UserArticle WHERE userId = ? AND articleId = ?'
+    )
+    .get(userId, id);
 
   if (!article) {
     return null;
   }
 
-  const { users, ...other } = article;
   return {
-    ...other,
-    ...users[0]
+    ...article,
+    ...userArticle
   };
 }
 
@@ -57,123 +52,134 @@ export async function getArticleHeadings({
   userId: User['id'];
   filter?: string;
 }): Promise<ArticleHeadingWithUserData[]> {
-  const articles = await prisma.article.findMany({
-    where: {
-      feedId: {
-        in: feedIds
-      },
-      id: {
-        in: articleIds
-      }
-    },
-    select: {
-      id: true,
-      feedId: true,
-      articleId: true,
-      title: true,
-      link: true,
-      published: true,
-      users: {
-        where: {
-          userId
-        },
-        select: {
-          read: true,
-          saved: true
-        }
-      }
-    },
-    orderBy: {
-      published: 'asc'
-    }
-  });
+  const db = getDb();
+  const wheres: string[] = [];
+  const params: unknown[] = [];
 
-  const userArticles = articles.map((article) => {
-    const { users, ...other } = article;
-    return {
-      ...other,
-      ...users[0]
-    };
-  });
+  let query = `SELECT id, feedId, Article.articleId, title, link, published, UserArticle.read, UserArticle.saved
+    FROM Article
+    LEFT JOIN UserArticle
+    ON UserArticle.userId = ? AND UserArticle.articleId = Article.id`;
+  params.push(userId);
+
+  if (feedIds) {
+    wheres.push(`feedId IN (${feedIds.map(() => '?').join(', ')})`);
+    params.push(...feedIds);
+  }
+  if (articleIds) {
+    wheres.push(`articleId IN (${articleIds.map(() => '?').join(', ')})`);
+    params.push(...articleIds);
+  }
+
+  if (wheres.length > 0) {
+    query = `${query} WHERE ${wheres.join(' AND ')}`;
+  }
+
+  query = `${query} ORDER BY published ASC`;
+
+  const articles: ArticleHeadingWithUserData[] = db
+    .prepare(query)
+    .all(...params);
 
   // TODO: perform filtering in db query
   if (filter === 'unread') {
-    return userArticles.filter((ua) => !ua.read);
+    return articles.filter((a) => !a.read);
   }
 
   if (filter === 'read') {
-    return userArticles.filter((ua) => ua.read);
+    return articles.filter((a) => a.read);
   }
 
-  return userArticles;
+  return articles;
 }
 
-export function updateArticleUserData({
+export function markArticleRead({
   id,
   userId,
-  userData
+  read
 }: {
   id: Article['id'];
   userId: User['id'];
-  userData: Partial<ArticleUserData>;
-}): Promise<ArticleUserData & Pick<UserArticle, 'articleId'>> {
-  return prisma.userArticle.upsert({
-    where: {
-      userId_articleId: {
-        articleId: id,
-        userId
-      }
-    },
-    create: {
-      userId,
-      articleId: id,
-      ...userData
-    },
-    update: {
-      ...userData
-    },
-    select: {
-      articleId: true,
-      read: true,
-      saved: true
-    }
+  read: boolean;
+}): void {
+  const db = getDb();
+  db.prepare<{
+    userId: User['id'];
+    articleId: Article['id'];
+    read: ArticleUserData['read'];
+  }>(
+    `INSERT INTO UserArticle(userId, articleId, read)
+    VALUES (@userId, @articleId, @read)
+    ON CONFLICT(userId, articleId)
+    DO UPDATE SET read = @read`
+  ).run({
+    userId,
+    articleId: id,
+    read: read ? 1 : 0
   });
 }
 
-export async function updateArticlesUserData({
+export function markArticlesRead({
   articleIds,
   userId,
-  userData
+  read
 }: {
   articleIds: Article['id'][];
   userId: User['id'];
-  userData: Partial<ArticleUserData>;
-}): Promise<ArticleHeadingWithUserData[]> {
-  await prisma.$transaction(
-    articleIds.map((id) =>
-      prisma.userArticle.upsert({
-        where: {
-          userId_articleId: {
-            articleId: id,
-            userId
-          }
-        },
-        create: {
-          ...userData,
-          userId,
-          articleId: id
-        },
-        update: {
-          ...userData
-        },
-        select: {
-          articleId: true,
-          read: true,
-          saved: true
-        }
-      })
-    )
+  read: boolean;
+}): void {
+  const db = getDb();
+  const updater = db.prepare<{
+    userId: User['id'];
+    articleId: Article['id'];
+    read: ArticleUserData['read'];
+  }>(
+    `INSERT INTO UserArticle(userId, articleId, read)
+    VALUES (@userId, @articleId, @read)
+    ON CONFLICT(userId, articleId)
+    DO UPDATE SET read = @read`
   );
 
-  return getArticleHeadings({ articleIds, userId });
+  try {
+    db.transaction(() => {
+      for (const articleId of articleIds) {
+        updater.run({
+          userId,
+          articleId,
+          read: read ? 1 : 0
+        });
+      }
+    })();
+  } catch (error) {
+    console.warn('problem marking articles as read:', error);
+  }
+}
+
+type ArticleUpsert = Pick<
+  Article,
+  'articleId' | 'feedId' | 'content' | 'title' | 'link' | 'published'
+>;
+
+export function upsertArticle(data: ArticleUpsert): void {
+  const db = getDb();
+  db.prepare<ArticleUpsert & { id?: Article['id'] }>(
+    `INSERT INTO Article (id, articleId, feedId, content, title, link, published)
+    VALUES (@id, @articleId, @feedId, @content, @title, @link, @published)
+    ON CONFLICT(articleId, feedId)
+    DO UPDATE SET content = @content, title = @title, link = @link, published = @published`
+  ).run({ id: cuid(), ...data });
+}
+
+export function deleteArticles(articleIds: Article['id'][]): void {
+  const db = getDb();
+  db.prepare<Article['id'][]>(
+    `DELETE FROM Article WHERE articleId in (${articleIds
+      .map(() => '?')
+      .join()})`
+  ).run(...articleIds);
+}
+
+export function deleteFeedArticles(feedId: Feed['id']): void {
+  const db = getDb();
+  db.prepare<Feed['id']>('DELETE FROM Article WHERE feedId = ?').run(feedId);
 }

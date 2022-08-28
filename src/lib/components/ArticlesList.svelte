@@ -1,6 +1,5 @@
 <script type="ts">
   import { page, session } from '$app/stores';
-  import type { Article, Feed } from '@prisma/client';
   import ContextMenu from './ContextMenu.svelte';
   import { getAge } from '$lib/date';
   import type { ArticleHeadingWithUserData } from '$lib/db/article';
@@ -19,6 +18,8 @@
   import { onMount } from 'svelte';
   import { put } from '$lib/request';
   import { getAppContext } from '$lib/contexts';
+  import type { Article, Feed } from '$lib/db/schema';
+  import { browser } from '$app/env';
 
   const { articles, feeds, sidebarVisible } = getAppContext().stores;
 
@@ -54,7 +55,7 @@
   }
 
   $: {
-    if (selectedArticleId) {
+    if (browser && selectedArticleId) {
       updatedArticleIds.add(selectedArticleId);
       if (!$articles?.find(({ id }) => id === selectedArticleId)?.read) {
         markAsRead([selectedArticleId], true);
@@ -104,7 +105,7 @@
         feed: $feeds.find(({ id }) => id === article.feedId),
         isActive: activeArticleId === article.id,
         isSelected: selectedArticleId === article.id,
-        isRead: article.read ?? false
+        isRead: Boolean(article.read)
       }));
   }
 
@@ -204,21 +205,19 @@
     if ($articles) {
       for (const id of articleIds) {
         const idx = $articles.findIndex((article) => article.id === id);
-        if (idx !== -1 && $articles[idx].read !== read) {
-          $articles[idx] = { ...$articles[idx], read };
+        if (idx !== -1 && Boolean($articles[idx].read) !== read) {
+          $articles[idx] = { ...$articles[idx], read: read ? 1 : 0 };
           updated.push(id);
         }
       }
     }
 
     try {
-      data = await put<ArticleUpdateRequest, ArticleUpdateResponse>(
-        '/api/articles',
-        {
-          articleIds,
-          userData: { read }
-        }
-      );
+      await put<ArticleUpdateRequest, ArticleUpdateResponse>('/api/articles', {
+        articleIds,
+        userData: { read }
+      });
+      invalidate('/api/feedstats');
     } catch (error) {
       console.warn(`Error marking articles as read: ${error}`);
 
@@ -227,21 +226,7 @@
         for (const id of updated) {
           const idx = $articles.findIndex((article) => article.id === id);
           if (idx !== -1) {
-            $articles[idx] = { ...$articles[idx], read: !read };
-          }
-        }
-      }
-    }
-
-    if (data?.articles) {
-      invalidate('/api/feedstats');
-
-      // update articles from returned data
-      if ($articles) {
-        for (const article of data.articles) {
-          const idx = $articles.findIndex(({ id }) => id === article.id);
-          if (idx !== -1) {
-            $articles[idx] = article;
+            $articles[idx] = { ...$articles[idx], read: read ? 0 : 1 };
           }
         }
       }

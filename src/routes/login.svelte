@@ -1,6 +1,5 @@
 <script type="ts">
   import { goto } from '$app/navigation';
-  import { session } from '$app/stores';
   import { isErrorResponse, post } from '$lib/request';
   import type { LoginRequest, LoginResponse } from './auth/login';
 
@@ -21,7 +20,6 @@
         user: 'No user data in response'
       };
     } else {
-      $session.user = response.user;
       goto('/');
     }
   }

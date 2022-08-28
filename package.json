@@ -6,13 +6,12 @@
     "build": "vite build",
     "package": "svelte-kit package",
     "preview": "svelte-kit preview",
-    "prepare": "husky install && prisma generate",
+    "prepare": "husky install",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-check --tsconfig ./tsconfig.json --watch",
     "lint": "prettier --check --plugin-search-dir=. . && eslint .",
     "format": "prettier --write --plugin-search-dir=. .",
     "db": "ts-node ./scripts/db.ts",
-    "migrate": "prisma migrate deploy",
     "test": "vitest run",
     "coverage": "vitest run --coverage",
     "push": "ts-node ./scripts/deploy.ts",
@@ -20,18 +19,21 @@
   },
   "devDependencies": {
     "@sveltejs/adapter-node": "^1.0.0-next.86",
-    "@sveltejs/kit": "next",
+    "@sveltejs/kit": "1.0.0-next.405",
     "@swc/core": "^1.2.226",
     "@types/bcryptjs": "^2.4.2",
+    "@types/better-sqlite3": "^7.6.0",
     "@types/cookie": "^0.5.1",
     "@types/jsdom": "^20.0.0",
     "@types/node": "^18.7.2",
     "@types/yargs": "^17.0.11",
     "@typescript-eslint/eslint-plugin": "^5.33.0",
     "@typescript-eslint/parser": "^5.33.0",
+    "better-sqlite3": "^7.6.2",
     "bcryptjs": "^2.4.3",
     "c8": "^7.12.0",
     "cookie": "^0.5.0",
+    "cuid": "^2.1.8",
     "dotenv": "^16.0.1",
     "eslint": "^8.21.0",
     "eslint-config-prettier": "^8.5.0",
@@ -41,7 +43,6 @@
     "lint-staged": "^13.0.3",
     "prettier": "^2.7.1",
     "prettier-plugin-svelte": "^2.7.0",
-    "prisma": "^4.2.1",
     "rss-parser": "^3.12.0",
     "svelte": "^3.49.0",
     "svelte-check": "^2.8.0",
@@ -53,8 +54,5 @@
     "vitest": "^0.21.1",
     "yargs": "^17.5.1"
   },
-  "type": "module",
-  "dependencies": {
-    "@prisma/client": "^4.2.1"
-  }
+  "type": "module"
 }

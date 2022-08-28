@@ -27,7 +27,7 @@ export const PUT: RequestHandler = async function ({ locals, request }) {
   }
 
   try {
-    await setSessionData(locals.session.id, data);
+    setSessionData(locals.session.id, data);
   } catch (error) {
     return errorResponse(`${error}`, 500);
   }

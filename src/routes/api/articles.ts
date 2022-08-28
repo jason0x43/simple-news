@@ -1,12 +1,12 @@
-import { prisma } from '$lib/db';
 import {
   getArticleHeadings,
-  updateArticlesUserData,
-  type ArticleHeadingWithUserData,
-  type ArticleUserData
+  markArticlesRead,
+  type ArticleHeadingWithUserData
 } from '$lib/db/article';
+import { getFeed } from '$lib/db/feed';
+import { getFeedGroupWithFeeds } from '$lib/db/feedgroup';
+import type { Article, Feed } from '$lib/db/schema';
 import { unauthResponse } from '$lib/request';
-import type { Article, Feed } from '@prisma/client';
 import type { RequestHandler } from './__types/articles';
 
 /**
@@ -24,21 +24,10 @@ export const GET: RequestHandler = async function ({ url, locals }) {
   if (feedOrGroupId) {
     const [type, id] = feedOrGroupId.split('-');
     if (type === 'group') {
-      const group = await prisma.feedGroup.findUnique({
-        where: {
-          id
-        },
-        include: {
-          feeds: true
-        }
-      });
-      feedIds = group?.feeds.map(({ feedId }) => feedId) ?? [];
+      const group = getFeedGroupWithFeeds(id);
+      feedIds = group?.feeds.map(({ id }) => id) ?? [];
     } else {
-      const feed = await prisma.feed.findUnique({
-        where: {
-          id
-        }
-      });
+      const feed = getFeed(id);
       feedIds = feed ? [feed.id] : [];
     }
   }
@@ -58,7 +47,10 @@ export const GET: RequestHandler = async function ({ url, locals }) {
 
 export type ArticleUpdateRequest = {
   articleIds: Article['id'][];
-  userData: Partial<ArticleUserData>;
+  userData: {
+    read?: boolean;
+    saved?: boolean;
+  };
 };
 
 export type ArticleUpdateResponse = {
@@ -102,13 +94,13 @@ export const PUT: RequestHandler = async function ({ request, locals }) {
     };
   }
 
-  return {
-    body: {
-      articles: await updateArticlesUserData({
-        userId: user.id,
-        articleIds: data.articleIds,
-        userData: data.userData
-      })
-    }
-  };
+  if (data.userData.read !== undefined) {
+    markArticlesRead({
+      userId: user.id,
+      articleIds: data.articleIds,
+      read: data.userData.read
+    });
+  }
+
+  return {};
 };

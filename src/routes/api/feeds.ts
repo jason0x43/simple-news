@@ -1,6 +1,6 @@
-import { prisma } from '$lib/db';
+import { addOrGetFeed, getFeeds } from '$lib/db/feed';
+import type { Feed } from '$lib/db/schema';
 import { downloadFeed } from '$lib/feed';
-import type { Feed } from '@prisma/client';
 import type { RequestHandler } from './__types/feeds';
 
 export type GetFeedsResponse = Feed[];
@@ -11,7 +11,7 @@ export type GetFeedsResponse = Feed[];
 export const GET: RequestHandler = async () => {
   return {
     status: 200,
-    body: await prisma.feed.findMany()
+    body: getFeeds()
   };
 };
 
@@ -42,15 +42,9 @@ export const POST: RequestHandler = async ({ request }) => {
   }
 
   const parsedFeed = await downloadFeed(data.url);
-  const feed = await prisma.feed.upsert({
-    where: {
-      url: data.url
-    },
-    update: {},
-    create: {
-      url: data.url,
-      title: parsedFeed.title ?? data.url
-    }
+  const feed = addOrGetFeed({
+    url: data.url,
+    title: parsedFeed.title ?? data.url
   });
 
   return {

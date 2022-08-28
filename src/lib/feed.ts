@@ -5,7 +5,10 @@ export type FeedItem = Parser.Item;
 
 export async function downloadFeed(url: string) {
   const aborter = new AbortController();
-  const abortTimer = setTimeout(() => aborter.abort(), 10000);
+  const abortTimer = setTimeout(() => {
+    aborter.abort();
+    console.log(`>>> Aborted ${url}`);
+  }, 4000);
   const response = await fetch(url, { signal: aborter.signal });
   clearTimeout(abortTimer);
 
