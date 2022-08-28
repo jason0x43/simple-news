@@ -3,15 +3,15 @@
   import Dialog from './Dialog.svelte';
   import Portal from './Portal.svelte';
   import Select from './Select.svelte';
-  import type {
-    AddGroupFeedRequest,
-    AddGroupFeedResponse
-  } from 'src/routes/api/feedgroups';
   import { invalidate } from '$app/navigation';
   import { showToast } from '$lib/toast';
   import { getEventValue } from '$lib/util';
   import { getAppContext } from '$lib/contexts';
   import type { Feed, FeedGroup } from '$lib/db/schema';
+  import type {
+    AddGroupFeedRequest,
+    AddGroupFeedResponse
+  } from 'src/routes/api/feedgroups/+server';
 
   const { feeds, feedGroups, managingFeeds } = getAppContext().stores;
   const groups: { [feedId: string]: string } = {};

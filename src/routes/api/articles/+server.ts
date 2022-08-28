@@ -3,19 +3,19 @@ import {
   markArticlesRead,
   type ArticleHeadingWithUserData
 } from '$lib/db/article';
-import { getFeed } from '$lib/db/feed';
 import { getFeedGroupWithFeeds } from '$lib/db/feedgroup';
 import type { Article, Feed } from '$lib/db/schema';
-import { unauthResponse } from '$lib/request';
-import type { RequestHandler } from './__types/articles';
+import { errorResponse } from '$lib/request';
+import { error, json } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
 
 /**
  * Get article headings for articles from a given set of feed IDs
  */
 export const GET: RequestHandler = async function ({ url, locals }) {
-  const user = locals.session?.user;
+  const user = locals.user;
   if (!user) {
-    return unauthResponse();
+    throw error(401, 'not logged in');
   }
 
   let feedIds: Feed['id'][] | undefined;
@@ -25,24 +25,20 @@ export const GET: RequestHandler = async function ({ url, locals }) {
     const [type, id] = feedOrGroupId.split('-');
     if (type === 'group') {
       const group = getFeedGroupWithFeeds(id);
-      feedIds = group?.feeds.map(({ id }) => id) ?? [];
+      feedIds = group.feeds.map(({ id }) => id) ?? [];
     } else {
-      const feed = getFeed(id);
-      feedIds = feed ? [feed.id] : [];
+      feedIds = [id];
     }
   }
 
   const { articleFilter } = locals.sessionData;
-  const articles = await getArticleHeadings({
+  const articles = getArticleHeadings({
     userId: user.id,
     feedIds,
     filter: articleFilter
   });
 
-  return {
-    status: 200,
-    body: articles
-  };
+  return json(articles);
 };
 
 export type ArticleUpdateRequest = {
@@ -65,33 +61,27 @@ export type ArticleUpdateResponse = {
  * Update user data for a set of articles
  */
 export const PUT: RequestHandler = async function ({ request, locals }) {
-  const user = locals.session?.user;
+  const user = locals.user;
   if (!user) {
-    return unauthResponse();
+    throw error(401, 'not logged in');
   }
 
   const data: ArticleUpdateRequest = await request.json();
 
   if (!Array.isArray(data.articleIds)) {
-    return {
-      status: 400,
-      body: {
-        errors: {
-          articleIds: 'articleIds must be an array of IDs'
-        }
+    return errorResponse({
+      errors: {
+        articleIds: 'articleIds must be an array of IDs'
       }
-    };
+    });
   }
 
   if (!data.userData) {
-    return {
-      status: 400,
-      body: {
-        errors: {
-          userData: 'UserData must be an object of flags'
-        }
+    return errorResponse({
+      errors: {
+        userData: 'UserData must be an object of flags'
       }
-    };
+    });
   }
 
   if (data.userData.read !== undefined) {
@@ -102,5 +92,5 @@ export const PUT: RequestHandler = async function ({ request, locals }) {
     });
   }
 
-  return {};
+  return new Response();
 };

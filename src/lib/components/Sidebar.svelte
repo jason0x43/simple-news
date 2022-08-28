@@ -2,10 +2,10 @@
   import { getAppContext } from '$lib/contexts';
   import { slide } from '$lib/transition';
   import FeedsList from './FeedsList.svelte';
-  import { session } from '$app/stores';
   import Select from './Select.svelte';
 
-  const { sidebarVisible, managingFeeds } = getAppContext().stores;
+  const { articleFilter, sidebarVisible, managingFeeds } =
+    getAppContext().stores;
 
   let ref: HTMLElement;
 
@@ -26,14 +26,11 @@
   bind:this={ref}
 >
   <div class="sidebar-feeds">
-    <FeedsList
-      articleFilter={$session.data.articleFilter}
-      onSelect={() => ($sidebarVisible = false)}
-    />
+    <FeedsList onSelect={() => ($sidebarVisible = false)} />
   </div>
   <div class="sidebar-controls">
     <button on:click={() => ($managingFeeds = true)}>Manage Feeds</button>
-    <Select bind:value={$session.data.articleFilter}>
+    <Select bind:value={$articleFilter}>
       <option value="unread">Unread</option>
       <option value="all">All</option>
       <option value="saved">Saved</option>

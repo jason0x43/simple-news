@@ -1,12 +1,10 @@
 <script type="ts">
   import { getAppContext } from '$lib/contexts';
-  import type { ArticleFilter } from '$lib/db/session';
   import { areIdentified, getArticleCount, getGroupFeeds } from '$lib/feedUtil';
 
-  export let articleFilter: ArticleFilter;
   export let onSelect: () => void;
 
-  const { feeds, feedGroups, feedStats, selectedFeedIds } =
+  const { articleFilter, feeds, feedGroups, feedStats, selectedFeedIds } =
     getAppContext().stores;
   let expanded: { [title: string]: boolean } = {};
 </script>
@@ -14,7 +12,7 @@
 <ul class="feeds">
   {#each $feedGroups as group (group.name)}
     {@const groupFeeds = getGroupFeeds(group, $feeds)}
-    {#if getArticleCount(groupFeeds, $feedStats, articleFilter) > 0}
+    {#if getArticleCount(groupFeeds, $feedStats, $articleFilter) > 0}
       <li class:expanded={expanded[group.name]}>
         <div
           class="group"
@@ -43,14 +41,14 @@
           </a>
           {#if feedStats}
             <span class="Feeds-unread">
-              {getArticleCount(groupFeeds, $feedStats, articleFilter)}
+              {getArticleCount(groupFeeds, $feedStats, $articleFilter)}
             </span>
           {/if}
         </div>
 
         <ul>
           {#each groupFeeds as feed (feed.id)}
-            {#if getArticleCount([feed], $feedStats, articleFilter) > 0}
+            {#if getArticleCount([feed], $feedStats, $articleFilter) > 0}
               <li
                 class="feed"
                 class:selected={areIdentified([feed], $selectedFeedIds)}

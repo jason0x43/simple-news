@@ -1,7 +1,8 @@
 import { addOrGetFeed, getFeeds } from '$lib/db/feed';
 import type { Feed } from '$lib/db/schema';
 import { downloadFeed } from '$lib/feed';
-import type { RequestHandler } from './__types/feeds';
+import { error, json } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
 
 export type GetFeedsResponse = Feed[];
 
@@ -9,10 +10,7 @@ export type GetFeedsResponse = Feed[];
  * Get all feeds
  */
 export const GET: RequestHandler = async () => {
-  return {
-    status: 200,
-    body: getFeeds()
-  };
+  return json(getFeeds());
 };
 
 export type AddFeedRequest = {
@@ -31,14 +29,7 @@ export const POST: RequestHandler = async ({ request }) => {
   const data: AddFeedRequest = await request.json();
 
   if (typeof data.url !== 'string') {
-    return {
-      status: 400,
-      body: {
-        errors: {
-          url: 'A URL must be provided'
-        }
-      }
-    };
+    throw error(400, 'A URL must be provided');
   }
 
   const parsedFeed = await downloadFeed(data.url);
@@ -47,9 +38,5 @@ export const POST: RequestHandler = async ({ request }) => {
     title: parsedFeed.title ?? data.url
   });
 
-  return {
-    body: {
-      feed
-    }
-  };
+  return json({ feed });
 };

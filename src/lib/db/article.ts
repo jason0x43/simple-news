@@ -41,7 +41,7 @@ export function getArticle({
   };
 }
 
-export async function getArticleHeadings({
+export function getArticleHeadings({
   feedIds,
   articleIds,
   userId,
@@ -51,7 +51,7 @@ export async function getArticleHeadings({
   articleIds?: Article['id'][];
   userId: User['id'];
   filter?: string;
-}): Promise<ArticleHeadingWithUserData[]> {
+}): ArticleHeadingWithUserData[] {
   const db = getDb();
   const wheres: string[] = [];
   const params: unknown[] = [];

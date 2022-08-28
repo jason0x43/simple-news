@@ -1,32 +1,12 @@
 <script type="ts">
-  import { goto } from '$app/navigation';
-  import { isErrorResponse, post } from '$lib/request';
-  import type { LoginRequest, LoginResponse } from './auth/login';
+  export let errors: Record<string, string> | undefined;
 
-  let errors: Record<string, string> | null = null;
   let username = '';
   let password = '';
-
-  async function submit() {
-    const response = await post<LoginRequest, LoginResponse>('/auth/login', {
-      username,
-      password
-    });
-
-    if (isErrorResponse(response)) {
-      errors = response.errors;
-    } else if (!response.user) {
-      errors = {
-        user: 'No user data in response'
-      };
-    } else {
-      goto('/');
-    }
-  }
 </script>
 
 <section class="login">
-  <form on:submit|preventDefault={submit}>
+  <form method="post">
     <input name="username" placeholder="Username" bind:value={username} />
     <input
       name="password"

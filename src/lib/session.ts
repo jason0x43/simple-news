@@ -1,5 +1,6 @@
 import * as cookie from 'cookie';
-import type { Session, User } from './db/schema';
+import type { Session } from './db/schema';
+import { getSessionWithUser, type SessionWithUser } from './db/session';
 
 const options = {
   path: '/',
@@ -8,49 +9,34 @@ const options = {
   secure: process.env.NODE_ENV === 'production'
 };
 
-export function setSessionCookie<T extends Headers | Record<string, string>>(
-  session: Session,
-  headers?: T
-): T {
-  return setHeader(
-    'set-cookie',
-    cookie.serialize('session', session.id, {
-      ...options,
-      expires: new Date(session.expires)
-    }),
-    headers
-  );
-}
-
-export function clearSessionCookie<T extends Headers | Record<string, string>>(
-  headers?: T
-): T {
-  return setHeader(
-    'set-cookie',
-    cookie.serialize('session', '', {
-      ...options,
-      expires: new Date(0)
-    }),
-    headers
-  );
-}
-
-function setHeader<T extends Headers | Record<string, string>>(
-  key: string,
-  value: string,
-  headers?: T
-): T {
-  if (!headers) {
-    headers = { [key]: value } as T;
-  } else if (headers instanceof Headers) {
-    headers.set(key, value);
-  } else {
-    headers[key] = value;
+export function getSession(
+  cookieStr: string | null
+): SessionWithUser | undefined {
+  if (!cookieStr) {
+    return undefined;
   }
-  return headers;
+  const cookies = cookie.parse(cookieStr);
+  return getSessionWithUser(cookies.session) ?? undefined;
 }
 
-export function getSessionUser(locals: App.Locals): User | undefined {
-  const { session } = locals;
-  return session?.user;
+export function clearSessionCookie(): string {
+  return cookie.serialize('session', '', {
+    ...options,
+    expires: new Date(0)
+  });
+}
+
+export function createSessionCookie(session: Session): string {
+  return cookie.serialize('session', session.id, {
+    ...options,
+    expires: new Date(session.expires)
+  });
+}
+
+export function getSessionId(cookieStr: string | null): string | undefined {
+  if (!cookieStr) {
+    return undefined;
+  }
+  const cookies = cookie.parse(cookieStr);
+  return cookies.session;
 }

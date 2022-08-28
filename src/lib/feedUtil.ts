@@ -1,3 +1,6 @@
+import type { GetFeedStatsResponse } from 'src/routes/api/feedstats/+server';
+import type { Writable } from 'svelte/store';
+import { getAppContext } from './contexts';
 import type { FeedStats } from './db/feed';
 import type { FeedGroupWithFeeds } from './db/feedgroup';
 import type { Feed } from './db/schema';
@@ -49,4 +52,17 @@ export function areIdentified<T>(
     return false;
   }
   return items.every(({ id }) => ids.includes(id));
+}
+
+/**
+ * Update the feedStats store
+ */
+export async function updateFeedStats(feedStats: Writable<FeedStats>) {
+  try {
+    const resp = await fetch('/api/feedstats');
+    const data = (await resp.json()) as GetFeedStatsResponse;
+    feedStats.set(data);
+  } catch (error) {
+    console.warn(`Error updating feed stats: ${error}`);
+  }
 }

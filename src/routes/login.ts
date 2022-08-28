@@ -1,11 +1,8 @@
-import type { RequestHandler } from '@sveltejs/kit';
+import { redirect, type RequestHandler } from '@sveltejs/kit';
 
 export const GET: RequestHandler = async ({ locals }) => {
-  if (locals.session?.user) {
-    return {
-      status: 302,
-      redirected: '/reader'
-    };
+  if (locals.user) {
+    throw redirect(302, '/reader');
   }
-  return {};
+  return new Response();
 };

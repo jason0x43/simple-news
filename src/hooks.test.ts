@@ -1,8 +1,6 @@
-import type { User } from '$lib/db/schema.js';
-import type { SessionWithUser } from '$lib/db/session.js';
 import type { RequestEvent } from '@sveltejs/kit';
 import { describe, expect, it, vi } from 'vitest';
-import { handle, getSession } from './hooks.js';
+import { handle } from './hooks.js';
 
 vi.mock('cookie', () => {
   return {
@@ -14,10 +12,12 @@ vi.mock('cookie', () => {
   };
 });
 
-vi.mock('$lib/db/session', () => {
+vi.mock('$lib/session', () => {
   return {
-    getSessionWithUser: vi.fn(() => {
-      return { sessionId: 'foo' };
+    getSession: vi.fn(() => {
+      return {
+        id: 'foo'
+      };
     }),
     defaultSessionData: {
       articleFilter: 'unread'
@@ -25,56 +25,25 @@ vi.mock('$lib/db/session', () => {
   };
 });
 
-describe('hooks', () => {
-  describe('handle', () => {
-    it('sets the session', async () => {
-      const event = {
-        request: {
-          headers: new Headers()
-        },
-        locals: {}
-      } as RequestEvent;
-      const resolve = vi.fn(
-        (event: RequestEvent) =>
-          ({
-            resolvedEvent: event
-          } as unknown as Response)
-      );
-      const resolved = await handle({ event, resolve });
-      expect(resolve).toHaveBeenCalled();
-      expect(resolved).toBeDefined();
-      expect(resolved).toEqual(resolve.mock.results[0].value);
-      const resolvedEvent = resolve.mock.calls[0][0];
-      expect(resolvedEvent.locals.session).toEqual({ sessionId: 'foo' });
-    });
-  });
-
-  describe('getSession', () => {
-    it('gets the session', () => {
-      const result = getSession({
-        locals: {
-          session: {
-            id: 'session-id',
-            user: { name: 'session' } as unknown as User
-          } as unknown as SessionWithUser
-        }
-      } as unknown as RequestEvent);
-      expect(result).toEqual({
-        id: 'session-id',
-        user: { name: 'session' }
-      });
-    });
-
-    it('works with no defined session', () => {
-      const result = getSession({
-        locals: {
-          session: undefined
-        }
-      } as unknown as RequestEvent);
-      expect(result).toEqual({
-        id: undefined,
-        user: undefined
-      });
-    });
+describe('handle', () => {
+  it('sets the session', async () => {
+    const event = {
+      request: {
+        headers: new Headers()
+      },
+      locals: {}
+    } as RequestEvent;
+    const resolve = vi.fn(
+      (event: RequestEvent) =>
+        ({
+          resolvedEvent: event
+        } as unknown as Response)
+    );
+    const resolved = await handle({ event, resolve });
+    expect(resolve).toHaveBeenCalled();
+    expect(resolved).toBeDefined();
+    expect(resolved).toEqual(resolve.mock.results[0].value);
+    const resolvedEvent = resolve.mock.calls[0][0];
+    expect(resolvedEvent.locals.sessionId).toEqual('foo');
   });
 });

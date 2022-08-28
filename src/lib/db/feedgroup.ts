@@ -28,7 +28,15 @@ export function createFeedGroup(data: CreateFeedGroupData): void {
   });
 }
 
-export function getFeedGroup(
+export function getFeedGroup(id: FeedGroup['id']): FeedGroup {
+  const db = getDb();
+  const feedGroup: FeedGroup = db
+    .prepare<FeedGroup['id']>('SELECT * from FeedGroup WHERE id = ?')
+    .get(id);
+  return feedGroup;
+}
+
+export function getUserFeedGroup(
   userId: User['id'],
   name: FeedGroup['name']
 ): FeedGroup | null {

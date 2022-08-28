@@ -6,27 +6,21 @@ import {
   type FeedGroupWithFeeds
 } from '$lib/db/feedgroup';
 import type { Feed, FeedGroup } from '$lib/db/schema';
-import {
-  errorResponse,
-  unauthResponse,
-  type ErrorResponse
-} from '$lib/request';
-import type { RequestHandler } from './__types/feedgroups';
+import { error, json } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
 
-export type GetFeedGroupsResponse = FeedGroupWithFeeds[] | ErrorResponse;
+export type GetFeedGroupsResponse = FeedGroupWithFeeds[];
 
 /**
  * Get all feeds
  */
 export const GET: RequestHandler = async ({ locals }) => {
-  const user = locals.session?.user;
+  const user = locals.user;
   if (!user) {
-    return unauthResponse();
+    return error(401, 'not logged in');
   }
 
-  return {
-    body: getUserFeedGroupsWithFeeds(user.id)
-  };
+  return json(getUserFeedGroupsWithFeeds(user.id));
 };
 
 export type AddGroupFeedRequest = {
@@ -34,7 +28,7 @@ export type AddGroupFeedRequest = {
   groupId: FeedGroup['id'] | 'not subscribed';
 };
 
-export type AddGroupFeedResponse = Record<string, never> | ErrorResponse;
+export type AddGroupFeedResponse = Record<string, never>;
 
 /**
  * Add a feed to a feed group
@@ -42,23 +36,19 @@ export type AddGroupFeedResponse = Record<string, never> | ErrorResponse;
  * The feed will be removed from any existing feed group
  */
 export const PUT: RequestHandler = async ({ locals, request }) => {
-  const user = locals.session?.user;
+  const user = locals.user;
   if (!user) {
-    return unauthResponse();
+    throw error(401, 'not logged in');
   }
 
   const data: AddGroupFeedRequest = await request.json();
 
   if (typeof data.feedId !== 'string') {
-    return errorResponse({
-      feedId: 'A feed ID must be provided'
-    });
+    throw error(400, 'A feed ID must be provided');
   }
 
   if (typeof data.groupId !== 'string') {
-    return errorResponse({
-      groupId: 'A feed group ID must be provided'
-    });
+    throw error(400, 'A feed group ID must be provided');
   }
 
   const existingGroup = findUserFeedGroupContainingFeed({
@@ -74,5 +64,5 @@ export const PUT: RequestHandler = async ({ locals, request }) => {
     addFeedsToGroup(data.groupId, [data.feedId]);
   }
 
-  return {};
+  return new Response();
 };

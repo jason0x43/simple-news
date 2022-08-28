@@ -1,11 +1,18 @@
 <script type="ts">
-  import type { ArticleWithUserData } from '$lib/db/article';
   import ArticleView from '$lib/components/ArticleView.svelte';
   import { slide } from '$lib/transition';
   import { onMount } from 'svelte';
   import { getAppContext, getReaderContext } from '$lib/contexts';
+  import type { Errors, PageData } from './$types';
 
-  export let article: ArticleWithUserData | null;
+  export let data: PageData;
+  export let errors: Errors;
+
+  if (errors) {
+    console.warn(errors);
+  }
+
+  $: article = data.article;
 
   const context = getReaderContext();
   const { displayType } = getAppContext().stores;

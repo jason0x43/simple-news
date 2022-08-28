@@ -61,7 +61,7 @@
     <h2 on:click={onTitlePress}>{title}</h2>
   </div>
   <div class="right">
-    <a class="user" href="/auth/logout">
+    <a class="user" href="/login">
       <UserIcon size={20} />
     </a>
   </div>

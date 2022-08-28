@@ -1,5 +1,5 @@
 <script type="ts">
-  import { page, session } from '$app/stores';
+  import { page } from '$app/stores';
   import ContextMenu from './ContextMenu.svelte';
   import { getAge } from '$lib/date';
   import type { ArticleHeadingWithUserData } from '$lib/db/article';
@@ -10,18 +10,19 @@
     unescapeHtml,
     uniquify
   } from '$lib/util';
-  import { invalidate } from '$app/navigation';
-  import type {
-    ArticleUpdateRequest,
-    ArticleUpdateResponse
-  } from 'src/routes/api/articles';
   import { onMount } from 'svelte';
   import { put } from '$lib/request';
   import { getAppContext } from '$lib/contexts';
   import type { Article, Feed } from '$lib/db/schema';
-  import { browser } from '$app/env';
+  import { browser } from '$app/environment';
+  import type {
+    ArticleUpdateRequest,
+    ArticleUpdateResponse
+  } from 'src/routes/api/articles/+server';
+  import { updateFeedStats } from '$lib/feedUtil';
+  import type { GetFeedStatsResponse } from 'src/routes/api/feedstats/+server';
 
-  const { articles, feeds, sidebarVisible } = getAppContext().stores;
+  const { articles, feeds, feedStats, sidebarVisible } = getAppContext().stores;
 
   type ScrollData = { visibleCount: number; scrollTop: number };
   const updatedArticleIds = new Set<Article['id']>();
@@ -55,7 +56,7 @@
   }
 
   $: {
-    if (browser && selectedArticleId) {
+    if (selectedArticleId) {
       updatedArticleIds.add(selectedArticleId);
       if (!$articles?.find(({ id }) => id === selectedArticleId)?.read) {
         markAsRead([selectedArticleId], true);
@@ -80,10 +81,10 @@
       if (!articles) {
         // there are no articles
         filteredArticles = [];
-      } else if ($session.data.articleFilter === 'all') {
+      } else if ($page.data.articleFilter === 'all') {
         // show all articles
         filteredArticles = $articles ?? [];
-      } else if ($session.data.articleFilter === 'saved') {
+      } else if ($page.data.articleFilter === 'saved') {
         // show saved articles
         filteredArticles = $articles?.filter(({ saved }) => saved) ?? [];
       } else {
@@ -198,8 +199,11 @@
   }
 
   async function markAsRead(articleIds: Article['id'][], read: boolean) {
+    if (!browser) {
+      return;
+    }
+
     const updated: Article['id'][] = [];
-    let data: ArticleUpdateResponse | undefined;
 
     // optimistically update articles
     if ($articles) {
@@ -217,7 +221,8 @@
         articleIds,
         userData: { read }
       });
-      invalidate('/api/feedstats');
+
+      updateFeedStats(feedStats);
     } catch (error) {
       console.warn(`Error marking articles as read: ${error}`);
 
