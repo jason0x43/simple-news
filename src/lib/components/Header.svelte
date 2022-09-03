@@ -5,6 +5,7 @@
   import { getAppContext } from '$lib/contexts';
   import type { Feed } from '$lib/db/schema';
   import Button from './Button.svelte';
+  import Link from './Link.svelte';
 
   export let onTitlePress: () => void;
 
@@ -66,12 +67,14 @@
     </div>
   </Button>
   <div class="center">
-    <h2 on:click={onTitlePress}>{title}</h2>
+    <Button type="invisible" on:click={onTitlePress}>
+      <h2>{title}</h2>
+    </Button>
   </div>
   <div class="right">
-    <a class="user" href="/login">
+    <Link type="invisible" href="/login">
       <UserIcon size={20} />
-    </a>
+    </Link>
   </div>
 </header>
 
@@ -90,7 +93,6 @@
     align-items: center;
     padding: calc(var(--side-pad) / 2) var(--side-pad);
     gap: 0.25rem;
-    cursor: pointer;
   }
 
   .left h1 {
@@ -120,14 +122,6 @@
   .right {
     justify-self: right;
     padding: calc(var(--side-pad) / 2) var(--side-pad);
-  }
-
-  .user {
-    cursor: pointer;
-    text-decoration: none;
-    color: inherit;
-    display: flex;
-    align-items: center;
   }
 
   /* Mobile */
