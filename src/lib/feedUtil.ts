@@ -1,6 +1,5 @@
 import type { GetFeedStatsResponse } from 'src/routes/api/feedstats/+server';
 import type { Writable } from 'svelte/store';
-import { getAppContext } from './contexts';
 import type { FeedStats } from './db/feed';
 import type { FeedGroupWithFeeds } from './db/feedgroup';
 import type { Feed } from './db/schema';

@@ -22,7 +22,6 @@
   class="sidebar"
   in:slide={{ direction: 'right' }}
   out:slide={{ direction: 'right' }}
-  on:outroend={() => ($sidebarVisible = false)}
   bind:this={ref}
 >
   <div class="sidebar-feeds">
