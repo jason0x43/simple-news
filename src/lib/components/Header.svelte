@@ -4,6 +4,7 @@
   import RssIcon from '$lib/icons/Rss.svelte';
   import { getAppContext } from '$lib/contexts';
   import type { Feed } from '$lib/db/schema';
+  import Button from './Button.svelte';
 
   export let onTitlePress: () => void;
 
@@ -44,19 +45,26 @@
 
     return '';
   }
+
+  function toggleSidebar() {
+    $sidebarVisible = !$sidebarVisible;
+  }
 </script>
 
 <header class="header">
-  <div
-    class="left"
+  <Button
+    disabled={$selectedFeedIds.length === 0}
+    type="invisible"
     on:click={(event) => {
-      $sidebarVisible = !$sidebarVisible;
+      toggleSidebar();
       event.stopPropagation();
     }}
   >
-    <RssIcon size="22px" />
-    <h1>Simple News</h1>
-  </div>
+    <div class="left">
+      <RssIcon size="22px" />
+      <h1>Simple News</h1>
+    </div>
+  </Button>
   <div class="center">
     <h2 on:click={onTitlePress}>{title}</h2>
   </div>

@@ -4,13 +4,16 @@
   import FeedsList from './FeedsList.svelte';
   import Select from './Select.svelte';
 
-  const { articleFilter, sidebarVisible, managingFeeds } =
+  const { articleFilter, sidebarVisible, managingFeeds, selectedFeedIds } =
     getAppContext().stores;
 
   let ref: HTMLElement;
 
   function handleClick(event: MouseEvent) {
-    if (!event.target || !ref.contains(event.target as HTMLElement)) {
+    if (
+      $selectedFeedIds.length > 0 &&
+      (!event.target || !ref.contains(event.target as HTMLElement))
+    ) {
       $sidebarVisible = false;
     }
   }
