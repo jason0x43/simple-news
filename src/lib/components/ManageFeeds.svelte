@@ -12,6 +12,7 @@
     AddGroupFeedRequest,
     AddGroupFeedResponse
   } from 'src/routes/api/feedgroups/+server';
+  import Button from './Button.svelte';
 
   const { feeds, feedGroups, managingFeeds } = getAppContext().stores;
   const groups: { [feedId: string]: string } = {};
@@ -139,13 +140,13 @@
           <h3>Add Feed</h3>
           <form on:submit|preventDefault={addFeed}>
             <input bind:value={feedUrl} placeholder="https://..." />
-            <button>Save</button>
+            <Button type="submit">Save</Button>
           </form>
 
           <h3>Add Group</h3>
           <form>
             <input name="group-name" placeholder="Applications" />
-            <button>Save</button>
+            <Button type="submit">Save</Button>
           </form>
 
           <h3>Rename Group</h3>
@@ -156,7 +157,7 @@
               {/each}
             </Select>
             <input name="group-name" placeholder="Applications" />
-            <button>Save</button>
+            <Button type="submit">Save</Button>
           </form>
         </section>
       </div>

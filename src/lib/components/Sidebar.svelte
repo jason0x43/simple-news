@@ -1,6 +1,7 @@
 <script type="ts">
   import { getAppContext } from '$lib/contexts';
   import { slide } from '$lib/transition';
+  import Button from './Button.svelte';
   import FeedsList from './FeedsList.svelte';
   import Select from './Select.svelte';
 
@@ -31,7 +32,7 @@
     <FeedsList onSelect={() => ($sidebarVisible = false)} />
   </div>
   <div class="sidebar-controls">
-    <button on:click={() => ($managingFeeds = true)}>Manage Feeds</button>
+    <Button on:click={() => ($managingFeeds = true)}>Manage Feeds</Button>
     <Select bind:value={$articleFilter}>
       <option value="unread">Unread</option>
       <option value="all">All</option>

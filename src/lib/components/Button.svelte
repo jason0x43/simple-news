@@ -1,8 +1,13 @@
 <script type="ts">
-  export let type: 'normal' | 'invisible' = 'normal';
+  export let variant: 'normal' | 'invisible' = 'normal';
 </script>
 
-<button on:click {...$$props} class:invisible={type === 'invisible'}>
+<button
+  type="button"
+  on:click
+  {...$$restProps}
+  class:invisible={variant === 'invisible'}
+>
   <slot />
 </button>
 

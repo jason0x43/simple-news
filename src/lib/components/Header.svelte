@@ -55,7 +55,7 @@
 <header class="header">
   <Button
     disabled={$selectedFeedIds.length === 0}
-    type="invisible"
+    variant="invisible"
     on:click={(event) => {
       toggleSidebar();
       event.stopPropagation();
@@ -67,12 +67,12 @@
     </div>
   </Button>
   <div class="center">
-    <Button type="invisible" on:click={onTitlePress}>
+    <Button variant="invisible" on:click={onTitlePress}>
       <h2>{title}</h2>
     </Button>
   </div>
   <div class="right">
-    <Link type="invisible" href="/login">
+    <Link variant="invisible" href="/login">
       <UserIcon size={20} />
     </Link>
   </div>

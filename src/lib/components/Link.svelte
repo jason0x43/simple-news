@@ -1,9 +1,10 @@
 <script type="ts">
   export let href: string;
-  export let type: 'normal' | 'invisible' = 'normal';
+  export let variant: 'normal' | 'invisible' = 'normal';
 </script>
 
-<a {href} {...$$restProps} class:invisible={type === 'invisible'}><slot /></a>
+<a {href} {...$$restProps} class:invisible={variant === 'invisible'}><slot /></a
+>
 
 <style>
   a {
