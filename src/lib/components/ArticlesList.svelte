@@ -20,7 +20,6 @@
     ArticleUpdateResponse
   } from 'src/routes/api/articles/+server';
   import { updateFeedStats } from '$lib/feedUtil';
-  import type { GetFeedStatsResponse } from 'src/routes/api/feedstats/+server';
 
   const { articles, feeds, feedStats, sidebarVisible } = getAppContext().stores;
 
