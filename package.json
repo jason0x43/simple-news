@@ -5,7 +5,7 @@
     "dev": "vite dev",
     "build": "vite build",
     "package": "svelte-kit package",
-    "preview": "svelte-kit preview",
+    "preview": "vite preview",
     "prepare": "husky install",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-check --tsconfig ./tsconfig.json --watch",
@@ -29,10 +29,8 @@
     "@typescript-eslint/eslint-plugin": "^5.36.1",
     "@typescript-eslint/parser": "^5.36.1",
     "bcryptjs": "^2.4.3",
-    "better-sqlite3": "^7.6.2",
     "c8": "^7.12.0",
     "cookie": "^0.5.0",
-    "cuid": "^2.1.8",
     "dotenv": "^16.0.2",
     "eslint": "^8.23.0",
     "eslint-config-prettier": "^8.5.0",
@@ -53,6 +51,10 @@
     "vitest": "^0.22.1",
     "yargs": "^17.5.1",
     "zx": "^7.0.8"
+  },
+  "dependencies": {
+    "better-sqlite3": "^7.6.2",
+    "cuid": "^2.1.8"
   },
   "pnpm": {
     "overrides": {
