@@ -19,15 +19,15 @@
   "devDependencies": {
     "@sveltejs/adapter-node": "^1.0.0-next.88",
     "@sveltejs/kit": "next",
-    "@swc/core": "^1.2.246",
+    "@swc/core": "^1.2.248",
     "@types/bcryptjs": "^2.4.2",
     "@types/better-sqlite3": "^7.6.0",
     "@types/cookie": "^0.5.1",
     "@types/jsdom": "^20.0.0",
-    "@types/node": "^18.7.14",
+    "@types/node": "^18.7.16",
     "@types/yargs": "^17.0.12",
-    "@typescript-eslint/eslint-plugin": "^5.36.1",
-    "@typescript-eslint/parser": "^5.36.1",
+    "@typescript-eslint/eslint-plugin": "^5.36.2",
+    "@typescript-eslint/parser": "^5.36.2",
     "bcryptjs": "^2.4.3",
     "c8": "^7.12.0",
     "cookie": "^0.5.0",
@@ -47,7 +47,7 @@
     "ts-node": "^10.9.1",
     "tslib": "^2.4.0",
     "typescript": "^4.8.2",
-    "vite": "^3.1.0-beta.2",
+    "vite": "^3.1.0",
     "vitest": "^0.22.1",
     "yargs": "^17.5.1",
     "zx": "^7.0.8"
@@ -55,11 +55,6 @@
   "dependencies": {
     "better-sqlite3": "^7.6.2",
     "cuid": "^2.1.8"
-  },
-  "pnpm": {
-    "overrides": {
-      "vite": "^3.1.0-beta.2"
-    }
   },
   "type": "module"
 }
