@@ -3,14 +3,9 @@
   import { slide } from '$lib/transition';
   import { onMount } from 'svelte';
   import { getAppContext, getReaderContext } from '$lib/contexts';
-  import type { Errors, PageData } from './$types';
+  import type { PageData } from './$types';
 
   export let data: PageData;
-  export let errors: Errors;
-
-  if (errors) {
-    console.warn(errors);
-  }
 
   $: article = data.article;
 

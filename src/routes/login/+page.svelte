@@ -1,5 +1,8 @@
 <script type="ts">
-  export let errors: Record<string, string> | undefined;
+  // import type { ActionData } from './$types';
+
+  // export let form: ActionData;
+  export let form: Record<string, unknown> | undefined;
 
   let username = '';
   let password = '';
@@ -16,12 +19,12 @@
     />
     <button type="submit">Login</button>
 
-    {#if errors?.username}
-      <div id="username-error">{errors.username}</div>
+    {#if form?.username}
+      <div id="username-error">{form.username}</div>
     {/if}
 
-    {#if errors?.password}
-      <div id="password-error">{errors.password}</div>
+    {#if form?.password}
+      <div id="password-error">{form.password}</div>
     {/if}
   </form>
 </section>
