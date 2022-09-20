@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import cuid from 'cuid';
-import { getDb } from './index.js';
+import { getDb } from './lib/db.js';
 import { getPasswordHash } from './password.js';
 import type { Password, User } from './schema';
 

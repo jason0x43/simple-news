@@ -1,4 +1,4 @@
-import { getDb } from '.';
+import { getDb } from './lib/db.js';
 import type { Session, User } from './schema';
 import cuid from 'cuid';
 

@@ -1,5 +1,5 @@
 import cuid from 'cuid';
-import { getDb } from './index.js';
+import { getDb } from './lib/db.js';
 import type { Article, Feed, User } from './schema';
 
 export type FeedStats = {

@@ -1,4 +1,4 @@
-import { getDb } from './index.js';
+import { getDb } from './lib/db.js';
 import type { Password, User } from './schema';
 
 export function getPasswordHash(
