@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  app:
+    image: simple-news-app
+    container_name: simple-news-app
+    build:
+      context: .
+      target: dev
+    command: ['pnpm', 'dev', '--port', '3000', '--host']
+    ports:
+      - '3000:3000'
+    environment:
+      DB_FILE: /db/data.db
+    volumes:
+      - ./:/app
+      - simple-news-modules:/app/node_modules
+      - simple-news-data:/db
+
+volumes:
+  simple-news-data:
+  simple-news-modules:

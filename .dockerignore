@@ -1,0 +1,15 @@
+.DS_Store
+.env*
+.eslint*
+.git*
+.husky*
+.prettier*
+.svelte-kit
+Dockerfile*
+README.md
+build/
+coverage/
+data.*
+docker-compose.yml
+lint-staged.config.js
+node_modules/
