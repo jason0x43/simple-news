@@ -1,6 +1,6 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { describe, expect, it, vi } from 'vitest';
-import { handle } from './hooks.js';
+import { handle } from './hooks.server.js';
 
 vi.mock('cookie', () => {
 	return {
