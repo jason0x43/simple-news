@@ -4,23 +4,23 @@ export type ParsedFeed = Parser.Output<Record<string, unknown>>;
 export type FeedItem = Parser.Item;
 
 export async function downloadFeed(url: string) {
-  const aborter = new AbortController();
-  const abortTimer = setTimeout(() => {
-    aborter.abort();
-    console.log(`>>> Aborted ${url}`);
-  }, 4000);
-  const response = await fetch(url, { signal: aborter.signal });
-  clearTimeout(abortTimer);
+	const aborter = new AbortController();
+	const abortTimer = setTimeout(() => {
+		aborter.abort();
+		console.log(`>>> Aborted ${url}`);
+	}, 4000);
+	const response = await fetch(url, { signal: aborter.signal });
+	clearTimeout(abortTimer);
 
-  if (response.status !== 200) {
-    throw new Error(`Error downloading feed: ${response.status}`);
-  }
+	if (response.status !== 200) {
+		throw new Error(`Error downloading feed: ${response.status}`);
+	}
 
-  const xml = await response.text();
-  if (xml.length === 0) {
-    throw new Error(`Error downloading feed: empty body`);
-  }
+	const xml = await response.text();
+	if (xml.length === 0) {
+		throw new Error(`Error downloading feed: empty body`);
+	}
 
-  const parser = new Parser();
-  return parser.parseString(xml);
+	const parser = new Parser();
+	return parser.parseString(xml);
 }

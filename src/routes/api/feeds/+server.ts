@@ -10,33 +10,33 @@ export type GetFeedsResponse = Feed[];
  * Get all feeds
  */
 export const GET: RequestHandler = async () => {
-  return json(getFeeds());
+	return json(getFeeds());
 };
 
 export type AddFeedRequest = {
-  url: string;
+	url: string;
 };
 
 export type AddFeedResponse = {
-  errors?: Record<string, string>;
-  feed?: Feed;
+	errors?: Record<string, string>;
+	feed?: Feed;
 };
 
 /**
  * Add a new feed
  */
 export const POST: RequestHandler = async ({ request }) => {
-  const data: AddFeedRequest = await request.json();
+	const data: AddFeedRequest = await request.json();
 
-  if (typeof data.url !== 'string') {
-    throw error(400, 'A URL must be provided');
-  }
+	if (typeof data.url !== 'string') {
+		throw error(400, 'A URL must be provided');
+	}
 
-  const parsedFeed = await downloadFeed(data.url);
-  const feed = createOrGetFeed({
-    url: data.url,
-    title: parsedFeed.title ?? data.url
-  });
+	const parsedFeed = await downloadFeed(data.url);
+	const feed = createOrGetFeed({
+		url: data.url,
+		title: parsedFeed.title ?? data.url
+	});
 
-  return json({ feed });
+	return json({ feed });
 };

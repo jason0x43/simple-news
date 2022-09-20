@@ -1,71 +1,71 @@
 import type { Database } from 'better-sqlite3';
 
 type Migration = {
-  up: (db: Database) => void;
-  down: (db: Database) => void;
+	up: (db: Database) => void;
+	down: (db: Database) => void;
 };
 
 export function runMigrations(db: Database) {
-  const version = getVersion(db);
-  for (let i = version + 1; i < migrations.length; i++) {
-    migrations[i].up(db);
-  }
+	const version = getVersion(db);
+	for (let i = version + 1; i < migrations.length; i++) {
+		migrations[i].up(db);
+	}
 }
 
 function getVersion(db: Database): number {
-  try {
-    const ver = db.prepare(`SELECT value FROM Meta WHERE key='version'`).get();
-    return Number(ver.value);
-  } catch (error) {
-    return -1;
-  }
+	try {
+		const ver = db.prepare(`SELECT value FROM Meta WHERE key='version'`).get();
+		return Number(ver.value);
+	} catch (error) {
+		return -1;
+	}
 }
 
 export const migrations: Migration[] = [
-  // Initial migration
-  {
-    up(db) {
-      db.transaction(function () {
-        db.prepare(
-          `CREATE TABLE IF NOT EXISTS Meta (
+	// Initial migration
+	{
+		up(db) {
+			db.transaction(function () {
+				db.prepare(
+					`CREATE TABLE IF NOT EXISTS Meta (
             key TEXT NOT NULL PRIMARY KEY,
             value TEXT NOT NULL
           )`
-        ).run();
+				).run();
 
-        db.prepare<[string, string]>(
-          'INSERT INTO Meta (key, value) VALUES (?, ?)'
-        ).run('version', '0');
+				db.prepare<[string, string]>(
+					'INSERT INTO Meta (key, value) VALUES (?, ?)'
+				).run('version', '0');
 
-        db.prepare(
-          `CREATE TABLE IF NOT EXISTS User (
+				db.prepare(
+					`CREATE TABLE IF NOT EXISTS User (
             id TEXT NOT NULL PRIMARY KEY,
             email TEXT NOT NULL UNIQUE,
             username TEXT NOT NULL UNIQUE,
             config TEXT
           )`
-        ).run();
+				).run();
 
-        db.prepare(
-          `CREATE TABLE IF NOT EXISTS Password (
+				db.prepare(
+					`CREATE TABLE IF NOT EXISTS Password (
             hash TEXT NOT NULL,
             userId TEXT NOT NULL UNIQUE,
             FOREIGN KEY (userId) REFERENCES User (id) ON DELETE CASCADE ON UPDATE NO ACTION
           )`
-        ).run();
+				).run();
 
-        db.prepare(
-          `CREATE TABLE IF NOT EXISTS Session (
+				db.prepare(
+					`CREATE TABLE IF NOT EXISTS Session (
             id TEXT NOT NULL PRIMARY KEY,
             data TEXT,
             expires DATETIME NOT NULL,
             userId TEXT NOT NULL,
             FOREIGN KEY (userId) REFERENCES User (id) ON DELETE CASCADE ON UPDATE NO ACTION
           )`
-        ).run();
+				).run();
 
-        db.prepare(
-          `CREATE TABLE IF NOT EXISTS Feed (
+				db.prepare(
+					`CREATE TABLE IF NOT EXISTS Feed (
             id TEXT NOT NULL PRIMARY KEY,
             url TEXT NOT NULL UNIQUE,
             title TEXT NOT NULL,
@@ -75,10 +75,10 @@ export const migrations: Migration[] = [
             icon TEXT,
             htmlUrl TEXT
           )`
-        ).run();
+				).run();
 
-        db.prepare(
-          `CREATE TABLE IF NOT EXISTS Article (
+				db.prepare(
+					`CREATE TABLE IF NOT EXISTS Article (
             id TEXT NOT NULL PRIMARY KEY,
             articleId TEXT NOT NULL,
             feedId TEXT NOT NULL,
@@ -88,10 +88,10 @@ export const migrations: Migration[] = [
             content TEXT,
             FOREIGN KEY (feedId) REFERENCES Feed (id) ON DELETE NO ACTION ON UPDATE NO ACTION
           )`
-        ).run();
+				).run();
 
-        db.prepare(
-          `CREATE TABLE IF NOT EXISTS UserArticle (
+				db.prepare(
+					`CREATE TABLE IF NOT EXISTS UserArticle (
             userId TEXT NOT NULL,
             articleId TEXT NOT NULL,
             read BOOLEAN,
@@ -100,40 +100,40 @@ export const migrations: Migration[] = [
             FOREIGN KEY (userId) REFERENCES User (id) ON DELETE CASCADE ON UPDATE NO ACTION,
             FOREIGN KEY (articleId) REFERENCES Article (id) ON DELETE CASCADE ON UPDATE NO ACTION
           )`
-        ).run();
+				).run();
 
-        db.prepare(
-          `CREATE TABLE IF NOT EXISTS FeedGroup (
+				db.prepare(
+					`CREATE TABLE IF NOT EXISTS FeedGroup (
             id TEXT NOT NULL PRIMARY KEY,
             userId TEXT NOT NULL,
             name TEXT NOT NULL,
             UNIQUE (userId, name),
             FOREIGN KEY (userId) REFERENCES User (id) ON DELETE CASCADE ON UPDATE NO ACTION
           )`
-        ).run();
+				).run();
 
-        db.prepare(
-          `CREATE TABLE IF NOT EXISTS FeedGroupFeed (
+				db.prepare(
+					`CREATE TABLE IF NOT EXISTS FeedGroupFeed (
             feedGroupId TEXT NOT NULL,
             feedId TEXT NOT NULL,
             PRIMARY KEY (feedGroupId, feedId),
             FOREIGN KEY (feedId) REFERENCES Feed (id) ON DELETE CASCADE ON UPDATE NO ACTION,
             FOREIGN KEY (feedGroupId) REFERENCES FeedGroup (id) ON DELETE CASCADE ON UPDATE NO ACTION
           )`
-        ).run();
-      })();
-    },
+				).run();
+			})();
+		},
 
-    down(db) {
-      db.prepare('DROP TABLE FeedGroupFeed').run();
-      db.prepare('DROP TABLE FeedGroup').run();
-      db.prepare('DROP TABLE UserArticle').run();
-      db.prepare('DROP TABLE Article').run();
-      db.prepare('DROP TABLE Feed').run();
-      db.prepare('DROP TABLE Session').run();
-      db.prepare('DROP TABLE Password').run();
-      db.prepare('DROP TABLE User').run();
-      db.prepare('DROP TABLE Meta').run();
-    }
-  }
+		down(db) {
+			db.prepare('DROP TABLE FeedGroupFeed').run();
+			db.prepare('DROP TABLE FeedGroup').run();
+			db.prepare('DROP TABLE UserArticle').run();
+			db.prepare('DROP TABLE Article').run();
+			db.prepare('DROP TABLE Feed').run();
+			db.prepare('DROP TABLE Session').run();
+			db.prepare('DROP TABLE Password').run();
+			db.prepare('DROP TABLE User').run();
+			db.prepare('DROP TABLE Meta').run();
+		}
+	}
 ];

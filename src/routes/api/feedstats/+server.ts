@@ -6,13 +6,13 @@ import type { RequestHandler } from './$types';
 export type GetFeedStatsResponse = FeedStats;
 
 export const GET: RequestHandler = ({ locals }) => {
-  const user = locals.user;
-  if (!user) {
-    throw error(401, 'not logged in');
-  }
+	const user = locals.user;
+	if (!user) {
+		throw error(401, 'not logged in');
+	}
 
-  const feeds = getUserFeeds(user.id);
-  const feedStats = getFeedStats({ userId: user.id, feeds });
+	const feeds = getUserFeeds(user.id);
+	const feedStats = getFeedStats({ userId: user.id, feeds });
 
-  return json(feedStats);
+	return json(feedStats);
 };
