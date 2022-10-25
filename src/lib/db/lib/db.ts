@@ -6,12 +6,12 @@ export type { Database };
 let db: Database | undefined;
 
 export function getDb() {
-	if (!process.env.VITE_DB) {
-		throw new Error('The VITE_DB environment variable must be defined');
+	if (!process.env.DB_FILE) {
+		throw new Error('The DB_FILE environment variable must be defined');
 	}
 
 	if (!db) {
-		db = sqlite3(process.env.VITE_DB);
+		db = sqlite3(process.env.DB_FILE);
 		runMigrations(db);
 	}
 	return db;
