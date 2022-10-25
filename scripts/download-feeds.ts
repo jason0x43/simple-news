@@ -6,7 +6,6 @@ import { JSDOM } from 'jsdom';
 import Parser, { type Item } from 'rss-parser';
 import { upsertArticle } from '../src/lib/db/article.js';
 import { getFeeds, updateFeedIcon } from '../src/lib/db/feed.js';
-import { transaction } from '../src/lib/db/lib/db.js';
 import { Feed } from '../src/lib/db/schema.js';
 import { downloadFeed as getFeed, FeedItem } from '../src/lib/feed.js';
 
@@ -37,25 +36,22 @@ async function downloadFeed(feed: Feed) {
 				feedId: feed.id,
 				icon
 			});
+			console.log(`>>> Updated icon for ${feed.url}`);
 		}
 
-		transaction(() => {
-			for (const entry of parsedFeed.items) {
-				const articleId = getArticleId(entry);
-				const content = getContent(entry);
+		for (const entry of parsedFeed.items) {
+			const articleId = getArticleId(entry);
+			const content = getContent(entry);
 
-				upsertArticle({
-					articleId,
-					feedId: feed.id,
-					content,
-					title: entry.title ?? 'Untitled',
-					link: entry.link ?? null,
-					published: entry.pubDate
-						? Number(new Date(entry.pubDate))
-						: Date.now()
-				});
-			}
-		});
+			upsertArticle({
+				articleId,
+				feedId: feed.id,
+				content,
+				title: entry.title ?? 'Untitled',
+				link: entry.link ?? null,
+				published: entry.pubDate ? Number(new Date(entry.pubDate)) : Date.now()
+			});
+		}
 
 		console.debug(`>>> Processed feed ${feed.title} (${feedCount} left)`);
 	} catch (error) {
