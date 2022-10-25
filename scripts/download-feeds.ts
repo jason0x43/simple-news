@@ -6,7 +6,7 @@ import { JSDOM } from 'jsdom';
 import Parser, { type Item } from 'rss-parser';
 import { upsertArticle } from '../src/lib/db/article.js';
 import { getFeeds, updateFeedIcon } from '../src/lib/db/feed.js';
-import { transaction } from '../src/lib/db/index.js';
+import { transaction } from '../src/lib/db/lib/db.js';
 import { Feed } from '../src/lib/db/schema.js';
 import { downloadFeed as getFeed, FeedItem } from '../src/lib/feed.js';
 
