@@ -1,15 +1,15 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 
-/** @type {import('vite').UserConfigFn} */
-export default function defineConfig() {
-  return {
-    plugins: [sveltekit()],
-    test: {
-      coverage: {
-        all: true,
-        include: ['src/**']
-      },
-      restoreMocks: true
-    }
-  };
-}
+/** @type {import('vite').UserConfig} */
+const config = {
+	plugins: [sveltekit()],
+	test: {
+		coverage: {
+			all: true,
+			include: ['src/**']
+		},
+		restoreMocks: true
+	}
+};
+
+export default config;
