@@ -4,8 +4,10 @@ services:
   app:
     image: simple-news-app
     container_name: simple-news-app
+    restart: unless-stopped
     build:
       context: .
+      target: app
     command: ['node', 'index.js']
     ports:
       - '3000:3000'
@@ -17,9 +19,10 @@ services:
   downloader:
     image: simple-news-downloader
     container_name: simple-news-downloader
+    restart: unless-stopped
     build:
-        context: .
-        target: prebuild
+      context: .
+      target: build
     command: ['pnpm', 'download-feeds']
     environment:
       DB_FILE: /db/data.db
