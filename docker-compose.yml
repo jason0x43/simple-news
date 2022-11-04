@@ -6,17 +6,22 @@ services:
     container_name: simple-news-app
     build:
       context: .
-      target: dev
-    command: ['pnpm', 'dev', '--port', '3000', '--host']
+    command: ['node', 'index.js']
     ports:
       - '3000:3000'
     environment:
       DB_FILE: /db/data.db
     volumes:
-      - ./:/app
-      - simple-news-modules:/app/node_modules
-      - simple-news-data:/db
+      - .:/db
 
-volumes:
-  simple-news-data:
-  simple-news-modules:
+  downloader:
+    image: simple-news-downloader
+    container_name: simple-news-downloader
+    build:
+        context: .
+        target: prebuild
+    command: ['pnpm', 'download-feeds']
+    environment:
+      DB_FILE: /db/data.db
+    volumes:
+      - .:/db

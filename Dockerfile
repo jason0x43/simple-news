@@ -1,23 +1,21 @@
-FROM node:18-alpine AS base
+FROM node:18-alpine AS prebuild
+RUN corepack enable pnpm
 WORKDIR /app
-RUN npm i --location=global pnpm
-
-FROM base AS dev
-ENV NODE_ENV development
-COPY package.json pnpm-lock.yaml ./
+COPY pnpm-lock.yaml .
 RUN pnpm fetch
-ADD . ./
+COPY . .
 RUN pnpm install --offline --ignore-scripts
 
-FROM dev AS build
-ENV NODE_ENV production
+FROM prebuild AS build
+ARG base_url=
+ENV BASE_URL=$base_url
 RUN pnpm build
 
-FROM base AS prod
-COPY --from=build /app/package.json ./
-COPY --from=build /app/pnpm-lock.yaml ./
-COPY --from=build /app/build ./
-ENV NODE_ENV production
+FROM node:18-alpine as prod
+RUN corepack enable pnpm
+WORKDIR /app
+COPY pnpm-lock.yaml .
 RUN pnpm fetch --prod
+COPY --from=build /app/package.json .
+COPY --from=build /app/build .
 RUN pnpm install --offline --prod --ignore-scripts
-CMD ["node", "./index.js"]
