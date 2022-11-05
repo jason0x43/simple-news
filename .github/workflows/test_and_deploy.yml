@@ -70,10 +70,5 @@ jobs:
         env:
           REPO: ${{ secrets.DEPLOY_REPO }}
 
-      - name: Rebuild app
-        run: ssh staging "cd $REPO && pnpm install && pnpm build"
-        env:
-          REPO: ${{ secrets.DEPLOY_REPO }}
-
-      - name: Restart app
-        run: ssh staging "systemctl --user restart --now simple-news"
+      # - name: Restart app
+      #   run: ssh staging "systemctl --user restart --now simple-news"
