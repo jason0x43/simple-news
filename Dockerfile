@@ -26,11 +26,13 @@ WORKDIR /app
 COPY package.json .
 COPY --from=build_downloader /app/build .
 COPY --from=deps /app/node_modules ./node_modules
-USER node
+ARG uid=node
+USER $uid
 
 FROM node:18-alpine AS app
 WORKDIR /app
 COPY package.json .
 COPY --from=build_app /app/build .
 COPY --from=deps /app/node_modules ./node_modules
-USER node
+ARG uid=node
+USER $uid
