@@ -21,18 +21,22 @@ ARG base_url=
 ENV BASE_URL=$base_url
 RUN pnpm build
 
-FROM node:18-alpine AS downloader
+FROM alpine:3.16 AS downloader
+RUN apk add --update nodejs-current
 WORKDIR /app
 COPY package.json .
 COPY --from=build_downloader /app/build .
 COPY --from=deps /app/node_modules ./node_modules
-ARG uid=node
+ARG uid=1001
+RUN adduser --disabled-password --uid $uid node 
 USER $uid
 
-FROM node:18-alpine AS app
+FROM alpine:3.16 AS app
+RUN apk add --update nodejs-current
 WORKDIR /app
 COPY package.json .
 COPY --from=build_app /app/build .
 COPY --from=deps /app/node_modules ./node_modules
-ARG uid=node
+ARG uid=1001
+RUN adduser --disabled-password --uid $uid node 
 USER $uid
