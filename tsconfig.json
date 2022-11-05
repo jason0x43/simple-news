@@ -16,7 +16,7 @@
 	},
 	"ts-node": {
 		"esm": true,
-		"transpileOnly": true,
-		"transpiler": "ts-node/transpilers/swc"
+		"swc": true,
+		"transpileOnly": true
 	}
 }
