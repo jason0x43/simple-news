@@ -70,5 +70,9 @@ jobs:
         env:
           REPO: ${{ secrets.DEPLOY_REPO }}
 
-      # - name: Restart app
-      #   run: ssh staging "systemctl --user restart --now simple-news"
+      - name: Restart app
+        run: ssh staging "cd $DOCKER_DIR && docker compose up --build -d $APP_CONTAINER $DL_CONTAINER"
+        env:
+          DOCKER_DIR: ${{ secrets.DOCKER_DIR }}
+          APP_CONTAINER: ${{ secrets.APP_CONTAINER }}
+          DL_CONTAINER: ${{ secrets.DL_CONTAINER }}
