@@ -1,5 +1,5 @@
 import cuid from 'cuid';
-import { getDb } from './lib/db.js';
+import * as db from './lib/db.js';
 import type { Feed, FeedGroup, FeedGroupFeed, User } from './schema';
 
 export type FeedGroupWithFeeds = FeedGroup & {
@@ -13,15 +13,15 @@ type CreateFeedGroupData = {
 };
 
 export function createFeedGroup(data: CreateFeedGroupData): void {
-	const db = getDb();
 	const feedGroupId = cuid();
+	const addFeed = db.prepare<
+		[FeedGroupFeed['feedGroupId'], FeedGroupFeed['feedId']]
+	>('INSERT INTO FeedGroupFeed (feedGroupId, feedId) VALUES (?, ?)');
+
 	db.transaction(() => {
 		db.prepare<FeedGroup>(
 			'INSERT INTO FeedGroup (id, userId, name) VALUES (@id, @userId, @name)'
 		).run({ ...data, id: feedGroupId });
-		const addFeed = db.prepare<
-			[FeedGroupFeed['feedGroupId'], FeedGroupFeed['feedId']]
-		>('INSERT INTO FeedGroupFeed (feedGroupId, feedId) VALUES (?, ?)');
 		for (const feedId of data.feeds) {
 			addFeed.run(feedGroupId, feedId);
 		}
@@ -29,10 +29,12 @@ export function createFeedGroup(data: CreateFeedGroupData): void {
 }
 
 export function getFeedGroup(id: FeedGroup['id']): FeedGroup {
-	const db = getDb();
-	const feedGroup: FeedGroup = db
+	const feedGroup = db
 		.prepare<FeedGroup['id']>('SELECT * from FeedGroup WHERE id = ?')
-		.get(id);
+		.get<FeedGroup>(id);
+	if (!feedGroup) {
+		throw new Error(`No feedgroup with ID ${id}`);
+	}
 	return feedGroup;
 }
 
@@ -40,12 +42,11 @@ export function getUserFeedGroup(
 	userId: User['id'],
 	name: FeedGroup['name']
 ): FeedGroup {
-	const db = getDb();
-	const feedGroup: FeedGroup = db
+	const feedGroup = db
 		.prepare<[User['id'], FeedGroup['name']]>(
 			'SELECT * from FeedGroup WHERE userId = ? AND name = ?'
 		)
-		.get(userId, name);
+		.get<FeedGroup>(userId, name);
 	if (!feedGroup) {
 		throw new Error(`User ${userId} has no group ${name}`);
 	}
@@ -53,18 +54,19 @@ export function getUserFeedGroup(
 }
 
 export function getUserFeedGroups(userId: User['id']): FeedGroup[] {
-	const db = getDb();
-	const feedGroups: FeedGroup[] = db
+	const feedGroups = db
 		.prepare<User['id']>('SELECT * from FeedGroup WHERE userId = ?')
-		.all(userId);
+		.all<FeedGroup>(userId);
 	return feedGroups;
 }
 
 export function getFeedGroupWithFeeds(id: FeedGroup['id']): FeedGroupWithFeeds {
-	const db = getDb();
-	const feedGroup: FeedGroup = db
+	const feedGroup = db
 		.prepare<FeedGroup['id']>('SELECT * from FeedGroup WHERE id = ?')
-		.get(id);
+		.get<FeedGroup>(id);
+	if (!feedGroup) {
+		throw new Error(`No feedgroup with ID ${id}`);
+	}
 	const feeds = getGroupFeeds(feedGroup.id);
 	return {
 		...feedGroup,
@@ -75,10 +77,9 @@ export function getFeedGroupWithFeeds(id: FeedGroup['id']): FeedGroupWithFeeds {
 export function getUserFeedGroupsWithFeeds(
 	userId: User['id']
 ): FeedGroupWithFeeds[] {
-	const db = getDb();
-	const feedGroups: FeedGroup[] = db
+	const feedGroups = db
 		.prepare<User['id']>('SELECT * from FeedGroup WHERE userId = ?')
-		.all(userId);
+		.all<FeedGroup>(userId);
 	const feedGroupsWithFeeds: FeedGroupWithFeeds[] = [];
 	for (const group of feedGroups) {
 		const feeds = getGroupFeeds(group.id);
@@ -97,77 +98,63 @@ type FindGroupContainingFeedData = {
 
 export function findUserFeedGroupContainingFeed(
 	data: FindGroupContainingFeedData
-): FeedGroup | null {
-	const db = getDb();
-
-	const feedGroupId: FeedGroup['id'] | null = db
+): FeedGroup | undefined {
+	const feedGroupId = db
 		.prepare<FindGroupContainingFeedData>(
 			'SELECT feedGroupId FROM FeedGroupFeed' +
 				' INNER JOIN FeedGroup' +
 				' ON FeedGroup.userId = @userId' +
 				' WHERE FeedGroup.id = FeedGroupFeed.feedGroupId'
 		)
-		.get(data);
+		.get<{ feedGroupId: string }>(data);
 
 	if (feedGroupId) {
-		const feedGroup: FeedGroup | null = db
+		return db
 			.prepare<FeedGroup['id']>('SELECT * FROM FeedGroup WHERE id = ?')
-			.get(feedGroupId);
-		return feedGroup;
+			.get<FeedGroup>(feedGroupId.feedGroupId);
 	}
-
-	return null;
 }
 
 type DeleteFeedGroupData = Pick<FeedGroup, 'userId' | 'name'>;
 
 export function deleteFeedGroup(data: DeleteFeedGroupData): void {
-	const db = getDb();
 	db.prepare<DeleteFeedGroupData>(
 		'DELETE FROM FeedGroup WHERE userId = @userId AND name = @name'
 	).run(data);
 }
 
 export function getUserFeeds(userId: User['id']): Feed[] {
-	const db = getDb();
-
-	const feedIds: Feed['id'][] = db
+	const feedIds = db
 		.prepare<FeedGroup['id']>(
 			`SELECT feedId
-      FROM FeedGroupFeed
-      INNER JOIN FeedGroup
-      ON FeedGroup.id = FeedGroupFeed.feedGroupId
-      WHERE FeedGroup.userId = ?`
+			FROM FeedGroupFeed
+			INNER JOIN FeedGroup
+			ON FeedGroup.id = FeedGroupFeed.feedGroupId
+			WHERE FeedGroup.userId = ?`
 		)
-		.all(userId)
+		.all<{ feedId: string }>(userId)
 		.map(({ feedId }) => feedId);
 
-	const feeds: Feed[] = db
+	return db
 		.prepare<Feed['id'][]>(
 			`SELECT * FROM Feed WHERE id IN (${feedIds.map(() => '?').join()})`
 		)
-		.all(...feedIds);
-
-	return feeds;
+		.all<Feed>(...feedIds);
 }
 
 export function getGroupFeeds(groupId: FeedGroupFeed['feedGroupId']): Feed[] {
-	const db = getDb();
-
-	const feedIds: Feed['id'][] = db
+	const feedIds = db
 		.prepare<FeedGroup['id']>(
 			'SELECT feedId FROM FeedGroupFeed WHERE feedGroupId = ?'
 		)
-		.all(groupId)
+		.all<{ feedId: string }>(groupId)
 		.map(({ feedId }) => feedId);
 
-	const feeds: Feed[] = db
+	return db
 		.prepare<Feed['id'][]>(
 			`SELECT * FROM Feed WHERE id IN (${feedIds.map(() => '?').join()})`
 		)
-		.all(...feedIds);
-
-	return feeds;
+		.all<Feed>(...feedIds);
 }
 
 /**
@@ -180,11 +167,10 @@ export function addFeedsToGroup(
 	groupId: FeedGroupFeed['feedGroupId'],
 	feedIds: Feed['id'][]
 ): void {
-	const db = getDb();
+	const creator = db.prepare(
+		'INSERT INTO FeedGroupFeed (feedGroupId, feedId) VALUES (?, ?)'
+	);
 	db.transaction(() => {
-		const creator = db.prepare(
-			'INSERT INTO FeedGroupFeed (feedGroupId, feedId) VALUES (?, ?)'
-		);
 		for (const feedId of feedIds) {
 			creator.run(groupId, feedId);
 		}
@@ -201,11 +187,10 @@ export function removeFeedsFromGroup(
 	groupId: FeedGroupFeed['feedGroupId'],
 	feedIds: Feed['id'][]
 ): void {
-	const db = getDb();
+	const creator = db.prepare(
+		'DELETE FROM FeedGroupFeed WHERE feedGroupId = ? AND feedId = ?'
+	);
 	db.transaction(() => {
-		const creator = db.prepare(
-			'DELETE FROM FeedGroupFeed WHERE feedGroupId = ? AND feedId = ?'
-		);
 		for (const feedId of feedIds) {
 			creator.run(groupId, feedId);
 		}

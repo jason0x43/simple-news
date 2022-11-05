@@ -1,18 +1,15 @@
-import sqlite3, { type Database } from 'better-sqlite3';
-import { runMigrations } from './migrations.js';
+import sqlite3, { type Database, type RunResult } from 'better-sqlite3';
 
 export type { Database };
 
 let db: Database | undefined;
 
-export function getDb() {
-	if (!process.env.DB_FILE) {
-		throw new Error('The DB_FILE environment variable must be defined');
-	}
-
+function getDb(): Database {
 	if (!db) {
+		if (!process.env.DB_FILE) {
+			throw new Error('The DB_FILE environment variable must be defined');
+		}
 		db = sqlite3(process.env.DB_FILE);
-		runMigrations(db);
 	}
 	return db;
 }
@@ -22,12 +19,24 @@ export function closeDb() {
 	db = undefined;
 }
 
-export const prepare: Database['prepare'] = (source) => {
-	const db = getDb();
-	return db.prepare(source);
+type Statement<BindParams extends unknown[]> = {
+	run(...params: BindParams): RunResult;
+	get<T = unknown>(...params: BindParams): T | undefined;
+	all<T = unknown>(...params: BindParams): T[];
 };
 
-export const transaction: Database['transaction'] = (queries: () => void) => {
-	const db = getDb();
-	return db.transaction(queries);
-};
+export function prepare<
+	// eslint-disable-next-line @typescript-eslint/ban-types
+	BindParams extends unknown[] | {} = unknown[],
+	Ret = BindParams extends unknown[]
+		? Statement<BindParams>
+		: Statement<[BindParams]>
+>(query: string): Ret {
+	return getDb().prepare<BindParams>(query) as Ret;
+}
+
+export function transaction(
+	transactor: Parameters<Database['transaction']>[0]
+) {
+	return getDb().transaction(transactor)();
+}

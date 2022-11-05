@@ -1,5 +1,5 @@
 import cuid from 'cuid';
-import { getDb } from './lib/db.js';
+import * as db from './lib/db.js';
 import type { Article, Feed, User, UserArticle } from './schema';
 
 export type ArticleHeading = Pick<
@@ -21,19 +21,18 @@ export function getArticle({
 	id: Article['id'];
 	userId: User['id'];
 }): ArticleWithUserData | null {
-	const db = getDb();
-	const article: Article = db
+	const article = db
 		.prepare<Article['id']>('SELECT * FROM Article WHERE id = ?')
-		.get(id);
-	const userArticle: Pick<UserArticle, 'read' | 'saved'> | null = db
-		.prepare<[User['id'], Article['id']]>(
-			'SELECT read, saved FROM UserArticle WHERE userId = ? AND articleId = ?'
-		)
-		.get(userId, id);
-
+		.get(id) as Article;
 	if (!article) {
 		return null;
 	}
+
+	const userArticle = db
+		.prepare<[User['id'], Article['id']]>(
+			'SELECT read, saved FROM UserArticle WHERE userId = ? AND articleId = ?'
+		)
+		.get<Pick<UserArticle, 'read' | 'saved'>>(userId, id);
 
 	return {
 		...article,
@@ -52,7 +51,6 @@ export function getArticleHeadings({
 	userId: User['id'];
 	filter?: string;
 }): ArticleHeadingWithUserData[] {
-	const db = getDb();
 	const wheres: string[] = [];
 	const params: unknown[] = [];
 
@@ -102,16 +100,15 @@ export function markArticleRead({
 	userId: User['id'];
 	read: boolean;
 }): void {
-	const db = getDb();
 	db.prepare<{
 		userId: User['id'];
 		articleId: Article['id'];
 		read: ArticleUserData['read'];
 	}>(
 		`INSERT INTO UserArticle(userId, articleId, read)
-    VALUES (@userId, @articleId, @read)
-    ON CONFLICT(userId, articleId)
-    DO UPDATE SET read = @read`
+		VALUES (@userId, @articleId, @read)
+		ON CONFLICT(userId, articleId)
+		DO UPDATE SET read = @read`
 	).run({
 		userId,
 		articleId: id,
@@ -128,16 +125,15 @@ export function markArticlesRead({
 	userId: User['id'];
 	read: boolean;
 }): void {
-	const db = getDb();
 	const updater = db.prepare<{
 		userId: User['id'];
 		articleId: Article['id'];
 		read: ArticleUserData['read'];
 	}>(
 		`INSERT INTO UserArticle(userId, articleId, read)
-    VALUES (@userId, @articleId, @read)
-    ON CONFLICT(userId, articleId)
-    DO UPDATE SET read = @read`
+		VALUES (@userId, @articleId, @read)
+		ON CONFLICT(userId, articleId)
+		DO UPDATE SET read = @read`
 	);
 
 	try {
@@ -161,17 +157,15 @@ type ArticleUpsert = Pick<
 >;
 
 export function upsertArticle(data: ArticleUpsert): void {
-	const db = getDb();
 	db.prepare<ArticleUpsert & { id?: Article['id'] }>(
 		`INSERT INTO Article (id, articleId, feedId, content, title, link, published)
-    VALUES (@id, @articleId, @feedId, @content, @title, @link, @published)
-    ON CONFLICT(articleId, feedId)
-    DO UPDATE SET content = @content, title = @title, link = @link, published = @published`
+		VALUES (@id, @articleId, @feedId, @content, @title, @link, @published)
+		ON CONFLICT(articleId, feedId)
+		DO UPDATE SET content = @content, title = @title, link = @link, published = @published`
 	).run({ id: cuid(), ...data });
 }
 
 export function deleteArticles(articleIds: Article['id'][]): void {
-	const db = getDb();
 	db.prepare<Article['id'][]>(
 		`DELETE FROM Article WHERE articleId in (${articleIds
 			.map(() => '?')
@@ -180,6 +174,5 @@ export function deleteArticles(articleIds: Article['id'][]): void {
 }
 
 export function deleteFeedArticles(feedId: Feed['id']): void {
-	const db = getDb();
 	db.prepare<Feed['id']>('DELETE FROM Article WHERE feedId = ?').run(feedId);
 }
