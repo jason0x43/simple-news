@@ -145,7 +145,7 @@ export function markArticlesRead({
 					read: read ? 1 : 0
 				});
 			}
-		})();
+		});
 	} catch (error) {
 		console.warn('problem marking articles as read:', error);
 	}
