@@ -17,6 +17,11 @@ export function getDb() {
 	return db;
 }
 
+export function closeDb() {
+	db?.close();
+	db = undefined;
+}
+
 export const prepare: Database['prepare'] = (source) => {
 	const db = getDb();
 	return db.prepare(source);

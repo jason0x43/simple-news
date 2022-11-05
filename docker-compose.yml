@@ -22,8 +22,8 @@ services:
     restart: unless-stopped
     build:
       context: .
-      target: build
-    command: ['pnpm', 'download-feeds']
+      target: downloader
+    command: ['scripts/download-feeds.js']
     environment:
       DB_FILE: /db/data.db
     volumes:

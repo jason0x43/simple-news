@@ -39,13 +39,16 @@ export function getFeedGroup(id: FeedGroup['id']): FeedGroup {
 export function getUserFeedGroup(
 	userId: User['id'],
 	name: FeedGroup['name']
-): FeedGroup | null {
+): FeedGroup {
 	const db = getDb();
 	const feedGroup: FeedGroup = db
 		.prepare<[User['id'], FeedGroup['name']]>(
 			'SELECT * from FeedGroup WHERE userId = ? AND name = ?'
 		)
 		.get(userId, name);
+	if (!feedGroup) {
+		throw new Error(`User ${userId} has no group ${name}`);
+	}
 	return feedGroup;
 }
 

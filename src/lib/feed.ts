@@ -13,6 +13,7 @@ export async function downloadFeed(url: string) {
 	clearTimeout(abortTimer);
 
 	if (response.status !== 200) {
+		await response.body?.cancel();
 		throw new Error(`Error downloading feed: ${response.status}`);
 	}
 

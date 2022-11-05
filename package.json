@@ -4,6 +4,7 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
+    "build:downloader": "tsc -p scripts/tsconfig.json",
     "package": "svelte-kit package",
     "preview": "vite preview",
     "prepare": "husky install",
@@ -23,7 +24,6 @@
     "@types/bcryptjs": "^2.4.2",
     "@types/better-sqlite3": "^7.6.2",
     "@types/cookie": "^0.5.1",
-    "@types/jsdom": "^20.0.0",
     "@types/node": "^18.11.9",
     "@types/yargs": "^17.0.13",
     "@typescript-eslint/eslint-plugin": "^5.42.0",
@@ -35,11 +35,9 @@
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-svelte3": "^4.0.0",
     "husky": "^8.0.1",
-    "jsdom": "^20.0.2",
     "lint-staged": "^13.0.3",
     "prettier": "^2.7.1",
     "prettier-plugin-svelte": "^2.8.0",
-    "rss-parser": "^3.12.0",
     "svelte": "^3.52.0",
     "svelte-check": "^2.9.2",
     "svelte-preprocess": "^4.10.7",
@@ -53,7 +51,10 @@
   },
   "dependencies": {
     "better-sqlite3": "^7.6.2",
-    "cuid": "^2.1.8"
+    "cheerio": "1.0.0-rc.12",
+    "cuid": "^2.1.8",
+    "rss-parser": "^3.12.0",
+    "undici": "^5.12.0"
   },
   "type": "module"
 }

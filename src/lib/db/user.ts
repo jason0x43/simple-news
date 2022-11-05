@@ -38,18 +38,24 @@ export function verifyLogin({
 	return user;
 }
 
-export function getUserById(userId: User['id']): User | null {
+export function getUserById(userId: User['id']): User {
 	const db = getDb();
 	const user: User = db
 		.prepare<User['id']>('SELECT * FROM User WHERE id = ?')
 		.get(userId);
+	if (!user) {
+		throw new Error(`No user with ID ${userId}`);
+	}
 	return user;
 }
 
-export function getUserByUsername(username: User['username']): User | null {
+export function getUserByUsername(username: User['username']): User {
 	const db = getDb();
 	const user: User = db
 		.prepare<User['username']>('SELECT * FROM User WHERE username = ?')
 		.get(username);
+	if (!user) {
+		throw new Error(`No user with username ${username}`);
+	}
 	return user;
 }

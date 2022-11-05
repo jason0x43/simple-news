@@ -66,14 +66,16 @@ export async function put<T = unknown, R = unknown>(
 			'content-type': 'application/json'
 		}
 	});
+	const body = await resp.text();
+
 	if (resp.status >= 400) {
-		const body = await resp.text();
 		throw new ResponseError('PUT', path, resp.status, resp.statusText, body);
 	}
-	const body = await resp.text();
+
 	if (body) {
 		return JSON.parse(body) as R;
 	}
+
 	return undefined as R;
 }
 

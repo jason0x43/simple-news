@@ -2,23 +2,31 @@
 // Download feeds
 //
 
-import { JSDOM } from 'jsdom';
+import * as cheerio from 'cheerio';
 import Parser, { type Item } from 'rss-parser';
+import { fetch } from 'undici';
 import { upsertArticle } from '../src/lib/db/article.js';
 import { getFeeds, updateFeedIcon } from '../src/lib/db/feed.js';
-import { Feed } from '../src/lib/db/schema.js';
-import { downloadFeed as getFeed, FeedItem } from '../src/lib/feed.js';
+import { closeDb } from '../src/lib/db/lib/db.js';
+import type { Feed } from '../src/lib/db/schema.js';
+import { downloadFeed as getFeed, type FeedItem } from '../src/lib/feed.js';
+
+// @ts-expect-error undici fetch is a valid replacement in this context
+global.fetch = fetch;
 
 type ParsedFeed = Parser.Output<unknown>;
-
-let feedCount = 0;
 
 async function downloadFeeds() {
 	console.log('>>> Downloading feeds...');
 	const feeds = getFeeds();
-	feedCount = feeds.length;
-	await Promise.all(feeds.map(downloadFeed));
+	let feed = feeds.pop();
+	while (feed) {
+		await downloadFeed(feed);
+		console.debug(`>>> Processed feed ${feed.title} (${feeds.length} left)`);
+		feed = feeds.pop();
+	}
 	console.log('>>> Finished downloading');
+	closeDb();
 }
 
 async function downloadFeed(feed: Feed) {
@@ -32,17 +40,19 @@ async function downloadFeed(feed: Feed) {
 
 		if (!feed.icon) {
 			const icon = await getIcon(parsedFeed);
-			updateFeedIcon({
-				feedId: feed.id,
-				icon
-			});
-			console.log(`>>> Updated icon for ${feed.url}`);
+			if (icon) {
+				updateFeedIcon({
+					feedId: feed.id,
+					icon
+				});
+				console.log(`>>> Updated icon for ${feed.url}`);
+			}
 		}
 
-		for (const entry of parsedFeed.items) {
+		let entry = parsedFeed.items.pop();
+		while (entry) {
 			const articleId = getArticleId(entry);
 			const content = getContent(entry);
-
 			upsertArticle({
 				articleId,
 				feedId: feed.id,
@@ -51,13 +61,10 @@ async function downloadFeed(feed: Feed) {
 				link: entry.link ?? null,
 				published: entry.pubDate ? Number(new Date(entry.pubDate)) : Date.now()
 			});
+			entry = parsedFeed.items.pop();
 		}
-
-		console.debug(`>>> Processed feed ${feed.title} (${feedCount} left)`);
 	} catch (error) {
 		console.error(`>>> Error updating ${feed.url}: ${error}`);
-	} finally {
-		feedCount--;
 	}
 }
 
@@ -69,11 +76,11 @@ function getContent(entry: FeedItem): string {
 		entry['content:encoded'] ?? entry.content ?? entry.summary ?? null;
 	if (content) {
 		try {
-			const dom = new JSDOM(content);
-			dom.window.document.querySelectorAll('a').forEach((a) => {
-				a.removeAttribute('style');
+			const $ = cheerio.load(content);
+			$('a').each((_, a) => {
+				$(a).removeAttr('style');
 			});
-			content = dom.window.document.body.innerHTML;
+			content = $('body').html();
 		} catch (error) {
 			console.warn('Error processing document content');
 		}
@@ -105,6 +112,7 @@ function getArticleId(article: Item & { [key: string]: unknown }): string {
 async function getIcon(feed: ParsedFeed): Promise<string | null> {
 	if (feed.image) {
 		const response = await fetch(feed.image.url, { method: 'HEAD' });
+		await response.body.cancel();
 		if (response.status === 200) {
 			console.debug(`Using feed icon ${feed.image} for ${feed.title}`);
 			return feed.image.url;
@@ -115,17 +123,17 @@ async function getIcon(feed: ParsedFeed): Promise<string | null> {
 		const feedBase = new URL(feed.link).origin;
 		const htmlResponse = await fetch(feedBase);
 		const html = await htmlResponse.text();
-		const dom = new JSDOM(html);
-		const iconLink =
-			dom.window.document.head.querySelector('link[rel*="icon"]');
+		const $ = cheerio.load(html);
+		const iconLink = $('link[rel*="icon"]');
 
 		if (iconLink) {
-			const iconHref = iconLink.getAttribute('href') as string;
+			const iconHref = iconLink.attr('href') as string;
 			const iconUrl = new URL(iconHref, feedBase);
 
 			// Try https by default
 			iconUrl.protocol = 'https';
 			const iconResponse = await fetch(`${iconUrl}`, { method: 'HEAD' });
+			await iconResponse.body.cancel();
 			if (iconResponse.status === 200) {
 				console.debug(`Using link ${iconUrl} for ${feed.title}`);
 				return `${iconUrl}`;
@@ -133,6 +141,7 @@ async function getIcon(feed: ParsedFeed): Promise<string | null> {
 
 			iconUrl.protocol = 'http';
 			const httpIconResponse = await fetch(`${iconUrl}`, { method: 'HEAD' });
+			await httpIconResponse.body.cancel();
 			if (httpIconResponse.status === 200) {
 				console.debug(`Using link ${iconUrl} for ${feed.title}`);
 				return `${iconUrl}`;
@@ -141,6 +150,7 @@ async function getIcon(feed: ParsedFeed): Promise<string | null> {
 
 		const favicon = new URL('/favicon.ico', feedBase);
 		const response = await fetch(`${favicon}`, { method: 'HEAD' });
+		await response.body.cancel();
 		if (
 			response.status === 200 &&
 			response.headers.get('content-length') !== '0'
