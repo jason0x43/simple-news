@@ -112,7 +112,7 @@ function getArticleId(article: Item & { [key: string]: unknown }): string {
 async function getIcon(feed: ParsedFeed): Promise<string | null> {
 	if (feed.image) {
 		const response = await fetch(feed.image.url, { method: 'HEAD' });
-		await response.body.cancel();
+		await response.body?.cancel();
 		if (response.status === 200) {
 			console.debug(`Using feed icon ${feed.image} for ${feed.title}`);
 			return feed.image.url;
@@ -133,7 +133,7 @@ async function getIcon(feed: ParsedFeed): Promise<string | null> {
 			// Try https by default
 			iconUrl.protocol = 'https';
 			const iconResponse = await fetch(`${iconUrl}`, { method: 'HEAD' });
-			await iconResponse.body.cancel();
+			await iconResponse.body?.cancel();
 			if (iconResponse.status === 200) {
 				console.debug(`Using link ${iconUrl} for ${feed.title}`);
 				return `${iconUrl}`;
@@ -141,7 +141,7 @@ async function getIcon(feed: ParsedFeed): Promise<string | null> {
 
 			iconUrl.protocol = 'http';
 			const httpIconResponse = await fetch(`${iconUrl}`, { method: 'HEAD' });
-			await httpIconResponse.body.cancel();
+			await httpIconResponse.body?.cancel();
 			if (httpIconResponse.status === 200) {
 				console.debug(`Using link ${iconUrl} for ${feed.title}`);
 				return `${iconUrl}`;
@@ -150,7 +150,7 @@ async function getIcon(feed: ParsedFeed): Promise<string | null> {
 
 		const favicon = new URL('/favicon.ico', feedBase);
 		const response = await fetch(`${favicon}`, { method: 'HEAD' });
-		await response.body.cancel();
+		await response.body?.cancel();
 		if (
 			response.status === 200 &&
 			response.headers.get('content-length') !== '0'
