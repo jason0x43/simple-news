@@ -28,29 +28,21 @@ export function createFeedGroup(data: CreateFeedGroupData): void {
 	});
 }
 
-export function getFeedGroup(id: FeedGroup['id']): FeedGroup {
-	const feedGroup = db
+export function getFeedGroup(id: FeedGroup['id']): FeedGroup | undefined {
+	return db
 		.prepare<FeedGroup['id']>('SELECT * from FeedGroup WHERE id = ?')
 		.get<FeedGroup>(id);
-	if (!feedGroup) {
-		throw new Error(`No feedgroup with ID ${id}`);
-	}
-	return feedGroup;
 }
 
 export function getUserFeedGroup(
 	userId: User['id'],
 	name: FeedGroup['name']
-): FeedGroup {
-	const feedGroup = db
+): FeedGroup | undefined {
+	return db
 		.prepare<[User['id'], FeedGroup['name']]>(
 			'SELECT * from FeedGroup WHERE userId = ? AND name = ?'
 		)
 		.get<FeedGroup>(userId, name);
-	if (!feedGroup) {
-		throw new Error(`User ${userId} has no group ${name}`);
-	}
-	return feedGroup;
 }
 
 export function getUserFeedGroups(userId: User['id']): FeedGroup[] {
@@ -60,13 +52,16 @@ export function getUserFeedGroups(userId: User['id']): FeedGroup[] {
 	return feedGroups;
 }
 
-export function getFeedGroupWithFeeds(id: FeedGroup['id']): FeedGroupWithFeeds {
+export function getFeedGroupWithFeeds(
+	id: FeedGroup['id']
+): FeedGroupWithFeeds | undefined {
 	const feedGroup = db
 		.prepare<FeedGroup['id']>('SELECT * from FeedGroup WHERE id = ?')
 		.get<FeedGroup>(id);
 	if (!feedGroup) {
-		throw new Error(`No feedgroup with ID ${id}`);
+		return;
 	}
+
 	const feeds = getGroupFeeds(feedGroup.id);
 	return {
 		...feedGroup,

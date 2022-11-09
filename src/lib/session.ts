@@ -17,7 +17,7 @@ export function getSession(
 		return undefined;
 	}
 	const cookies = cookie.parse(cookieStr);
-	return getSessionWithUser(cookies.session) ?? undefined;
+	return getSessionWithUser(cookies.session);
 }
 
 export function clearSessionCookie(cookies: Cookies): void {
@@ -36,7 +36,7 @@ export function setSessionCookie(cookies: Cookies, session: Session): void {
 
 export function getSessionId(cookieStr: string | null): string | undefined {
 	if (!cookieStr) {
-		return undefined;
+		return;
 	}
 	const cookies = cookie.parse(cookieStr);
 	return cookies.session;

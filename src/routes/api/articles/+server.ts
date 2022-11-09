@@ -25,7 +25,7 @@ export const GET: RequestHandler = async function ({ url, locals }) {
 		const [type, id] = feedOrGroupId.split('-');
 		if (type === 'group') {
 			const group = getFeedGroupWithFeeds(id);
-			feedIds = group.feeds.map(({ id }) => id) ?? [];
+			feedIds = group?.feeds.map(({ id }) => id) ?? [];
 		} else {
 			feedIds = [id];
 		}

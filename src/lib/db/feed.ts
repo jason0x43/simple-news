@@ -46,24 +46,16 @@ export function getFeeds(): Feed[] {
 	return feeds;
 }
 
-export function getFeed(id: string): Feed {
-	const feed = db
+export function getFeed(id: string): Feed | undefined {
+	return db
 		.prepare<Feed['id']>('SELECT * FROM Feed WHERE id = ?')
 		.get<Feed>(id);
-	if (!feed) {
-		throw new Error(`No feed with id "${id}"`);
-	}
-	return feed;
 }
 
-export function getFeedByUrl(url: string): Feed {
-	const feed = db
+export function getFeedByUrl(url: string): Feed | undefined {
+	return db
 		.prepare<Feed['url']>('SELECT * FROM Feed WHERE url = ?')
 		.get<Feed>(url);
-	if (!feed) {
-		throw new Error(`No feed with url "${url}"`);
-	}
-	return feed;
 }
 
 export function getFeedStats(data: {

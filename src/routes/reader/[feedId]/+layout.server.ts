@@ -18,7 +18,7 @@ export const load: LayoutServerLoad = async ({ locals, params }) => {
 
 	if (type === 'group') {
 		const group = getFeedGroupWithFeeds(id);
-		feedIds = group.feeds.map(({ id }) => id) ?? [];
+		feedIds = group?.feeds.map(({ id }) => id) ?? [];
 	} else {
 		feedIds = [id];
 	}

@@ -9,5 +9,5 @@ export const handle: Handle = async ({ event, resolve }) => {
 	event.locals.sessionData = session?.data
 		? JSON.parse(session.data)
 		: defaultSessionData;
-	return resolve(event);
+	return await resolve(event);
 };

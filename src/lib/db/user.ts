@@ -39,22 +39,16 @@ export function verifyLogin({
 		.get<User>(username);
 }
 
-export function getUserById(userId: User['id']): User {
-	const user = db
+export function getUserById(userId: User['id']): User | undefined {
+	return db
 		.prepare<User['id']>('SELECT * FROM User WHERE id = ?')
 		.get<User>(userId);
-	if (!user) {
-		throw new Error(`No user with ID ${userId}`);
-	}
-	return user;
 }
 
-export function getUserByUsername(username: User['username']): User {
-	const user = db
+export function getUserByUsername(
+	username: User['username']
+): User | undefined {
+	return db
 		.prepare<User['username']>('SELECT * FROM User WHERE username = ?')
 		.get<User>(username);
-	if (!user) {
-		throw new Error(`No user with username ${username}`);
-	}
-	return user;
 }

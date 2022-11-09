@@ -31,19 +31,21 @@ export function createUserSession(userId: User['id']): Session {
 	return session;
 }
 
-export function getSessionWithUser(id: Session['id']): SessionWithUser {
+export function getSessionWithUser(
+	id: Session['id']
+): SessionWithUser | undefined {
 	const session = db
 		.prepare<Session['id']>('SELECT * FROM Session WHERE id = ?')
 		.get<Session>(id);
 	if (!session) {
-		throw new Error(`No session with ID ${id}`);
+		return;
 	}
 
 	const user = db
 		.prepare<User['id']>('SELECT * FROM User WHERE id = ?')
 		.get<User>(session.userId);
 	if (!user) {
-		throw new Error(`No user for session ${id}`);
+		return;
 	}
 
 	return {
