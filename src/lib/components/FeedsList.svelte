@@ -1,171 +1,194 @@
 <script type="ts">
-  import { getAppContext } from '$lib/contexts';
-  import { areIdentified, getArticleCount, getGroupFeeds } from '$lib/feedUtil';
+	import { getAppContext } from '$lib/contexts';
+	import type { Feed } from '$lib/db/schema';
+	import { areIdentified, getArticleCount, getGroupFeeds } from '$lib/feedUtil';
 
-  export let onSelect: () => void;
+	export let onSelect: () => void;
 
-  const { articleFilter, feeds, feedGroups, feedStats, selectedFeedIds } =
-    getAppContext().stores;
-  let expanded: { [title: string]: boolean } = {};
+	const { articleFilter, feeds, feedGroups, feedStats, selectedFeedIds } =
+		getAppContext().stores;
+	let expanded: { [title: string]: boolean } = {};
+
+	function containsFeed(groupFeeds: Feed[], feedIds: string[]) {
+		for (const id of feedIds) {
+			if (groupFeeds.find((f) => f.id === id)) {
+				return true;
+			}
+		}
+		return false;
+	}
 </script>
 
 <ul class="feeds">
-  {#each $feedGroups as group (group.name)}
-    {@const groupFeeds = getGroupFeeds(group, $feeds)}
-    {#if getArticleCount(groupFeeds, $feedStats, $articleFilter) > 0}
-      <li class:expanded={expanded[group.name]}>
-        <div
-          class="group"
-          class:selected={areIdentified(groupFeeds, $selectedFeedIds)}
-        >
-          <span
-            class="expander"
-            on:click={() => {
-              expanded = {
-                ...expanded,
-                [group.name]: !expanded[group.name]
-              };
-            }}
-          />
-          <a
-            class="title"
-            href={`/reader/group-${group.id}`}
-            on:click={() => {
-              // setSelectedFeeds(
-              //   getFeedsFromGroup(group).map(({ id }) => id)
-              // );
-              onSelect?.();
-            }}
-          >
-            {group.name}
-          </a>
-          {#if feedStats}
-            <span class="Feeds-unread">
-              {getArticleCount(groupFeeds, $feedStats, $articleFilter)}
-            </span>
-          {/if}
-        </div>
+	{#each $feedGroups as group (group.name)}
+		{@const groupFeeds = getGroupFeeds(group, $feeds)}
+		{#if getArticleCount(groupFeeds, $feedStats, $articleFilter) > 0}
+			<li
+				class:expanded={expanded[group.name] ||
+					containsFeed(groupFeeds, $selectedFeedIds)}
+			>
+				<div
+					class="group"
+					class:selected={areIdentified(groupFeeds, $selectedFeedIds)}
+				>
+					<button
+						class="expander"
+						on:click={() => {
+							expanded = {
+								...expanded,
+								[group.name]: !expanded[group.name]
+							};
+						}}
+					/>
+					<a
+						class="title"
+						href={`/reader/group-${group.id}`}
+						on:click={() => {
+							// setSelectedFeeds(
+							//   getFeedsFromGroup(group).map(({ id }) => id)
+							// );
+							onSelect?.();
+						}}
+					>
+						{group.name}
+					</a>
+					{#if feedStats}
+						<span class="Feeds-unread">
+							{getArticleCount(groupFeeds, $feedStats, $articleFilter)}
+						</span>
+					{/if}
+				</div>
 
-        <ul>
-          {#each groupFeeds as feed (feed.id)}
-            {#if getArticleCount([feed], $feedStats, $articleFilter) > 0}
-              <li
-                class="feed"
-                class:selected={areIdentified([feed], $selectedFeedIds)}
-                on:click={() => {
-                  onSelect?.();
-                }}
-              >
-                <a href={`/reader/feed-${feed.id}`} class="title">
-                  {$feeds.find((f) => f.id === feed.id)?.title}
-                </a>
-                <div class="unread">
-                  {($feedStats[feed.id].total ?? 0) -
-                    ($feedStats[feed.id].read ?? 0)}
-                </div>
-              </li>
-            {/if}
-          {/each}
-        </ul>
-      </li>
-    {/if}
-  {/each}
+				<ul>
+					{#each groupFeeds as feed (feed.id)}
+						{#if getArticleCount([feed], $feedStats, $articleFilter) > 0}
+							<li
+								class="feed"
+								class:selected={areIdentified([feed], $selectedFeedIds)}
+							>
+								<a
+									href={`/reader/feed-${feed.id}`}
+									class="title"
+									on:click={() => {
+										onSelect?.();
+									}}
+								>
+									{$feeds.find((f) => f.id === feed.id)?.title}
+								</a>
+								<div class="unread">
+									{($feedStats[feed.id].total ?? 0) -
+										($feedStats[feed.id].read ?? 0)}
+								</div>
+							</li>
+						{/if}
+					{/each}
+				</ul>
+			</li>
+		{/if}
+	{/each}
 </ul>
 
 <style>
-  .feeds {
-    list-style-type: none;
-    padding: 1rem;
-    margin: 0;
-    --hpad: 0.5rem;
-    --vpad: 0.25rem;
-    --expander-width: 1rem;
-  }
+	.feeds {
+		list-style-type: none;
+		padding: 1rem;
+		margin: 0;
+		--hpad: 0.5rem;
+		--vpad: 0.25rem;
+		--expander-width: 1rem;
+	}
 
-  .selected {
-    background: rgba(255, 255, 255, 0.1);
-  }
+	.selected {
+		background: rgba(255, 255, 255, 0.1);
+	}
 
-  .group,
-  .feed {
-    border-radius: var(--border-radius);
-  }
+	.group,
+	.feed {
+		border-radius: var(--border-radius);
+	}
 
-  .expanded .selected {
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-  }
+	.expanded .selected {
+		border-bottom-left-radius: 0;
+		border-bottom-right-radius: 0;
+	}
 
-  .expanded .selected:first-child {
-    border-top-left-radius: 0;
-    border-top-right-radius: 0;
-  }
+	.expanded .selected:first-child {
+		border-top-left-radius: 0;
+		border-top-right-radius: 0;
+	}
 
-  .feeds ul {
-    list-style-type: none;
-    padding: 0;
-  }
+	.feeds ul {
+		list-style-type: none;
+		padding: 0;
+	}
 
-  .feed {
-    display: flex;
-    flex-direction: row;
-  }
+	.feed {
+		display: flex;
+		flex-direction: row;
+	}
 
-  .group {
-    display: flex;
-    align-items: center;
-  }
+	.group {
+		display: flex;
+		align-items: center;
+	}
 
-  .group > *,
-  .feed > * {
-    padding: var(--vpad) var(--hpad);
-  }
+	.group > *,
+	.feed > * {
+		padding: var(--vpad) var(--hpad);
+	}
 
-  .feed {
-    /* padding is size of expander + expander padding */
-    padding-left: calc(var(--expander-width) + 2 * var(--hpad));
-  }
+	.feed {
+		/* padding is size of expander + expander padding */
+		padding-left: calc(var(--expander-width) + 2 * var(--hpad));
+	}
 
-  .expander::before {
-    content: '▷';
-    display: inline-block;
-    flex-grow: 0;
-    width: var(--expander-width);
-  }
+	.expander {
+		border: none;
+		background: none;
+		padding: 0;
+		padding-left: 4px;
+	}
 
-  .title {
-    flex-grow: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+	.expander::before {
+		content: '▷';
+		display: inline-block;
+		flex-grow: 0;
+		width: var(--expander-width);
+	}
 
-  a.title {
-    text-decoration: none;
-    color: inherit;
-  }
+	.title {
+		flex-grow: 1;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
 
-  .group,
-  .feed {
-    cursor: pointer;
-  }
+	a.title {
+		text-decoration: none;
+		color: inherit;
+	}
 
-  .feeds ul {
-    display: none;
-  }
+	.group,
+	.feed {
+		cursor: pointer;
+	}
 
-  .expanded ul {
-    display: initial;
-  }
+	.feeds ul {
+		display: none;
+	}
 
-  .expanded .expander::before {
-    content: '▽';
-  }
+	.expanded ul {
+		display: initial;
+	}
 
-  @media (hover: hover) {
-    .group:hover,
-    .feed:hover {
-      background: rgba(0, 0, 0, 0.1);
-    }
-  }
+	.expanded .expander::before {
+		content: '▽';
+	}
+
+	@media (hover: hover) {
+		.group:hover,
+		.feed:hover {
+			background: rgba(0, 0, 0, 0.1);
+		}
+	}
 </style>

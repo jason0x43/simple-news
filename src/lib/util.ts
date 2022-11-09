@@ -51,3 +51,10 @@ export function getEventValue(event: Event): string | undefined {
 		return target.value;
 	}
 }
+
+export function isActionEvent(event: Event) {
+	return (
+		(event instanceof MouseEvent && event.type === 'click') ||
+		(event instanceof KeyboardEvent && event.key === 'Enter')
+	);
+}

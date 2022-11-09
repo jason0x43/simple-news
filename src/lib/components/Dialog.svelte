@@ -1,94 +1,94 @@
 <script type="ts">
-  import CloseIcon from '$lib/icons/Close.svelte';
-  import Activity from '$lib/components/Activity.svelte';
-  import { fade } from 'svelte/transition';
+	import CloseIcon from '$lib/icons/Close.svelte';
+	import Activity from '$lib/components/Activity.svelte';
+	import { fade } from 'svelte/transition';
 
-  export let title: string | undefined = undefined;
-  export let onClose: (() => void) | undefined = undefined;
-  export let busy: boolean = false;
+	export let title: string | undefined = undefined;
+	export let onClose: (() => void) | undefined = undefined;
+	export let busy: boolean = false;
 </script>
 
 <div class="dialog">
-  {#if title || onClose}
-    <div class="title">
-      {title}
-      {#if onClose}
-        <div
-          class="close"
-          on:click={(event) => {
-            event.stopPropagation();
-            onClose?.();
-          }}
-        >
-          <CloseIcon size="22px" />
-        </div>
-      {/if}
-    </div>
-  {/if}
-  <div class="content">
-    <slot />
-    {#if busy}
-      <div
-        class="overlay"
-        in:fade={{ duration: 150 }}
-        out:fade={{ duration: 150 }}
-      >
-        <Activity />
-      </div>
-    {/if}
-  </div>
+	{#if title || onClose}
+		<div class="title">
+			{title}
+			{#if onClose}
+				<button
+					class="close"
+					on:click={(event) => {
+						event.stopPropagation();
+						onClose?.();
+					}}
+				>
+					<CloseIcon size="22px" />
+				</button>
+			{/if}
+		</div>
+	{/if}
+	<div class="content">
+		<slot />
+		{#if busy}
+			<div
+				class="overlay"
+				in:fade={{ duration: 150 }}
+				out:fade={{ duration: 150 }}
+			>
+				<Activity />
+			</div>
+		{/if}
+	</div>
 </div>
 
 <style>
-  .dialog {
-    background: var(--background);
-    border: solid 1px var(--border);
-    border-radius: var(--border-radius);
-    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    max-width: 80%;
-    max-height: 80%;
-  }
+	.dialog {
+		background: var(--background);
+		border: solid 1px var(--border);
+		border-radius: var(--border-radius);
+		box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+		max-width: 80%;
+		max-height: 80%;
+	}
 
-  .title {
-    background: var(--active-matte);
-    padding: var(--gap);
-    font-weight: bold;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
+	.title {
+		background: var(--active-matte);
+		padding: var(--gap);
+		font-weight: bold;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
 
-  .content {
-    display: flex;
-    overflow: hidden;
-    position: relative;
-  }
+	.content {
+		display: flex;
+		overflow: hidden;
+		position: relative;
+	}
 
-  .overlay {
-    position: absolute;
-    z-index: 10;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    right: 0;
-    background: var(--background);
-    opacity: 0.75;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+	.overlay {
+		position: absolute;
+		z-index: 10;
+		top: 0;
+		left: 0;
+		bottom: 0;
+		right: 0;
+		background: var(--background);
+		opacity: 0.75;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
 
-  /* Mobile */
-  @media only screen and (max-width: 800px) {
-    .dialog {
-      border: none;
-      border-radius: 0;
-      box-shadow: none;
-      min-width: 100%;
-      min-height: 100%;
-    }
-  }
+	/* Mobile */
+	@media only screen and (max-width: 800px) {
+		.dialog {
+			border: none;
+			border-radius: 0;
+			box-shadow: none;
+			min-width: 100%;
+			min-height: 100%;
+		}
+	}
 </style>

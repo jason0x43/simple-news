@@ -1,65 +1,73 @@
 <script type="ts">
-  import Portal from './Portal.svelte';
+	import { isActionEvent } from '$lib/util';
 
-  export let items: { label?: string; value: string }[];
-  export let anchor: { x: number; y: number };
-  export let onSelect: (value: string) => void;
-  export let onClose: () => void;
+	import Portal from './Portal.svelte';
 
-  let ref: HTMLUListElement;
+	export let items: { label?: string; value: string }[];
+	export let anchor: { x: number; y: number };
+	export let onSelect: (value: string) => void;
+	export let onClose: () => void;
 
-  function handleClick(event: MouseEvent) {
-    if (!event.target || !ref.contains(event.target as HTMLElement)) {
-      onClose();
-    }
-  }
+	let ref: HTMLUListElement;
 
-  function handleItemClick(
-    event: MouseEvent & { currentTarget: EventTarget & HTMLLIElement }
-  ) {
-    const value = event.currentTarget.getAttribute('data-value') as string;
-    onSelect(value);
-    onClose();
-  }
+	function handleClick(event: MouseEvent) {
+		if (!event.target || !ref.contains(event.target as HTMLElement)) {
+			onClose();
+		}
+	}
+
+	function handleItemClick(
+		event: Event & { currentTarget: EventTarget & HTMLLIElement }
+	) {
+		if (isActionEvent(event)) {
+			const value = event.currentTarget.getAttribute('data-value') as string;
+			onSelect(value);
+			onClose();
+		}
+	}
 </script>
 
 <svelte:window on:click={handleClick} />
 
 <Portal {anchor}>
-  <ul class="contextmenu" bind:this={ref}>
-    {#each items as item}
-      <li on:click={handleItemClick} data-value={item.value}>
-        {item.label ?? item.value}
-      </li>
-    {/each}
-  </ul>
+	<ul class="contextmenu" bind:this={ref}>
+		{#each items as item}
+			<li
+				on:click={handleItemClick}
+				on:keypress={handleItemClick}
+				data-value={item.value}
+			>
+				{item.label ?? item.value}
+			</li>
+		{/each}
+	</ul>
 </Portal>
 
 <style>
-  .contextmenu {
-    background: var(--background);
-    border: solid 1px var(--border);
-    border-radius: var(--border-radius);
-    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
-    color: var(--foreground);
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
-    min-width: 100px;
-  }
+	.contextmenu {
+		background: var(--background);
+		border: solid 1px var(--border);
+		border-radius: var(--border-radius);
+		box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+		color: var(--foreground);
+		list-style-type: none;
+		padding: 0;
+		margin: 0;
+		min-width: 100px;
+	}
 
-  li {
-    padding: 0.5rem;
-    cursor: pointer;
-    white-space: nowrap;
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-  }
+	li {
+		padding: 0.5rem;
+		cursor: pointer;
+		white-space: nowrap;
+		user-select: none;
+		-webkit-user-select: none;
+		-moz-user-select: none;
+	}
 
-  @media (hover: hover) {
-    li:hover {
-      background: var(--matte);
-    }
-  }
+	@media (hover: hover) {
+		li:hover {
+			background: var(--matte);
+		}
+	}
 </style>
