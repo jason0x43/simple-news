@@ -34,7 +34,7 @@ export function createOrGetFeed(data: CreateFeedData): Feed {
 			ON CONFLICT (url) DO NOTHING
 			RETURNING *`
 		)
-		.get<Feed>({ id: cuid(), ...data });
+		.get<Feed>({ id: cuid(), icon: '', htmlUrl: '', ...data });
 	if (!feed) {
 		throw new Error('Unable to get or create feed');
 	}
