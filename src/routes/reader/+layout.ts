@@ -1,4 +1,5 @@
 import type { GetFeedGroupsResponse } from '../api/feedgroups/+server';
+import type { GetFeedsResponse } from '../api/feeds/+server';
 import type { GetFeedStatsResponse } from '../api/feedstats/+server';
 import type { LayoutLoad } from './$types';
 
@@ -11,7 +12,8 @@ export const load: LayoutLoad = async ({ data, fetch }) => {
 	const feedStatsResp = await fetch('/api/feedstats');
 	const feedStats: GetFeedStatsResponse = await feedStatsResp.json();
 
-	const feeds = feedGroups.flatMap((group) => group.feeds);
+	const feedsResp = await fetch('/api/feeds');
+	const feeds: GetFeedsResponse = await feedsResp.json();
 
 	return {
 		articleFilter,
