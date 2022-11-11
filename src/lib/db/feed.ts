@@ -31,8 +31,8 @@ export function createOrGetFeed(data: CreateFeedData): Feed {
 		.prepare<CreateFeedData & { id?: Feed['id'] }>(
 			`INSERT INTO Feed (id, url, title, icon, htmlUrl)
 			VALUES (@id, @url, @title, @icon, @htmlUrl)
-			RETURNING *
-			ON CONFLICT (url) DO NOTHING`
+			ON CONFLICT (url) DO NOTHING
+			RETURNING *`
 		)
 		.get<Feed>({ id: cuid(), ...data });
 	if (!feed) {
