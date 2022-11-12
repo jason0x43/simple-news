@@ -81,9 +81,8 @@ jobs:
         run: |
           ssh staging <<END
           cd $DOCKER_DIR
-          docker compose stop $APP_NAME
-          docker compose rm $APP_NAME
-          docker image rm $APP_NAME
+          docker compose rm -fs $APP_NAME 
+          docker image rm -f $APP_NAME
           docker load -i $APP_NAME.tar
           docker compose up -d $APP_NAME
           END
