@@ -66,10 +66,9 @@ jobs:
           SSH_HOST_KEY: ${{ secrets.DEPLOY_HOST_KEY }}
 
       - name: Build app
-        run: >-
-          echo ">>> Building image..."
-          docker build --platform linux/amd64 -t $APP_NAME --target app . &&
-          docker save -o $APP_NAME.tar $APP_NAME &&
+        run: |
+          docker build --platform linux/amd64 -t $APP_NAME --target app .
+          docker save -o $APP_NAME.tar $APP_NAME
           scp $APP_NAME.tar staging:$DOCKER_DIR/
         env:
           APP_NAME: simple-news-app
