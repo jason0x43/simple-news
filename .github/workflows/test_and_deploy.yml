@@ -67,7 +67,7 @@ jobs:
 
       - name: Deploy app
         run: >-
-          docker build --platform linux/amd64 -t $APP_NAME --target app &&
+          docker build --platform linux/amd64 -t $APP_NAME --target app . &&
           docker save -o $APP_NAME.tar $APP_NAME &&
           scp $APP_NAME.tar staging: &&
           ssh staging <<END
