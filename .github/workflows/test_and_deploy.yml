@@ -67,9 +67,13 @@ jobs:
 
       - name: Deploy app
         run: >-
+          echo ">>> Building image..."
           docker build --platform linux/amd64 -t $APP_NAME --target app . &&
+          echo ">>> Saving image..."
           docker save -o $APP_NAME.tar $APP_NAME &&
+          echo ">>> Copying image to deploy host..."
           scp $APP_NAME.tar staging: &&
+          echo ">>> Running deployment commands..."
           ssh staging <<END
           cd $DOCKER_DIR && \
           docker compose stop $APP_NAME && \
