@@ -75,11 +75,11 @@ jobs:
           scp $APP_NAME.tar staging: &&
           echo ">>> Running deployment commands..."
           ssh staging <<END
-          cd $DOCKER_DIR && \
-          docker compose stop $APP_NAME && \
-          docker compose rm $APP_NAME && \
-          docker image rm $APP_NAME && \
-          docker load -i $APP_NAME.tar && \
+          cd $DOCKER_DIR
+          docker compose stop $APP_NAME
+          docker compose rm $APP_NAME
+          docker image rm $APP_NAME
+          docker load -i $APP_NAME.tar
           docker compose up -d $APP_NAME
           END
         env:
