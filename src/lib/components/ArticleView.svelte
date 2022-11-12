@@ -32,7 +32,7 @@
 			const elem = event.target as HTMLElement;
 			const href = elem.getAttribute('href') ?? undefined;
 			if (href) {
-				global.open(href, target);
+				globalThis.open(href, target);
 			}
 		}
 	}

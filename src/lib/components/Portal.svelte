@@ -65,7 +65,7 @@
 	}
 
 	onMount(() => {
-		const elem = target ?? context.getRoot() ?? global.document?.body;
+		const elem = target ?? context.getRoot() ?? globalThis.document?.body;
 		elem?.append(ref);
 	});
 </script>
