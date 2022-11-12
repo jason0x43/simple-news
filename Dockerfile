@@ -27,9 +27,6 @@ WORKDIR /app
 COPY package.json .
 COPY --from=build_downloader /app/build .
 COPY --from=deps /app/node_modules ./node_modules
-ARG uid=1001
-RUN adduser --disabled-password --uid $uid node 
-USER $uid
 
 FROM alpine:3.16 AS app
 RUN apk add --update nodejs-current
@@ -37,6 +34,3 @@ WORKDIR /app
 COPY package.json .
 COPY --from=build_app /app/build .
 COPY --from=deps /app/node_modules ./node_modules
-ARG uid=1001
-RUN adduser --disabled-password --uid $uid node 
-USER $uid
