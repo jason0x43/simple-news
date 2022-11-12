@@ -65,7 +65,7 @@ jobs:
           SSH_HOST: ${{ secrets.DEPLOY_HOST }}
           SSH_HOST_KEY: ${{ secrets.DEPLOY_HOST_KEY }}
 
-      - name: Deploy app
+      - name: Build app
         run: >-
           echo ">>> Building image..."
           docker build --platform linux/amd64 -t $APP_NAME --target app . &&
@@ -74,6 +74,11 @@ jobs:
           echo ">>> Copying image to deploy host..."
           scp $APP_NAME.tar staging: &&
           echo ">>> Running deployment commands..."
+        env:
+          APP_NAME: simple-news-app
+
+      - name: Deploy app
+        run: |
           ssh staging <<END
           cd $DOCKER_DIR
           docker compose stop $APP_NAME
