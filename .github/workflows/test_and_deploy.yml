@@ -74,9 +74,9 @@ jobs:
           cd $DOCKER_DIR && \
           docker compose stop $APP_NAME && \
           docker compose rm $APP_NAME && \
-          docker image rm $APP_NAME" && \
-          docker load -i $APP_NAME.tar" && \
-          docker compose up -d $APP_NAME"
+          docker image rm $APP_NAME && \
+          docker load -i $APP_NAME.tar && \
+          docker compose up -d $APP_NAME
           END
         env:
           APP_NAME: simple-news-app
