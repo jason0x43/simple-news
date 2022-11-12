@@ -69,13 +69,11 @@ jobs:
         run: >-
           echo ">>> Building image..."
           docker build --platform linux/amd64 -t $APP_NAME --target app . &&
-          echo ">>> Saving image..."
           docker save -o $APP_NAME.tar $APP_NAME &&
-          echo ">>> Copying image to deploy host..."
-          scp $APP_NAME.tar staging: &&
-          echo ">>> Running deployment commands..."
+          scp $APP_NAME.tar staging:$DOCKER_DIR/
         env:
           APP_NAME: simple-news-app
+          DOCKER_DIR: ${{ secrets.DOCKER_DIR }}
 
       - name: Deploy app
         run: |
