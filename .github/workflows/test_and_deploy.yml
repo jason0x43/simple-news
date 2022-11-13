@@ -70,7 +70,7 @@ jobs:
         run: |
           docker build --platform linux/amd64 -t $APP_NAME --target app .
           ssh staging "cd $DOCKER_DIR && docker compose rm -fs $APP_NAME"
-          docker save $app_name | ssh staging "docker load"
+          docker save $APP_NAME | ssh staging "docker load"
           ssh staging "cd $DOCKER_DIR && docker compose up -d $APP_NAME"
         env:
           APP_NAME: simple-news-app
@@ -80,7 +80,7 @@ jobs:
         run: |
           docker build --platform linux/amd64 -t $APP_NAME --target downloader .
           ssh staging "cd $DOCKER_DIR && docker compose rm -fs $APP_NAME"
-          docker save $app_name | ssh staging "docker load"
+          docker save $APP_NAME | ssh staging "docker load"
           ssh staging "cd $DOCKER_DIR && docker compose up -d $APP_NAME"
         env:
           APP_NAME: simple-news-downloader
