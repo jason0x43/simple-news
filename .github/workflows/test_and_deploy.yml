@@ -66,46 +66,22 @@ jobs:
           SSH_HOST: ${{ secrets.DEPLOY_HOST }}
           SSH_HOST_KEY: ${{ secrets.DEPLOY_HOST_KEY }}
 
-      - name: Build app
+      - name: Build and deploy app
         run: |
           docker build --platform linux/amd64 -t $APP_NAME --target app .
-          docker save -o $APP_NAME.tar $APP_NAME
-          scp $APP_NAME.tar staging:$DOCKER_DIR/
+          ssh staging "cd $DOCKER_DIR && docker compose rm -fs $APP_NAME"
+          docker save $app_name | ssh staging "docker load"
+          ssh staging "cd $DOCKER_DIR && docker compose up -d $APP_NAME"
         env:
           APP_NAME: simple-news-app
           DOCKER_DIR: ${{ secrets.DOCKER_DIR }}
 
-      - name: Deploy app
-        run: |
-          ssh staging <<END
-          cd $DOCKER_DIR
-          docker compose rm -fs $APP_NAME 
-          docker image rm -f $APP_NAME
-          docker load -i $APP_NAME.tar
-          docker compose up -d $APP_NAME
-          END
-        env:
-          APP_NAME: simple-news-app
-          DOCKER_DIR: ${{ secrets.DOCKER_DIR }}
-
-      - name: Build downloader
+      - name: Build and deploy downloader
         run: |
           docker build --platform linux/amd64 -t $APP_NAME --target downloader .
-          docker save -o $APP_NAME.tar $APP_NAME
-          scp $APP_NAME.tar staging:$DOCKER_DIR/
-        env:
-          APP_NAME: simple-news-downloader
-          DOCKER_DIR: ${{ secrets.DOCKER_DIR }}
-
-      - name: Deploy downloader
-        run: |
-          ssh staging <<END
-          cd $DOCKER_DIR
-          docker compose rm -fs $APP_NAME 
-          docker image rm -f $APP_NAME
-          docker load -i $APP_NAME.tar
-          docker compose up -d $APP_NAME
-          END
+          ssh staging "cd $DOCKER_DIR && docker compose rm -fs $APP_NAME"
+          docker save $app_name | ssh staging "docker load"
+          ssh staging "cd $DOCKER_DIR && docker compose up -d $APP_NAME"
         env:
           APP_NAME: simple-news-downloader
           DOCKER_DIR: ${{ secrets.DOCKER_DIR }}
