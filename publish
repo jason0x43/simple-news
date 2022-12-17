@@ -1,0 +1,28 @@
+#!/bin/sh
+
+set -e
+
+if [[ -z $DEPLOY_REMOTE ]]; then
+  echo "DEPLOY_REMOTE must be defined"
+  exit 1
+fi
+
+git diff-index --quiet HEAD || (echo "Project has uncommitted changes" && exit 1)
+
+echo ">>> Running tests..."
+echo ""
+
+pnpm test
+
+echo ">>> Pushing app to deploy host..."
+echo ""
+
+git push $DEPLOY_REMOTE
+
+echo ">>> Deploying..."
+echo ""
+
+ssh $DEPLOY_HOST "cd $DEPLOY_DOCKER && docker compose up -d --build simple-news-app simple-news-downloader"
+
+echo ""
+echo ">>> Done."
