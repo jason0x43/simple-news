@@ -83,7 +83,7 @@
 			</div>
 		</div>
 		<a class="close" href={`/reader/${$page.params.feedId}`}>
-			<CloseIcon size="22px" />
+			<CloseIcon size={22} />
 		</a>
 	</div>
 {/if}

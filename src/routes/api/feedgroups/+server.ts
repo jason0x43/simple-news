@@ -17,7 +17,7 @@ export type GetFeedGroupsResponse = FeedGroupWithFeeds[];
 export const GET: RequestHandler = async ({ locals }) => {
 	const user = locals.user;
 	if (!user) {
-		return error(401, 'not logged in');
+		throw error(401, 'not logged in');
 	}
 
 	return json(getUserFeedGroupsWithFeeds(user.id));

@@ -20,7 +20,7 @@
 						onClose?.();
 					}}
 				>
-					<CloseIcon size="22px" />
+					<CloseIcon size={22} />
 				</button>
 			{/if}
 		</div>
