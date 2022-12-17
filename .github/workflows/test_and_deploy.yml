@@ -47,41 +47,41 @@ jobs:
       - name: Run tests
         run: pnpm test
 
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh/
-          echo "$SSH_KEY" > ~/.ssh/staging.key
-          echo "$SSH_HOST_KEY" > ~/.ssh/known_hosts
-          chmod 600 ~/.ssh/staging.key
-          cat >>~/.ssh/config <<END
-          Host staging
-            HostName $SSH_HOST
-            User $SSH_USER
-            IdentityFile ~/.ssh/staging.key
-            StrictHostKeyChecking no
-          END
-        env:
-          SSH_USER: ${{ secrets.DEPLOY_USER }}
-          SSH_KEY: ${{ secrets.DEPLOY_KEY }}
-          SSH_HOST: ${{ secrets.DEPLOY_HOST }}
-          SSH_HOST_KEY: ${{ secrets.DEPLOY_HOST_KEY }}
+      #- name: Setup SSH
+      #  run: |
+      #    mkdir -p ~/.ssh/
+      #    echo "$SSH_KEY" > ~/.ssh/staging.key
+      #    echo "$SSH_HOST_KEY" > ~/.ssh/known_hosts
+      #    chmod 600 ~/.ssh/staging.key
+      #    cat >>~/.ssh/config <<END
+      #    Host staging
+      #      HostName $SSH_HOST
+      #      User $SSH_USER
+      #      IdentityFile ~/.ssh/staging.key
+      #      StrictHostKeyChecking no
+      #    END
+      #  env:
+      #    SSH_USER: ${{ secrets.DEPLOY_USER }}
+      #    SSH_KEY: ${{ secrets.DEPLOY_KEY }}
+      #    SSH_HOST: ${{ secrets.DEPLOY_HOST }}
+      #    SSH_HOST_KEY: ${{ secrets.DEPLOY_HOST_KEY }}
 
-      - name: Build and deploy app
-        run: |
-          docker build --platform linux/amd64 -t $APP_NAME --target app .
-          ssh staging "cd $DOCKER_DIR && docker compose rm -fs $APP_NAME"
-          docker save $APP_NAME | ssh staging "docker load"
-          ssh staging "cd $DOCKER_DIR && docker compose up -d $APP_NAME"
-        env:
-          APP_NAME: simple-news-app
-          DOCKER_DIR: ${{ secrets.DOCKER_DIR }}
+      #- name: Build and deploy app
+      #  run: |
+      #    docker build --platform linux/amd64 -t $APP_NAME --target app .
+      #    ssh staging "cd $DOCKER_DIR && docker compose rm -fs $APP_NAME"
+      #    docker save $APP_NAME | ssh staging "docker load"
+      #    ssh staging "cd $DOCKER_DIR && docker compose up -d $APP_NAME"
+      #  env:
+      #    APP_NAME: simple-news-app
+      #    DOCKER_DIR: ${{ secrets.DOCKER_DIR }}
 
-      - name: Build and deploy downloader
-        run: |
-          docker build --platform linux/amd64 -t $APP_NAME --target downloader .
-          ssh staging "cd $DOCKER_DIR && docker compose rm -fs $APP_NAME"
-          docker save $APP_NAME | ssh staging "docker load"
-          ssh staging "cd $DOCKER_DIR && docker compose up -d $APP_NAME"
-        env:
-          APP_NAME: simple-news-downloader
-          DOCKER_DIR: ${{ secrets.DOCKER_DIR }}
+      #- name: Build and deploy downloader
+      #  run: |
+      #    docker build --platform linux/amd64 -t $APP_NAME --target downloader .
+      #    ssh staging "cd $DOCKER_DIR && docker compose rm -fs $APP_NAME"
+      #    docker save $APP_NAME | ssh staging "docker load"
+      #    ssh staging "cd $DOCKER_DIR && docker compose up -d $APP_NAME"
+      #  env:
+      #    APP_NAME: simple-news-downloader
+      #    DOCKER_DIR: ${{ secrets.DOCKER_DIR }}
