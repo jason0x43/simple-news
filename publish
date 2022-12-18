@@ -23,10 +23,10 @@ echo ">>> Deploying..."
 echo ""
 
 ssh $DEPLOY_HOST <<END
-cd $DEPLOY_REPO
-git pull
-cd $DEPLOY_DOCKER
-docker compose up -d --build simple-news-app simple-news-downloader
+cd $DEPLOY_REPO \
+&& git pull \
+&& cd $DEPLOY_DOCKER \
+&& docker compose up -d --build simple-news-app simple-news-downloader
 END
 
 echo ""
