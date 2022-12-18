@@ -3,8 +3,10 @@ import { getSession } from '$lib/session';
 import type { Handle } from '@sveltejs/kit';
 
 export const handle: Handle = async ({ event, resolve }) => {
-	const session = getSession(event.request.headers.get('cookie'));
+	const cookie = event.request.headers.get('cookie');
+	const session = getSession(cookie);
 	event.locals.user = session?.user;
+	console.log(`session for cookie ${cookie}: ${JSON.stringify(session)}`);
 	event.locals.sessionId = session?.id;
 	event.locals.sessionData = session?.data
 		? JSON.parse(session.data)
