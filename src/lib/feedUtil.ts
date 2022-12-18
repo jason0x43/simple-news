@@ -43,7 +43,7 @@ export function getGroupFeeds(
 /**
  * Return true if all the item IDs are contained in the given list of IDs
  */
-export function areIdentified<T>(
+export function allAreIdentified<T>(
 	items: { id: T }[],
 	ids: T[] | undefined
 ): boolean {

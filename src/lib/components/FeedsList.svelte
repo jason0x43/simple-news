@@ -1,7 +1,11 @@
 <script type="ts">
 	import { getAppContext } from '$lib/contexts';
 	import type { Feed } from '$lib/db/schema';
-	import { areIdentified, getArticleCount, getGroupFeeds } from '$lib/feedUtil';
+	import {
+		allAreIdentified,
+		getArticleCount,
+		getGroupFeeds
+	} from '$lib/feedUtil';
 
 	export let onSelect: () => void;
 
@@ -10,12 +14,7 @@
 	let expanded: { [title: string]: boolean } = {};
 
 	function containsFeed(groupFeeds: Feed[], feedIds: string[]) {
-		for (const id of feedIds) {
-			if (groupFeeds.find((f) => f.id === id)) {
-				return true;
-			}
-		}
-		return false;
+		return feedIds.some((id) => groupFeeds.find((f) => f.id === id));
 	}
 </script>
 
@@ -25,12 +24,11 @@
 		{#if getArticleCount(groupFeeds, $feedStats, $articleFilter) > 0}
 			<li
 				class:expanded={expanded[group.name] ||
-					containsFeed(groupFeeds, $selectedFeedIds)}
+					(containsFeed(groupFeeds, $selectedFeedIds) &&
+						!allAreIdentified(groupFeeds, $selectedFeedIds))}
+				class:group-selected={allAreIdentified(groupFeeds, $selectedFeedIds)}
 			>
-				<div
-					class="group"
-					class:selected={areIdentified(groupFeeds, $selectedFeedIds)}
-				>
+				<div class="group">
 					<button
 						class="expander"
 						on:click={() => {
@@ -44,9 +42,6 @@
 						class="title"
 						href={`/reader/group-${group.id}`}
 						on:click={() => {
-							// setSelectedFeeds(
-							//   getFeedsFromGroup(group).map(({ id }) => id)
-							// );
 							onSelect?.();
 						}}
 					>
@@ -64,7 +59,7 @@
 						{#if getArticleCount([feed], $feedStats, $articleFilter) > 0}
 							<li
 								class="feed"
-								class:selected={areIdentified([feed], $selectedFeedIds)}
+								class:selected={allAreIdentified([feed], $selectedFeedIds)}
 							>
 								<a
 									href={`/reader/feed-${feed.id}`}
@@ -98,7 +93,8 @@
 		--expander-width: 1rem;
 	}
 
-	.selected {
+	.selected,
+	.group-selected > .group {
 		background: rgba(255, 255, 255, 0.1);
 	}
 
@@ -107,14 +103,19 @@
 		border-radius: var(--border-radius);
 	}
 
-	.expanded .selected {
+	.expanded.group-selected > ul > .selected {
+		border-top-left-radius: 0;
+		border-top-right-radius: 0;
+	}
+
+	.expanded.group-selected > .group {
 		border-bottom-left-radius: 0;
 		border-bottom-right-radius: 0;
 	}
 
-	.expanded .selected:first-child {
-		border-top-left-radius: 0;
-		border-top-right-radius: 0;
+	.expanded.group-selected > ul > .selected:not(:last-child) {
+		border-bottom-left-radius: 0;
+		border-bottom-right-radius: 0;
 	}
 
 	.feeds ul {
@@ -154,6 +155,10 @@
 		display: inline-block;
 		flex-grow: 0;
 		width: var(--expander-width);
+	}
+
+	.group-selected .expander::before {
+		color: var(--highlight);
 	}
 
 	.title {
