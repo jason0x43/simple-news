@@ -1,4 +1,4 @@
-<script type="ts">
+<script lang="ts">
 	import '../app.css';
 	import { onMount } from 'svelte';
 	import { createStores } from '$lib/stores';

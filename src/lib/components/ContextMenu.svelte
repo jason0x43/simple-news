@@ -1,4 +1,4 @@
-<script type="ts">
+<script lang="ts">
 	import { isActionEvent } from '$lib/util';
 
 	import Portal from './Portal.svelte';

@@ -1,4 +1,4 @@
-<script type="ts">
+<script lang="ts">
 	import { post, put } from '$lib/request';
 	import Dialog from './Dialog.svelte';
 	import Portal from './Portal.svelte';
@@ -11,7 +11,7 @@
 	import type {
 		AddGroupFeedRequest,
 		AddGroupFeedResponse
-	} from 'src/routes/api/feedgroups/+server';
+	} from '../../routes/api/feedgroups/+server';
 	import Button from './Button.svelte';
 
 	const { feeds, feedGroups, managingFeeds } = getAppContext().stores;

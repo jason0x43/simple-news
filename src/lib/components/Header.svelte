@@ -1,4 +1,4 @@
-<script type="ts">
+<script lang="ts">
 	import type { FeedGroupWithFeeds } from '$lib/db/feedgroup';
 	import UserIcon from '$lib/icons/User.svelte';
 	import RssIcon from '$lib/icons/Rss.svelte';

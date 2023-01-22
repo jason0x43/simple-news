@@ -1,4 +1,4 @@
-<script type="ts">
+<script lang="ts">
 	import { page } from '$app/stores';
 	import type { ArticleWithUserData } from '$lib/db/article';
 	import {

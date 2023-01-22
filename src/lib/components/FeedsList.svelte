@@ -1,4 +1,4 @@
-<script type="ts">
+<script lang="ts">
 	import { getAppContext } from '$lib/contexts';
 	import type { Feed } from '$lib/db/schema';
 	import {

@@ -1,4 +1,4 @@
-<script type="ts">
+<script lang="ts">
 	import CloseIcon from '$lib/icons/Close.svelte';
 	import Activity from '$lib/components/Activity.svelte';
 	import { fade } from 'svelte/transition';
