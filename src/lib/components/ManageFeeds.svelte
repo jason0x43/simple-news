@@ -15,12 +15,17 @@
 	import Button from './Button.svelte';
 
 	const { feeds, feedGroups, managingFeeds } = getAppContext().stores;
-	const groups: { [feedId: string]: string } = {};
 
-	if ($feedGroups) {
-		for (const group of $feedGroups) {
-			for (const feedGroup of group.feeds) {
-				groups[feedGroup.id] = group.id;
+	/** A mapping of feed IDs to their containing group IDs */
+	let groups: { [feedId: string]: string } = {};
+
+	$: {
+		if ($feedGroups) {
+			groups = {};
+			for (const group of $feedGroups) {
+				for (const feed of group.feeds) {
+					groups[feed.id] = group.id;
+				}
 			}
 		}
 	}

@@ -96,10 +96,11 @@ export function findUserFeedGroupContainingFeed(
 ): FeedGroup | undefined {
 	const feedGroupId = db
 		.prepare<FindGroupContainingFeedData>(
-			'SELECT feedGroupId FROM FeedGroupFeed' +
+			'SELECT DISTINCT feedGroupId FROM FeedGroupFeed' +
 				' INNER JOIN FeedGroup' +
 				' ON FeedGroup.userId = @userId' +
-				' WHERE FeedGroup.id = FeedGroupFeed.feedGroupId'
+				' WHERE FeedGroup.id = FeedGroupFeed.feedGroupId' +
+				' AND FeedGroupFeed.feedId = @feedId'
 		)
 		.get<{ feedGroupId: string }>(data);
 
@@ -182,12 +183,10 @@ export function removeFeedsFromGroup(
 	groupId: FeedGroupFeed['feedGroupId'],
 	feedIds: Feed['id'][]
 ): void {
-	const creator = db.prepare(
+	const statement = db.prepare(
 		'DELETE FROM FeedGroupFeed WHERE feedGroupId = ? AND feedId = ?'
 	);
-	db.transaction(() => {
-		for (const feedId of feedIds) {
-			creator.run(groupId, feedId);
-		}
-	});
+	for (const feedId of feedIds) {
+		statement.run(groupId, feedId);
+	}
 }
