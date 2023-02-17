@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import cuid from 'cuid';
+import { createId } from '@paralleldrive/cuid2';
 import * as db from './lib/db.js';
 import { getPasswordHash } from './password.js';
 import type { Password, User } from './schema';
@@ -11,7 +11,7 @@ export function createUser(userData: Omit<User, 'id'>, password: string): User {
 			VALUES (?, ?, ?)
 			RETURNING *`
 		)
-		.get<User>(cuid(), userData.username, userData.email);
+		.get<User>(createId(), userData.username, userData.email);
 	if (!user) {
 		throw new Error('Unable to create user');
 	}

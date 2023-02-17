@@ -1,4 +1,4 @@
-import cuid from 'cuid';
+import { createId } from '@paralleldrive/cuid2';
 import * as db from './lib/db.js';
 import type { Article, Feed, User, UserArticle } from './schema';
 
@@ -162,7 +162,7 @@ export function upsertArticle(data: ArticleUpsert): void {
 		VALUES (@id, @articleId, @feedId, @content, @title, @link, @published)
 		ON CONFLICT(articleId, feedId)
 		DO UPDATE SET content = @content, title = @title, link = @link, published = @published`
-	).run({ id: cuid(), ...data });
+	).run({ id: createId(), ...data });
 }
 
 export function deleteArticles(articleIds: Article['id'][]): void {

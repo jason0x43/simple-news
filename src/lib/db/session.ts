@@ -1,6 +1,6 @@
 import * as db from './lib/db.js';
 import type { Session, User } from './schema';
-import cuid from 'cuid';
+import { createId } from '@paralleldrive/cuid2';
 
 export type SessionWithUser = Session & {
 	user: User;
@@ -24,7 +24,12 @@ export function createUserSession(userId: User['id']): Session {
 			VALUES (?, ?, ?, ?)
 			RETURNING *`
 		)
-		.get<Session>(cuid(), expires, userId, JSON.stringify(defaultSessionData));
+		.get<Session>(
+			createId(),
+			expires,
+			userId,
+			JSON.stringify(defaultSessionData)
+		);
 	if (!session) {
 		throw new Error('Unable to create session');
 	}

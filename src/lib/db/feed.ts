@@ -1,4 +1,4 @@
-import cuid from 'cuid';
+import { createId } from '@paralleldrive/cuid2';
 import * as db from './lib/db.js';
 import type { Article, Feed, User } from './schema';
 
@@ -19,7 +19,7 @@ export function createFeed(data: CreateFeedData): Feed {
 			VALUES (@id, @url, @title, @icon, @htmlUrl)
 			RETURNING *`
 		)
-		.get<Feed>({ id: cuid(), ...data });
+		.get<Feed>({ id: createId(), ...data });
 	if (!feed) {
 		throw new Error(`Unable to create feed`);
 	}
@@ -34,7 +34,7 @@ export function createOrGetFeed(data: CreateFeedData): Feed {
 			ON CONFLICT (url) DO NOTHING
 			RETURNING *`
 		)
-		.get<Feed>({ id: cuid(), icon: '', htmlUrl: '', ...data });
+		.get<Feed>({ id: createId(), icon: '', htmlUrl: '', ...data });
 	if (!feed) {
 		throw new Error('Unable to get or create feed');
 	}

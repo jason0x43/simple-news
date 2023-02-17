@@ -1,4 +1,4 @@
-import cuid from 'cuid';
+import { createId } from '@paralleldrive/cuid2';
 import * as db from './lib/db.js';
 import type { Feed, FeedGroup, FeedGroupFeed, User } from './schema';
 
@@ -13,7 +13,7 @@ type CreateFeedGroupData = {
 };
 
 export function createFeedGroup(data: CreateFeedGroupData): void {
-	const feedGroupId = cuid();
+	const feedGroupId = createId();
 	const addFeed = db.prepare<
 		[FeedGroupFeed['feedGroupId'], FeedGroupFeed['feedId']]
 	>('INSERT INTO FeedGroupFeed (feedGroupId, feedId) VALUES (?, ?)');
