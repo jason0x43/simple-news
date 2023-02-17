@@ -15,7 +15,7 @@
     "db": "ts-node ./scripts/db.ts",
     "test": "vitest run",
     "coverage": "vitest run --coverage",
-    "download-feeds": "ts-node ./scripts/download-feeds.ts"
+    "download-feeds": "ts-node --esm ./scripts/download-feeds.ts"
   },
   "devDependencies": {
     "@sveltejs/adapter-node": "^1.2.0",
@@ -50,9 +50,9 @@
     "zx": "^7.1.1"
   },
   "dependencies": {
+    "@paralleldrive/cuid2": "^2.0.1",
     "better-sqlite3": "^8.1.0",
     "cheerio": "1.0.0-rc.12",
-    "@paralleldrive/cuid2": "^2.0.1",
     "rss-parser": "^3.12.0",
     "undici": "^5.19.1"
   },
