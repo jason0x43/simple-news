@@ -21,9 +21,12 @@ export const load: LayoutServerLoad = async ({ locals, params }) => {
 	} else {
 		feedIds = [id];
 	}
-	const articleHeadings = getArticleHeadings({
+
+	const articleHeadings = await getArticleHeadings({
 		feedIds,
-		userId
+		userId,
+		// articles no older than 6 weeks
+		maxAge: 6 * 7 * 24 * 60 * 60 * 1000
 	});
 
 	return {

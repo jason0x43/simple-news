@@ -64,18 +64,22 @@ export async function getFeedByUrl(url: string): Promise<Feed | undefined> {
 export async function getFeedStats(data: {
 	userId: User['id'];
 	feeds: Feed[];
+	maxAge?: number;
 }): Promise<FeedStats> {
 	const stats: FeedStats = {};
 	const feedIds = data.feeds.map(({ id }) => id);
 
 	for (const feedId of feedIds) {
-		const articleIds = (
-			await db
-				.selectFrom('Article')
-				.select('id')
-				.where('feedId', '=', feedId)
-				.execute()
-		).map(({ id }) => id);
+		let articleQuery = db
+			.selectFrom('Article')
+			.select('id')
+			.where('feedId', '=', feedId);
+		if (data.maxAge) {
+			const cutoff = BigInt(Date.now() - data.maxAge);
+			articleQuery = articleQuery.where('published', '>', cutoff);
+		}
+
+		const articleIds = (await articleQuery.execute()).map(({ id }) => id);
 
 		const numRead = await db
 			.selectFrom('UserArticle')

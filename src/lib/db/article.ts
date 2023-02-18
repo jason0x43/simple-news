@@ -2,6 +2,7 @@ import { createId } from '@paralleldrive/cuid2';
 import type { Transaction } from 'kysely';
 import db from './lib/db.js';
 import type { Article, Database, Feed, User, UserArticle } from './lib/db';
+import type { ArticleFilter } from './session.js';
 
 export type { Article };
 
@@ -50,12 +51,16 @@ export async function getArticleHeadings({
 	feedIds,
 	articleIds,
 	userId,
-	filter
+	filter,
+	maxAge
 }: {
 	feedIds?: Feed['id'][];
 	articleIds?: Article['id'][];
 	userId: User['id'];
-	filter?: string;
+	/** Only return read or unread articles */
+	filter?: ArticleFilter;
+	/** Maximum age of articles in milliseconds */
+	maxAge?: number;
 }): Promise<ArticleHeadingWithUserData[]> {
 	let query = db
 		.selectFrom('Article')
@@ -78,20 +83,24 @@ export async function getArticleHeadings({
 	if (feedIds) {
 		query = query.where('feedId', 'in', feedIds);
 	}
+
 	if (articleIds) {
 		query = query.where('articleId', 'in', articleIds);
 	}
 
-	const articles = await query.orderBy('published', 'asc').execute();
-
-	// TODO: perform filtering in db query
 	if (filter === 'unread') {
-		return articles.filter((a) => !a.read);
+		query = query.where('read', '=', 0);
 	}
 
-	if (filter === 'read') {
-		return articles.filter((a) => a.read);
+	if (maxAge) {
+		const cutoff = BigInt(Date.now() - maxAge);
+		query = query.where('published', '>', cutoff);
 	}
+
+	// sort in descending order by publish date for maxAge, then sort the
+	// result in ascending order
+	const articles = await query.orderBy('published', 'desc').execute();
+	articles.sort((a, b) => Number(a.published - b.published));
 
 	return articles;
 }

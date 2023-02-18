@@ -13,7 +13,12 @@ export const GET: RequestHandler = async ({ locals }) => {
 	}
 
 	const feeds = await getUserFeeds(user.id);
-	const feedStats = await getFeedStats({ userId: user.id, feeds });
+	const feedStats = await getFeedStats({
+		userId: user.id,
+		feeds,
+		// don't consider articles older than 6 weeks
+		maxAge: 6 * 7 * 24 * 60 * 60 * 1000
+	});
 
 	return json(feedStats);
 };
