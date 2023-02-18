@@ -3,7 +3,7 @@
 	import UserIcon from '$lib/icons/User.svelte';
 	import RssIcon from '$lib/icons/Rss.svelte';
 	import { getAppContext } from '$lib/contexts';
-	import type { Feed } from '$lib/db/schema';
+	import type { Feed } from '$lib/db/feed';
 	import Button from './Button.svelte';
 
 	export let onTitlePress: () => void;

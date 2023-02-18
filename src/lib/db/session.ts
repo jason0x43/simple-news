@@ -1,6 +1,8 @@
-import * as db from './lib/db.js';
-import type { Session, User } from './schema';
 import { createId } from '@paralleldrive/cuid2';
+import type { Session, User } from './lib/db.js';
+import db from './lib/db.js';
+
+export type { Session };
 
 export type SessionWithUser = Session & {
 	user: User;
@@ -16,39 +18,37 @@ export const defaultSessionData: SessionData = {
 	articleFilter: 'unread'
 };
 
-export function createUserSession(userId: User['id']): Session {
+export async function createUserSession(userId: User['id']): Promise<Session> {
 	const expires = Number(new Date(Date.now() + 1000 * 60 * 60 * 24 * 7));
-	const session = db
-		.prepare<[Session['id'], Session['expires'], Session['userId'], string]>(
-			`INSERT INTO Session (id, expires, userId, data)
-			VALUES (?, ?, ?, ?)
-			RETURNING *`
-		)
-		.get<Session>(
-			createId(),
+	return db
+		.insertInto('Session')
+		.values({
+			id: createId(),
 			expires,
 			userId,
-			JSON.stringify(defaultSessionData)
-		);
-	if (!session) {
-		throw new Error('Unable to create session');
-	}
-	return session;
+			data: JSON.stringify(defaultSessionData)
+		})
+		.returningAll()
+		.executeTakeFirstOrThrow();
 }
 
-export function getSessionWithUser(
+export async function getSessionWithUser(
 	id: Session['id']
-): SessionWithUser | undefined {
-	const session = db
-		.prepare<Session['id']>('SELECT * FROM Session WHERE id = ?')
-		.get<Session>(id);
+): Promise<SessionWithUser | undefined> {
+	const session = await db
+		.selectFrom('Session')
+		.selectAll()
+		.where('id', '=', id)
+		.executeTakeFirst();
 	if (!session) {
 		return;
 	}
 
-	const user = db
-		.prepare<User['id']>('SELECT * FROM User WHERE id = ?')
-		.get<User>(session.userId);
+	const user = await db
+		.selectFrom('User')
+		.selectAll()
+		.where('id', '=', session.userId)
+		.executeTakeFirst();
 	if (!user) {
 		return;
 	}
@@ -59,12 +59,19 @@ export function getSessionWithUser(
 	};
 }
 
-export function setSessionData(id: Session['id'], data: SessionData): void {
-	db.prepare<[string, Session['id']]>(
-		'UPDATE Session SET data = ? WHERE id = ?'
-	).run(JSON.stringify(data), id);
+export async function setSessionData(
+	id: Session['id'],
+	data: SessionData
+): Promise<void> {
+	await db
+		.updateTable('Session')
+		.set({
+			data: JSON.stringify(data)
+		})
+		.where('id', '=', id)
+		.executeTakeFirst();
 }
 
-export function deleteSession(id: Session['id']): void {
-	db.prepare<Session['id']>('DELETE FROM Session WHERE id = ?').run(id);
+export async function deleteSession(id: Session['id']): Promise<void> {
+	await db.deleteFrom('Session').where('id', '=', id).executeTakeFirst();
 }

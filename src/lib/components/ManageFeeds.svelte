@@ -7,7 +7,8 @@
 	import { showToast } from '$lib/toast';
 	import { getEventValue } from '$lib/util';
 	import { getAppContext } from '$lib/contexts';
-	import type { Feed, FeedGroup } from '$lib/db/schema';
+	import type { Feed } from '$lib/db/feed';
+	import type { FeedGroup } from '$lib/db/feedgroup';
 	import type {
 		AddGroupFeedRequest,
 		AddGroupFeedResponse

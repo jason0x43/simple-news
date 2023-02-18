@@ -1,6 +1,6 @@
 import { getArticleHeadings } from '$lib/db/article';
+import type { Feed } from '$lib/db/feed';
 import { getFeedGroupWithFeeds } from '$lib/db/feedgroup';
-import type { Feed } from '$lib/db/schema';
 import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 
@@ -16,7 +16,7 @@ export const load: LayoutServerLoad = async ({ locals, params }) => {
 	let feedIds: Feed['id'][];
 
 	if (type === 'group') {
-		const group = getFeedGroupWithFeeds(id);
+		const group = await getFeedGroupWithFeeds(id);
 		feedIds = group?.feeds.map(({ id }) => id) ?? [];
 	} else {
 		feedIds = [id];

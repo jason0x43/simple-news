@@ -13,7 +13,8 @@
 	import { onMount } from 'svelte';
 	import { put } from '$lib/request';
 	import { getAppContext } from '$lib/contexts';
-	import type { Article, Feed } from '$lib/db/schema';
+	import type { Article } from '$lib/db/article';
+	import type { Feed } from '$lib/db/feed';
 	import { browser } from '$app/environment';
 	import type {
 		ArticleUpdateRequest,
@@ -230,7 +231,7 @@
 				for (const id of updated) {
 					const idx = $articles.findIndex((article) => article.id === id);
 					if (idx !== -1) {
-						$articles[idx] = { ...$articles[idx], read: read ? 0 : 1 };
+						$articles[idx] = { ...$articles[idx], read: read ? 1 : 0 };
 					}
 				}
 			}

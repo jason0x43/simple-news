@@ -1,6 +1,9 @@
 import { createId } from '@paralleldrive/cuid2';
-import * as db from './lib/db.js';
-import type { Article, Feed, User } from './schema';
+import { sql } from 'kysely';
+import db from './lib/db.js';
+import type { Feed, InsertableFeed, User } from './lib/db';
+
+export type { Feed };
 
 export type FeedStats = {
 	[feedId: Feed['id']]: {
@@ -9,90 +12,94 @@ export type FeedStats = {
 	};
 };
 
-type CreateFeedData = Omit<Feed, 'id' | 'type' | 'lastUpdate'> &
-	Partial<Pick<Feed, 'type' | 'lastUpdate' | 'id'>>;
+type CreateFeedData = Omit<InsertableFeed, 'id' | 'type' | 'lastUpdate'> &
+	Partial<Pick<InsertableFeed, 'id' | 'type' | 'lastUpdate'>>;
 
-export function createFeed(data: CreateFeedData): Feed {
-	const feed = db
-		.prepare<CreateFeedData & { id: Feed['id'] }>(
-			`INSERT INTO Feed (id, url, title, icon, htmlUrl)
-			VALUES (@id, @url, @title, @icon, @htmlUrl)
-			RETURNING *`
-		)
-		.get<Feed>({ id: createId(), ...data });
-	if (!feed) {
-		throw new Error(`Unable to create feed`);
-	}
-	return feed;
+export async function createFeed(data: CreateFeedData): Promise<Feed> {
+	return db
+		.insertInto('Feed')
+		.values({
+			id: createId(),
+			...data
+		})
+		.returningAll()
+		.executeTakeFirstOrThrow();
 }
 
-export function createOrGetFeed(data: CreateFeedData): Feed {
-	const feed = db
-		.prepare<CreateFeedData & { id?: Feed['id'] }>(
-			`INSERT INTO Feed (id, url, title, icon, htmlUrl)
-			VALUES (@id, @url, @title, @icon, @htmlUrl)
-			ON CONFLICT (url) DO NOTHING
-			RETURNING *`
-		)
-		.get<Feed>({ id: createId(), icon: '', htmlUrl: '', ...data });
-	if (!feed) {
-		throw new Error('Unable to get or create feed');
-	}
-	return feed;
+export async function createOrGetFeed(data: CreateFeedData): Promise<Feed> {
+	return db
+		.insertInto('Feed')
+		.values({
+			id: createId(),
+			icon: '',
+			htmlUrl: '',
+			...data
+		})
+		.onConflict((conflict) => conflict.column('url').doNothing())
+		.returningAll()
+		.executeTakeFirstOrThrow();
 }
 
-export function getFeeds(): Feed[] {
-	const feeds: Feed[] = db.prepare('SELECT * FROM Feed').all();
+export async function getFeeds(): Promise<Feed[]> {
+	const feeds = await db.selectFrom('Feed').selectAll().execute();
 	return feeds;
 }
 
-export function getFeed(id: string): Feed | undefined {
+export async function getFeed(id: string): Promise<Feed | undefined> {
 	return db
-		.prepare<Feed['id']>('SELECT * FROM Feed WHERE id = ?')
-		.get<Feed>(id);
+		.selectFrom('Feed')
+		.selectAll()
+		.where('id', '=', id)
+		.executeTakeFirst();
 }
 
-export function getFeedByUrl(url: string): Feed | undefined {
+export async function getFeedByUrl(url: string): Promise<Feed | undefined> {
 	return db
-		.prepare<Feed['url']>('SELECT * FROM Feed WHERE url = ?')
-		.get<Feed>(url);
+		.selectFrom('Feed')
+		.selectAll()
+		.where('url', '=', url)
+		.executeTakeFirst();
 }
 
-export function getFeedStats(data: {
+export async function getFeedStats(data: {
 	userId: User['id'];
 	feeds: Feed[];
-}): FeedStats {
+}): Promise<FeedStats> {
 	const stats: FeedStats = {};
 	const feedIds = data.feeds.map(({ id }) => id);
 
 	for (const feedId of feedIds) {
-		const articleIds: Article['id'][] = db
-			.prepare<Article['feedId']>('SELECT id FROM Article WHERE feedId = ?')
-			.all<Pick<Article, 'id'>>(feedId)
-			.map(({ id }) => id);
+		const articleIds = (
+			await db
+				.selectFrom('Article')
+				.select('id')
+				.where('feedId', '=', feedId)
+				.execute()
+		).map(({ id }) => id);
 
-		const numRead = db
-			.prepare<Article['id'][]>(
-				`SELECT COUNT(*) FROM UserArticle WHERE articleId IN (${articleIds
-					.map(() => '?')
-					.join()}) AND read = true`
-			)
-			.get<{ 'COUNT(*)': number }>(...articleIds)?.['COUNT(*)'];
+		const numRead = await db
+			.selectFrom('UserArticle')
+			.select(sql<number>`count(*)`.as('count'))
+			.where('articleId', 'in', articleIds)
+			.where('read', '=', 1)
+			.executeTakeFirst();
 
 		stats[feedId] = {
 			total: articleIds.length,
-			read: numRead ?? 0
+			read: numRead?.count ?? 0
 		};
 	}
 
 	return stats;
 }
 
-export function updateFeedIcon(data: {
+export async function updateFeedIcon(data: {
 	feedId: Feed['id'];
 	icon: string;
-}): void {
-	db.prepare<[Feed['icon'], Feed['id']]>(
-		'UPDATE Feed SET icon = ? WHERE id = ?'
-	).run(data.icon, data.feedId);
+}): Promise<void> {
+	await db
+		.updateTable('Feed')
+		.set({ icon: data.icon })
+		.where('id', '=', data.feedId)
+		.executeTakeFirst();
 }

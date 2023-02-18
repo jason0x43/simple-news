@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { getAppContext } from '$lib/contexts';
-	import type { Feed } from '$lib/db/schema';
+	import type { Feed } from '$lib/db/feed';
 	import {
 		allAreIdentified,
 		getArticleCount,

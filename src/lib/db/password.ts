@@ -1,16 +1,16 @@
-import * as db from './lib/db.js';
-import type { Password, User } from './schema';
+import db from './lib/db.js';
+import type { Password, User } from './lib/db';
 
-export function getPasswordHash(
+export type { Password };
+
+export async function getPasswordHash(
 	username: User['username']
-): Password['hash'] | undefined {
-	return db
-		.prepare<User['username']>(
-			`SELECT hash
-			FROM Password
-			INNER JOIN User
-			ON User.id = Password.userId
-			WHERE username = ?`
-		)
-		.get<{ hash: string }>(username)?.hash;
+): Promise<Password['hash'] | undefined> {
+	const result = await db
+		.selectFrom('Password')
+		.select('hash')
+		.innerJoin('User', 'User.id', 'Password.userId')
+		.where('username', '=', username)
+		.executeTakeFirst();
+	return result?.hash;
 }

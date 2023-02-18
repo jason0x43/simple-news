@@ -32,13 +32,12 @@ export const actions: Actions = {
 			return fail(403, { username: 'Invalid username or password' });
 		}
 
-		const user = verifyLogin({ username, password });
-
+		const user = await verifyLogin({ username, password });
 		if (!user) {
 			return fail(403, { username: 'Invalid username or password' });
 		}
 
-		const session = createUserSession(user.id);
+		const session = await createUserSession(user.id);
 
 		setSessionCookie(cookies, session);
 
@@ -49,7 +48,7 @@ export const actions: Actions = {
 		const cookie = request.headers.get('cookie');
 		const sessionId = getSessionId(cookie);
 		if (sessionId) {
-			deleteSession(sessionId);
+			await deleteSession(sessionId);
 			clearSessionCookie(cookies);
 		}
 	}

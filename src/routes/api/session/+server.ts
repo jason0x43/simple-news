@@ -4,7 +4,6 @@ import { setSessionData, type SessionData } from '$lib/db/session';
 import { error } from '@sveltejs/kit';
 
 export type UpdateSessionRequest = SessionData;
-
 export type UpdateSessionResponse = Record<string, never> | ErrorResponse;
 
 /**
@@ -24,7 +23,7 @@ export const PUT: RequestHandler = async function ({ locals, request }) {
 	}
 
 	try {
-		setSessionData(locals.sessionId, data);
+		await setSessionData(locals.sessionId, data);
 	} catch (err) {
 		throw error(500, `${err}`);
 	}

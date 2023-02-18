@@ -1,6 +1,8 @@
 import { createId } from '@paralleldrive/cuid2';
-import * as db from './lib/db.js';
-import type { Feed, FeedGroup, FeedGroupFeed, User } from './schema';
+import db from './lib/db.js';
+import type { Feed, FeedGroup, FeedGroupFeed, User } from './lib/db';
+
+export type { FeedGroup };
 
 export type FeedGroupWithFeeds = FeedGroup & {
 	feeds: Feed[];
@@ -12,72 +14,96 @@ type CreateFeedGroupData = {
 	feeds: Feed['id'][];
 };
 
-export function createFeedGroup(data: CreateFeedGroupData): void {
+export async function createFeedGroup(
+	data: CreateFeedGroupData
+): Promise<FeedGroup['id']> {
 	const feedGroupId = createId();
-	const addFeed = db.prepare<
-		[FeedGroupFeed['feedGroupId'], FeedGroupFeed['feedId']]
-	>('INSERT INTO FeedGroupFeed (feedGroupId, feedId) VALUES (?, ?)');
 
-	db.transaction(() => {
-		db.prepare<FeedGroup>(
-			'INSERT INTO FeedGroup (id, userId, name) VALUES (@id, @userId, @name)'
-		).run({ ...data, id: feedGroupId });
+	await db.transaction().execute(async (trx) => {
+		await trx
+			.insertInto('FeedGroup')
+			.values({
+				userId: data.userId,
+				name: data.name,
+				id: feedGroupId
+			})
+			.executeTakeFirst();
 		for (const feedId of data.feeds) {
-			addFeed.run(feedGroupId, feedId);
+			await trx
+				.insertInto('FeedGroupFeed')
+				.values({
+					feedGroupId,
+					feedId
+				})
+				.executeTakeFirst();
 		}
 	});
+
+	return feedGroupId;
 }
 
-export function getFeedGroup(id: FeedGroup['id']): FeedGroup | undefined {
+export async function getFeedGroup(
+	id: FeedGroup['id']
+): Promise<FeedGroup | undefined> {
 	return db
-		.prepare<FeedGroup['id']>('SELECT * from FeedGroup WHERE id = ?')
-		.get<FeedGroup>(id);
+		.selectFrom('FeedGroup')
+		.selectAll()
+		.where('id', '=', id)
+		.executeTakeFirst();
 }
 
-export function getUserFeedGroup(
+export async function getUserFeedGroup(
 	userId: User['id'],
 	name: FeedGroup['name']
-): FeedGroup | undefined {
+): Promise<FeedGroup | undefined> {
 	return db
-		.prepare<[User['id'], FeedGroup['name']]>(
-			'SELECT * from FeedGroup WHERE userId = ? AND name = ?'
-		)
-		.get<FeedGroup>(userId, name);
+		.selectFrom('FeedGroup')
+		.selectAll()
+		.where('userId', '=', userId)
+		.where('name', '=', name)
+		.executeTakeFirst();
 }
 
-export function getUserFeedGroups(userId: User['id']): FeedGroup[] {
-	const feedGroups = db
-		.prepare<User['id']>('SELECT * from FeedGroup WHERE userId = ?')
-		.all<FeedGroup>(userId);
-	return feedGroups;
+export async function getUserFeedGroups(
+	userId: User['id']
+): Promise<FeedGroup[]> {
+	return db
+		.selectFrom('FeedGroup')
+		.selectAll()
+		.where('userId', '=', userId)
+		.execute();
 }
 
-export function getFeedGroupWithFeeds(
+export async function getFeedGroupWithFeeds(
 	id: FeedGroup['id']
-): FeedGroupWithFeeds | undefined {
-	const feedGroup = db
-		.prepare<FeedGroup['id']>('SELECT * from FeedGroup WHERE id = ?')
-		.get<FeedGroup>(id);
+): Promise<FeedGroupWithFeeds | undefined> {
+	const feedGroup = await db
+		.selectFrom('FeedGroup')
+		.selectAll()
+		.where('id', '=', id)
+		.executeTakeFirst();
 	if (!feedGroup) {
 		return;
 	}
 
-	const feeds = getGroupFeeds(feedGroup.id);
+	const feeds = await getGroupFeeds(feedGroup.id);
 	return {
 		...feedGroup,
 		feeds
 	};
 }
 
-export function getUserFeedGroupsWithFeeds(
+export async function getUserFeedGroupsWithFeeds(
 	userId: User['id']
-): FeedGroupWithFeeds[] {
-	const feedGroups = db
-		.prepare<User['id']>('SELECT * from FeedGroup WHERE userId = ?')
-		.all<FeedGroup>(userId);
+): Promise<FeedGroupWithFeeds[]> {
+	const feedGroups = await db
+		.selectFrom('FeedGroup')
+		.selectAll()
+		.where('userId', '=', userId)
+		.execute();
 	const feedGroupsWithFeeds: FeedGroupWithFeeds[] = [];
 	for (const group of feedGroups) {
-		const feeds = getGroupFeeds(group.id);
+		const feeds = await getGroupFeeds(group.id);
 		feedGroupsWithFeeds.push({
 			...group,
 			feeds
@@ -91,66 +117,66 @@ type FindGroupContainingFeedData = {
 	feedId: Feed['id'];
 };
 
-export function findUserFeedGroupContainingFeed(
+export async function findUserFeedGroupContainingFeed(
 	data: FindGroupContainingFeedData
-): FeedGroup | undefined {
-	const feedGroupId = db
-		.prepare<FindGroupContainingFeedData>(
-			'SELECT DISTINCT feedGroupId FROM FeedGroupFeed' +
-				' INNER JOIN FeedGroup' +
-				' ON FeedGroup.userId = @userId' +
-				' WHERE FeedGroup.id = FeedGroupFeed.feedGroupId' +
-				' AND FeedGroupFeed.feedId = @feedId'
+): Promise<FeedGroup | undefined> {
+	const feedGroupId = await db
+		.selectFrom('FeedGroupFeed')
+		.select('feedGroupId')
+		.distinct()
+		.innerJoin('FeedGroup', (join) =>
+			join.on('FeedGroup.userId', '=', data.userId)
 		)
-		.get<{ feedGroupId: string }>(data);
+		.where('FeedGroup.id', '=', 'FeedGroupFeed.feedGroupId')
+		.where('FeedGroupFeed.feedId', '=', data.feedId)
+		.executeTakeFirst();
 
 	if (feedGroupId) {
 		return db
-			.prepare<FeedGroup['id']>('SELECT * FROM FeedGroup WHERE id = ?')
-			.get<FeedGroup>(feedGroupId.feedGroupId);
+			.selectFrom('FeedGroup')
+			.selectAll()
+			.where('id', '=', feedGroupId.feedGroupId)
+			.executeTakeFirst();
 	}
 }
 
 type DeleteFeedGroupData = Pick<FeedGroup, 'userId' | 'name'>;
 
-export function deleteFeedGroup(data: DeleteFeedGroupData): void {
-	db.prepare<DeleteFeedGroupData>(
-		'DELETE FROM FeedGroup WHERE userId = @userId AND name = @name'
-	).run(data);
+export async function deleteFeedGroup(
+	data: DeleteFeedGroupData
+): Promise<void> {
+	await db
+		.deleteFrom('FeedGroup')
+		.where('userId', '=', data.userId)
+		.where('name', '=', data.name)
+		.executeTakeFirst();
 }
 
-export function getUserFeeds(userId: User['id']): Feed[] {
-	const feedIds = db
-		.prepare<FeedGroup['id']>(
-			`SELECT feedId
-			FROM FeedGroupFeed
-			INNER JOIN FeedGroup
-			ON FeedGroup.id = FeedGroupFeed.feedGroupId
-			WHERE FeedGroup.userId = ?`
-		)
-		.all<{ feedId: string }>(userId)
-		.map(({ feedId }) => feedId);
+export async function getUserFeeds(userId: User['id']): Promise<Feed[]> {
+	const feedIds = (
+		await db
+			.selectFrom('FeedGroupFeed')
+			.select('feedId')
+			.innerJoin('FeedGroup', 'FeedGroup.id', 'FeedGroupFeed.feedGroupId')
+			.where('FeedGroup.userId', '=', userId)
+			.execute()
+	).map(({ feedId }) => feedId);
 
-	return db
-		.prepare<Feed['id'][]>(
-			`SELECT * FROM Feed WHERE id IN (${feedIds.map(() => '?').join()})`
-		)
-		.all<Feed>(...feedIds);
+	return db.selectFrom('Feed').selectAll().where('id', 'in', feedIds).execute();
 }
 
-export function getGroupFeeds(groupId: FeedGroupFeed['feedGroupId']): Feed[] {
-	const feedIds = db
-		.prepare<FeedGroup['id']>(
-			'SELECT feedId FROM FeedGroupFeed WHERE feedGroupId = ?'
-		)
-		.all<{ feedId: string }>(groupId)
-		.map(({ feedId }) => feedId);
+export async function getGroupFeeds(
+	groupId: FeedGroupFeed['feedGroupId']
+): Promise<Feed[]> {
+	const feedIds = (
+		await db
+			.selectFrom('FeedGroupFeed')
+			.select('feedId')
+			.where('feedGroupId', '=', groupId)
+			.execute()
+	).map(({ feedId }) => feedId);
 
-	return db
-		.prepare<Feed['id'][]>(
-			`SELECT * FROM Feed WHERE id IN (${feedIds.map(() => '?').join()})`
-		)
-		.all<Feed>(...feedIds);
+	return db.selectFrom('Feed').selectAll().where('id', 'in', feedIds).execute();
 }
 
 /**
@@ -159,16 +185,19 @@ export function getGroupFeeds(groupId: FeedGroupFeed['feedGroupId']): Feed[] {
  * @param groupId ID of the group to add feeds to
  * @param feedIds feed IDs to add to the group
  */
-export function addFeedsToGroup(
+export async function addFeedsToGroup(
 	groupId: FeedGroupFeed['feedGroupId'],
 	feedIds: Feed['id'][]
-): void {
-	const creator = db.prepare(
-		'INSERT INTO FeedGroupFeed (feedGroupId, feedId) VALUES (?, ?)'
-	);
-	db.transaction(() => {
+): Promise<void> {
+	await db.transaction().execute(async (trx) => {
 		for (const feedId of feedIds) {
-			creator.run(groupId, feedId);
+			await trx
+				.insertInto('FeedGroupFeed')
+				.values({
+					feedGroupId: groupId,
+					feedId
+				})
+				.executeTakeFirst();
 		}
 	});
 }
@@ -179,14 +208,15 @@ export function addFeedsToGroup(
  * @param groupId ID of the group to remove feeds from
  * @param feedIds feed IDs to remove from the group
  */
-export function removeFeedsFromGroup(
+export async function removeFeedsFromGroup(
 	groupId: FeedGroupFeed['feedGroupId'],
 	feedIds: Feed['id'][]
-): void {
-	const statement = db.prepare(
-		'DELETE FROM FeedGroupFeed WHERE feedGroupId = ? AND feedId = ?'
-	);
+): Promise<void> {
 	for (const feedId of feedIds) {
-		statement.run(groupId, feedId);
+		await db
+			.deleteFrom('FeedGroupFeed')
+			.where('feedGroupId', '=', groupId)
+			.where('feedId', '=', feedId)
+			.executeTakeFirst();
 	}
 }

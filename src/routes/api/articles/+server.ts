@@ -1,12 +1,14 @@
+import type { Article } from '$lib/db/article';
 import {
 	getArticleHeadings,
 	markArticlesRead,
 	type ArticleHeadingWithUserData
 } from '$lib/db/article';
+import type { Feed } from '$lib/db/feed';
 import { getFeedGroupWithFeeds } from '$lib/db/feedgroup';
-import type { Article, Feed } from '$lib/db/schema';
+import { json } from '$lib/kit';
 import { errorResponse } from '$lib/request';
-import { error, json } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
 /**
@@ -24,7 +26,7 @@ export const GET: RequestHandler = async function ({ url, locals }) {
 	if (feedOrGroupId) {
 		const [type, id] = feedOrGroupId.split('-');
 		if (type === 'group') {
-			const group = getFeedGroupWithFeeds(id);
+			const group = await getFeedGroupWithFeeds(id);
 			feedIds = group?.feeds.map(({ id }) => id) ?? [];
 		} else {
 			feedIds = [id];
@@ -32,7 +34,7 @@ export const GET: RequestHandler = async function ({ url, locals }) {
 	}
 
 	const { articleFilter } = locals.sessionData;
-	const articles = getArticleHeadings({
+	const articles = await getArticleHeadings({
 		userId: user.id,
 		feedIds,
 		filter: articleFilter

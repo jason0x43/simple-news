@@ -4,11 +4,11 @@ import type { Handle } from '@sveltejs/kit';
 
 export const handle: Handle = async ({ event, resolve }) => {
 	const cookie = event.request.headers.get('cookie');
-	const session = getSession(cookie);
+	const session = await getSession(cookie);
 	event.locals.user = session?.user;
 	event.locals.sessionId = session?.id;
 	event.locals.sessionData = session?.data
 		? JSON.parse(session.data)
 		: defaultSessionData;
-	return await resolve(event);
+	return resolve(event);
 };

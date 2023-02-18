@@ -1,12 +1,13 @@
+import type { Feed } from '$lib/db/feed';
+import type { FeedGroup, FeedGroupWithFeeds } from '$lib/db/feedgroup';
 import {
 	addFeedsToGroup,
 	findUserFeedGroupContainingFeed,
 	getUserFeedGroupsWithFeeds,
-	removeFeedsFromGroup,
-	type FeedGroupWithFeeds
+	removeFeedsFromGroup
 } from '$lib/db/feedgroup';
-import type { Feed, FeedGroup } from '$lib/db/schema';
-import { error, json } from '@sveltejs/kit';
+import { json } from '$lib/kit';
+import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
 export type GetFeedGroupsResponse = FeedGroupWithFeeds[];
@@ -20,7 +21,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 		throw error(401, 'not logged in');
 	}
 
-	return json(getUserFeedGroupsWithFeeds(user.id));
+	return json(await getUserFeedGroupsWithFeeds(user.id));
 };
 
 export type AddGroupFeedRequest = {
@@ -51,17 +52,17 @@ export const PUT: RequestHandler = async ({ locals, request }) => {
 		throw error(400, 'A feed group ID must be provided');
 	}
 
-	const existingGroup = findUserFeedGroupContainingFeed({
+	const existingGroup = await findUserFeedGroupContainingFeed({
 		userId: user.id,
 		feedId: data.feedId
 	});
 
 	if (existingGroup) {
-		removeFeedsFromGroup(existingGroup.id, [data.feedId]);
+		await removeFeedsFromGroup(existingGroup.id, [data.feedId]);
 	}
 
 	if (data.groupId !== 'not subscribed') {
-		addFeedsToGroup(data.groupId, [data.feedId]);
+		await addFeedsToGroup(data.groupId, [data.feedId]);
 	}
 
 	return new Response();

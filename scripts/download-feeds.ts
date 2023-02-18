@@ -7,8 +7,7 @@ import Parser, { type Item } from 'rss-parser';
 import { fetch } from 'undici';
 import { upsertArticle } from '../src/lib/db/article.js';
 import { getFeeds, updateFeedIcon } from '../src/lib/db/feed.js';
-import { closeDb } from '../src/lib/db/lib/db.js';
-import type { Feed } from '../src/lib/db/schema.js';
+import type { Feed } from '../src/lib/db/feed';
 import { downloadFeed as getFeed, type FeedItem } from '../src/lib/feed.js';
 
 // @ts-expect-error undici fetch is a valid replacement in this context
@@ -18,7 +17,7 @@ type ParsedFeed = Parser.Output<unknown>;
 
 async function downloadFeeds() {
 	console.log('>>> Downloading feeds...');
-	const feeds = getFeeds();
+	const feeds = await getFeeds();
 	let feed = feeds.pop();
 	while (feed) {
 		await downloadFeed(feed);
@@ -26,7 +25,6 @@ async function downloadFeeds() {
 		feed = feeds.pop();
 	}
 	console.log('>>> Finished downloading');
-	closeDb();
 }
 
 async function downloadFeed(feed: Feed) {
@@ -59,7 +57,9 @@ async function downloadFeed(feed: Feed) {
 				content,
 				title: entry.title ?? 'Untitled',
 				link: entry.link ?? null,
-				published: entry.pubDate ? Number(new Date(entry.pubDate)) : Date.now()
+				published: BigInt(
+					entry.pubDate ? Number(new Date(entry.pubDate)) : Date.now()
+				)
 			});
 			entry = parsedFeed.items.pop();
 		}

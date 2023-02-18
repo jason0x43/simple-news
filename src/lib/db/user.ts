@@ -1,54 +1,67 @@
 import bcrypt from 'bcryptjs';
 import { createId } from '@paralleldrive/cuid2';
-import * as db from './lib/db.js';
+import db from './lib/db.js';
 import { getPasswordHash } from './password.js';
-import type { Password, User } from './schema';
+import type { Password, User } from './lib/db.js';
 
-export function createUser(userData: Omit<User, 'id'>, password: string): User {
-	const user = db
-		.prepare<[User['id'], User['username'], User['email']]>(
-			`INSERT INTO User (id, username, email)
-			VALUES (?, ?, ?)
-			RETURNING *`
-		)
-		.get<User>(createId(), userData.username, userData.email);
-	if (!user) {
-		throw new Error('Unable to create user');
-	}
-	db.prepare<[Password['hash'], User['id']]>(
-		'INSERT INTO Password (hash, userId) VALUES (?, ?)'
-	).run(bcrypt.hashSync(password, 7), user.id);
+export type { User };
+
+export async function createUser(
+	userData: Omit<User, 'id'>,
+	password: string
+): Promise<User> {
+	const user = await db
+		.insertInto('User')
+		.values({
+			id: createId(),
+			username: userData.username,
+			email: userData.email
+		})
+		.returningAll()
+		.executeTakeFirstOrThrow();
+	await db
+		.insertInto('Password')
+		.values({
+			hash: bcrypt.hashSync(password, 7),
+			userId: user.id
+		})
+		.executeTakeFirst();
 	return user;
 }
 
-export function verifyLogin({
+export async function verifyLogin({
 	username,
 	password
 }: {
 	username: User['username'];
 	password: Password['hash'];
-}): User | undefined {
-	const hash = getPasswordHash(username);
-
+}): Promise<User | undefined> {
+	const hash = await getPasswordHash(username);
 	if (!hash || !bcrypt.compareSync(password, hash)) {
 		return;
 	}
 
 	return db
-		.prepare<User['username']>('SELECT * from User WHERE username = ?')
-		.get<User>(username);
+		.selectFrom('User')
+		.selectAll()
+		.where('username', '=', username)
+		.executeTakeFirst();
 }
 
-export function getUserById(userId: User['id']): User | undefined {
+export async function getUserById(userId: User['id']): Promise<User> {
 	return db
-		.prepare<User['id']>('SELECT * FROM User WHERE id = ?')
-		.get<User>(userId);
+		.selectFrom('User')
+		.selectAll()
+		.where('id', '=', userId)
+		.executeTakeFirstOrThrow();
 }
 
-export function getUserByUsername(
+export async function getUserByUsername(
 	username: User['username']
-): User | undefined {
+): Promise<User> {
 	return db
-		.prepare<User['username']>('SELECT * FROM User WHERE username = ?')
-		.get<User>(username);
+		.selectFrom('User')
+		.selectAll()
+		.where('username', '=', username)
+		.executeTakeFirstOrThrow();
 }

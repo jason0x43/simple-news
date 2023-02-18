@@ -1,6 +1,6 @@
 import type { Cookies } from '@sveltejs/kit';
 import * as cookie from 'cookie';
-import type { Session } from './db/schema';
+import type { Session } from './db/lib/db';
 import { getSessionWithUser, type SessionWithUser } from './db/session';
 
 const options = {
@@ -10,11 +10,11 @@ const options = {
 	secure: process.env.NODE_ENV === 'production'
 };
 
-export function getSession(
+export async function getSession(
 	cookieStr: string | null
-): SessionWithUser | undefined {
+): Promise<SessionWithUser | undefined> {
 	if (!cookieStr) {
-		return undefined;
+		return;
 	}
 	const cookies = cookie.parse(cookieStr);
 	return getSessionWithUser(cookies.session);

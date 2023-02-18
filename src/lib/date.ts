@@ -27,13 +27,15 @@ export function diffDates(date1: Date, date2: Date) {
 	};
 }
 
-export function getAge(timestamp: Date | number | undefined | null): string {
-	if (!timestamp) {
+export function getAge(
+	timestamp: Date | number | bigint | undefined | null
+): string {
+	if (timestamp == null) {
 		return '?';
 	}
 
 	const date0 = new Date();
-	const date1 = new Date(timestamp);
+	const date1 = new Date(Number(timestamp));
 	const diff = diffDates(date0, date1);
 	if (diff.weeks) {
 		return `${diff.weeks} w`;
