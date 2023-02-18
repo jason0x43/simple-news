@@ -5,7 +5,6 @@
 	import { getAppContext } from '$lib/contexts';
 	import type { Feed } from '$lib/db/schema';
 	import Button from './Button.svelte';
-	import Link from './Link.svelte';
 
 	export let onTitlePress: () => void;
 
@@ -72,9 +71,11 @@
 		</Button>
 	</div>
 	<div class="right">
-		<Link variant="invisible" href="/login">
-			<UserIcon size={20} />
-		</Link>
+		<form method="post" action="/?/logout">
+			<Button variant="invisible" type="submit">
+				<UserIcon size={20} />
+			</Button>
+		</form>
 	</div>
 </header>
 

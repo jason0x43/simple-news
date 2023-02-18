@@ -1,15 +1,14 @@
 <script lang="ts">
-	// import type { ActionData } from './$types';
+	import type { ActionData } from './$types';
 
-	// export let form: ActionData;
-	export let form: Record<string, unknown> | undefined;
+	export let form: ActionData;
 
 	let username = '';
 	let password = '';
 </script>
 
 <section class="login">
-	<form method="post">
+	<form method="post" action="/?/login">
 		<input name="username" placeholder="Username" bind:value={username} />
 		<input
 			name="password"
@@ -21,10 +20,6 @@
 
 		{#if form?.username}
 			<div id="username-error">{form.username}</div>
-		{/if}
-
-		{#if form?.password}
-			<div id="password-error">{form.password}</div>
 		{/if}
 	</form>
 </section>
