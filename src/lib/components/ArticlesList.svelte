@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { page } from '$app/stores';
 	import ContextMenu from './ContextMenu.svelte';
 	import { getAge } from '$lib/date';
 	import type { ArticleHeadingWithUserData } from '$lib/db/article';
@@ -22,14 +21,16 @@
 	} from '../../routes/api/articles/+server';
 	import { updateFeedStats } from '$lib/feedUtil';
 
-	const { articles, feeds, feedStats, sidebarVisible } = getAppContext().stores;
+	export let selectedArticleId: Article['id'] | undefined;
+	export let selectedFeedId: Feed['id'] | undefined;
+
+	const { articles, feeds, feedStats, sidebarVisible, articleFilter } =
+		getAppContext().stores;
 
 	type ScrollData = { visibleCount: number; scrollTop: number };
 	const updatedArticleIds = new Set<Article['id']>();
 	const scrollDataKey = 'scrollData';
 
-	$: selectedFeed = $page.params.feedId;
-	$: selectedArticleId = $page.params.articleId;
 	$: articleFeedIds = uniquify(
 		$articles?.slice(0, 40).map(({ feedId }) => feedId) ?? []
 	);
@@ -39,19 +40,19 @@
 
 	let visibleCount = 40;
 	let scrollBox: HTMLElement | undefined;
-	let prevFeed = selectedFeed;
+	let prevFeedId = selectedFeedId;
 
 	$: {
-		if (prevFeed !== selectedFeed) {
+		if (prevFeedId !== selectedFeedId) {
 			// reset state when selected feed changes (but not when it's first
 			// initialized)
-			if (prevFeed && selectedFeed) {
+			if (prevFeedId && selectedFeedId) {
 				updatedArticleIds.clear();
 				clearValue(scrollDataKey);
 				visibleCount = 40;
 				scrollBox?.scrollTo(0, 0);
 			}
-			prevFeed = selectedFeed;
+			prevFeedId = selectedFeedId;
 		}
 	}
 
@@ -81,10 +82,10 @@
 			if (!articles) {
 				// there are no articles
 				filteredArticles = [];
-			} else if ($page.data.articleFilter === 'all') {
+			} else if ($articleFilter === 'all') {
 				// show all articles
 				filteredArticles = $articles ?? [];
-			} else if ($page.data.articleFilter === 'saved') {
+			} else if ($articleFilter === 'saved') {
 				// show saved articles
 				filteredArticles = $articles?.filter(({ saved }) => saved) ?? [];
 			} else {
@@ -269,7 +270,7 @@
 					on:touchend={handleTouchEnd}
 					on:touchmove={handleTouchEnd}
 				>
-					<a href={`/reader/${selectedFeed}/${article.id}`}>
+					<a href={`/reader/${selectedFeedId}/${article.id}`}>
 						<div class="icon">
 							{#if article.feed?.icon}
 								<img

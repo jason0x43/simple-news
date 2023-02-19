@@ -26,13 +26,21 @@
 
 {#if $displayType === 'mobile'}
 	<div class="article" out:slide in:slide>
-		<ArticleView {article} bind:this={articleView} />
+		<ArticleView
+			{article}
+			bind:this={articleView}
+			selectedFeedId={data.feedId}
+		/>
 	</div>
 {/if}
 
 {#if $displayType !== 'mobile'}
 	<div class="article">
-		<ArticleView {article} bind:this={articleView} />
+		<ArticleView
+			{article}
+			bind:this={articleView}
+			selectedFeedId={data.feedId}
+		/>
 	</div>
 {/if}
 

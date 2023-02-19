@@ -4,7 +4,10 @@ import { getFeedGroupWithFeeds } from '$lib/db/feedgroup';
 import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 
-export const load: LayoutServerLoad = async ({ locals, params }) => {
+export const load: LayoutServerLoad = async ({ locals, params, depends }) => {
+	// Depend on a virtual route so we have a way to call `invalidate`
+	depends('user:articleFilter');
+
 	if (!locals.user) {
 		console.log('no active user -- redirecting to login');
 		throw redirect(302, '/login');
@@ -25,12 +28,14 @@ export const load: LayoutServerLoad = async ({ locals, params }) => {
 	const articleHeadings = await getArticleHeadings({
 		feedIds,
 		userId,
+		filter: locals.sessionData.articleFilter,
 		// articles no older than 6 weeks
 		maxAge: 6 * 7 * 24 * 60 * 60 * 1000
 	});
 
 	return {
 		articleHeadings,
-		feedId
+		feedId,
+		articleId: params.articleId
 	};
 };

@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { page } from '$app/stores';
 	import type { ArticleWithUserData } from '$lib/db/article';
 	import {
 		isActionEvent,
@@ -9,8 +8,10 @@
 	} from '$lib/util';
 	import CloseIcon from '$lib/icons/Close.svelte';
 	import { onMount } from 'svelte';
+	import type { Feed } from '$lib/db/feed';
 
 	export let article: ArticleWithUserData | null;
+	export let selectedFeedId: Feed['id'];
 
 	const target = 'SimpleNews_ArticleView';
 
@@ -82,7 +83,7 @@
 				{@html unescapeHtml(article?.content ?? '')}
 			</div>
 		</div>
-		<a class="close" href={`/reader/${$page.params.feedId}`}>
+		<a class="close" href={`/reader/${selectedFeedId}`}>
 			<CloseIcon size={22} />
 		</a>
 	</div>

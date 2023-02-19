@@ -1,12 +1,20 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
+	import { invalidate } from '$app/navigation';
 	import ArticlesList from '$lib/components/ArticlesList.svelte';
 	import { getAppContext } from '$lib/contexts';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
 
-	const { articles, feeds, feedGroups, selectedFeedIds } =
+	const { articles, feeds, feedGroups, selectedFeedIds, articleFilter } =
 		getAppContext().stores;
+
+	$: if ($articleFilter) {
+		if (browser) {
+			invalidate('user:articleFilter');
+		}
+	}
 
 	$: $articles = data.articleHeadings;
 
@@ -25,7 +33,10 @@
 </script>
 
 <div class="feed-layout">
-	<ArticlesList />
+	<ArticlesList
+		selectedFeedId={data.feedId}
+		selectedArticleId={data.articleId}
+	/>
 	<slot />
 </div>
 

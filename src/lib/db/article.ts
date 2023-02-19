@@ -76,8 +76,8 @@ export async function getArticleHeadings({
 			'title',
 			'link',
 			'published',
-			'UserArticle.read',
-			'UserArticle.saved'
+			'read',
+			'saved'
 		]);
 
 	if (feedIds) {
@@ -89,7 +89,7 @@ export async function getArticleHeadings({
 	}
 
 	if (filter === 'unread') {
-		query = query.where('read', '=', 0);
+		query = query.where('read', 'is not', 1);
 	}
 
 	if (maxAge) {
