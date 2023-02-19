@@ -1,16 +1,13 @@
 import { getFeedStats } from '$lib/db/feed';
 import { getUserFeedGroupsWithFeeds, getUserFeeds } from '$lib/db/feedgroup';
-import { redirect } from '@sveltejs/kit';
+import { getSessionOrThrow } from '$lib/session';
 import type { LayoutServerLoad } from './$types';
 
-export const load: LayoutServerLoad = async ({ locals, depends }) => {
+export const load: LayoutServerLoad = async ({ depends, request }) => {
 	depends('reader:feedstats');
 
-	const { user, sessionData } = locals;
-	if (!user) {
-		console.log('no active user -- redirecting to login');
-		throw redirect(302, '/');
-	}
+	const session = await getSessionOrThrow(request.headers.get('cookie'));
+	const { user, data: sessionData } = session;
 
 	const feedGroups = await getUserFeedGroupsWithFeeds(user.id);
 	const feeds = await getUserFeeds(user.id);
@@ -23,7 +20,7 @@ export const load: LayoutServerLoad = async ({ locals, depends }) => {
 
 	return {
 		user,
-		articleFilter: sessionData.articleFilter,
+		articleFilter: sessionData?.articleFilter,
 		feedStats,
 		feeds,
 		feedGroups

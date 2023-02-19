@@ -4,10 +4,6 @@ import db from './lib/db.js';
 
 export type { Session };
 
-export type SessionWithUser = Session & {
-	user: User;
-};
-
 export type ArticleFilter = 'all' | 'unread' | 'saved';
 
 export type SessionData = {
@@ -18,9 +14,19 @@ export const defaultSessionData: SessionData = {
 	articleFilter: 'unread'
 };
 
-export async function createUserSession(userId: User['id']): Promise<Session> {
+export type SessionWithData = Omit<Session, 'data'> & {
+	data: SessionData | undefined;
+};
+
+export type SessionWithUser = SessionWithData & {
+	user: User;
+};
+
+export async function createUserSession(
+	userId: User['id']
+): Promise<SessionWithData> {
 	const expires = Number(new Date(Date.now() + 1000 * 60 * 60 * 24 * 7));
-	return db
+	const sess = await db
 		.insertInto('Session')
 		.values({
 			id: createId(),
@@ -30,6 +36,10 @@ export async function createUserSession(userId: User['id']): Promise<Session> {
 		})
 		.returningAll()
 		.executeTakeFirstOrThrow();
+	return {
+		...sess,
+		data: defaultSessionData
+	};
 }
 
 export async function getSessionWithUser(
@@ -55,6 +65,7 @@ export async function getSessionWithUser(
 
 	return {
 		...session,
+		data: session.data ? JSON.parse(session.data) : undefined,
 		user
 	};
 }

@@ -2,6 +2,7 @@ import type { RequestHandler } from './$types';
 import { errorResponse, type ErrorResponse } from '$lib/request';
 import { setSessionData, type SessionData } from '$lib/db/session';
 import { error } from '@sveltejs/kit';
+import { getSessionOrThrow } from '$lib/session';
 
 export type UpdateSessionRequest = SessionData;
 export type UpdateSessionResponse = Record<string, never> | ErrorResponse;
@@ -9,11 +10,8 @@ export type UpdateSessionResponse = Record<string, never> | ErrorResponse;
 /**
  * Update session data
  */
-export const PUT: RequestHandler = async function ({ locals, request }) {
-	if (!locals.user || !locals.sessionId) {
-		throw error(401, 'not logged in');
-	}
-
+export const PUT: RequestHandler = async function ({ request }) {
+	const session = await getSessionOrThrow(request.headers.get('cookie'));
 	const data: UpdateSessionRequest = await request.json();
 
 	if (typeof data.articleFilter !== 'string') {
@@ -23,7 +21,7 @@ export const PUT: RequestHandler = async function ({ locals, request }) {
 	}
 
 	try {
-		await setSessionData(locals.sessionId, data);
+		await setSessionData(session.id, data);
 	} catch (err) {
 		throw error(500, `${err}`);
 	}

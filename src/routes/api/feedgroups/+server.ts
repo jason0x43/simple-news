@@ -7,6 +7,7 @@ import {
 	removeFeedsFromGroup
 } from '$lib/db/feedgroup';
 import { json } from '$lib/kit';
+import { getSessionOrThrow as getSessionOrThrow } from '$lib/session';
 import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
@@ -15,12 +16,9 @@ export type GetFeedGroupsResponse = FeedGroupWithFeeds[];
 /**
  * Get all feeds
  */
-export const GET: RequestHandler = async ({ locals }) => {
-	const user = locals.user;
-	if (!user) {
-		throw error(401, 'not logged in');
-	}
-
+export const GET: RequestHandler = async ({ request }) => {
+	const session = await getSessionOrThrow(request.headers.get('cookie'));
+	const { user } = session;
 	return json(await getUserFeedGroupsWithFeeds(user.id));
 };
 
@@ -36,12 +34,9 @@ export type AddGroupFeedResponse = Record<string, never>;
  *
  * The feed will be removed from any existing feed group
  */
-export const PUT: RequestHandler = async ({ locals, request }) => {
-	const user = locals.user;
-	if (!user) {
-		throw error(401, 'not logged in');
-	}
-
+export const PUT: RequestHandler = async ({ request }) => {
+	const session = await getSessionOrThrow(request.headers.get('cookie'));
+	const { user } = session;
 	const data: AddGroupFeedRequest = await request.json();
 
 	if (typeof data.feedId !== 'string') {

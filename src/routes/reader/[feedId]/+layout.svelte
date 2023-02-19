@@ -1,20 +1,12 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
-	import { invalidate } from '$app/navigation';
 	import ArticlesList from '$lib/components/ArticlesList.svelte';
 	import { getAppContext } from '$lib/contexts';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
 
-	const { articles, feeds, feedGroups, selectedFeedIds, articleFilter } =
+	const { articles, feeds, feedGroups, selectedFeedIds } =
 		getAppContext().stores;
-
-	$: if ($articleFilter) {
-		if (browser) {
-			invalidate('user:articleFilter');
-		}
-	}
 
 	$: $articles = data.articleHeadings;
 

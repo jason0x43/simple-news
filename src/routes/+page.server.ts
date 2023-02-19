@@ -16,8 +16,9 @@ export type LoginRequest = {
 /**
  * Redirect users when accessing the root path
  */
-export const load: PageServerLoad = async ({ locals }) => {
-	if (locals.user) {
+export const load: PageServerLoad = async ({ parent }) => {
+	const { user } = await parent();
+	if (user) {
 		throw redirect(307, '/reader');
 	}
 };
