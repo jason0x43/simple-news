@@ -34,7 +34,6 @@ export const load: LayoutServerLoad = async ({ locals, params, depends }) => {
 
 	return {
 		articleHeadings,
-		feedId,
-		articleId: params.articleId
+		feedId
 	};
 };
