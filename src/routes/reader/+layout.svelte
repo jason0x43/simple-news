@@ -63,8 +63,7 @@
 
 	onMount(() => {
 		const interval = setInterval(() => {
-			invalidate('/api/feedgroups');
-			invalidate('/api/feedstats');
+			invalidate('reader:feedstats');
 		}, 600_000);
 
 		return () => {
