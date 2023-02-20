@@ -5,10 +5,8 @@
 
 	export let data: PageData;
 
-	const { articles, feeds, feedGroups, selectedFeedIds, sidebarVisible } =
+	const { articles, feeds, feedGroups, selectedFeedIds } =
 		getAppContext().stores;
-
-	$sidebarVisible = false;
 
 	$: $articles = data.articleHeadings;
 

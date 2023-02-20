@@ -1,5 +1,8 @@
 <script lang="ts">
 	import { getAppContext } from '$lib/contexts';
 	const { sidebarVisible } = getAppContext().stores;
-	$sidebarVisible = true;
+
+	if ($sidebarVisible === undefined) {
+		$sidebarVisible = true;
+	}
 </script>

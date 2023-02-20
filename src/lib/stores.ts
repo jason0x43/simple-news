@@ -8,7 +8,7 @@ import type { ArticleFilter } from './db/session';
 
 export function createStores() {
 	return {
-		sidebarVisible: writable<boolean>(false),
+		sidebarVisible: writable<boolean>(),
 		displayType: writable<'mobile' | 'desktop'>('desktop'),
 		updatedArticleIds: writable<Set<Article['id']>>(new Set()),
 		articles: writable<ArticleHeadingWithUserData[] | undefined>(),
