@@ -3,10 +3,10 @@ import { getUserFeedGroupsWithFeeds, getUserFeeds } from '$lib/db/feedgroup';
 import { getSessionOrThrow } from '$lib/session';
 import type { LayoutServerLoad } from './$types';
 
-export const load: LayoutServerLoad = async ({ depends, request }) => {
+export const load: LayoutServerLoad = async ({ depends, cookies }) => {
 	depends('reader:feedstats');
 
-	const session = await getSessionOrThrow(request.headers.get('cookie'));
+	const session = await getSessionOrThrow(cookies);
 	const { user, data: sessionData } = session;
 
 	const feedGroups = await getUserFeedGroupsWithFeeds(user.id);

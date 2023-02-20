@@ -1,29 +1,30 @@
 import { error, type Cookies } from '@sveltejs/kit';
-import * as cookie from 'cookie';
 import type { Session } from './db/lib/db';
 import { getSessionWithUser, type SessionWithUser } from './db/session';
 
-const options = {
+const cookieOpts = {
 	path: '/',
 	httpOnly: true,
 	sameSite: 'strict' as const,
 	secure: process.env.NODE_ENV === 'production'
 };
 
+export function getSessionId(cookies: Cookies): string | undefined {
+	return cookies.get('session');
+}
+
 export async function getSession(
-	cookieStr: string | null
+	cookies: Cookies
 ): Promise<SessionWithUser | undefined> {
-	if (!cookieStr) {
-		return;
-	}
-	const cookies = cookie.parse(cookieStr);
-	return getSessionWithUser(cookies.session);
+	const sessionId = getSessionId(cookies);
+	return sessionId ? getSessionWithUser(sessionId) : undefined;
 }
 
 export async function getSessionOrThrow(
-	cookieStr: string | null
+	cookies: Cookies
 ): Promise<SessionWithUser> {
-	const session = await getSession(cookieStr);
+	const sessionId = getSessionId(cookies);
+	const session = sessionId ? await getSessionWithUser(sessionId) : undefined;
 	if (!session?.user) {
 		throw error(401, 'not logged in');
 	}
@@ -32,7 +33,7 @@ export async function getSessionOrThrow(
 
 export function clearSessionCookie(cookies: Cookies): void {
 	cookies.set('session', '', {
-		...options,
+		...cookieOpts,
 		expires: new Date(0)
 	});
 }
@@ -42,15 +43,7 @@ export function setSessionCookie(
 	session: Pick<Session, 'id' | 'expires'>
 ): void {
 	cookies.set('session', session.id, {
-		...options,
+		...cookieOpts,
 		expires: new Date(session.expires)
 	});
-}
-
-export function getSessionId(cookieStr: string | null): string | undefined {
-	if (!cookieStr) {
-		return;
-	}
-	const cookies = cookie.parse(cookieStr);
-	return cookies.session;
 }

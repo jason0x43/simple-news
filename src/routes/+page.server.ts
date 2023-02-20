@@ -45,9 +45,8 @@ export const actions: Actions = {
 		throw redirect(301, '/');
 	},
 
-	logout: async ({ request, cookies }) => {
-		const cookie = request.headers.get('cookie');
-		const sessionId = getSessionId(cookie);
+	logout: async ({ cookies }) => {
+		const sessionId = getSessionId(cookies);
 		if (sessionId) {
 			await deleteSession(sessionId);
 			clearSessionCookie(cookies);

@@ -10,8 +10,8 @@ export type UpdateSessionResponse = Record<string, never> | ErrorResponse;
 /**
  * Update session data
  */
-export const PUT: RequestHandler = async function ({ request }) {
-	const session = await getSessionOrThrow(request.headers.get('cookie'));
+export const PUT: RequestHandler = async function ({ cookies, request }) {
+	const session = await getSessionOrThrow(cookies);
 	const data: UpdateSessionRequest = await request.json();
 
 	if (typeof data.articleFilter !== 'string') {

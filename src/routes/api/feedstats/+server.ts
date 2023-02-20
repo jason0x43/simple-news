@@ -6,8 +6,8 @@ import type { RequestHandler } from './$types';
 
 export type GetFeedStatsResponse = FeedStats;
 
-export const GET: RequestHandler = async ({ request }) => {
-	const session = await getSessionOrThrow(request.headers.get('cookie'));
+export const GET: RequestHandler = async ({ cookies }) => {
+	const session = await getSessionOrThrow(cookies);
 	const { user } = session;
 	const feeds = await getUserFeeds(user.id);
 	const feedStats = await getFeedStats({

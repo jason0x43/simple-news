@@ -26,8 +26,8 @@ export type ArticleUpdateResponse = {
 /**
  * Update user data for a set of articles
  */
-export const PUT: RequestHandler = async function ({ request }) {
-	const session = await getSessionOrThrow(request.headers.get('cookie'));
+export const PUT: RequestHandler = async function ({ cookies, request }) {
+	const session = await getSessionOrThrow(cookies);
 	const { user } = session;
 
 	const data: ArticleUpdateRequest = await request.json();

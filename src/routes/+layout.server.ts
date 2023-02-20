@@ -1,8 +1,8 @@
 import { getSession } from '$lib/session';
 import type { LayoutServerLoad } from './$types';
 
-export const load: LayoutServerLoad = async ({ request }) => {
-	const session = await getSession(request.headers.get('cookie'));
+export const load: LayoutServerLoad = async ({ cookies }) => {
+	const session = await getSession(cookies);
 	return {
 		user: session?.user,
 		sessionId: session?.id,
