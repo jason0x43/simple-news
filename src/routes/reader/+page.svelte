@@ -1,3 +1,5 @@
-<!--
-A placeholder to allow the base reader route to render
--->
+<script lang="ts">
+	import { getAppContext } from '$lib/contexts';
+	const { sidebarVisible } = getAppContext().stores;
+	$sidebarVisible = true;
+</script>

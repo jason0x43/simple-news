@@ -18,14 +18,8 @@
 		feeds,
 		feedGroups,
 		feedStats,
-		managingFeeds,
-		selectedFeedIds
+		managingFeeds
 	} = getAppContext().stores;
-
-	// Show the sidebar if there are no initially selected feeds
-	if (!$sidebarVisible && $selectedFeedIds.length === 0) {
-		$sidebarVisible = true;
-	}
 
 	$: {
 		$feeds = data.feeds ?? [];

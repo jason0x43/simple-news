@@ -1,3 +1,5 @@
-<!--
-This view lets the feedId layout render before the user selects an article.
--->
+<script lang="ts">
+	import { getAppContext } from '$lib/contexts';
+	const { sidebarVisible } = getAppContext().stores;
+	$sidebarVisible = true;
+</script>
