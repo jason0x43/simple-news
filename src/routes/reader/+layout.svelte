@@ -7,8 +7,8 @@
 	import { put } from '$lib/request';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import { browser } from '$app/environment';
-	import type { UpdateSessionRequest } from '../api/session/+server';
 	import type { LayoutData } from './$types';
+	import type { UpdateSessionRequest } from '$lib/types';
 
 	export let data: LayoutData;
 

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { ArticleWithUserData } from '$lib/db/article';
+	import { z } from 'zod';
 	import {
 		isActionEvent,
 		loadValue,
@@ -38,7 +39,12 @@
 		}
 	}
 
-	type ScrollData = { articleId: string; scrollTop: number };
+	const ScrollDataSchema = z.object({
+		articleId: z.string(),
+		scrollTop: z.number()
+	});
+	type ScrollData = z.infer<typeof ScrollDataSchema>;
+
 	let scrollTimer: ReturnType<typeof setTimeout>;
 
 	function handleScroll(event: Event) {
@@ -62,7 +68,7 @@
 	}
 
 	onMount(() => {
-		const scrollData = loadValue<ScrollData>('articleScrollData');
+		const scrollData = loadValue('articleScrollData', ScrollDataSchema);
 		if (scrollData && article && scrollData.articleId === article.id) {
 			setTimeout(() => {
 				scrollBox?.scrollTo({ top: scrollData.scrollTop });

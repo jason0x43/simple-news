@@ -1,23 +1,20 @@
-import type { RequestHandler } from './$types';
-import { errorResponse, type ErrorResponse } from '$lib/request';
-import { setSessionData, type SessionData } from '$lib/db/session';
-import { error } from '@sveltejs/kit';
+import { setSessionData } from '$lib/db/session';
 import { getSessionOrThrow } from '$lib/session';
-
-export type UpdateSessionRequest = SessionData;
-export type UpdateSessionResponse = Record<string, never> | ErrorResponse;
+import { SessionDataSchema, type UpdateSessionRequest } from '$lib/types';
+import { error } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
 
 /**
  * Update session data
  */
 export const PUT: RequestHandler = async function ({ cookies, request }) {
 	const session = await getSessionOrThrow(cookies);
-	const data: UpdateSessionRequest = await request.json();
+	let data: UpdateSessionRequest;
 
-	if (typeof data.articleFilter !== 'string') {
-		return errorResponse({
-			feedId: 'An articleFilter must be provided'
-		});
+	try {
+		data = SessionDataSchema.parse(await request.json());
+	} catch (err) {
+		throw error(400, 'An articleFilter must be provided');
 	}
 
 	try {

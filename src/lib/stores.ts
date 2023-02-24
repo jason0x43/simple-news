@@ -4,7 +4,7 @@ import type { FeedStats } from './db/feed';
 import type { FeedGroupWithFeeds } from './db/feedgroup';
 import type { Article } from './db/article';
 import type { Feed } from './db/feed';
-import type { ArticleFilter } from './db/session';
+import type { ArticleFilter } from './types';
 
 export function createStores() {
 	return {

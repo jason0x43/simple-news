@@ -1,5 +1,3 @@
-import type { Feed } from '$lib/db/feed';
-import type { FeedGroup, FeedGroupWithFeeds } from '$lib/db/feedgroup';
 import {
 	addFeedsToGroup,
 	findUserFeedGroupContainingFeed,
@@ -7,11 +5,11 @@ import {
 	removeFeedsFromGroup
 } from '$lib/db/feedgroup';
 import { json } from '$lib/kit';
-import { getSessionOrThrow as getSessionOrThrow } from '$lib/session';
+import { getSessionOrThrow } from '$lib/session';
+import type { GetFeedGroupsResponse } from '$lib/types';
 import { error } from '@sveltejs/kit';
+import { z } from 'zod';
 import type { RequestHandler } from './$types';
-
-export type GetFeedGroupsResponse = FeedGroupWithFeeds[];
 
 /**
  * Get all feeds
@@ -19,13 +17,15 @@ export type GetFeedGroupsResponse = FeedGroupWithFeeds[];
 export const GET: RequestHandler = async ({ cookies }) => {
 	const session = await getSessionOrThrow(cookies);
 	const { user } = session;
-	return json(await getUserFeedGroupsWithFeeds(user.id));
+	const resp: GetFeedGroupsResponse = await getUserFeedGroupsWithFeeds(user.id);
+	return json(resp);
 };
 
-export type AddGroupFeedRequest = {
-	feedId: Feed['id'];
-	groupId: FeedGroup['id'] | 'not subscribed';
-};
+const AddGroupFeedRequestSchema = z.object({
+	feedId: z.string(),
+	groupId: z.string()
+});
+export type AddGroupFeedRequest = z.infer<typeof AddGroupFeedRequestSchema>;
 
 export type AddGroupFeedResponse = Record<string, never>;
 
@@ -37,14 +37,13 @@ export type AddGroupFeedResponse = Record<string, never>;
 export const PUT: RequestHandler = async ({ request, cookies }) => {
 	const session = await getSessionOrThrow(cookies);
 	const { user } = session;
-	const data: AddGroupFeedRequest = await request.json();
 
-	if (typeof data.feedId !== 'string') {
-		throw error(400, 'A feed ID must be provided');
-	}
+	let data: AddGroupFeedRequest;
 
-	if (typeof data.groupId !== 'string') {
-		throw error(400, 'A feed group ID must be provided');
+	try {
+		data = AddGroupFeedRequestSchema.parse(await request.json());
+	} catch (err) {
+		throw error(400, 'A feed ID and feed group ID must be provided');
 	}
 
 	const existingGroup = await findUserFeedGroupContainingFeed({

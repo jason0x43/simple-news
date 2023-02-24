@@ -1,14 +1,9 @@
+import { SessionDataSchema, type SessionData } from '$lib/types.js';
 import { createId } from '@paralleldrive/cuid2';
 import type { Session, User } from './lib/db.js';
 import db from './lib/db.js';
 
 export type { Session };
-
-export type ArticleFilter = 'all' | 'unread' | 'saved';
-
-export type SessionData = {
-	articleFilter: ArticleFilter;
-};
 
 export const defaultSessionData: SessionData = {
 	articleFilter: 'unread'
@@ -65,7 +60,9 @@ export async function getSessionWithUser(
 
 	return {
 		...session,
-		data: session.data ? JSON.parse(session.data) : undefined,
+		data: session.data
+			? SessionDataSchema.parse(JSON.parse(session.data))
+			: undefined,
 		user
 	};
 }

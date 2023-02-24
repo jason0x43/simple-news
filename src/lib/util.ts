@@ -1,3 +1,5 @@
+import type { ZodType } from 'zod';
+
 export function unescapeHtml(text: string): string {
 	return text
 		.replace(/&quot;/g, '"')
@@ -15,10 +17,11 @@ export function uniquify<T>(val: T[]): T[] {
 	return Array.from(new Set(val));
 }
 
-export function loadValue<T>(key: string): T | undefined {
-	const val = window.sessionStorage.getItem(`simple-news:${key}`);
-	if (val) {
-		return JSON.parse(val);
+export function loadValue<T>(key: string, parser?: ZodType<T>): T | undefined {
+	const valStr = window.sessionStorage.getItem(`simple-news:${key}`);
+	if (valStr) {
+		const val = JSON.parse(valStr);
+		return parser ? parser.parse(val) : (val as T);
 	}
 	return undefined;
 }

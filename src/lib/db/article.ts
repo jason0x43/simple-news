@@ -1,8 +1,8 @@
+import type { ArticleFilter } from '$lib/types';
 import { createId } from '@paralleldrive/cuid2';
 import type { Transaction } from 'kysely';
-import db from './lib/db.js';
 import type { Article, Database, Feed, User, UserArticle } from './lib/db';
-import type { ArticleFilter } from './session.js';
+import db from './lib/db.js';
 
 export type { Article };
 

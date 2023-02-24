@@ -16,7 +16,7 @@ export class ResponseError extends Error {
 		let msg = this.message;
 		try {
 			const data = JSON.parse(this.body);
-			if (data.errors) {
+			if (data && typeof data === 'object' && 'errors' in data) {
 				msg += `\n${JSON.stringify(data.errors, null, '  ')}`;
 			}
 		} catch {

@@ -1,8 +1,8 @@
 import { getFeedStats } from '$lib/db/feed';
 import { getUserFeedGroupsWithFeeds, getUserFeeds } from '$lib/db/feedgroup';
-import type { SessionData } from '$lib/db/session';
 import type { User } from '$lib/db/user';
 import { getSessionOrThrow } from '$lib/session';
+import type { SessionData } from '$lib/types';
 import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 

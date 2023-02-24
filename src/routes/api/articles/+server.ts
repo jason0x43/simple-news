@@ -1,27 +1,11 @@
-import type { Article } from '$lib/db/article';
-import {
-	markArticlesRead,
-	type ArticleHeadingWithUserData
-} from '$lib/db/article';
-import { errorResponse } from '$lib/request';
+import { markArticlesRead } from '$lib/db/article';
 import { getSessionOrThrow } from '$lib/session';
 import type { RequestHandler } from './$types';
-
-export type ArticleUpdateRequest = {
-	articleIds: Article['id'][];
-	userData: {
-		read?: boolean;
-		saved?: boolean;
-	};
-};
-
-export type ArticleUpdateResponse = {
-	errors?: {
-		articleIds?: string;
-		userData?: string;
-	};
-	articles?: ArticleHeadingWithUserData[];
-};
+import { error } from '@sveltejs/kit';
+import {
+	ArticleUpdateRequestSchema,
+	type ArticleUpdateRequest
+} from '$lib/types';
 
 /**
  * Update user data for a set of articles
@@ -30,22 +14,12 @@ export const PUT: RequestHandler = async function ({ cookies, request }) {
 	const session = await getSessionOrThrow(cookies);
 	const { user } = session;
 
-	const data: ArticleUpdateRequest = await request.json();
+	let data: ArticleUpdateRequest;
 
-	if (!Array.isArray(data.articleIds)) {
-		return errorResponse({
-			errors: {
-				articleIds: 'articleIds must be an array of IDs'
-			}
-		});
-	}
-
-	if (!data.userData) {
-		return errorResponse({
-			errors: {
-				userData: 'UserData must be an object of flags'
-			}
-		});
+	try {
+		data = ArticleUpdateRequestSchema.parse(await request.json());
+	} catch (err) {
+		throw error(400, 'Invalid request data');
 	}
 
 	if (data.userData.read !== undefined) {

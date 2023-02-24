@@ -10,24 +10,27 @@
 		uniquify
 	} from '$lib/util';
 	import { onMount } from 'svelte';
-	import { put } from '$lib/request';
 	import { getAppContext } from '$lib/contexts';
 	import type { Article } from '$lib/db/article';
 	import type { Feed } from '$lib/db/feed';
 	import { browser } from '$app/environment';
-	import type {
-		ArticleUpdateRequest,
-		ArticleUpdateResponse
-	} from '../../routes/api/articles/+server';
-	import { updateFeedStats } from '$lib/feedUtil';
+	import { invalidate } from '$app/navigation';
+	import { put } from '$lib/request';
+	import { z } from 'zod';
+	import type { ArticleUpdateRequest } from '$lib/types';
 
 	export let selectedArticleId: Article['id'] | undefined;
 	export let selectedFeedId: Feed['id'] | undefined;
 
-	const { articles, feeds, feedStats, sidebarVisible, articleFilter } =
+	const { articles, feeds, sidebarVisible, articleFilter } =
 		getAppContext().stores;
 
-	type ScrollData = { visibleCount: number; scrollTop: number };
+	const ScrollDataSchema = z.object({
+		visibleCount: z.number(),
+		scrollTop: z.number()
+	});
+	type ScrollData = z.infer<typeof ScrollDataSchema>;
+
 	const updatedArticleIds = new Set<Article['id']>();
 	const scrollDataKey = 'scrollData';
 
@@ -218,12 +221,11 @@
 		}
 
 		try {
-			await put<ArticleUpdateRequest, ArticleUpdateResponse>('/api/articles', {
+			await put<ArticleUpdateRequest>('/api/articles', {
 				articleIds,
 				userData: { read }
 			});
-
-			updateFeedStats(feedStats);
+			invalidate('reader:feedstats');
 		} catch (error) {
 			console.warn(`Error marking articles as read: ${error}`);
 
@@ -240,7 +242,7 @@
 	}
 
 	onMount(() => {
-		const scrollData = loadValue<ScrollData>(scrollDataKey);
+		const scrollData = loadValue(scrollDataKey, ScrollDataSchema);
 		if (scrollData) {
 			visibleCount = scrollData.visibleCount;
 			setTimeout(() => {

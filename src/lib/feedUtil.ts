@@ -1,9 +1,7 @@
 import type { Writable } from 'svelte/store';
-import type { GetFeedStatsResponse } from '../routes/api/feedstats/+server';
-import type { FeedStats } from './db/feed';
+import type { Feed, FeedStats } from './db/feed';
 import type { FeedGroupWithFeeds } from './db/feedgroup';
-import type { Feed } from './db/feed';
-import type { ArticleFilter } from './db/session';
+import { GetFeedStatsResponseSchema, type ArticleFilter } from './types';
 
 /**
  * Get the number of articles from a list of feeds that match a filter
@@ -59,7 +57,7 @@ export function allAreIdentified<T>(
 export async function updateFeedStats(feedStats: Writable<FeedStats>) {
 	try {
 		const resp = await fetch('/api/feedstats');
-		const data = (await resp.json()) as GetFeedStatsResponse;
+		const data = GetFeedStatsResponseSchema.parse(await resp.json());
 		feedStats.set(data);
 	} catch (error) {
 		console.warn(`Error updating feed stats: ${error}`);

@@ -1,9 +1,48 @@
-import type { SvelteComponentTyped } from 'svelte';
+import { z } from 'zod';
+import type { Feed } from './db/feed';
+import type { FeedGroupWithFeeds } from './db/feedgroup';
 
-export type Props<T> = T extends SvelteComponentTyped<
-	infer P,
-	Record<string, unknown>,
-	Record<string, unknown>
->
-	? P
-	: never;
+export const GetFeedStatsResponseSchema = z.record(
+	z.object({
+		total: z.number(),
+		read: z.number()
+	})
+);
+export type GetFeedStatsResponse = z.infer<typeof GetFeedStatsResponseSchema>;
+
+export const ArticleUpdateRequestSchema = z.object({
+	articleIds: z.array(z.string()),
+	userData: z.object({
+		read: z.boolean().optional(),
+		saved: z.boolean().optional()
+	})
+});
+export type ArticleUpdateRequest = z.infer<typeof ArticleUpdateRequestSchema>;
+
+export type GetFeedGroupsResponse = FeedGroupWithFeeds[];
+
+export type GetFeedsResponse = Feed[];
+
+export const AddFeedRequestSchema = z.object({
+	url: z.string()
+});
+export type AddFeedRequest = z.infer<typeof AddFeedRequestSchema>;
+
+export type AddFeedResponse = {
+	errors?: Record<string, string>;
+	feed?: Feed;
+};
+
+export type UpdateSessionRequest = SessionData;
+
+export const ArticleFilterSchema = z.union([
+	z.literal('all'),
+	z.literal('unread'),
+	z.literal('saved')
+]);
+export type ArticleFilter = z.infer<typeof ArticleFilterSchema>;
+
+export const SessionDataSchema = z.object({
+	articleFilter: ArticleFilterSchema
+});
+export type SessionData = z.infer<typeof SessionDataSchema>;
