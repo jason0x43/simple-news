@@ -155,20 +155,32 @@
 	}
 
 	let touchTimer: ReturnType<typeof setTimeout>;
+	let isLongPress = false;
 
 	function handleTouchStart(event: TouchEvent) {
-		const { pageX, pageY } = event.touches[0];
-		touchTimer = setTimeout(() => {
-			handleContextMenu({
-				target: event.target,
-				x: pageX,
-				y: pageY
-			});
-		}, 500);
+		isLongPress = false;
+
+		if (menuAnchor) {
+			handleContextClose();
+			event.preventDefault();
+		} else {
+			const { pageX, pageY } = event.touches[0];
+			touchTimer = setTimeout(() => {
+				isLongPress = true;
+				handleContextMenu({
+					target: event.target,
+					x: pageX,
+					y: pageY
+				});
+			}, 500);
+		}
 	}
 
-	function handleTouchEnd() {
+	function handleTouchEnd(event: TouchEvent) {
 		clearTimeout(touchTimer);
+		if (isLongPress) {
+			event.preventDefault();
+		}
 	}
 
 	function handleContextSelect(value: string) {
@@ -343,6 +355,7 @@
 		flex-shrink: 0;
 		border-right: solid 1px var(--border);
 		position: relative;
+		user-select: none;
 	}
 
 	.list {
@@ -350,6 +363,7 @@
 		width: 100%;
 		padding: 0;
 		margin: 0;
+		user-select: none;
 	}
 
 	.article {
@@ -359,6 +373,7 @@
 		padding: 0 calc(var(--vertical-pad));
 		min-height: 2.25rem;
 		cursor: pointer;
+		user-select: none;
 	}
 
 	.article a {
