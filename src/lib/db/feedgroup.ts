@@ -2,7 +2,7 @@ import { createId } from '@paralleldrive/cuid2';
 import db from './lib/db.js';
 import type { Feed, FeedGroup, FeedGroupFeed, User } from './lib/db';
 
-export type { FeedGroup };
+export type { FeedGroup, FeedGroupFeed };
 
 export type FeedGroupWithFeeds = FeedGroup & {
 	feeds: Feed[];

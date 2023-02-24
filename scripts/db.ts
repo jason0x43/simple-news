@@ -4,23 +4,27 @@ import { Writable } from 'stream';
 import { inspect } from 'util';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
+import { z } from 'zod';
+import 'zx/globals';
 import { deleteFeedArticles } from '../src/lib/db/article.js';
+import type { Feed } from '../src/lib/db/feed.js';
 import { createFeed, getFeedByUrl, getFeeds } from '../src/lib/db/feed.js';
 import {
+	addFeedsToGroup,
 	createFeedGroup,
 	deleteFeedGroup,
-	getUserFeedGroups
-} from '../src/lib/db/feedgroup.js';
-import {
-	addFeedsToGroup,
 	getGroupFeeds,
 	getUserFeedGroup,
+	getUserFeedGroups,
 	getUserFeeds,
 	removeFeedsFromGroup
 } from '../src/lib/db/feedgroup.js';
-import type { Feed, FeedGroup, FeedGroupFeed } from '../src/lib/db/schema';
+import {
+	FeedGroupFeedSchema,
+	FeedGroupSchema,
+	FeedSchema
+} from '../src/lib/db/lib/db.js';
 import { createUser, getUserByUsername } from '../src/lib/db/user.js';
-import 'zx/globals';
 
 type MutableWritable = Writable & { muted?: boolean };
 
@@ -33,9 +37,20 @@ const mutableStdout: MutableWritable = new Writable({
 	}
 });
 
-type ExportedFeedGroup = FeedGroup & {
-	feeds: (FeedGroupFeed & { feed: Feed })[];
-};
+const ExportedFeedGroupSchema = z.intersection(
+	FeedGroupSchema,
+	z.object({
+		feeds: z.array(
+			z.intersection(
+				FeedGroupFeedSchema,
+				z.object({
+					feed: FeedSchema
+				})
+			)
+		)
+	})
+);
+const ExportedFeedGroupArraySchema = z.array(ExportedFeedGroupSchema);
 
 yargs(hideBin(process.argv))
 	.scriptName('db')
@@ -156,8 +171,8 @@ yargs(hideBin(process.argv))
 				terminal: true
 			});
 
-			const user = getUserByUsername(argv.username);
-			const feeds = getFeeds();
+			const user = await getUserByUsername(argv.username);
+			const feeds = await getFeeds();
 			const groupFeeds: string[] = [];
 
 			for (;;) {
@@ -238,9 +253,9 @@ yargs(hideBin(process.argv))
 					type: 'string'
 				});
 		},
-		(argv) => {
-			const user = getUserByUsername(argv.username);
-			deleteFeedGroup({
+		async (argv) => {
+			const user = await getUserByUsername(argv.username);
+			await deleteFeedGroup({
 				userId: user.id,
 				name: argv.name
 			});
@@ -275,15 +290,15 @@ yargs(hideBin(process.argv))
 				terminal: true
 			});
 
-			const user = getUserByUsername(argv.username);
-			const userFeeds = getUserFeeds(user.id);
+			const user = await getUserByUsername(argv.username);
+			const userFeeds = await getUserFeeds(user.id);
 			const alreadyGrouped: Set<string> = new Set();
 			for (const feed of userFeeds) {
 				alreadyGrouped.add(feed.id);
 			}
 
 			const groupFeeds: string[] = [];
-			const feeds = getFeeds();
+			const feeds = await getFeeds();
 
 			for (;;) {
 				rl.write(`Feeds in ${argv.name}:\n`);
@@ -372,22 +387,22 @@ yargs(hideBin(process.argv))
 				terminal: true
 			});
 
-			const user = getUserByUsername(argv.username);
-			const groups = getUserFeedGroups(user.id);
+			const user = await getUserByUsername(argv.username);
+			const groups = await getUserFeedGroups(user.id);
 			const group = groups.find((g) => g.name === argv.name);
 
 			if (!group) {
 				throw new Error(`Unknown group name ${argv.name}`);
 			}
 
-			const feeds = getFeeds();
-			const userFeeds = getUserFeeds(user.id);
+			const feeds = await getFeeds();
+			const userFeeds = await getUserFeeds(user.id);
 			const alreadyGrouped: Set<string> = new Set();
 			for (const feed of userFeeds) {
 				alreadyGrouped.add(feed.id);
 			}
 
-			const existingGroupFeeds: string[] = getGroupFeeds(group.id).map(
+			const existingGroupFeeds: string[] = (await getGroupFeeds(group.id)).map(
 				(feed) => feed.id
 			);
 			const groupFeeds: string[] = existingGroupFeeds.slice();
@@ -458,9 +473,11 @@ yargs(hideBin(process.argv))
 						}
 					}
 
-					const group = getUserFeedGroup(user.id, argv.name);
-					addFeedsToGroup(group.id, toAdd);
-					removeFeedsFromGroup(group.id, toRemove);
+					const group = await getUserFeedGroup(user.id, argv.name);
+					if (group) {
+						addFeedsToGroup(group.id, toAdd);
+						removeFeedsFromGroup(group.id, toRemove);
+					}
 
 					rl.close();
 					break;
@@ -489,7 +506,7 @@ yargs(hideBin(process.argv))
 	)
 
 	.command('list-feeds', 'List feeds', {}, async () => {
-		for (const feed of getFeeds()) {
+		for (const feed of await getFeeds()) {
 			console.log(`${feed.id}: ${feed.title}`);
 		}
 	})
@@ -510,8 +527,8 @@ yargs(hideBin(process.argv))
 				});
 		},
 		async (argv) => {
-			const user = getUserByUsername(argv.username);
-			const groups = getUserFeedGroups(user.id);
+			const user = await getUserByUsername(argv.username);
+			const groups = await getUserFeedGroups(user.id);
 			if (argv.file) {
 				writeFileSync(argv.file, JSON.stringify(groups, null, '  '));
 			} else {
@@ -564,16 +581,19 @@ yargs(hideBin(process.argv))
 				});
 		},
 		async (argv) => {
-			const user = getUserByUsername(argv.username);
-			const groupData = JSON.parse(
-				readFileSync(argv.file, { encoding: 'utf8' })
-			) as ExportedFeedGroup[];
+			const user = await getUserByUsername(argv.username);
+			const groupData = ExportedFeedGroupArraySchema.parse(
+				JSON.parse(readFileSync(argv.file, { encoding: 'utf8' }))
+			);
 
 			for (const group of groupData) {
 				const feedUrls = group.feeds.map((f) => f.feed.url);
 				const feeds: Feed[] = [];
 				for (const url of feedUrls) {
-					feeds.push(getFeedByUrl(url));
+					const feed = await getFeedByUrl(url);
+					if (feed) {
+						feeds.push(feed);
+					}
 				}
 
 				createFeedGroup({

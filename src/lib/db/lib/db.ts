@@ -6,6 +6,7 @@ import {
 	type Insertable,
 	type Selectable
 } from 'kysely';
+import { z } from 'zod';
 
 export const version = 1;
 
@@ -30,19 +31,32 @@ type DbFeed = {
 	htmlUrl?: string | null;
 };
 
-export type Feed = Selectable<DbFeed>;
+export const FeedSchema = z.object({
+	id: z.string(),
+	url: z.string(),
+	title: z.string(),
+	type: z.literal('rss').or(z.literal('atom')),
+	lastUpdate: z.number(),
+	disabled: z.optional(z.literal(0).or(z.literal(1)).or(z.null())),
+	icon: z.optional(z.string().or(z.null())),
+	htmlUrl: z.optional(z.string().or(z.null()))
+});
+export type Feed = z.infer<typeof FeedSchema>;
+
 export type InsertableFeed = Insertable<DbFeed>;
 
-export type FeedGroup = {
-	id: string;
-	userId: User['id'];
-	name: string;
-};
+export const FeedGroupSchema = z.object({
+	id: z.string(),
+	userId: z.string(),
+	name: z.string()
+});
+export type FeedGroup = z.infer<typeof FeedGroupSchema>;
 
-export type FeedGroupFeed = {
-	feedGroupId: FeedGroup['id'];
-	feedId: Feed['id'];
-};
+export const FeedGroupFeedSchema = z.object({
+	feedGroupId: z.string(),
+	feedId: z.string()
+});
+export type FeedGroupFeed = z.infer<typeof FeedGroupFeedSchema>;
 
 export type Password = {
 	hash: string;
