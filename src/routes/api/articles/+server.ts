@@ -1,18 +1,17 @@
 import { markArticlesRead } from '$lib/db/article';
-import { getSessionOrThrow } from '$lib/session';
-import type { RequestHandler } from './$types';
-import { error } from '@sveltejs/kit';
+import { getSessionUser } from '$lib/session';
 import {
 	ArticleUpdateRequestSchema,
 	type ArticleUpdateRequest
 } from '$lib/types';
+import { error } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
 
 /**
  * Update user data for a set of articles
  */
 export const PUT: RequestHandler = async function ({ cookies, request }) {
-	const session = await getSessionOrThrow(cookies);
-	const { user } = session;
+	const user = await getSessionUser(cookies);
 
 	let data: ArticleUpdateRequest;
 

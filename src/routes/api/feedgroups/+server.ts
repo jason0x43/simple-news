@@ -5,7 +5,7 @@ import {
 	removeFeedsFromGroup
 } from '$lib/db/feedgroup';
 import { json } from '$lib/kit';
-import { getSessionOrThrow } from '$lib/session';
+import { getSessionUser } from '$lib/session';
 import type { GetFeedGroupsResponse } from '$lib/types';
 import { error } from '@sveltejs/kit';
 import { z } from 'zod';
@@ -15,8 +15,7 @@ import type { RequestHandler } from './$types';
  * Get all feeds
  */
 export const GET: RequestHandler = async ({ cookies }) => {
-	const session = await getSessionOrThrow(cookies);
-	const { user } = session;
+	const user = await getSessionUser(cookies);
 	const resp: GetFeedGroupsResponse = await getUserFeedGroupsWithFeeds(user.id);
 	return json(resp);
 };
@@ -35,8 +34,7 @@ export type AddGroupFeedResponse = Record<string, never>;
  * The feed will be removed from any existing feed group
  */
 export const PUT: RequestHandler = async ({ request, cookies }) => {
-	const session = await getSessionOrThrow(cookies);
-	const { user } = session;
+	const user = await getSessionUser(cookies);
 
 	let data: AddGroupFeedRequest;
 

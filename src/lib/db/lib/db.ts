@@ -1,11 +1,5 @@
 import sqlite3 from 'better-sqlite3';
-import {
-	Kysely,
-	SqliteDialect,
-	type Generated,
-	type Insertable,
-	type Selectable
-} from 'kysely';
+import { Kysely, SqliteDialect, type Generated, type Insertable } from 'kysely';
 import { z } from 'zod';
 
 export const version = 1;

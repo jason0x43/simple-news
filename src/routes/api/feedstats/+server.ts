@@ -1,13 +1,12 @@
 import { getFeedStats } from '$lib/db/feed';
 import { getUserFeeds } from '$lib/db/feedgroup';
 import { json } from '$lib/kit';
-import { getSessionOrThrow } from '$lib/session';
+import { getSessionUser } from '$lib/session';
 import type { GetFeedStatsResponse } from '$lib/types';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ cookies }) => {
-	const session = await getSessionOrThrow(cookies);
-	const { user } = session;
+	const user = await getSessionUser(cookies);
 	const feeds = await getUserFeeds(user.id);
 	const resp: GetFeedStatsResponse = await getFeedStats({
 		userId: user.id,

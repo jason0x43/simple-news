@@ -1,6 +1,10 @@
 import { error, type Cookies } from '@sveltejs/kit';
-import type { Session } from './db/lib/db';
-import { getSessionWithUser, type SessionWithUser } from './db/session';
+import {
+	getSessionWithUser,
+	type Session,
+	type SessionWithUser
+} from './db/session';
+import type { User } from './db/user';
 
 const cookieOpts = {
 	path: '/',
@@ -29,6 +33,15 @@ export async function getSessionOrThrow(
 		throw error(401, 'not logged in');
 	}
 	return session;
+}
+
+export async function getSessionUser(cookies: Cookies): Promise<User> {
+	const sessionId = getSessionId(cookies);
+	const session = sessionId ? await getSessionWithUser(sessionId) : undefined;
+	if (!session?.user) {
+		throw error(401, 'not logged in');
+	}
+	return session.user;
 }
 
 export function clearSessionCookie(cookies: Cookies): void {
