@@ -12,12 +12,12 @@ export type FeedStats = {
 	};
 };
 
-type CreateFeedData = Omit<InsertableFeed, 'id' | 'type' | 'lastUpdate'> &
-	Partial<Pick<InsertableFeed, 'id' | 'type' | 'lastUpdate'>>;
+type CreateFeedData = Omit<InsertableFeed, 'id' | 'type' | 'last_update'> &
+	Partial<Pick<InsertableFeed, 'id' | 'type' | 'last_update'>>;
 
 export async function createFeed(data: CreateFeedData): Promise<Feed> {
 	return db
-		.insertInto('Feed')
+		.insertInto('feed')
 		.values({
 			id: createId(),
 			...data
@@ -28,11 +28,11 @@ export async function createFeed(data: CreateFeedData): Promise<Feed> {
 
 export async function createOrGetFeed(data: CreateFeedData): Promise<Feed> {
 	return db
-		.insertInto('Feed')
+		.insertInto('feed')
 		.values({
 			id: createId(),
 			icon: '',
-			htmlUrl: '',
+			html_url: '',
 			...data
 		})
 		.onConflict((conflict) => conflict.column('url').doNothing())
@@ -41,13 +41,13 @@ export async function createOrGetFeed(data: CreateFeedData): Promise<Feed> {
 }
 
 export async function getFeeds(): Promise<Feed[]> {
-	const feeds = await db.selectFrom('Feed').selectAll().execute();
+	const feeds = await db.selectFrom('feed').selectAll().execute();
 	return feeds;
 }
 
 export async function getFeed(id: string): Promise<Feed | undefined> {
 	return db
-		.selectFrom('Feed')
+		.selectFrom('feed')
 		.selectAll()
 		.where('id', '=', id)
 		.executeTakeFirst();
@@ -55,7 +55,7 @@ export async function getFeed(id: string): Promise<Feed | undefined> {
 
 export async function getFeedByUrl(url: string): Promise<Feed | undefined> {
 	return db
-		.selectFrom('Feed')
+		.selectFrom('feed')
 		.selectAll()
 		.where('url', '=', url)
 		.executeTakeFirst();
@@ -71,9 +71,9 @@ export async function getFeedStats(data: {
 
 	for (const feedId of feedIds) {
 		let articleQuery = db
-			.selectFrom('Article')
+			.selectFrom('article')
 			.select('id')
-			.where('feedId', '=', feedId);
+			.where('feed_id', '=', feedId);
 		if (data.maxAge) {
 			const cutoff = BigInt(Date.now() - data.maxAge);
 			articleQuery = articleQuery.where('published', '>', cutoff);
@@ -82,9 +82,9 @@ export async function getFeedStats(data: {
 		const articleIds = (await articleQuery.execute()).map(({ id }) => id);
 
 		const numRead = await db
-			.selectFrom('UserArticle')
+			.selectFrom('user_article')
 			.select(sql<number>`count(*)`.as('count'))
-			.where('articleId', 'in', articleIds)
+			.where('article_id', 'in', articleIds)
 			.where('read', '=', 1)
 			.executeTakeFirst();
 
@@ -102,7 +102,7 @@ export async function updateFeedIcon(data: {
 	icon: string;
 }): Promise<void> {
 	await db
-		.updateTable('Feed')
+		.updateTable('feed')
 		.set({ icon: data.icon })
 		.where('id', '=', data.feedId)
 		.executeTakeFirst();

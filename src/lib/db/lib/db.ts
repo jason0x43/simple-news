@@ -2,12 +2,10 @@ import sqlite3 from 'better-sqlite3';
 import { Kysely, SqliteDialect, type Generated, type Insertable } from 'kysely';
 import { z } from 'zod';
 
-export const version = 1;
-
 export type Article = {
 	id: string;
-	articleId: string;
-	feedId: Feed['id'];
+	article_id: string;
+	feed_id: Feed['id'];
 	title?: string | null;
 	link?: string | null;
 	published: bigint;
@@ -19,10 +17,10 @@ type DbFeed = {
 	url: string;
 	title: string;
 	type: Generated<'rss' | 'atom'>;
-	lastUpdate: Generated<number>;
+	last_update: Generated<number>;
 	disabled?: 0 | 1 | null;
 	icon?: string | null;
-	htmlUrl?: string | null;
+	html_url?: string | null;
 };
 
 export const FeedSchema = z.object({
@@ -30,10 +28,10 @@ export const FeedSchema = z.object({
 	url: z.string(),
 	title: z.string(),
 	type: z.literal('rss').or(z.literal('atom')),
-	lastUpdate: z.number(),
+	last_update: z.number(),
 	disabled: z.optional(z.literal(0).or(z.literal(1)).or(z.null())),
 	icon: z.optional(z.string().or(z.null())),
-	htmlUrl: z.optional(z.string().or(z.null()))
+	html_url: z.optional(z.string().or(z.null()))
 });
 export type Feed = z.infer<typeof FeedSchema>;
 
@@ -41,27 +39,27 @@ export type InsertableFeed = Insertable<DbFeed>;
 
 export const FeedGroupSchema = z.object({
 	id: z.string(),
-	userId: z.string(),
+	user_id: z.string(),
 	name: z.string()
 });
 export type FeedGroup = z.infer<typeof FeedGroupSchema>;
 
 export const FeedGroupFeedSchema = z.object({
-	feedGroupId: z.string(),
-	feedId: z.string()
+	feed_group_id: z.string(),
+	feed_id: z.string()
 });
 export type FeedGroupFeed = z.infer<typeof FeedGroupFeedSchema>;
 
 export type Password = {
 	hash: string;
-	userId: string;
+	user_id: string;
 };
 
 export type Session = {
 	id: string;
 	data: string;
 	expires: number;
-	userId: User['id'];
+	user_id: User['id'];
 };
 
 export type User = {
@@ -72,30 +70,32 @@ export type User = {
 };
 
 export type UserArticle = {
-	userId: User['id'];
-	articleId: Article['id'];
+	user_id: User['id'];
+	article_id: Article['id'];
 	read?: 0 | 1 | null;
 	saved?: 0 | 1 | null;
 };
 
 export type Database = {
-	Article: Article;
-	Feed: DbFeed;
-	FeedGroup: FeedGroup;
-	FeedGroupFeed: FeedGroupFeed;
-	Password: Password;
-	Session: Session;
-	User: User;
-	UserArticle: UserArticle;
+	article: Article;
+	feed: DbFeed;
+	feed_group: FeedGroup;
+	feed_group_feed: FeedGroupFeed;
+	password: Password;
+	session: Session;
+	user: User;
+	user_article: UserArticle;
 };
 
 const db = new Kysely<Database>({
 	dialect: new SqliteDialect({
 		database: async () => {
-			if (!process.env.DB_FILE) {
+			const dbFile = process.env.DB_FILE;
+			if (!dbFile) {
 				throw new Error('The DB_FILE environment variable must be defined');
 			}
-			return sqlite3(process.env.DB_FILE);
+			console.debug(`Connecting to database ${dbFile}`);
+			return sqlite3(dbFile);
 		}
 	})
 });

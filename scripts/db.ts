@@ -128,7 +128,7 @@ yargs(hideBin(process.argv))
 				url: argv.url,
 				title: argv.title,
 				icon: argv.icon,
-				htmlUrl: argv.htmlUrl
+				html_url: argv.htmlUrl
 			});
 		}
 	)
@@ -256,7 +256,7 @@ yargs(hideBin(process.argv))
 		async (argv) => {
 			const user = await getUserByUsername(argv.username);
 			await deleteFeedGroup({
-				userId: user.id,
+				user_id: user.id,
 				name: argv.name
 			});
 		}
@@ -558,7 +558,7 @@ yargs(hideBin(process.argv))
 					url: feed.url,
 					title: feed.title,
 					icon: feed.icon,
-					htmlUrl: feed.htmlUrl
+					html_url: feed.htmlUrl
 				});
 			}
 		}

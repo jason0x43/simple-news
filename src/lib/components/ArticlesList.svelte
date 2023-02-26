@@ -35,7 +35,7 @@
 	const scrollDataKey = 'scrollData';
 
 	$: articleFeedIds = uniquify(
-		$articles?.slice(0, 40).map(({ feedId }) => feedId) ?? []
+		$articles?.slice(0, 40).map(({ feed_id }) => feed_id) ?? []
 	);
 	$: icons = $feeds
 		.filter(({ id }) => articleFeedIds.includes(id))
@@ -107,7 +107,7 @@
 			.slice(0, visibleCount)
 			.map((article) => ({
 				...article,
-				feed: $feeds.find(({ id }) => id === article.feedId),
+				feed: $feeds.find(({ id }) => id === article.feed_id),
 				isActive: activeArticleId === article.id,
 				isSelected: selectedArticleId === article.id,
 				isRead: Boolean(article.read)

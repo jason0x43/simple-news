@@ -52,8 +52,8 @@ async function downloadFeed(feed: Feed) {
 			const articleId = getArticleId(entry);
 			const content = getContent(entry);
 			upsertArticle({
-				articleId,
-				feedId: feed.id,
+				article_id: articleId,
+				feed_id: feed.id,
 				content,
 				title: entry.title ?? 'Untitled',
 				link: entry.link ?? null,

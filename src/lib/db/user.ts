@@ -11,7 +11,7 @@ export async function createUser(
 	password: string
 ): Promise<User> {
 	const user = await db
-		.insertInto('User')
+		.insertInto('user')
 		.values({
 			id: createId(),
 			username: userData.username,
@@ -20,10 +20,10 @@ export async function createUser(
 		.returningAll()
 		.executeTakeFirstOrThrow();
 	await db
-		.insertInto('Password')
+		.insertInto('password')
 		.values({
 			hash: bcrypt.hashSync(password, 7),
-			userId: user.id
+			user_id: user.id
 		})
 		.executeTakeFirst();
 	return user;
@@ -42,7 +42,7 @@ export async function verifyLogin({
 	}
 
 	return db
-		.selectFrom('User')
+		.selectFrom('user')
 		.selectAll()
 		.where('username', '=', username)
 		.executeTakeFirst();
@@ -50,7 +50,7 @@ export async function verifyLogin({
 
 export async function getUserById(userId: User['id']): Promise<User> {
 	return db
-		.selectFrom('User')
+		.selectFrom('user')
 		.selectAll()
 		.where('id', '=', userId)
 		.executeTakeFirstOrThrow();
@@ -60,7 +60,7 @@ export async function getUserByUsername(
 	username: User['username']
 ): Promise<User> {
 	return db
-		.selectFrom('User')
+		.selectFrom('user')
 		.selectAll()
 		.where('username', '=', username)
 		.executeTakeFirstOrThrow();

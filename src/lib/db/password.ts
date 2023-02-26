@@ -7,9 +7,9 @@ export async function getPasswordHash(
 	username: User['username']
 ): Promise<Password['hash'] | undefined> {
 	const result = await db
-		.selectFrom('Password')
+		.selectFrom('password')
 		.select('hash')
-		.innerJoin('User', 'User.id', 'Password.userId')
+		.innerJoin('user', 'user.id', 'password.user_id')
 		.where('username', '=', username)
 		.executeTakeFirst();
 	return result?.hash;

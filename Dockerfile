@@ -20,6 +20,7 @@ FROM prebuild as build_app
 ARG base_url=
 ENV BASE_URL=$base_url
 RUN pnpm build
+RUN pnpm migrate
 
 FROM alpine:3.16 AS downloader
 RUN apk add --update nodejs-current

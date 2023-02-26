@@ -8,10 +8,10 @@ export type { Article };
 
 export type ArticleHeading = Pick<
 	Article,
-	'id' | 'feedId' | 'articleId' | 'title' | 'link' | 'published'
+	'id' | 'feed_id' | 'article_id' | 'title' | 'link' | 'published'
 >;
 
-export type ArticleUserData = Omit<UserArticle, 'userId' | 'articleId'>;
+export type ArticleUserData = Omit<UserArticle, 'user_id' | 'article_id'>;
 
 export type ArticleHeadingWithUserData = Omit<Article, 'content'> &
 	ArticleUserData;
@@ -26,7 +26,7 @@ export async function getArticle({
 	userId: User['id'];
 }): Promise<ArticleWithUserData | null> {
 	const article = await db
-		.selectFrom('Article')
+		.selectFrom('article')
 		.selectAll()
 		.where('id', '=', id)
 		.executeTakeFirst();
@@ -35,10 +35,10 @@ export async function getArticle({
 	}
 
 	const userArticle = await db
-		.selectFrom('UserArticle')
+		.selectFrom('user_article')
 		.select(['read', 'saved'])
-		.where('userId', '=', userId)
-		.where('articleId', '=', id)
+		.where('user_id', '=', userId)
+		.where('article_id', '=', id)
 		.executeTakeFirst();
 
 	return {
@@ -63,16 +63,16 @@ export async function getArticleHeadings({
 	maxAge?: number;
 }): Promise<ArticleHeadingWithUserData[]> {
 	let query = db
-		.selectFrom('Article')
-		.leftJoin('UserArticle', (join) =>
+		.selectFrom('article')
+		.leftJoin('user_article', (join) =>
 			join
-				.onRef('UserArticle.articleId', '=', 'Article.id')
-				.on('UserArticle.userId', '=', userId)
+				.onRef('user_article.article_id', '=', 'article.id')
+				.on('user_article.user_id', '=', userId)
 		)
 		.select([
 			'id',
-			'feedId',
-			'Article.articleId',
+			'feed_id',
+			'article.article_id',
 			'title',
 			'link',
 			'published',
@@ -81,11 +81,11 @@ export async function getArticleHeadings({
 		]);
 
 	if (feedIds) {
-		query = query.where('feedId', 'in', feedIds);
+		query = query.where('feed_id', 'in', feedIds);
 	}
 
 	if (articleIds) {
-		query = query.where('articleId', 'in', articleIds);
+		query = query.where('article_id', 'in', articleIds);
 	}
 
 	if (filter === 'unread') {
@@ -118,14 +118,14 @@ async function internalMarkArticleRead(
 	}
 ): Promise<void> {
 	await d
-		.insertInto('UserArticle')
+		.insertInto('user_article')
 		.values({
-			userId,
-			articleId: id,
+			user_id: userId,
+			article_id: id,
 			read: read ? 1 : 0
 		})
 		.onConflict((conflict) =>
-			conflict.columns(['userId', 'articleId']).doUpdateSet({
+			conflict.columns(['user_id', 'article_id']).doUpdateSet({
 				read: read ? 1 : 0
 			})
 		)
@@ -158,18 +158,18 @@ export async function markArticlesRead({
 
 type ArticleUpsert = Pick<
 	Article,
-	'articleId' | 'feedId' | 'content' | 'title' | 'link' | 'published'
+	'article_id' | 'feed_id' | 'content' | 'title' | 'link' | 'published'
 >;
 
 export async function upsertArticle(data: ArticleUpsert): Promise<void> {
 	await db
-		.insertInto('Article')
+		.insertInto('article')
 		.values({
 			id: createId(),
 			...data
 		})
 		.onConflict((conflict) =>
-			conflict.columns(['articleId', 'feedId']).doUpdateSet({
+			conflict.columns(['article_id', 'feed_id']).doUpdateSet({
 				content: data.content,
 				title: data.title,
 				link: data.link,
@@ -183,14 +183,14 @@ export async function deleteArticles(
 	articleIds: Article['id'][]
 ): Promise<void> {
 	await db
-		.deleteFrom('Article')
-		.where('articleId', 'in', articleIds)
+		.deleteFrom('article')
+		.where('article_id', 'in', articleIds)
 		.executeTakeFirst();
 }
 
 export async function deleteFeedArticles(feedId: Feed['id']): Promise<void> {
 	await db
-		.deleteFrom('Article')
-		.where('feedId', '=', feedId)
+		.deleteFrom('article')
+		.where('feed_id', '=', feedId)
 		.executeTakeFirst();
 }

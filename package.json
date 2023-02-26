@@ -12,9 +12,10 @@
     "check:watch": "svelte-check --tsconfig ./tsconfig.json --watch",
     "lint": "prettier --check --plugin-search-dir=. . && eslint .",
     "format": "prettier --write --plugin-search-dir=. .",
-    "db": "ts-node ./scripts/db.ts",
+    "db": "ts-node --esm ./scripts/db.ts",
     "test": "vitest run",
     "coverage": "vitest run --coverage",
+    "migrate": "node ./scripts/migrate.js",
     "download-feeds": "ts-node --esm ./scripts/download-feeds.ts"
   },
   "devDependencies": {
