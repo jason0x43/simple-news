@@ -9,7 +9,7 @@
 
 	export let onSelect: () => void;
 
-	const { articleFilter, feeds, feedGroups, feedStats, selectedFeedIds } =
+	const { articleFilter, userFeeds, feedGroups, feedStats, selectedFeedIds } =
 		getAppContext().stores;
 	let expanded: { [title: string]: boolean } = {};
 
@@ -20,7 +20,7 @@
 
 <ul class="feeds">
 	{#each $feedGroups as group (group.name)}
-		{@const groupFeeds = getGroupFeeds(group, $feeds)}
+		{@const groupFeeds = getGroupFeeds(group, $userFeeds)}
 		{#if getArticleCount(groupFeeds, $feedStats, $articleFilter) > 0}
 			<li
 				class:expanded={expanded[group.name] ||
@@ -68,7 +68,7 @@
 										onSelect?.();
 									}}
 								>
-									{$feeds.find((f) => f.id === feed.id)?.title}
+									{$userFeeds.find((f) => f.id === feed.id)?.title}
 								</a>
 								<div class="unread">
 									{($feedStats[feed.id].total ?? 0) -

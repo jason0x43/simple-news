@@ -1,4 +1,4 @@
-import { getFeedStats } from '$lib/db/feed';
+import { getFeeds, getFeedStats } from '$lib/db/feed';
 import { getUserFeedGroupsWithFeeds, getUserFeeds } from '$lib/db/feedgroup';
 import type { User } from '$lib/db/user';
 import { getSessionOrThrow } from '$lib/session';
@@ -20,7 +20,8 @@ export const load: LayoutServerLoad = async ({ depends, cookies }) => {
 	}
 
 	const feedGroups = await getUserFeedGroupsWithFeeds(user.id);
-	const feeds = await getUserFeeds(user.id);
+	const feeds = await getFeeds();
+	const userFeeds = await getUserFeeds(user.id);
 	const feedStats = await getFeedStats({
 		userId: user.id,
 		feeds,
@@ -31,8 +32,9 @@ export const load: LayoutServerLoad = async ({ depends, cookies }) => {
 	return {
 		user,
 		articleFilter: sessionData?.articleFilter,
-		feedStats,
 		feeds,
+		userFeeds,
+		feedStats,
 		feedGroups
 	};
 };

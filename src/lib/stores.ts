@@ -14,6 +14,7 @@ export function createStores() {
 		articles: writable<ArticleHeadingWithUserData[] | undefined>(),
 		articleFilter: writable<ArticleFilter>('unread'),
 		feeds: writable<Feed[]>([]),
+		userFeeds: writable<Feed[]>([]),
 		feedGroups: writable<FeedGroupWithFeeds[]>([]),
 		feedStats: writable<FeedStats>({}),
 		managingFeeds: writable<boolean>(false),
