@@ -46,8 +46,7 @@
     "typescript": "^4.9.5",
     "vite": "^4.1.4",
     "vitest": "^0.28.5",
-    "yargs": "^17.7.1",
-    "zx": "^7.1.1"
+    "yargs": "^17.7.1"
   },
   "dependencies": {
     "@paralleldrive/cuid2": "^2.2.0",

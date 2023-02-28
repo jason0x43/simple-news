@@ -1,6 +1,7 @@
 import sqlite3 from 'better-sqlite3';
 import { Kysely, SqliteDialect, type Generated, type Insertable } from 'kysely';
 import { z } from 'zod';
+import log from '../../log.js';
 
 export type Article = {
 	id: string;
@@ -94,7 +95,7 @@ const db = new Kysely<Database>({
 			if (!dbFile) {
 				throw new Error('The DB_FILE environment variable must be defined');
 			}
-			console.debug(`Connecting to database ${dbFile}`);
+			log.debug(`Connecting to database ${dbFile}`);
 			return sqlite3(dbFile);
 		}
 	})

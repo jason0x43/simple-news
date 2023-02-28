@@ -1,11 +1,13 @@
 import { readFileSync, writeFileSync } from 'fs';
+import { mkdir } from 'fs/promises';
+import { exec as _exec } from 'child_process';
+import { dirname } from 'path';
 import readline from 'readline';
 import { Writable } from 'stream';
-import { inspect } from 'util';
+import { inspect, promisify } from 'util';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { z } from 'zod';
-import 'zx/globals';
 import { deleteFeedArticles } from '../src/lib/db/article.js';
 import type { Feed } from '../src/lib/db/feed.js';
 import { createFeed, getFeedByUrl, getFeeds } from '../src/lib/db/feed.js';
@@ -25,6 +27,8 @@ import {
 	FeedSchema
 } from '../src/lib/db/lib/db.js';
 import { createUser, getUserByUsername } from '../src/lib/db/user.js';
+
+const exec = promisify(_exec);
 
 type MutableWritable = Writable & { muted?: boolean };
 
@@ -608,12 +612,11 @@ yargs(hideBin(process.argv))
 	.command(
 		'schema [outfile]',
 		'write the database schema to a file',
-		(yargs) => {
+		(yargs) =>
 			yargs.positional('outfile', {
 				describe: 'Optional name for the output file',
 				type: 'string'
-			});
-		},
+			}),
 		async (argv) => {
 			let outfile = argv.outfile ?? '';
 			if (!outfile) {
@@ -626,10 +629,10 @@ yargs(hideBin(process.argv))
 				const sc = `${dt.getSeconds()}`.padStart(2, '0');
 				outfile = `schema/schema_${y}${m}${d}${hr}${mn}${sc}.sql`;
 			}
-			echo`db: ${process.env.DB_FILE}`;
-			const dir = await $`dirname ${outfile}`;
-			await $`mkdir -p ${dir}`;
-			await $`echo .schema | sqlite3 ${process.env.DB_FILE} > ${outfile}`;
+			console.log(`db: ${process.env.DB_FILE}`);
+			const dir = dirname(outfile);
+			await mkdir(dir, { recursive: true });
+			await exec(`echo .schema | sqlite3 ${process.env.DB_FILE} > ${outfile}`);
 		}
 	)
 

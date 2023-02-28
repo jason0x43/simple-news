@@ -45,6 +45,15 @@ export async function getFeeds(): Promise<Feed[]> {
 	return feeds;
 }
 
+export async function getEnabledFeeds(): Promise<Feed[]> {
+	const feeds = await db
+		.selectFrom('feed')
+		.selectAll()
+		.where('disabled', 'is not', 1)
+		.execute();
+	return feeds;
+}
+
 export async function getFeed(id: string): Promise<Feed | undefined> {
 	return db
 		.selectFrom('feed')

@@ -26,7 +26,7 @@ ssh $DEPLOY_HOST <<END
 cd $DEPLOY_REPO \
 && git pull \
 && cd $DEPLOY_DOCKER \
-&& docker compose up -d --build simple-news-app simple-news-downloader
+&& docker compose up -d --build simple-news-app
 END
 
 echo ""

@@ -3,28 +3,15 @@ version: '3'
 services:
   app:
     image: simple-news-app
-    container_name: simple-news-app
-    restart: unless-stopped
     build:
       context: .
       target: app
+    environment:
+      DB_FILE: /db/data.db
+      DB_MIGRATIONS: /app/migrations
     command: ['node', 'index.js']
     ports:
       - '3000:3000'
-    environment:
-      DB_FILE: /db/data.db
     volumes:
       - .:/db
-
-  downloader:
-    image: simple-news-downloader
-    container_name: simple-news-downloader
-    restart: unless-stopped
-    build:
-      context: .
-      target: downloader
-    command: ['node', 'scripts/download-feeds.js']
-    environment:
-      DB_FILE: /db/data.db
-    volumes:
-      - .:/db
+      - ./migrations:/app/migrations

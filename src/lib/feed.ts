@@ -1,27 +1,65 @@
-import Parser from 'rss-parser';
+import type { Writable } from 'svelte/store';
+import type { Feed, FeedStats } from './db/feed';
+import type { FeedGroupWithFeeds } from './db/feedgroup';
+import { GetFeedStatsResponseSchema, type ArticleFilter } from './types';
 
-export type ParsedFeed = Parser.Output<Record<string, unknown>>;
-export type FeedItem = Parser.Item;
+/**
+ * Get the number of articles from a list of feeds that match a filter
+ */
+export function getArticleCount(
+	feeds: Feed[],
+	feedStats: FeedStats,
+	articleFilter: ArticleFilter
+): number {
+	const count = feeds.reduce((acc, feed) => {
+		const stats = feedStats[feed.id] ?? {};
+		return (
+			acc +
+			(articleFilter === 'unread' ? stats.total - stats.read : stats.total)
+		);
+	}, 0);
+	return count;
+}
 
-export async function downloadFeed(url: string) {
-	const aborter = new AbortController();
-	const abortTimer = setTimeout(() => {
-		aborter.abort();
-		console.log(`>>> Aborted ${url}`);
-	}, 4000);
-	const response = await fetch(url, { signal: aborter.signal });
-	clearTimeout(abortTimer);
-
-	if (response.status !== 200) {
-		await response.body?.cancel();
-		throw new Error(`Error downloading feed: ${response.status}`);
+/**
+ * Get the feeds identified by a feed group
+ */
+export function getGroupFeeds(
+	group: FeedGroupWithFeeds,
+	feeds: Feed[]
+): Feed[] {
+	const groupFeeds: Feed[] = [];
+	for (const feedGroupFeed of group.feeds) {
+		const feed = feeds.find(({ id }) => id === feedGroupFeed.id);
+		if (feed) {
+			groupFeeds.push(feed);
+		}
 	}
+	return groupFeeds;
+}
 
-	const xml = await response.text();
-	if (xml.length === 0) {
-		throw new Error(`Error downloading feed: empty body`);
+/**
+ * Return true if all the item IDs are contained in the given list of IDs
+ */
+export function allAreIdentified<T>(
+	items: { id: T }[],
+	ids: T[] | undefined
+): boolean {
+	if (!ids) {
+		return false;
 	}
+	return items.every(({ id }) => ids.includes(id));
+}
 
-	const parser = new Parser();
-	return parser.parseString(xml);
+/**
+ * Update the feedStats store
+ */
+export async function updateFeedStats(feedStats: Writable<FeedStats>) {
+	try {
+		const resp = await fetch('/api/feedstats');
+		const data = GetFeedStatsResponseSchema.parse(await resp.json());
+		feedStats.set(data);
+	} catch (error) {
+		console.warn(`Error updating feed stats: ${error}`);
+	}
 }

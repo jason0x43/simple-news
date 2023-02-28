@@ -1,5 +1,5 @@
 import { createOrGetFeed, getFeeds } from '$lib/db/feed';
-import { downloadFeed } from '$lib/feed';
+import { downloadFeed } from '$lib/feed.server';
 import { json } from '$lib/kit';
 import {
 	AddFeedRequestSchema,

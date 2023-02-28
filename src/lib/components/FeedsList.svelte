@@ -1,11 +1,7 @@
 <script lang="ts">
 	import { getAppContext } from '$lib/contexts';
 	import type { Feed } from '$lib/db/feed';
-	import {
-		allAreIdentified,
-		getArticleCount,
-		getGroupFeeds
-	} from '$lib/feedUtil';
+	import { allAreIdentified, getArticleCount, getGroupFeeds } from '$lib/feed';
 
 	export let onSelect: () => void;
 
