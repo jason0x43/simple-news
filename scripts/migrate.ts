@@ -2,15 +2,13 @@ import sqlite3 from 'better-sqlite3';
 import { promises as fs } from 'fs';
 import { FileMigrationProvider, Kysely, Migrator, SqliteDialect } from 'kysely';
 import * as path from 'path';
- import * as url from 'url';
+import * as url from 'url';
+import type { Database } from '../src/lib/db/lib/db';
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
-/** @typedef { import('../src/lib/db/lib/db').Database } Database */
-
 async function migrateToLatest() {
-	/** @type {Kysely<Database>} */
-	const db = new Kysely({
+	const db = new Kysely<Database>({
 		dialect: new SqliteDialect({
 			database: async () => {
 				if (!process.env.DB_FILE) {

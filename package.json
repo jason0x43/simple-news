@@ -15,7 +15,7 @@
     "db": "ts-node --esm ./scripts/db.ts",
     "test": "vitest run",
     "coverage": "vitest run --coverage",
-    "migrate": "node ./scripts/migrate.js",
+    "migrate": "ts-node --esm ./scripts/migrate.ts",
     "download-feeds": "ts-node --esm ./scripts/download-feeds.ts"
   },
   "devDependencies": {
