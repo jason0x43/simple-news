@@ -1,4 +1,5 @@
 import type { Article } from './db/article';
+import * as cheerio from 'cheerio';
 
 export function getArticleContent(article: Article | null): string {
 	if (!article) {
@@ -10,8 +11,7 @@ export function getArticleContent(article: Article | null): string {
 		return '';
 	}
 
-	const div = document.createElement('div');
-	div.innerHTML = content;
+	const $ = cheerio.load(content);
 
 	const { link } = article;
 	let baseUrl: string | undefined;
@@ -20,14 +20,13 @@ export function getArticleContent(article: Article | null): string {
 		baseUrl = origin;
 	}
 
-	for (const img of div.querySelectorAll('img')) {
-		const src = img.getAttribute('src');
-		if (!src) {
-			continue;
+	$('img').each((_, img) => {
+		const src = img.attribs['src'];
+		if (src) {
+			const url = new URL(src, baseUrl);
+			img.attribs['src'] = url.href;
 		}
-		const url = new URL(src, baseUrl);
-		img.setAttribute('src', url.href);
-	}
+	});
 
-	return div.innerHTML;
+	return $.html();
 }
