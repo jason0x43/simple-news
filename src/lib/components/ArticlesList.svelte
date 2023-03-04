@@ -417,7 +417,7 @@
 	}
 
 	.icon {
-		margin-top: calc(var(--font-size) * 0.25);
+		margin-top: calc(var(--font-size) * 0.15);
 		flex-grow: 0;
 		flex-shrink: 0;
 		display: flex;
