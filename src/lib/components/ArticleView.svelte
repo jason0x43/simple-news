@@ -1,15 +1,11 @@
 <script lang="ts">
 	import type { ArticleWithUserData } from '$lib/db/article';
 	import { z } from 'zod';
-	import {
-		isActionEvent,
-		loadValue,
-		storeValue,
-		unescapeHtml
-	} from '$lib/util';
+	import { isActionEvent, loadValue, storeValue } from '$lib/util';
 	import CloseIcon from '$lib/icons/Close.svelte';
 	import { onMount } from 'svelte';
 	import type { Feed } from '$lib/db/feed';
+	import { getArticleContent } from '$lib/article';
 
 	export let article: ArticleWithUserData | null;
 	export let selectedFeedId: Feed['id'];
@@ -34,7 +30,7 @@
 			const elem = event.target as HTMLElement;
 			const href = elem.getAttribute('href') ?? undefined;
 			if (href) {
-				globalThis.open(href, target);
+				window.open(href, target);
 			}
 		}
 	}
@@ -86,7 +82,7 @@
 				</a>
 			</div>
 			<div class="content" on:click={onLinkClick} on:keypress={onLinkClick}>
-				{@html unescapeHtml(article?.content ?? '')}
+				{@html getArticleContent(article)}
 			</div>
 		</div>
 		<a class="close" href={`/reader/${selectedFeedId}`}>
@@ -119,7 +115,7 @@
 
 	.header,
 	.content {
-		max-width: 800px;
+		max-width: 50rem;
 		margin-left: auto;
 		margin-right: auto;
 	}
@@ -147,7 +143,7 @@
 		font-family: Merriweather, serif;
 		font-weight: 300;
 		padding-bottom: 3rem;
-		line-height: 1.5em;
+		line-height: 1.6em;
 	}
 
 	.content :global(h1) {
@@ -209,14 +205,11 @@
 	}
 
 	.content :global(img) {
-		height: auto !important;
 		border-radius: 6px;
-		margin: 2rem 0;
 	}
 
-	.content :global(.image),
-	.content :global(figure) {
-		margin: 2rem 0;
+	.content :global(p) :global(img) {
+		vertical-align: middle;
 	}
 
 	.content :global(.image img),
@@ -230,6 +223,19 @@
 
 	.content :global(.center) {
 		text-align: center;
+	}
+
+	.content :global(pre) {
+		padding: 1rem;
+		background: #f5f5f5;
+		border: solid 1px #eee;
+	}
+
+	.content :global(p) :global(code) {
+		font-size: 90%;
+		padding: 0.05rem 0.1rem;
+		background: #f5f5f5;
+		border: solid 1px #eee;
 	}
 
 	.content :global(.center-wrap) {
