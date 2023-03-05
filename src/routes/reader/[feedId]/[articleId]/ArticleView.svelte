@@ -144,9 +144,7 @@
 	.content {
 		padding-left: 5%;
 		padding-right: 5%;
-		font-size: calc(var(--font-size) * 1.1);
-		font-family: Merriweather, serif;
-		font-weight: 300;
+		font-size: calc(var(--font-size) * 1.15);
 		padding-bottom: 3rem;
 		line-height: 1.6em;
 	}
