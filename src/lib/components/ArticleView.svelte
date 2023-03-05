@@ -185,10 +185,6 @@
 		margin: 0.5em 0;
 	}
 
-	.content :global(table td) {
-		padding: 0 0.5em;
-	}
-
 	.content :global(aside) {
 		margin: 1.5em 0;
 		font-size: calc(var(--font-size) * 1.25);
@@ -203,6 +199,8 @@
 
 	.content :global(blockquote) {
 		font-style: italic;
+		border-left: solid 0.5rem #ddf;
+		padding-left: 0.5rem;
 	}
 
 	.content :global(*) {
@@ -230,17 +228,26 @@
 		text-align: center;
 	}
 
+	.content :global(hr) {
+		height: 1px;
+		border: none;
+		background: #ddd;
+	}
+
 	.content :global(pre) {
 		padding: 1rem;
+		font-size: 90%;
 		background: #f5f5f5;
 		border: solid 1px #eee;
+		border-radius: 6px;
 	}
 
 	.content :global(p) :global(code) {
 		font-size: 90%;
-		padding: 0.05rem 0.1rem;
+		padding: 0.05rem 0.1rem 0.15rem 0.1rem;
 		background: #f5f5f5;
 		border: solid 1px #eee;
+		border-radius: 3px;
 	}
 
 	.content :global(.center-wrap) {
