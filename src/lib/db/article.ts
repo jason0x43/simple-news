@@ -132,14 +132,6 @@ async function internalMarkArticleRead(
 		.execute();
 }
 
-export async function markArticleRead(data: {
-	id: Article['id'];
-	userId: User['id'];
-	read: boolean;
-}): Promise<void> {
-	await internalMarkArticleRead(db, data);
-}
-
 export async function markArticlesRead({
 	articleIds,
 	userId,
