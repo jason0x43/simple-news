@@ -1,5 +1,5 @@
 <script lang="ts">
-	import ArticlesList from '$lib/components/ArticlesList.svelte';
+	import ArticlesList from './ArticlesList.svelte';
 	import { getAppContext } from '$lib/contexts';
 	import type { PageData } from './$types';
 

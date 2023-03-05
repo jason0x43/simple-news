@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { post, put } from '$lib/request';
-	import Dialog from './Dialog.svelte';
-	import Portal from './Portal.svelte';
-	import Select from './Select.svelte';
+	import Button from '$lib/components/Button.svelte';
+	import Dialog from '$lib/components/Dialog.svelte';
+	import Portal from '$lib/components/Portal.svelte';
+	import Select from '$lib/components/Select.svelte';
 	import { invalidate } from '$app/navigation';
 	import { showToast } from '$lib/toast';
 	import { getEventValue } from '$lib/util';
@@ -13,7 +14,6 @@
 		AddGroupFeedRequest,
 		AddGroupFeedResponse
 	} from '../../routes/api/feedgroups/+server';
-	import Button from './Button.svelte';
 
 	const { feeds, feedGroups, managingFeeds } = getAppContext().stores;
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import ArticleView from '$lib/components/ArticleView.svelte';
+	import ArticleView from './ArticleView.svelte';
 	import { slide } from '$lib/transition';
 	import { onMount } from 'svelte';
 	import { getAppContext, getReaderContext } from '$lib/contexts';

@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { getAppContext } from '$lib/contexts';
 	import { slide } from '$lib/transition';
-	import Button from './Button.svelte';
+	import Button from '$lib/components/Button.svelte';
 	import FeedsList from './FeedsList.svelte';
-	import Select from './Select.svelte';
+	import Select from '$lib/components/Select.svelte';
 
 	const { articleFilter, sidebarVisible, managingFeeds, selectedFeedIds } =
 		getAppContext().stores;

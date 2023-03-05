@@ -4,7 +4,7 @@
 	import RssIcon from '$lib/icons/Rss.svelte';
 	import { getAppContext } from '$lib/contexts';
 	import type { Feed } from '$lib/db/feed';
-	import Button from './Button.svelte';
+	import Button from '$lib/components/Button.svelte';
 
 	export let onTitlePress: () => void;
 

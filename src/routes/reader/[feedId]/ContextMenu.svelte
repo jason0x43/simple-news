@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { isActionEvent } from '$lib/util';
-
-	import Portal from './Portal.svelte';
+	import Portal from '$lib/components/Portal.svelte';
 
 	export let items: { label?: string; value: string }[];
 	export let anchor: { x: number; y: number };

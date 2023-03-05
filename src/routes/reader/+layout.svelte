@@ -1,11 +1,11 @@
 <script lang="ts">
-	import Header from '$lib/components/Header.svelte';
+	import Header from './Header.svelte';
 	import { onMount } from 'svelte';
 	import { invalidate } from '$app/navigation';
 	import { getAppContext, setReaderContext } from '$lib/contexts';
-	import ManageFeeds from '$lib/components/ManageFeeds.svelte';
+	import ManageFeeds from './ManageFeeds.svelte';
 	import { put } from '$lib/request';
-	import Sidebar from '$lib/components/Sidebar.svelte';
+	import Sidebar from './Sidebar.svelte';
 	import { browser } from '$app/environment';
 	import type { LayoutData } from './$types';
 	import type { UpdateSessionRequest } from '$lib/types';
