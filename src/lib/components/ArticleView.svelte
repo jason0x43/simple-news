@@ -1,13 +1,14 @@
 <script lang="ts">
-	import type { ArticleWithUserData } from '$lib/db/article';
-	import { z } from 'zod';
-	import { isActionEvent, loadValue, storeValue } from '$lib/util';
-	import CloseIcon from '$lib/icons/Close.svelte';
 	import { onMount } from 'svelte';
-	import type { Feed } from '$lib/db/feed';
+	import { z } from 'zod';
 	import { getArticleContent } from '$lib/article';
+	import type { ArticleWithUserData } from '$lib/db/article';
+	import type { Feed } from '$lib/db/feed';
+	import CloseIcon from '$lib/icons/Close.svelte';
+	import { isActionEvent, loadValue, storeValue } from '$lib/util';
 
-	export let article: ArticleWithUserData | null;
+	export let article: ArticleWithUserData;
+	export let feed: Feed;
 	export let selectedFeedId: Feed['id'];
 
 	const target = 'SimpleNews_ArticleView';
@@ -77,9 +78,10 @@
 	<div class="article">
 		<div class="scroller" bind:this={scrollBox} on:scroll={handleScroll}>
 			<div class="header">
-				<a href={article?.link ?? undefined} {target}>
-					<h2>{article?.title}</h2>
+				<a href={article.link ?? undefined} {target}>
+					<h2>{article.title}</h2>
 				</a>
+				<h3>{feed.title}</h3>
 			</div>
 			<div class="content" on:click={onLinkClick} on:keypress={onLinkClick}>
 				{@html getArticleContent(article)}
@@ -107,8 +109,7 @@
 		font-weight: bold;
 		font-size: var(--font-size);
 		display: flex;
-		flex-direction: row;
-		gap: 1rem;
+		flex-direction: column;
 		align-items: stretch;
 		padding: 0 5%;
 	}
@@ -124,8 +125,12 @@
 		color: var(--foreground);
 		text-decoration: none;
 		display: block;
-		margin: 3rem 0 1rem 0;
+		margin-top: 3rem;
 		flex-grow: 1;
+	}
+
+	.header h3 {
+		margin: 0.5rem 0 1rem 0;
 	}
 
 	.header h2 {

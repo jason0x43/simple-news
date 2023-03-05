@@ -8,6 +8,7 @@
 	export let data: PageData;
 
 	$: article = data.article;
+	$: feed = data.feed;
 
 	const context = getReaderContext();
 	const { displayType } = getAppContext().stores;
@@ -26,21 +27,27 @@
 
 {#if $displayType === 'mobile'}
 	<div class="article" out:slide in:slide>
-		<ArticleView
-			{article}
-			bind:this={articleView}
-			selectedFeedId={data.feedId}
-		/>
+		{#if article && feed}
+			<ArticleView
+				{article}
+				{feed}
+				bind:this={articleView}
+				selectedFeedId={data.feedId}
+			/>
+		{/if}
 	</div>
 {/if}
 
 {#if $displayType !== 'mobile'}
 	<div class="article">
-		<ArticleView
-			{article}
-			bind:this={articleView}
-			selectedFeedId={data.feedId}
-		/>
+		{#if article && feed}
+			<ArticleView
+				{article}
+				{feed}
+				bind:this={articleView}
+				selectedFeedId={data.feedId}
+			/>
+		{/if}
 	</div>
 {/if}
 
