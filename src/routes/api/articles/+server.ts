@@ -22,7 +22,7 @@ export const PUT: RequestHandler = async function ({ cookies, request }) {
 	}
 
 	if (data.userData.read !== undefined) {
-		markArticlesRead({
+		await markArticlesRead({
 			userId: user.id,
 			articleIds: data.articleIds,
 			read: data.userData.read
