@@ -5,16 +5,13 @@
 	import FeedsList from './FeedsList.svelte';
 	import Select from '$lib/components/Select.svelte';
 
-	const { articleFilter, sidebarVisible, managingFeeds, selectedFeedIds } =
+	const { articleFilter, sidebarVisible, managingFeeds } =
 		getAppContext().stores;
 
 	let ref: HTMLElement;
 
 	function handleClick(event: MouseEvent) {
-		if (
-			$selectedFeedIds.length > 0 &&
-			(!event.target || !ref.contains(event.target as HTMLElement))
-		) {
+		if (!event.target || !ref.contains(event.target as HTMLElement)) {
 			$sidebarVisible = false;
 		}
 	}
@@ -29,14 +26,13 @@
 	bind:this={ref}
 >
 	<div class="sidebar-feeds">
-		<FeedsList onSelect={() => ($sidebarVisible = false)} />
+		<FeedsList />
 	</div>
 	<div class="sidebar-controls">
 		<Button on:click={() => ($managingFeeds = true)}>Manage Feeds</Button>
 		<Select bind:value={$articleFilter}>
 			<option value="unread">Unread</option>
 			<option value="all">All</option>
-			<option value="saved">Saved</option>
 		</Select>
 	</div>
 </div>

@@ -3,6 +3,6 @@
 	const { sidebarVisible } = getAppContext().stores;
 
 	if ($sidebarVisible === undefined) {
-		$sidebarVisible = true;
+		$sidebarVisible = false;
 	}
 </script>

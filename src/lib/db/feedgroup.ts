@@ -76,15 +76,12 @@ export async function getUserFeedGroups(
 
 export async function getFeedGroupWithFeeds(
 	id: FeedGroup['id']
-): Promise<FeedGroupWithFeeds | undefined> {
+): Promise<FeedGroupWithFeeds> {
 	const feedGroup = await db
 		.selectFrom('feed_group')
 		.selectAll()
 		.where('id', '=', id)
-		.executeTakeFirst();
-	if (!feedGroup) {
-		return;
-	}
+		.executeTakeFirstOrThrow();
 
 	const feeds = await getGroupFeeds(feedGroup.id);
 	return {

@@ -1,6 +1,5 @@
 import { createId } from '@paralleldrive/cuid2';
 import type { Transaction } from 'kysely';
-import type { ArticleFilter } from '../types';
 import type { Article, Database, Feed, User, UserArticle } from './lib/db';
 import db from './lib/db.js';
 
@@ -24,15 +23,12 @@ export async function getArticle({
 }: {
 	id: Article['id'];
 	userId: User['id'];
-}): Promise<ArticleWithUserData | null> {
+}): Promise<ArticleWithUserData> {
 	const article = await db
 		.selectFrom('article')
 		.selectAll()
 		.where('id', '=', id)
-		.executeTakeFirst();
-	if (!article) {
-		return null;
-	}
+		.executeTakeFirstOrThrow();
 
 	const userArticle = await db
 		.selectFrom('user_article')
@@ -51,15 +47,11 @@ export async function getArticleHeadings({
 	feedIds,
 	articleIds,
 	userId,
-	filter,
 	maxAge
 }: {
 	feedIds?: Feed['id'][];
 	articleIds?: Article['id'][];
 	userId: User['id'];
-	/** Only return read or unread articles */
-	filter?: ArticleFilter;
-	/** Maximum age of articles in milliseconds */
 	maxAge?: number;
 }): Promise<ArticleHeadingWithUserData[]> {
 	let query = db
@@ -88,10 +80,6 @@ export async function getArticleHeadings({
 		query = query.where('article_id', 'in', articleIds);
 	}
 
-	if (filter === 'unread') {
-		query = query.where('read', 'is not', 1);
-	}
-
 	if (maxAge) {
 		const cutoff = BigInt(Date.now() - maxAge);
 		query = query.where('published', '>', cutoff);
@@ -105,16 +93,41 @@ export async function getArticleHeadings({
 	return articles;
 }
 
-async function internalMarkArticleRead(
+export async function getSavedArticleHeadings(
+	userId: User['id']
+): Promise<ArticleHeadingWithUserData[]> {
+	return db
+		.selectFrom('article')
+		.leftJoin('user_article', (join) =>
+			join
+				.onRef('user_article.article_id', '=', 'article.id')
+				.on('user_article.user_id', '=', userId)
+		)
+		.select([
+			'id',
+			'feed_id',
+			'article.article_id',
+			'title',
+			'link',
+			'published',
+			'read',
+			'saved'
+		])
+		.where('saved', '=', 1)
+		.orderBy('published', 'asc')
+		.execute();
+}
+
+async function markArticle(
 	d: typeof db | Transaction<Database>,
 	{
 		id,
 		userId,
-		read
+		userData
 	}: {
 		id: Article['id'];
 		userId: User['id'];
-		read: boolean;
+		userData: ArticleUserData;
 	}
 ): Promise<void> {
 	await d
@@ -122,30 +135,37 @@ async function internalMarkArticleRead(
 		.values({
 			user_id: userId,
 			article_id: id,
-			read: read ? 1 : 0
+			...userData
 		})
 		.onConflict((conflict) =>
-			conflict.columns(['user_id', 'article_id']).doUpdateSet({
-				read: read ? 1 : 0
-			})
+			conflict.columns(['user_id', 'article_id']).doUpdateSet(userData)
 		)
 		.execute();
 }
 
-export async function markArticlesRead({
+export async function markArticles({
 	articleIds,
 	userId,
-	read
+	userData
 }: {
 	articleIds: Article['id'][];
 	userId: User['id'];
-	read: boolean;
+	userData: {
+		read?: boolean;
+		saved?: boolean;
+	};
 }): Promise<void> {
-	await db.transaction().execute(async (trx) => {
-		for (const id of articleIds) {
-			await internalMarkArticleRead(trx, { userId, id, read });
-		}
-	});
+	const data: ArticleUserData = {};
+	if (userData.read !== undefined) {
+		data.read = userData.read ? 1 : 0;
+	}
+	if (userData.saved !== undefined) {
+		data.saved = userData.saved ? 1 : 0;
+	}
+
+	await Promise.all(
+		articleIds.map((id) => markArticle(db, { userId, id, userData: data }))
+	);
 }
 
 type ArticleUpsert = Pick<

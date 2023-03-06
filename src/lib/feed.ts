@@ -12,7 +12,7 @@ export function getArticleCount(
 	articleFilter: ArticleFilter
 ): number {
 	const count = feeds.reduce((acc, feed) => {
-		const stats = feedStats[feed.id] ?? {};
+		const stats = feedStats.feeds[feed.id] ?? {};
 		return (
 			acc +
 			(articleFilter === 'unread' ? stats.total - stats.read : stats.total)

@@ -1,3 +1,10 @@
 import '@total-typescript/ts-reset';
+import type { SessionWithUser } from '$lib/db/session';
 
-declare namespace App {}
+declare global {
+	declare namespace App {
+		interface Locals {
+			session?: SessionWithUser;
+		}
+	}
+}

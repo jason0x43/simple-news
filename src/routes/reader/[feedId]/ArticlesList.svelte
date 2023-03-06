@@ -1,5 +1,5 @@
 <script lang="ts">
-	import ContextMenu from './ContextMenu.svelte';
+	import ContextMenu from '$lib/components/ContextMenu.svelte';
 	import { getAge } from '$lib/date';
 	import type { ArticleHeadingWithUserData } from '$lib/db/article';
 	import {
@@ -19,10 +19,9 @@
 	import { z } from 'zod';
 	import type { ArticleUpdateRequest } from '$lib/types';
 
-	export let selectedArticleId: Article['id'] | undefined;
-	export let selectedFeedId: Feed['id'] | undefined;
+	export let feedId: Feed['id'] | undefined;
 
-	const { articles, feeds, sidebarVisible, articleFilter } =
+	const { articles, feeds, sidebarVisible, articleFilter, selectedArticleId } =
 		getAppContext().stores;
 
 	const ScrollDataSchema = z.object({
@@ -43,39 +42,38 @@
 
 	let visibleCount = 40;
 	let scrollBox: HTMLElement | undefined;
-	let prevFeedId = selectedFeedId;
+	let prevFeedId = feedId;
 
 	$: {
-		if (prevFeedId !== selectedFeedId) {
+		if (prevFeedId !== feedId) {
 			// reset state when selected feed changes (but not when it's first
 			// initialized)
-			if (prevFeedId && selectedFeedId) {
+			if (prevFeedId && feedId) {
 				updatedArticleIds.clear();
 				clearValue(scrollDataKey);
 				visibleCount = 40;
 				scrollBox?.scrollTo(0, 0);
 			}
-			prevFeedId = selectedFeedId;
+			prevFeedId = feedId;
 		}
 	}
 
 	$: {
-		if (selectedArticleId) {
-			updatedArticleIds.add(selectedArticleId);
-			if (!$articles?.find(({ id }) => id === selectedArticleId)?.read) {
-				markAsRead([selectedArticleId], true);
+		if ($selectedArticleId) {
+			updatedArticleIds.add($selectedArticleId);
+			if (!$articles?.find(({ id }) => id === $selectedArticleId)?.read) {
+				markAsRead([$selectedArticleId], true);
 			}
 		}
 	}
 
 	let menuAnchor: { x: number; y: number } | undefined;
-	let activeArticleId: Article['id'] | undefined;
+	let activeArticle: ArticleHeadingWithUserData | undefined;
 	let filteredArticles: ArticleHeadingWithUserData[] = [];
 	let renderedArticles: (ArticleHeadingWithUserData & {
 		feed: Feed | undefined;
 		isActive: boolean;
 		isSelected: boolean;
-		isRead: boolean;
 	})[] = [];
 
 	$: {
@@ -85,18 +83,15 @@
 			if (!articles) {
 				// there are no articles
 				filteredArticles = [];
-			} else if ($articleFilter === 'all') {
+			} else if ($articleFilter === 'all' || feedId === 'saved') {
 				// show all articles
 				filteredArticles = $articles ?? [];
-			} else if ($articleFilter === 'saved') {
-				// show saved articles
-				filteredArticles = $articles?.filter(({ saved }) => saved) ?? [];
 			} else {
 				// show unread (and recently updated) articles
 				filteredArticles =
 					$articles?.filter(
 						({ id, read }) =>
-							!read || updatedArticleIds.has(id) || id === selectedArticleId
+							!read || updatedArticleIds.has(id) || id === $selectedArticleId
 					) ?? [];
 			}
 		}
@@ -108,9 +103,8 @@
 			.map((article) => ({
 				...article,
 				feed: $feeds.find(({ id }) => id === article.feed_id),
-				isActive: activeArticleId === article.id,
-				isSelected: selectedArticleId === article.id,
-				isRead: Boolean(article.read)
+				isActive: activeArticle?.id === article.id,
+				isSelected: $selectedArticleId === article.id
 			}));
 	}
 
@@ -148,7 +142,8 @@
 		}
 
 		if (target) {
-			activeArticleId = target.getAttribute('data-id') as string;
+			const activeArticleId = target.getAttribute('data-id') as string;
+			activeArticle = $articles?.find(({ id }) => id === activeArticleId);
 			menuAnchor = { x: event.x, y: event.y };
 			event.preventDefault?.();
 		}
@@ -183,35 +178,41 @@
 		}
 	}
 
-	function handleContextSelect(value: string) {
-		const read = !/unread/.test(value);
-		let ids: Article['id'][] | undefined;
+	async function handleContextSelect(value: string) {
+		if (/read/i.test(value)) {
+			const read = !/unread/i.test(value);
+			let ids: Article['id'][] | undefined;
 
-		if (/above/.test(value)) {
-			const idx = renderedArticles.findIndex(
-				({ id }) => id === activeArticleId
-			);
-			ids = renderedArticles.slice(0, idx).map(({ id }) => id);
-		} else if (/below/.test(value)) {
-			const idx = renderedArticles.findIndex(
-				({ id }) => id === activeArticleId
-			);
-			ids = renderedArticles.slice(idx + 1).map(({ id }) => id);
-		} else if (activeArticleId) {
-			ids = [activeArticleId];
-		}
-
-		if (ids) {
-			for (const id of ids) {
-				updatedArticleIds.add(id);
+			if (/above/i.test(value)) {
+				const idx = renderedArticles.findIndex(
+					({ id }) => id === activeArticle?.id
+				);
+				ids = renderedArticles.slice(0, idx).map(({ id }) => id);
+			} else if (/below/i.test(value)) {
+				const idx = renderedArticles.findIndex(
+					({ id }) => id === activeArticle?.id
+				);
+				ids = renderedArticles.slice(idx + 1).map(({ id }) => id);
+			} else if (activeArticle) {
+				ids = [activeArticle.id];
 			}
-			markAsRead(ids, read);
+
+			if (ids) {
+				for (const id of ids) {
+					updatedArticleIds.add(id);
+				}
+				await markAsRead(ids, read);
+			}
+		} else if (/save/i.test(value)) {
+			if (activeArticle) {
+				await markAsSaved(activeArticle.id, !activeArticle.saved);
+			}
 		}
 	}
 
 	function handleContextClose() {
 		menuAnchor = undefined;
-		activeArticleId = undefined;
+		activeArticle = undefined;
 	}
 
 	async function markAsRead(articleIds: Article['id'][], read: boolean) {
@@ -253,6 +254,40 @@
 		}
 	}
 
+	async function markAsSaved(articleId: Article['id'], saved: boolean) {
+		if (!browser) {
+			return;
+		}
+
+		let isUpdated = false;
+
+		// optimistically update articles
+		if ($articles) {
+			const idx = $articles.findIndex((article) => article.id === articleId);
+			if (idx !== -1 && Boolean($articles[idx].saved) !== saved) {
+				$articles[idx] = { ...$articles[idx], saved: saved ? 1 : 0 };
+				isUpdated = true;
+			}
+		}
+
+		try {
+			await put<ArticleUpdateRequest>('/api/articles', {
+				articleIds: [articleId],
+				userData: { saved }
+			});
+		} catch (error) {
+			console.warn(`Error marking articles as saved: ${error}`);
+
+			// revert the optimistic update if the request failed
+			if ($articles && isUpdated) {
+				const idx = $articles.findIndex((article) => article.id === articleId);
+				if (idx !== -1) {
+					$articles[idx] = { ...$articles[idx], saved: !saved ? 1 : 0 };
+				}
+			}
+		}
+	}
+
 	onMount(() => {
 		const scrollData = loadValue(scrollDataKey, ScrollDataSchema);
 		if (scrollData) {
@@ -278,13 +313,14 @@
 					class="article"
 					class:active={article.isActive}
 					class:selected={article.isSelected}
-					class:read={article.isRead}
+					class:read={article.read}
+					class:saved={article.saved}
 					data-id={article.id}
 					on:touchstart={handleTouchStart}
 					on:touchend={handleTouchEnd}
 					on:touchmove={handleTouchEnd}
 				>
-					<a href={`/reader/${selectedFeedId}/${article.id}`}>
+					<a href={`/reader/${feedId}/${article.id}`}>
 						<div class="icon">
 							{#if article.feed?.icon}
 								<img
@@ -305,7 +341,9 @@
 						</div>
 
 						<div class="age">
-							{getAge(article.published ?? undefined)}
+							<span>
+								{getAge(article.published ?? undefined)}
+							</span>
 						</div>
 					</a>
 				</li>
@@ -334,7 +372,10 @@
 {#if menuAnchor}
 	<ContextMenu
 		items={[
-			{ label: 'Mark read', value: 'item-read' },
+			{
+				label: activeArticle?.saved ? 'Unsave' : 'Save',
+				value: `item-${activeArticle?.saved ? 'unsave' : 'save'}`
+			},
 			{ label: 'Mark as unread', value: 'item-unread' },
 			{ label: 'Mark above as read', value: 'above-read' },
 			{ label: 'Mark above as unread', value: 'above-unread' },
@@ -374,6 +415,7 @@
 		min-height: 2.25rem;
 		cursor: pointer;
 		user-select: none;
+		position: relative;
 	}
 
 	.article a {
@@ -428,6 +470,7 @@
 	.icon img {
 		max-width: 16px;
 		max-height: 16px;
+		padding: 2px;
 		vertical-align: middle;
 	}
 
@@ -454,6 +497,18 @@
 		color: #999;
 		white-space: nowrap;
 		width: 3em;
+		padding-top: 2px;
+	}
+
+	.age span {
+		padding: 0 3px 1px 3px;
+		border: none;
+	}
+
+	.saved .age span {
+		background: rgba(125, 220, 125, 0.2);
+		border-radius: 3px;
+		box-shadow: 0 0 0 2px rgba(125, 220, 125, 0.3);
 	}
 
 	@media (hover: hover) {

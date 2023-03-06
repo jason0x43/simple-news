@@ -7,6 +7,9 @@
 
 	export let data: PageData;
 
+	const { selectedArticleId } = getAppContext().stores;
+
+	$: $selectedArticleId = data.article.id;
 	$: article = data.article;
 	$: feed = data.feed;
 

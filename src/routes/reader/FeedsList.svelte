@@ -3,10 +3,14 @@
 	import type { Feed } from '$lib/db/feed';
 	import { allAreIdentified, getArticleCount, getGroupFeeds } from '$lib/feed';
 
-	export let onSelect: () => void;
-
-	const { articleFilter, userFeeds, feedGroups, feedStats, selectedFeedIds } =
-		getAppContext().stores;
+	const {
+		articleFilter,
+		feedId,
+		userFeeds,
+		feedGroups,
+		feedStats,
+		selectedFeedIds
+	} = getAppContext().stores;
 	let expanded: { [title: string]: boolean } = {};
 
 	function containsFeed(groupFeeds: Feed[], feedIds: string[]) {
@@ -15,6 +19,17 @@
 </script>
 
 <ul class="feeds">
+	<li class:group-selected={$feedId === 'saved'}>
+		<div class="group">
+			<span class="saved" />
+			<a class="title" href="/reader/saved">Saved</a>
+			{#if $feedStats}
+				<span class="Feeds-unread">
+					{$feedStats.saved}
+				</span>
+			{/if}
+		</div>
+	</li>
 	{#each $feedGroups as group (group.name)}
 		{@const groupFeeds = getGroupFeeds(group, $userFeeds)}
 		{#if getArticleCount(groupFeeds, $feedStats, $articleFilter) > 0}
@@ -34,16 +49,10 @@
 							};
 						}}
 					/>
-					<a
-						class="title"
-						href={`/reader/group-${group.id}`}
-						on:click={() => {
-							onSelect?.();
-						}}
-					>
+					<a class="title" href={`/reader/group-${group.id}`}>
 						{group.name}
 					</a>
-					{#if feedStats}
+					{#if $feedStats}
 						<span class="Feeds-unread">
 							{getArticleCount(groupFeeds, $feedStats, $articleFilter)}
 						</span>
@@ -57,18 +66,12 @@
 								class="feed"
 								class:selected={allAreIdentified([feed], $selectedFeedIds)}
 							>
-								<a
-									href={`/reader/feed-${feed.id}`}
-									class="title"
-									on:click={() => {
-										onSelect?.();
-									}}
-								>
+								<a href={`/reader/feed-${feed.id}`} class="title">
 									{$userFeeds.find((f) => f.id === feed.id)?.title}
 								</a>
 								<div class="unread">
-									{($feedStats[feed.id].total ?? 0) -
-										($feedStats[feed.id].read ?? 0)}
+									{($feedStats.feeds[feed.id].total ?? 0) -
+										($feedStats.feeds[feed.id].read ?? 0)}
 								</div>
 							</li>
 						{/if}
@@ -139,6 +142,7 @@
 		padding-left: calc(var(--expander-width) + 2 * var(--hpad));
 	}
 
+	.saved,
 	.expander {
 		border: none;
 		background: none;
@@ -146,11 +150,17 @@
 		padding-left: 4px;
 	}
 
+	.saved::before,
 	.expander::before {
 		content: '▷';
 		display: inline-block;
+		text-align: center;
 		flex-grow: 0;
 		width: var(--expander-width);
+	}
+
+	.saved::before {
+		content: '⭐';
 	}
 
 	.group-selected .expander::before {

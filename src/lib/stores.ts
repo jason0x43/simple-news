@@ -8,17 +8,52 @@ import type { ArticleFilter } from './types';
 
 export function createStores() {
 	return {
-		sidebarVisible: writable<boolean>(),
-		displayType: writable<'mobile' | 'desktop'>('desktop'),
-		updatedArticleIds: writable<Set<Article['id']>>(new Set()),
-		articles: writable<ArticleHeadingWithUserData[] | undefined>(),
+		/** The filter applied to the set of loaded article headings */
 		articleFilter: writable<ArticleFilter>('unread'),
-		feeds: writable<Feed[]>([]),
-		userFeeds: writable<Feed[]>([]),
+
+		/** The currently loaded article headings */
+		articles: writable<ArticleHeadingWithUserData[] | undefined>(),
+
+		/** What the app is being displayed on */
+		displayType: writable<'mobile' | 'desktop'>('desktop'),
+
+		/** The user's feed groups */
 		feedGroups: writable<FeedGroupWithFeeds[]>([]),
-		feedStats: writable<FeedStats>({}),
+
+		/** The active feed or feed group ID */
+		feedId: writable<string | undefined>(),
+
+		/** The display name for the active feed or feed group */
+		feedName: writable<string>(),
+
+		/** Stats for the user's feeds */
+		feedStats: writable<FeedStats>({ feeds: {}, saved: 0 }),
+
+		/** All available feeds */
+		feeds: writable<Feed[]>([]),
+
+		/** True if the feed management UI should be active */
 		managingFeeds: writable<boolean>(false),
-		selectedFeedIds: writable<Feed['id'][]>([])
+
+		/** ID of the selected article */
+		selectedArticleId: writable<Article['id'] | undefined>(),
+
+		/** IDs of the feeds in the active feed group, or the active feed ID */
+		selectedFeedIds: writable<Feed['id'][]>([]),
+
+		/** True if the sidebar should be visible */
+		sidebarVisible: writable<boolean>(),
+
+		/**
+		 * IDs of articles that have been updated in the current set of active
+		 * feeds
+		 */
+		updatedArticleIds: writable<Set<Article['id']>>(new Set()),
+
+		/**
+		 * The user's subscribed feeds
+		 */
+		userFeeds: writable<Feed[]>([])
 	};
 }
 

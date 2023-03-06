@@ -125,7 +125,7 @@
 		color: var(--foreground);
 		text-decoration: none;
 		display: block;
-		margin-top: 3rem;
+		margin-top: 2rem;
 		flex-grow: 1;
 	}
 

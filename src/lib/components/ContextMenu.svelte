@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { isActionEvent } from '$lib/util';
-	import Portal from '$lib/components/Portal.svelte';
+	import { isActionEvent } from '../util';
+	import Portal from './Portal.svelte';
 
 	export let items: { label?: string; value: string }[];
 	export let anchor: { x: number; y: number };
-	export let onSelect: (value: string) => void;
+	export let onSelect: (value: string) => void | Promise<void>;
 	export let onClose: () => void;
 
 	let ref: HTMLUListElement;
@@ -15,12 +15,16 @@
 		}
 	}
 
-	function handleItemClick(
+	async function handleItemClick(
 		event: Event & { currentTarget: EventTarget & HTMLLIElement }
 	) {
 		if (isActionEvent(event)) {
 			const value = event.currentTarget.getAttribute('data-value') as string;
-			onSelect(value);
+			try {
+				await onSelect(value);
+			} catch (error) {
+				console.warn(`Error selecting item: ${error}`);
+			}
 			onClose();
 		}
 	}

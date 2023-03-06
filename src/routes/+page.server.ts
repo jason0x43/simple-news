@@ -1,10 +1,6 @@
 import { createUserSession, deleteSession } from '$lib/db/session';
 import { verifyLogin } from '$lib/db/user';
-import {
-	clearSessionCookie,
-	getSessionId,
-	setSessionCookie
-} from '$lib/session';
+import { clearSessionCookie, setSessionCookie } from '$lib/session';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -16,9 +12,9 @@ export type LoginRequest = {
 /**
  * Redirect users when accessing the root path
  */
-export const load: PageServerLoad = async ({ parent }) => {
-	const { user } = await parent();
-	if (user) {
+export const load: PageServerLoad = async ({ locals }) => {
+	const { session } = locals;
+	if (session) {
 		throw redirect(307, '/reader');
 	}
 };
@@ -42,14 +38,15 @@ export const actions: Actions = {
 
 		setSessionCookie(cookies, session);
 
-		throw redirect(301, '/');
+		throw redirect(302, '/reader');
 	},
 
-	logout: async ({ cookies }) => {
-		const sessionId = getSessionId(cookies);
-		if (sessionId) {
-			await deleteSession(sessionId);
+	logout: async ({ locals, cookies }) => {
+		const { session } = locals;
+		if (session) {
+			await deleteSession(session.id);
 			clearSessionCookie(cookies);
 		}
+		throw redirect(302, '/');
 	}
 };

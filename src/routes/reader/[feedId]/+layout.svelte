@@ -5,30 +5,28 @@
 
 	export let data: PageData;
 
-	const { articles, feeds, feedGroups, selectedFeedIds } =
+	const { articles, feedId, feedName, selectedFeedIds, sidebarVisible } =
 		getAppContext().stores;
 
 	$: $articles = data.articleHeadings;
+	$: $feedName = data.feedName;
+	$: $feedId = data.feedId;
+	$: $selectedFeedIds = data.selectedFeedIds;
+
+	let prevFeedId = data.feedId;
 
 	$: {
-		if (data.feedId) {
-			const [type, id] = data.feedId.split('-');
-			if (type === 'group') {
-				const group = $feedGroups.find((group) => group.id === id);
-				$selectedFeedIds = group?.feeds.map(({ id }) => id) ?? [];
-			} else {
-				const feed = $feeds.find((feed) => feed.id === id);
-				$selectedFeedIds = feed ? [feed.id] : [];
+		if (data.feedId !== prevFeedId) {
+			prevFeedId = data.feedId;
+			if (data.feedId) {
+				$sidebarVisible = false;
 			}
 		}
 	}
 </script>
 
 <div class="feed-layout">
-	<ArticlesList
-		selectedFeedId={data.feedId}
-		selectedArticleId={data.articleId}
-	/>
+	<ArticlesList feedId={data.feedId} />
 	<slot />
 </div>
 

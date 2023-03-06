@@ -2,12 +2,15 @@ import { z } from 'zod';
 import type { Feed } from './db/feed';
 import type { FeedGroupWithFeeds } from './db/feedgroup';
 
-export const GetFeedStatsResponseSchema = z.record(
-	z.object({
-		total: z.number(),
-		read: z.number()
-	})
-);
+export const GetFeedStatsResponseSchema = z.object({
+	feeds: z.record(
+		z.object({
+			total: z.number(),
+			read: z.number()
+		})
+	),
+	saved: z.number()
+});
 export type GetFeedStatsResponse = z.infer<typeof GetFeedStatsResponseSchema>;
 
 export const ArticleUpdateRequestSchema = z.object({
@@ -37,8 +40,7 @@ export type UpdateSessionRequest = SessionData;
 
 export const ArticleFilterSchema = z.union([
 	z.literal('all'),
-	z.literal('unread'),
-	z.literal('saved')
+	z.literal('unread')
 ]);
 export type ArticleFilter = z.infer<typeof ArticleFilterSchema>;
 

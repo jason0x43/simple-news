@@ -6,10 +6,13 @@ import type { Feed, InsertableFeed, User } from './lib/db';
 export type { Feed };
 
 export type FeedStats = {
-	[feedId: Feed['id']]: {
-		total: number;
-		read: number;
+	feeds: {
+		[feedId: Feed['id']]: {
+			total: number;
+			read: number;
+		};
 	};
+	saved: number;
 };
 
 type CreateFeedData = Omit<InsertableFeed, 'id' | 'type' | 'last_update'> &
@@ -54,12 +57,12 @@ export async function getEnabledFeeds(): Promise<Feed[]> {
 	return feeds;
 }
 
-export async function getFeed(id: string): Promise<Feed | undefined> {
+export async function getFeed(id: string): Promise<Feed> {
 	return db
 		.selectFrom('feed')
 		.selectAll()
 		.where('id', '=', id)
-		.executeTakeFirst();
+		.executeTakeFirstOrThrow();
 }
 
 export async function getFeedByUrl(url: string): Promise<Feed | undefined> {
@@ -75,7 +78,10 @@ export async function getFeedStats(data: {
 	feeds: Feed[];
 	maxAge?: number;
 }): Promise<FeedStats> {
-	const stats: FeedStats = {};
+	const stats: FeedStats = {
+		feeds: {},
+		saved: 0
+	};
 	const feedIds = data.feeds.map(({ id }) => id);
 
 	for (const feedId of feedIds) {
@@ -97,11 +103,19 @@ export async function getFeedStats(data: {
 			.where('read', '=', 1)
 			.executeTakeFirst();
 
-		stats[feedId] = {
+		stats.feeds[feedId] = {
 			total: articleIds.length,
 			read: numRead?.count ?? 0
 		};
 	}
+
+	const numSaved = await db
+		.selectFrom('user_article')
+		.select(sql<number>`count(*)`.as('count'))
+		.where('saved', '=', 1)
+		.executeTakeFirst();
+
+	stats.saved = numSaved?.count ?? 0;
 
 	return stats;
 }

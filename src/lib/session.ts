@@ -1,4 +1,4 @@
-import { error, type Cookies } from '@sveltejs/kit';
+import { error, redirect, type Cookies } from '@sveltejs/kit';
 import {
 	getSessionWithUser,
 	type Session,
@@ -12,6 +12,19 @@ const cookieOpts = {
 	sameSite: 'strict' as const,
 	secure: process.env.NODE_ENV === 'production'
 };
+
+export function getSessionOrRedirect(locals: App.Locals): SessionWithUser {
+	const { session } = locals;
+	if (!session) {
+		throw redirect(307, '/');
+	}
+	return session;
+}
+
+export function getUserOrRedirect(locals: App.Locals): User {
+	const { user } = getSessionOrRedirect(locals);
+	return user;
+}
 
 export function getSessionId(cookies: Cookies): string | undefined {
 	return cookies.get('session');

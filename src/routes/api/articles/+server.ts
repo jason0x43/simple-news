@@ -1,5 +1,5 @@
-import { markArticlesRead } from '$lib/db/article';
-import { getSessionUser } from '$lib/session';
+import { markArticles } from '$lib/db/article';
+import { getUserOrRedirect } from '$lib/session';
 import {
 	ArticleUpdateRequestSchema,
 	type ArticleUpdateRequest
@@ -10,8 +10,8 @@ import type { RequestHandler } from './$types';
 /**
  * Update user data for a set of articles
  */
-export const PUT: RequestHandler = async function ({ cookies, request }) {
-	const user = await getSessionUser(cookies);
+export const PUT: RequestHandler = async function ({ locals, request }) {
+	const user = getUserOrRedirect(locals);
 
 	let data: ArticleUpdateRequest;
 
@@ -21,13 +21,7 @@ export const PUT: RequestHandler = async function ({ cookies, request }) {
 		throw error(400, 'Invalid request data');
 	}
 
-	if (data.userData.read !== undefined) {
-		await markArticlesRead({
-			userId: user.id,
-			articleIds: data.articleIds,
-			read: data.userData.read
-		});
-	}
+	await markArticles({ userId: user.id, ...data });
 
 	return new Response();
 };
