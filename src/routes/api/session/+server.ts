@@ -7,8 +7,8 @@ import type { RequestHandler } from './$types';
 /**
  * Update session data
  */
-export const PUT: RequestHandler = async function ({ cookies, request }) {
-	const session = await getSessionOrThrow(cookies);
+export const PUT: RequestHandler = async function ({ locals, request }) {
+	const session = getSessionOrThrow(locals);
 	let data: UpdateSessionRequest;
 
 	try {

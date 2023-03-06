@@ -5,11 +5,20 @@ import {
 } from '$lib/db/article';
 import { getFeed, type Feed } from '$lib/db/feed';
 import { getFeedGroupWithFeeds } from '$lib/db/feedgroup';
-import { getUserOrRedirect } from '$lib/session';
+import type { User } from '$lib/db/user';
+import { getUserOrThrow } from '$lib/session';
+import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ locals, params }) => {
-	const user = getUserOrRedirect(locals);
+	let user: User;
+
+	try {
+		user = getUserOrThrow(locals);
+	} catch (err) {
+		throw redirect(307, '/');
+	}
+
 	const userId = user.id;
 	const feedId = params.feedId;
 

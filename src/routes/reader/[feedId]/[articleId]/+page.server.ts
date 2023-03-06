@@ -1,12 +1,21 @@
 import { getArticle } from '$lib/db/article';
 import { getFeed } from '$lib/db/feed';
-import { getUserOrRedirect } from '$lib/session';
+import type { User } from '$lib/db/user';
+import { getUserOrThrow } from '$lib/session';
+import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
 	const start = Date.now();
 
-	const user = getUserOrRedirect(locals);
+	let user: User;
+
+	try {
+		user = getUserOrThrow(locals);
+	} catch (err) {
+		throw redirect(307, '/');
+	}
+
 	const article = await getArticle({
 		id: params.articleId as string,
 		userId: user.id

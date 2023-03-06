@@ -1,4 +1,4 @@
-import { error, redirect, type Cookies } from '@sveltejs/kit';
+import { error, type Cookies } from '@sveltejs/kit';
 import {
 	getSessionWithUser,
 	type Session,
@@ -13,48 +13,24 @@ const cookieOpts = {
 	secure: process.env.NODE_ENV === 'production'
 };
 
-export function getSessionOrRedirect(locals: App.Locals): SessionWithUser {
+export function getSessionOrThrow(locals: App.Locals): SessionWithUser {
 	const { session } = locals;
 	if (!session) {
-		throw redirect(307, '/');
+		throw error(401, 'not logged in');
 	}
 	return session;
 }
 
-export function getUserOrRedirect(locals: App.Locals): User {
-	const { user } = getSessionOrRedirect(locals);
+export function getUserOrThrow(locals: App.Locals): User {
+	const { user } = getSessionOrThrow(locals);
 	return user;
-}
-
-export function getSessionId(cookies: Cookies): string | undefined {
-	return cookies.get('session');
 }
 
 export async function getSession(
 	cookies: Cookies
 ): Promise<SessionWithUser | undefined> {
-	const sessionId = getSessionId(cookies);
+	const sessionId = cookies.get('session');
 	return sessionId ? getSessionWithUser(sessionId) : undefined;
-}
-
-export async function getSessionOrThrow(
-	cookies: Cookies
-): Promise<SessionWithUser> {
-	const sessionId = getSessionId(cookies);
-	const session = sessionId ? await getSessionWithUser(sessionId) : undefined;
-	if (!session?.user) {
-		throw error(401, 'not logged in');
-	}
-	return session;
-}
-
-export async function getSessionUser(cookies: Cookies): Promise<User> {
-	const sessionId = getSessionId(cookies);
-	const session = sessionId ? await getSessionWithUser(sessionId) : undefined;
-	if (!session?.user) {
-		throw error(401, 'not logged in');
-	}
-	return session.user;
 }
 
 export function clearSessionCookie(cookies: Cookies): void {

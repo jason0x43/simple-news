@@ -1,5 +1,5 @@
 import { markArticles } from '$lib/db/article';
-import { getUserOrRedirect } from '$lib/session';
+import { getUserOrThrow } from '$lib/session';
 import {
 	ArticleUpdateRequestSchema,
 	type ArticleUpdateRequest
@@ -11,7 +11,7 @@ import type { RequestHandler } from './$types';
  * Update user data for a set of articles
  */
 export const PUT: RequestHandler = async function ({ locals, request }) {
-	const user = getUserOrRedirect(locals);
+	const user = getUserOrThrow(locals);
 
 	let data: ArticleUpdateRequest;
 
