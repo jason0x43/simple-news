@@ -450,13 +450,17 @@
 	}
 
 	.read {
-		color: #999;
+		opacity: 0.5;
 	}
 
 	.selected {
 		background: var(--selected);
 		border-color: var(--border);
-		color: inherit;
+		opacity: 1;
+	}
+
+	.saved {
+		opacity: 1;
 	}
 
 	.icon {

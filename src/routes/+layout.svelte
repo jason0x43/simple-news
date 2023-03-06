@@ -44,7 +44,7 @@
 		font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica,
 			Arial, sans-serif;
 		font-size: var(--font-size);
-		font-weight: 300;
+		font-weight: var(--font-weight);
 		display: flex;
 		flex-direction: column;
 		height: 100%;

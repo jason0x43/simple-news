@@ -18,7 +18,7 @@ body {
 	--surface: #e7e7e7;
 	--background: white;
 	--selected: rgba(0, 0, 0, 0.1);
-	--foreground: #666;
+	--foreground: #444;
 	--border: rgba(0, 0, 0, 0.15);
 	--highlight: #555;
 	--highlight-text: #eee;
@@ -27,6 +27,7 @@ body {
 	--sidebar-width: 300px;
 	--side-pad: 1rem;
 	--font-size: 14px;
+	--font-weight: 300;
 }
 
 @media (prefers-color-scheme: dark) {
