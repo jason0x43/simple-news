@@ -275,6 +275,7 @@
 				articleIds: [articleId],
 				userData: { saved }
 			});
+			invalidate('reader:feedstats');
 		} catch (error) {
 			console.warn(`Error marking articles as saved: ${error}`);
 
