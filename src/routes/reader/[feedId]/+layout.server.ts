@@ -52,6 +52,7 @@ export const load: LayoutServerLoad = async ({ locals, params }) => {
 
 	return {
 		articleHeadings,
+		articleId: params.articleId,
 		feedId,
 		feedName,
 		selectedFeedIds

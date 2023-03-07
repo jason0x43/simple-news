@@ -19,12 +19,7 @@ export const load: LayoutServerLoad = async ({ depends, locals }) => {
 	const feedGroups = await getUserFeedGroupsWithFeeds(user.id);
 	const feeds = await getFeeds();
 	const userFeeds = await getUserFeeds(user.id);
-	const feedStats = await getFeedStats({
-		userId: user.id,
-		feeds,
-		// don't consider articles older than 6 weeks
-		maxAge: 6 * 7 * 24 * 60 * 60 * 1000
-	});
+	const feedStats = await getFeedStats(user.id, { feeds });
 
 	return {
 		user,

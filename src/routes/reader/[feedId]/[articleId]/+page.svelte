@@ -7,11 +7,21 @@
 
 	export let data: PageData;
 
-	const { selectedArticleId } = getAppContext().stores;
+	const { feedStats, articles, updatedArticleIds } = getAppContext().stores;
 
-	$: $selectedArticleId = data.article.id;
+	$: $feedStats = data.feedStats;
 	$: article = data.article;
 	$: feed = data.feed;
+	$: $updatedArticleIds[article.id] = true;
+
+	$: {
+		if ($articles) {
+			const i = $articles.findIndex(({ id }) => id === article.id);
+			if (i !== -1) {
+				$articles[i] = article;
+			}
+		}
+	}
 
 	const context = getReaderContext();
 	const { displayType } = getAppContext().stores;

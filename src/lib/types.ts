@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { Feed } from './db/feed';
 import type { FeedGroupWithFeeds } from './db/feedgroup';
+import type { UserArticle } from './db/lib/db';
 
 export const GetFeedStatsResponseSchema = z.object({
 	feeds: z.record(
@@ -21,6 +22,11 @@ export const ArticleUpdateRequestSchema = z.object({
 	})
 });
 export type ArticleUpdateRequest = z.infer<typeof ArticleUpdateRequestSchema>;
+
+export type ArticleUpdateResponse = {
+	updatedArticles: UserArticle[];
+	feedStats: GetFeedStatsResponse;
+};
 
 export type GetFeedGroupsResponse = FeedGroupWithFeeds[];
 

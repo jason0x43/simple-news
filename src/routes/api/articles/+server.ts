@@ -1,7 +1,10 @@
 import { markArticles } from '$lib/db/article';
+import { getFeedStats } from '$lib/db/feed';
+import { json } from '$lib/kit';
 import { getUserOrThrow } from '$lib/session';
 import {
 	ArticleUpdateRequestSchema,
+	type ArticleUpdateResponse,
 	type ArticleUpdateRequest
 } from '$lib/types';
 import { error } from '@sveltejs/kit';
@@ -21,7 +24,11 @@ export const PUT: RequestHandler = async function ({ locals, request }) {
 		throw error(400, 'Invalid request data');
 	}
 
-	await markArticles({ userId: user.id, ...data });
+	const updatedArticles = await markArticles({ userId: user.id, ...data });
 
-	return new Response();
+	const feedStats = await getFeedStats(user.id);
+	return json<ArticleUpdateResponse>({
+		updatedArticles,
+		feedStats
+	});
 };

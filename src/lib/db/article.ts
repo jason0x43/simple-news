@@ -1,5 +1,6 @@
 import { createId } from '@paralleldrive/cuid2';
 import type { Transaction } from 'kysely';
+import { isDefined } from '../util';
 import type { Article, Database, Feed, User, UserArticle } from './lib/db';
 import db from './lib/db.js';
 
@@ -129,8 +130,8 @@ async function markArticle(
 		userId: User['id'];
 		userData: ArticleUserData;
 	}
-): Promise<void> {
-	await d
+): Promise<UserArticle | undefined> {
+	return d
 		.insertInto('user_article')
 		.values({
 			user_id: userId,
@@ -140,7 +141,8 @@ async function markArticle(
 		.onConflict((conflict) =>
 			conflict.columns(['user_id', 'article_id']).doUpdateSet(userData)
 		)
-		.execute();
+		.returningAll()
+		.executeTakeFirst();
 }
 
 export async function markArticles({
@@ -154,7 +156,7 @@ export async function markArticles({
 		read?: boolean;
 		saved?: boolean;
 	};
-}): Promise<void> {
+}): Promise<UserArticle[]> {
 	const data: ArticleUserData = {};
 	if (userData.read !== undefined) {
 		data.read = userData.read ? 1 : 0;
@@ -163,9 +165,10 @@ export async function markArticles({
 		data.saved = userData.saved ? 1 : 0;
 	}
 
-	await Promise.all(
+	const updates = await Promise.all(
 		articleIds.map((id) => markArticle(db, { userId, id, userData: data }))
 	);
+	return updates.filter(isDefined);
 }
 
 type ArticleUpsert = Pick<

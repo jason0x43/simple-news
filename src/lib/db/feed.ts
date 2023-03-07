@@ -2,6 +2,7 @@ import { createId } from '@paralleldrive/cuid2';
 import { sql } from 'kysely';
 import db from './lib/db.js';
 import type { Feed, InsertableFeed, User } from './lib/db';
+import { getUserFeeds } from './feedgroup.js';
 
 export type { Feed };
 
@@ -73,45 +74,53 @@ export async function getFeedByUrl(url: string): Promise<Feed | undefined> {
 		.executeTakeFirst();
 }
 
-export async function getFeedStats(data: {
-	userId: User['id'];
-	feeds: Feed[];
-	maxAge?: number;
-}): Promise<FeedStats> {
+export async function getFeedStats(
+	userId: User['id'],
+	options?: {
+		feeds?: Feed[];
+		maxAge?: number;
+	}
+): Promise<FeedStats> {
 	const stats: FeedStats = {
 		feeds: {},
 		saved: 0
 	};
-	const feedIds = data.feeds.map(({ id }) => id);
+	const feeds = options?.feeds ?? (await getUserFeeds(userId));
+	const { maxAge = 6 * 7 * 24 * 60 * 60 * 1000 } = options ?? {};
 
-	for (const feedId of feedIds) {
-		let articleQuery = db
-			.selectFrom('article')
-			.select('id')
-			.where('feed_id', '=', feedId);
-		if (data.maxAge) {
-			const cutoff = BigInt(Date.now() - data.maxAge);
-			articleQuery = articleQuery.where('published', '>', cutoff);
-		}
+	await Promise.all(
+		feeds.map(async (feed) => {
+			let articleQuery = db
+				.selectFrom('article')
+				.select('id')
+				.where('feed_id', '=', feed.id);
 
-		const articleIds = (await articleQuery.execute()).map(({ id }) => id);
+			if (maxAge) {
+				const cutoff = BigInt(Date.now() - maxAge);
+				articleQuery = articleQuery.where('published', '>', cutoff);
+			}
 
-		const numRead = await db
-			.selectFrom('user_article')
-			.select(sql<number>`count(*)`.as('count'))
-			.where('article_id', 'in', articleIds)
-			.where('read', '=', 1)
-			.executeTakeFirst();
+			const articleIds = (await articleQuery.execute()).map(({ id }) => id);
 
-		stats.feeds[feedId] = {
-			total: articleIds.length,
-			read: numRead?.count ?? 0
-		};
-	}
+			const numRead = await db
+				.selectFrom('user_article')
+				.select(sql<number>`count(*)`.as('count'))
+				.where('user_id', '=', userId)
+				.where('article_id', 'in', articleIds)
+				.where('read', '=', 1)
+				.executeTakeFirst();
+
+			stats.feeds[feed.id] = {
+				total: articleIds.length,
+				read: numRead?.count ?? 0
+			};
+		})
+	);
 
 	const numSaved = await db
 		.selectFrom('user_article')
 		.select(sql<number>`count(*)`.as('count'))
+		.where('user_id', '=', userId)
 		.where('saved', '=', 1)
 		.executeTakeFirst();
 

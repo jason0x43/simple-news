@@ -14,15 +14,21 @@
 	import type { Article } from '$lib/db/article';
 	import type { Feed } from '$lib/db/feed';
 	import { browser } from '$app/environment';
-	import { invalidate } from '$app/navigation';
 	import { put } from '$lib/request';
 	import { z } from 'zod';
-	import type { ArticleUpdateRequest } from '$lib/types';
+	import type { ArticleUpdateRequest, ArticleUpdateResponse } from '$lib/types';
 
 	export let feedId: Feed['id'] | undefined;
 
-	const { articles, feeds, sidebarVisible, articleFilter, selectedArticleId } =
-		getAppContext().stores;
+	const {
+		articles,
+		feeds,
+		feedStats,
+		sidebarVisible,
+		articleFilter,
+		selectedArticleId,
+		updatedArticleIds
+	} = getAppContext().stores;
 
 	const ScrollDataSchema = z.object({
 		visibleCount: z.number(),
@@ -30,7 +36,6 @@
 	});
 	type ScrollData = z.infer<typeof ScrollDataSchema>;
 
-	const updatedArticleIds = new Set<Article['id']>();
 	const scrollDataKey = 'scrollData';
 
 	$: articleFeedIds = uniquify(
@@ -49,21 +54,12 @@
 			// reset state when selected feed changes (but not when it's first
 			// initialized)
 			if (prevFeedId && feedId) {
-				updatedArticleIds.clear();
+				$updatedArticleIds = {};
 				clearValue(scrollDataKey);
 				visibleCount = 40;
 				scrollBox?.scrollTo(0, 0);
 			}
 			prevFeedId = feedId;
-		}
-	}
-
-	$: {
-		if ($selectedArticleId) {
-			updatedArticleIds.add($selectedArticleId);
-			if (!$articles?.find(({ id }) => id === $selectedArticleId)?.read) {
-				markAsRead([$selectedArticleId], true);
-			}
 		}
 	}
 
@@ -91,7 +87,7 @@
 				filteredArticles =
 					$articles?.filter(
 						({ id, read }) =>
-							!read || updatedArticleIds.has(id) || id === $selectedArticleId
+							!read || $updatedArticleIds[id] || id === $selectedArticleId
 					) ?? [];
 			}
 		}
@@ -199,13 +195,13 @@
 
 			if (ids) {
 				for (const id of ids) {
-					updatedArticleIds.add(id);
+					$updatedArticleIds[id] = true;
 				}
-				await markAsRead(ids, read);
+				await markArticles(ids, { read });
 			}
 		} else if (/save/i.test(value)) {
 			if (activeArticle) {
-				await markAsSaved(activeArticle.id, !activeArticle.saved);
+				await markArticles([activeArticle.id], { saved: !activeArticle.saved });
 			}
 		}
 	}
@@ -215,77 +211,38 @@
 		activeArticle = undefined;
 	}
 
-	async function markAsRead(articleIds: Article['id'][], read: boolean) {
+	async function markArticles(
+		articleIds: Article['id'][],
+		mark: { read?: boolean; saved?: boolean }
+	) {
 		if (!browser) {
 			return;
 		}
 
-		const updated: Article['id'][] = [];
-
-		// optimistically update articles
-		if ($articles) {
-			for (const id of articleIds) {
-				const idx = $articles.findIndex((article) => article.id === id);
-				if (idx !== -1 && Boolean($articles[idx].read) !== read) {
-					$articles[idx] = { ...$articles[idx], read: read ? 1 : 0 };
-					updated.push(id);
-				}
-			}
-		}
-
 		try {
-			await put<ArticleUpdateRequest>('/api/articles', {
-				articleIds,
-				userData: { read }
-			});
-			invalidate('reader:feedstats');
-		} catch (error) {
-			console.warn(`Error marking articles as read: ${error}`);
-
-			// revert the optimistic update if the request failed
-			if ($articles) {
-				for (const id of updated) {
-					const idx = $articles.findIndex((article) => article.id === id);
-					if (idx !== -1) {
-						$articles[idx] = { ...$articles[idx], read: read ? 1 : 0 };
-					}
+			const update = await put<ArticleUpdateRequest, ArticleUpdateResponse>(
+				'/api/articles',
+				{
+					articleIds,
+					userData: mark
 				}
-			}
-		}
-	}
+			);
 
-	async function markAsSaved(articleId: Article['id'], saved: boolean) {
-		if (!browser) {
-			return;
-		}
+			$feedStats = update.feedStats;
 
-		let isUpdated = false;
-
-		// optimistically update articles
-		if ($articles) {
-			const idx = $articles.findIndex((article) => article.id === articleId);
-			if (idx !== -1 && Boolean($articles[idx].saved) !== saved) {
-				$articles[idx] = { ...$articles[idx], saved: saved ? 1 : 0 };
-				isUpdated = true;
-			}
-		}
-
-		try {
-			await put<ArticleUpdateRequest>('/api/articles', {
-				articleIds: [articleId],
-				userData: { saved }
-			});
-			invalidate('reader:feedstats');
-		} catch (error) {
-			console.warn(`Error marking articles as saved: ${error}`);
-
-			// revert the optimistic update if the request failed
-			if ($articles && isUpdated) {
-				const idx = $articles.findIndex((article) => article.id === articleId);
+			for (const userArticle of update.updatedArticles) {
+				const idx = $articles?.findIndex(
+					(a) => a.id === userArticle.article_id
+				);
 				if (idx !== -1) {
-					$articles[idx] = { ...$articles[idx], saved: !saved ? 1 : 0 };
+					$articles[idx] = {
+						...$articles[idx],
+						...userArticle
+					};
 				}
 			}
+		} catch (error) {
+			console.warn(`Error marking articles: ${error}`);
 		}
 	}
 
@@ -354,13 +311,11 @@
 		<div class="controls">
 			<button
 				on:click={() => {
-					if ($articles) {
-						const ids = $articles.map(({ id }) => id);
-						for (const id of ids) {
-							updatedArticleIds.delete(id);
-						}
-						markAsRead(ids, true);
+					const ids = $articles.map(({ id }) => id);
+					for (const id of ids) {
+						$updatedArticleIds[id] = false;
 					}
+					markArticles(ids, { read: true });
 				}}>Mark all read</button
 			>
 		</div>

@@ -12,7 +12,7 @@ export function createStores() {
 		articleFilter: writable<ArticleFilter>('unread'),
 
 		/** The currently loaded article headings */
-		articles: writable<ArticleHeadingWithUserData[] | undefined>(),
+		articles: writable<ArticleHeadingWithUserData[]>([]),
 
 		/** What the app is being displayed on */
 		displayType: writable<'mobile' | 'desktop'>('desktop'),
@@ -48,7 +48,7 @@ export function createStores() {
 		 * IDs of articles that have been updated in the current set of active
 		 * feeds
 		 */
-		updatedArticleIds: writable<Set<Article['id']>>(new Set()),
+		updatedArticleIds: writable<{ [key: Article['id']]: boolean }>({}),
 
 		/**
 		 * The user's subscribed feeds

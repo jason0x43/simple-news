@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { z } from 'zod';
-	import { getArticleContent } from '$lib/article';
 	import type { ArticleWithUserData } from '$lib/db/article';
 	import type { Feed } from '$lib/db/feed';
 	import CloseIcon from '$lib/icons/Close.svelte';
@@ -84,7 +83,7 @@
 				<h3>{feed.title}</h3>
 			</div>
 			<div class="content" on:click={onLinkClick} on:keypress={onLinkClick}>
-				{@html getArticleContent(article)}
+				{@html article.content}
 			</div>
 		</div>
 		<a class="close" href={`/reader/${selectedFeedId}`}>

@@ -5,9 +5,16 @@
 
 	export let data: PageData;
 
-	const { articles, feedId, feedName, selectedFeedIds, sidebarVisible } =
-		getAppContext().stores;
+	const {
+		articles,
+		feedId,
+		feedName,
+		selectedFeedIds,
+		sidebarVisible,
+		selectedArticleId
+	} = getAppContext().stores;
 
+	$: $selectedArticleId = data.articleId;
 	$: $articles = data.articleHeadings;
 	$: $feedName = data.feedName;
 	$: $feedId = data.feedId;
