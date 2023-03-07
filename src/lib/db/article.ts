@@ -1,7 +1,15 @@
 import { createId } from '@paralleldrive/cuid2';
 import type { Transaction } from 'kysely';
 import { isDefined } from '../util';
-import type { Article, Database, Feed, User, UserArticle } from './lib/db';
+import { getFeedGroupWithFeeds } from './feedgroup';
+import type {
+	Article,
+	Database,
+	Feed,
+	FeedGroup,
+	User,
+	UserArticle
+} from './lib/db';
 import db from './lib/db.js';
 
 export type { Article };
@@ -44,17 +52,13 @@ export async function getArticle({
 	};
 }
 
-export async function getArticleHeadings({
-	feedIds,
-	articleIds,
-	userId,
-	maxAge
-}: {
-	feedIds?: Feed['id'][];
-	articleIds?: Article['id'][];
-	userId: User['id'];
-	maxAge?: number;
-}): Promise<ArticleHeadingWithUserData[]> {
+export async function getArticleHeadings(
+	userId: User['id'],
+	options?: {
+		feedIds?: Feed['id'][];
+		maxAge?: number;
+	}
+): Promise<ArticleHeadingWithUserData[]> {
 	let query = db
 		.selectFrom('article')
 		.leftJoin('user_article', (join) =>
@@ -73,16 +77,12 @@ export async function getArticleHeadings({
 			'saved'
 		]);
 
-	if (feedIds) {
-		query = query.where('feed_id', 'in', feedIds);
+	if (options?.feedIds) {
+		query = query.where('feed_id', 'in', options.feedIds);
 	}
 
-	if (articleIds) {
-		query = query.where('article_id', 'in', articleIds);
-	}
-
-	if (maxAge) {
-		const cutoff = BigInt(Date.now() - maxAge);
+	if (options?.maxAge !== undefined) {
+		const cutoff = BigInt(Date.now() - options.maxAge);
 		query = query.where('published', '>', cutoff);
 	}
 
@@ -92,6 +92,34 @@ export async function getArticleHeadings({
 	articles.sort((a, b) => Number(a.published - b.published));
 
 	return articles;
+}
+
+export async function getFeedArticleHeadings(
+	userId: User['id'],
+	feedId: Feed['id'],
+	options?: {
+		maxAge?: number;
+	}
+): Promise<ArticleHeadingWithUserData[]> {
+	return getArticleHeadings(userId, {
+		feedIds: [feedId],
+		maxAge: options?.maxAge
+	});
+}
+
+export async function getGroupArticleHeadings(
+	userId: User['id'],
+	feedGroupId: FeedGroup['id'],
+	options?: {
+		maxAge?: number;
+	}
+): Promise<ArticleHeadingWithUserData[]> {
+	const group = await getFeedGroupWithFeeds(feedGroupId);
+	const feedIds = group?.feeds.map(({ id }) => id) ?? [];
+	return getArticleHeadings(userId, {
+		feedIds,
+		maxAge: options?.maxAge
+	});
 }
 
 export async function getSavedArticleHeadings(

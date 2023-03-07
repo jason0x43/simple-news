@@ -42,14 +42,12 @@ export async function createFeedGroup(
 	return feedGroupId;
 }
 
-export async function getFeedGroup(
-	id: FeedGroup['id']
-): Promise<FeedGroup | undefined> {
+export async function getFeedGroup(id: FeedGroup['id']): Promise<FeedGroup> {
 	return db
 		.selectFrom('feed_group')
 		.selectAll()
 		.where('id', '=', id)
-		.executeTakeFirst();
+		.executeTakeFirstOrThrow();
 }
 
 export async function getUserFeedGroup(

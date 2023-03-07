@@ -22,7 +22,6 @@ export const ArticleUpdateRequestSchema = z.object({
 	})
 });
 export type ArticleUpdateRequest = z.infer<typeof ArticleUpdateRequestSchema>;
-
 export type ArticleUpdateResponse = {
 	updatedArticles: UserArticle[];
 	feedStats: GetFeedStatsResponse;

@@ -2,6 +2,9 @@
 	import ArticlesList from './ArticlesList.svelte';
 	import { getAppContext } from '$lib/contexts';
 	import type { PageData } from './$types';
+	import { onMount } from 'svelte';
+	import { get } from '$lib/request';
+	import type { ArticleHeadingWithUserData } from '$lib/db/article';
 
 	export let data: PageData;
 
@@ -30,6 +33,23 @@
 			}
 		}
 	}
+
+	onMount(() => {
+		const interval = setInterval(async () => {
+			try {
+				const resp = await get<ArticleHeadingWithUserData[]>(
+					`/api/feedgroups/${$feedId}/articles`
+				);
+				$articles = resp;
+			} catch (error) {
+				console.warn('Error updating articles list');
+			}
+		}, 600_000);
+
+		return () => {
+			clearInterval(interval);
+		};
+	});
 </script>
 
 <div class="feed-layout">

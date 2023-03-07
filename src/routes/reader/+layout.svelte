@@ -1,14 +1,13 @@
 <script lang="ts">
 	import Header from './Header.svelte';
 	import { onMount } from 'svelte';
-	import { invalidate } from '$app/navigation';
 	import { getAppContext, setReaderContext } from '$lib/contexts';
 	import ManageFeeds from './ManageFeeds.svelte';
-	import { put } from '$lib/request';
+	import { get, put } from '$lib/request';
 	import Sidebar from './Sidebar.svelte';
 	import { browser } from '$app/environment';
 	import type { LayoutData } from './$types';
-	import type { UpdateSessionRequest } from '$lib/types';
+	import type { GetFeedStatsResponse, UpdateSessionRequest } from '$lib/types';
 
 	export let data: LayoutData;
 
@@ -22,13 +21,11 @@
 		managingFeeds
 	} = getAppContext().stores;
 
-	$: {
-		$feeds = data.feeds ?? [];
-		$userFeeds = data.userFeeds ?? [];
-		$feedStats = data.feedStats ?? {};
-		$feedGroups = data.feedGroups ?? [];
-		$articleFilter = data.articleFilter ?? 'unread';
-	}
+	$: $feeds = data.feeds ?? [];
+	$: $userFeeds = data.userFeeds ?? [];
+	$: $feedStats = data.feedStats ?? {};
+	$: $feedGroups = data.feedGroups ?? [];
+	$: $articleFilter = data.articleFilter ?? 'unread';
 
 	const titleListeners = new Set<() => void>();
 
@@ -58,8 +55,13 @@
 	}
 
 	onMount(() => {
-		const interval = setInterval(() => {
-			invalidate('reader:feedstats');
+		const interval = setInterval(async () => {
+			try {
+				const resp = await get<GetFeedStatsResponse>('/api/feedstats');
+				$feedStats = resp;
+			} catch (error) {
+				console.warn('Error updating feedstats');
+			}
 		}, 600_000);
 
 		return () => {

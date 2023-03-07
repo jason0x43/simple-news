@@ -70,14 +70,15 @@ export async function getSessionWithUser(
 export async function setSessionData(
 	id: Session['id'],
 	data: SessionData
-): Promise<void> {
-	await db
+): Promise<Session> {
+	return await db
 		.updateTable('session')
 		.set({
 			data: JSON.stringify(data)
 		})
 		.where('id', '=', id)
-		.executeTakeFirst();
+		.returningAll()
+		.executeTakeFirstOrThrow();
 }
 
 export async function deleteSession(id: Session['id']): Promise<void> {

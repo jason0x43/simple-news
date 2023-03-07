@@ -1,40 +1,13 @@
+import type { ZodType } from 'zod';
 import { ResponseError } from './error';
-
-export type ErrorResponse<
-	T extends Record<string, string> | string = Record<string, string | string>
-> = {
-	errors: T;
-};
-
-export function errorResponse(
-	errors: Record<string, unknown> | string,
-	status?: number
-): Response {
-	const errs = {
-		errors:
-			typeof errors === 'string'
-				? {
-						error: errors
-				  }
-				: errors
-	};
-	return new Response(JSON.stringify(errs), { status: status ?? 400 });
-}
-
-export function isErrorResponse(value: unknown): value is ErrorResponse {
-	return (
-		value != null &&
-		typeof value === 'object' &&
-		(value as ErrorResponse).errors !== undefined
-	);
-}
 
 /**
  * Make a POST request
  */
 export async function post<T = unknown, R = unknown>(
 	path: string,
-	data: T
+	data: T,
+	parser?: ZodType<R>
 ): Promise<R> {
 	const resp = await fetch(path, {
 		method: 'POST',
@@ -44,11 +17,19 @@ export async function post<T = unknown, R = unknown>(
 			'content-type': 'application/json'
 		}
 	});
+
 	if (resp.status >= 400) {
 		const body = await resp.text();
 		throw new ResponseError('POST', path, resp.status, resp.statusText, body);
 	}
-	return (await resp.json()) as R;
+
+	const body = await resp.json();
+
+	if (parser) {
+		return parser.parse(body);
+	}
+
+	return body as R;
 }
 
 /**
@@ -56,7 +37,8 @@ export async function post<T = unknown, R = unknown>(
  */
 export async function put<T = unknown, R = unknown>(
 	path: string,
-	data: T
+	data: T,
+	parser?: ZodType<R>
 ): Promise<R> {
 	const resp = await fetch(path, {
 		method: 'PUT',
@@ -66,28 +48,32 @@ export async function put<T = unknown, R = unknown>(
 			'content-type': 'application/json'
 		}
 	});
-	const body = await resp.text();
 
 	if (resp.status >= 400) {
+		const body = await resp.text();
 		throw new ResponseError('PUT', path, resp.status, resp.statusText, body);
 	}
 
-	if (body) {
-		return JSON.parse(body) as R;
+	const body = await resp.json();
+
+	if (parser) {
+		return parser.parse(data);
 	}
 
-	return undefined as R;
+	return body as R;
 }
 
-export async function fetchData<T>(url: string): Promise<T> {
+/**
+ * Make a GET request
+ */
+export async function get<T = unknown>(
+	url: string,
+	parser?: ZodType<T>
+): Promise<T> {
 	const resp = await fetch(url);
-	return (await resp.json()) as T;
-}
-
-export function getQueryParam(params: URLSearchParams, key: string): string {
-	const val = params.get(key);
-	if (val === null) {
-		throw new Error(`Missing required param ${key}`);
+	const data = await resp.json();
+	if (parser) {
+		return parser.parse(data);
 	}
-	return val;
+	return data as T;
 }

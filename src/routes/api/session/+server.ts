@@ -1,6 +1,11 @@
-import { setSessionData } from '$lib/db/session';
+import { setSessionData, type Session } from '$lib/db/session';
+import { json } from '$lib/kit';
 import { getSessionOrThrow } from '$lib/session';
-import { SessionDataSchema, type UpdateSessionRequest } from '$lib/types';
+import {
+	SessionDataSchema,
+	type SessionData,
+	type UpdateSessionRequest
+} from '$lib/types';
 import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
@@ -17,11 +22,13 @@ export const PUT: RequestHandler = async function ({ locals, request }) {
 		throw error(400, 'An articleFilter must be provided');
 	}
 
+	let updated: Session;
+
 	try {
-		await setSessionData(session.id, data);
+		updated = await setSessionData(session.id, data);
 	} catch (err) {
 		throw error(500, `${err}`);
 	}
 
-	return new Response();
+	return json<SessionData>(SessionDataSchema.parse(JSON.parse(updated.data)));
 };
