@@ -14,7 +14,6 @@ import type { RequestHandler } from './$types';
 export const GET: RequestHandler = async ({ locals, params }) => {
 	const user = getUserOrThrow(locals);
 	const { groupId } = params;
-	console.log(params);
 
 	let articleHeadings: ArticleHeadingWithUserData[];
 
@@ -28,8 +27,6 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 			articleHeadings = await getFeedArticleHeadings(user.id, id);
 		}
 	}
-
-	console.log(`got headings for ${groupId}:`, articleHeadings);
 
 	return json<ArticleHeadingWithUserData[]>(articleHeadings);
 };
