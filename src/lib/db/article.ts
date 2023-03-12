@@ -81,10 +81,9 @@ export async function getArticleHeadings(
 		query = query.where('feed_id', 'in', options.feedIds);
 	}
 
-	if (options?.maxAge !== undefined) {
-		const cutoff = BigInt(Date.now() - options.maxAge);
-		query = query.where('published', '>', cutoff);
-	}
+	const maxAge = options?.maxAge ?? 6 * 7 * 24 * 60 * 60 * 1000;
+	const cutoff = BigInt(Date.now() - maxAge);
+	query = query.where('published', '>', cutoff);
 
 	// sort in descending order by publish date for maxAge, then sort the
 	// result in ascending order
