@@ -2,32 +2,48 @@
 
 set -e
 
-if [[ -z $DEPLOY_REMOTE ]]; then
-  echo "DEPLOY_REMOTE must be defined"
-  exit 1
+deploy_host=$DEPLOY_HOST
+if [[ -z $deploy_host ]]; then
+  deploy_host="localhost"
 fi
 
-git diff-index --quiet HEAD || (echo "Project has uncommitted changes" && exit 1)
+services_path=$SERVICES_PATH
+if [[ -z $services_path ]]; then
+  services_path="services"
+fi
+
+echo ">>> Verifying services path..."
+if [[ $deploy_host == "localhost" ]]; then
+  deploy_path=$HOME/$services_path
+  if [[ ! -d $deploy_path ]]; then
+    echo "!!! Deploy path $deploy_path doesn't exist"
+    exit 1
+  fi
+else
+  deploy_path=$deploy_host:$services_path
+  if ! ssh $deploy_host "[ -d $services_path ]"; then
+    echo "!!! Deploy path $services_path doesn't exist on $deploy_host"
+    exit 1
+  fi
+fi
 
 echo ">>> Running tests..."
-echo ""
-
 pnpm test
 
-echo ">>> Pushing app to deploy host..."
-echo ""
+echo ">>> Copying source..."
+rsync \
+  -av \
+  --delete \
+  --delete-excluded \
+  --progress \
+  --exclude-from .dockerignore \
+  . $deploy_path/build/simple-news
 
-git push $DEPLOY_REMOTE
+echo ">>> Updating service..."
+if [[ $deploy_host == "localhost" ]]; then
+  cd $SERVICES_PATH && docker compose up -d --build simple-news
+else
+  ssh $deploy_host "cd $SERVICES_PATH && docker compose up -d --build simple-news"
+fi
 
-echo ">>> Deploying..."
-echo ""
-
-ssh $DEPLOY_HOST <<END
-cd $DEPLOY_REPO \
-&& git pull \
-&& cd $DEPLOY_DOCKER \
-&& docker compose up -d --build simple-news
-END
-
-echo ""
-echo ">>> Done."
+echo ">>> Done"
