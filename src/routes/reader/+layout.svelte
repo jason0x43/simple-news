@@ -6,10 +6,9 @@
 	import { get, put } from '$lib/request';
 	import Sidebar from './Sidebar.svelte';
 	import { browser } from '$app/environment';
-	import type { LayoutData } from './$types';
 	import type { GetFeedStatsResponse, UpdateSessionRequest } from '$lib/types';
 
-	export let data: LayoutData;
+	export let data;
 
 	const {
 		articleFilter,

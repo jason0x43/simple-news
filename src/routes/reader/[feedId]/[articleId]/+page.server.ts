@@ -4,9 +4,8 @@ import { getFeed, getFeedStats } from '$lib/db/feed';
 import type { User } from '$lib/db/user';
 import { getUserOrThrow } from '$lib/session';
 import { redirect } from '@sveltejs/kit';
-import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals, parent, params }) => {
+export async function load({ locals, parent, params }) {
 	let user: User;
 
 	try {
@@ -35,4 +34,4 @@ export const load: PageServerLoad = async ({ locals, parent, params }) => {
 	article.content = getArticleContent(article);
 
 	return { article, feed, feedStats };
-};
+}

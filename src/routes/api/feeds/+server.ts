@@ -8,20 +8,19 @@ import {
 	type GetFeedsResponse
 } from '$lib/types';
 import { error } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
 
 /**
  * Get all feeds
  */
-export const GET: RequestHandler = async () => {
+export async function GET() {
 	const resp: GetFeedsResponse = await getFeeds();
 	return json(resp);
-};
+}
 
 /**
  * Add a new feed
  */
-export const POST: RequestHandler = async ({ request }) => {
+export async function POST({ request }) {
 	let data: AddFeedRequest;
 
 	try {
@@ -39,4 +38,4 @@ export const POST: RequestHandler = async ({ request }) => {
 	const resp: AddFeedResponse = { feed };
 
 	return json(resp);
-};
+}

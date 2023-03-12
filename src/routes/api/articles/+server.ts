@@ -8,12 +8,11 @@ import {
 	type ArticleUpdateRequest
 } from '$lib/types';
 import { error } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
 
 /**
  * Update user data for a set of articles
  */
-export const PUT: RequestHandler = async function ({ locals, request }) {
+export async function PUT({ locals, request }) {
 	const user = getUserOrThrow(locals);
 
 	let data: ArticleUpdateRequest;
@@ -31,4 +30,4 @@ export const PUT: RequestHandler = async function ({ locals, request }) {
 		updatedArticles,
 		feedStats
 	});
-};
+}

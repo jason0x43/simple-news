@@ -3,9 +3,8 @@ import { getUserFeedGroupsWithFeeds, getUserFeeds } from '$lib/db/feedgroup';
 import type { SessionWithUser } from '$lib/db/session';
 import { getSessionOrThrow } from '$lib/session';
 import { redirect } from '@sveltejs/kit';
-import type { LayoutServerLoad } from './$types';
 
-export const load: LayoutServerLoad = async ({ depends, locals }) => {
+export async function load({ depends, locals }) {
 	depends('reader:feedstats');
 
 	let session: SessionWithUser;
@@ -29,4 +28,4 @@ export const load: LayoutServerLoad = async ({ depends, locals }) => {
 		feedStats,
 		feedGroups
 	};
-};
+}

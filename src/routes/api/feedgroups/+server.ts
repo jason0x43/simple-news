@@ -9,16 +9,15 @@ import { getUserOrThrow } from '$lib/session';
 import type { GetFeedGroupsResponse } from '$lib/types';
 import { error } from '@sveltejs/kit';
 import { z } from 'zod';
-import type { RequestHandler } from './$types';
 
 /**
  * Get all feeds
  */
-export const GET: RequestHandler = async ({ locals }) => {
+export async function GET({ locals }) {
 	const user = getUserOrThrow(locals);
 	const resp: GetFeedGroupsResponse = await getUserFeedGroupsWithFeeds(user.id);
 	return json(resp);
-};
+}
 
 const AddGroupFeedRequestSchema = z.object({
 	feedId: z.string(),
@@ -33,7 +32,7 @@ export type AddGroupFeedResponse = Record<string, never>;
  *
  * The feed will be removed from any existing feed group
  */
-export const PUT: RequestHandler = async ({ locals, request }) => {
+export async function PUT({ locals, request }) {
 	const user = getUserOrThrow(locals);
 
 	let data: AddGroupFeedRequest;
@@ -58,4 +57,4 @@ export const PUT: RequestHandler = async ({ locals, request }) => {
 	}
 
 	return new Response();
-};
+}

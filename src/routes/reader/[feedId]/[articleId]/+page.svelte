@@ -3,9 +3,8 @@
 	import { slide } from '$lib/transition';
 	import { onMount } from 'svelte';
 	import { getAppContext, getReaderContext } from '$lib/contexts';
-	import type { PageData } from './$types';
 
-	export let data: PageData;
+	export let data;
 
 	const { feedStats, articles, updatedArticleIds } = getAppContext().stores;
 

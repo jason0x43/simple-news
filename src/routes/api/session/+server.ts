@@ -7,12 +7,11 @@ import {
 	type UpdateSessionRequest
 } from '$lib/types';
 import { error } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
 
 /**
  * Update session data
  */
-export const PUT: RequestHandler = async function ({ locals, request }) {
+export async function PUT({ locals, request }) {
 	const session = getSessionOrThrow(locals);
 	let data: UpdateSessionRequest;
 
@@ -31,4 +30,4 @@ export const PUT: RequestHandler = async function ({ locals, request }) {
 	}
 
 	return json<SessionData>(SessionDataSchema.parse(JSON.parse(updated.data)));
-};
+}

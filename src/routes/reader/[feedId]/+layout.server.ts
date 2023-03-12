@@ -8,9 +8,8 @@ import { getFeedGroupWithFeeds } from '$lib/db/feedgroup';
 import type { User } from '$lib/db/user';
 import { getUserOrThrow } from '$lib/session';
 import { redirect } from '@sveltejs/kit';
-import type { LayoutServerLoad } from './$types';
 
-export const load: LayoutServerLoad = async ({ locals, params }) => {
+export async function load({ locals, params }) {
 	let user: User;
 
 	try {
@@ -54,4 +53,4 @@ export const load: LayoutServerLoad = async ({ locals, params }) => {
 		feedName,
 		selectedFeedIds
 	};
-};
+}

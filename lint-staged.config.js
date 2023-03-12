@@ -11,7 +11,7 @@ function lint(filenames) {
 export default {
   '{src,scripts}/**/*.{ts,tsx}': (filenames) => [
     ...prettify(filenames),
-    'tsc --noEmit',
+    'svelte-check --tsconfig ./tsconfig.json',
     ...lint(filenames)
   ],
   'src/**/*.svelte': (filenames) => [

@@ -1,12 +1,11 @@
 <script lang="ts">
 	import ArticlesList from './ArticlesList.svelte';
 	import { getAppContext } from '$lib/contexts';
-	import type { PageData } from './$types';
 	import { onMount } from 'svelte';
 	import { get } from '$lib/request';
 	import type { ArticleHeadingWithUserData } from '$lib/db/article';
 
-	export let data: PageData;
+	export let data;
 
 	const {
 		articles,

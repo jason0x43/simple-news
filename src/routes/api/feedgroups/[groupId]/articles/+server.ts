@@ -6,12 +6,11 @@ import {
 } from '$lib/db/article';
 import { json } from '$lib/kit';
 import { getUserOrThrow } from '$lib/session';
-import type { RequestHandler } from './$types';
 
 /**
  * Request a set of articles
  */
-export const GET: RequestHandler = async ({ locals, params }) => {
+export async function GET({ locals, params }) {
 	const user = getUserOrThrow(locals);
 	const { groupId } = params;
 
@@ -29,4 +28,4 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 	}
 
 	return json<ArticleHeadingWithUserData[]>(articleHeadings);
-};
+}
