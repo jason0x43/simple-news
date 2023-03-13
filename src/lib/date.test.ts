@@ -46,6 +46,8 @@ describe('getAge', () => {
 	it('returns the age of a date that is days old', () => {
 		const date = new Date();
 		date.setDate(date.getDate() - 4);
+		// Add some hours to ensure the test doesn't break during a DST change
+		date.setHours(date.getHours() - 4);
 		const result = getAge(date);
 		expect(result).toEqual('4 d');
 	});
