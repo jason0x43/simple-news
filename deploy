@@ -2,6 +2,8 @@
 
 set -e
 
+service=simple-news
+
 deploy_host=$DEPLOY_HOST
 if [[ -z $deploy_host ]]; then
   deploy_host="localhost"
@@ -37,13 +39,13 @@ rsync \
   --delete-excluded \
   --progress \
   --exclude-from .dockerignore \
-  . $deploy_path/build/simple-news
+  . $deploy_path/build/$service
 
 echo ">>> Updating service..."
 if [[ $deploy_host == "localhost" ]]; then
-  cd $SERVICES_PATH && docker compose up -d --build simple-news
+  cd $SERVICES_PATH && docker compose up -d --build $service
 else
-  ssh $deploy_host "cd $SERVICES_PATH && docker compose up -d --build simple-news"
+  ssh $deploy_host "cd $SERVICES_PATH && docker compose up -d --build $service"
 fi
 
 echo ">>> Done"
