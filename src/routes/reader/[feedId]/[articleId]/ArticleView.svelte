@@ -93,6 +93,11 @@
 {/if}
 
 <style>
+	@import url('highlight.js/styles/default.css') screen and
+		(prefers-color-scheme: light);
+	@import url('highlight.js/styles/dark.css') screen and
+		(prefers-color-scheme: dark);
+
 	.article {
 		width: 100%;
 		background-color: var(--background);
