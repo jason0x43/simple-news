@@ -14,4 +14,3 @@ README.md
 *.sql
 docker-compose.yml
 lint-staged.config.js
-publish
