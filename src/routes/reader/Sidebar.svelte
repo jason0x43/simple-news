@@ -39,8 +39,8 @@
 
 <style>
 	.sidebar {
-		background: var(--highlight);
-		color: var(--highlight-text);
+		background: var(--highlight-text);
+		color: var(--highlight);
 		width: var(--sidebar-width);
 		display: flex;
 		height: 100%;
