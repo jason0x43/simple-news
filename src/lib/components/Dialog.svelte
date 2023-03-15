@@ -5,7 +5,7 @@
 
 	export let title: string | undefined = undefined;
 	export let onClose: (() => void) | undefined = undefined;
-	export let busy: boolean = false;
+	export let busy = false;
 </script>
 
 <div class="dialog">

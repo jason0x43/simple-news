@@ -79,6 +79,7 @@ button {
 	font-size: var(--font-size);
 	padding: 4px 6px;
 	margin: 0;
+	display: flex;
 }
 
 button:active {
