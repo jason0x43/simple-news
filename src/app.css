@@ -39,6 +39,8 @@ body {
 		--background: black;
 		--foreground: #ddd;
 		--border: rgba(255, 255, 255, 0.2);
+		--highlight: #eee;
+		--highlight-text: #555;
 		--selected: rgba(255, 2550, 255, 0.2);
 		--link: #77f;
 	}

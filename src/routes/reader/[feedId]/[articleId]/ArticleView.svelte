@@ -234,16 +234,16 @@
 	.content :global(pre) {
 		padding: 1rem;
 		font-size: 90%;
-		background: #f5f5f5;
-		border: solid 1px #eee;
+		background: var(--matte);
+		border: solid 1px var(--highlight-text);
 		border-radius: 6px;
 	}
 
 	.content :global(p) :global(code) {
 		font-size: 90%;
 		padding: 0.05rem 0.1rem 0.15rem 0.1rem;
-		background: #f5f5f5;
-		border: solid 1px #eee;
+		background: var(--matte);
+		border: solid 1px var(--highlight-text);
 		border-radius: 3px;
 	}
 

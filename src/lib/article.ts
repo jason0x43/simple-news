@@ -21,6 +21,7 @@ export function getArticleContent(article: Article | null): string {
 	removeHorizontalPadding($);
 	removeBorderRadii($);
 	removeExplicitImageSize($);
+	removeInlineCodeStyles($);
 	removeBreaks($);
 
 	return $.html();
@@ -91,4 +92,8 @@ function removeBreaks($: cheerio.CheerioAPI): void {
 	$('ul + br').remove();
 	$('br:has(+ h2)').remove();
 	$('h2 + br').remove();
+}
+
+function removeInlineCodeStyles($: cheerio.CheerioAPI): void {
+	$('pre[style]').removeAttr('style');
 }
