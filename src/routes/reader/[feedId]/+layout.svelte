@@ -22,14 +22,9 @@
 	$: $feedId = data.feedId;
 	$: $selectedFeedIds = data.selectedFeedIds;
 
-	let prevFeedId = data.feedId;
-
 	$: {
-		if (data.feedId !== prevFeedId) {
-			prevFeedId = data.feedId;
-			if (data.feedId) {
-				$sidebarVisible = false;
-			}
+		if (data.feedId) {
+			$sidebarVisible = false;
 		}
 	}
 
