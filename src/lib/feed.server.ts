@@ -16,14 +16,14 @@ declare global {
 	 * restarts during dev.
 	 */
 	// eslint-disable-next-line no-var
-	var downloadCleanup: () => void | undefined;
+	var stopDownloader: () => void | undefined;
 }
 
 /**
  * Start a feed downloader that will periodically download the feeds
  */
 export function startDownloader(time = 600_000): () => void {
-	const stop = global.downloadCleanup as () => void;
+	const stop = global.stopDownloader as () => void;
 	stop?.();
 
 	const aborter = new AbortController();
@@ -37,7 +37,7 @@ export function startDownloader(time = 600_000): () => void {
 		clearInterval(interval);
 		aborter.abort();
 	};
-	global.downloadCleanup = cleanup;
+	global.stopDownloader = cleanup;
 
 	return cleanup;
 }
@@ -226,8 +226,12 @@ async function fetchWithTimeout(
 	url: string,
 	init?: RequestInit
 ): Promise<Response> {
+	const aborter = new AbortController();
+	setTimeout(() => {
+		aborter.abort(new Error(`Request for ${url} timed out`));
+	}, 5000);
 	return fetch(url, {
-		signal: AbortSignal.timeout(5000),
+		signal: aborter.signal,
 		...init
 	});
 }
