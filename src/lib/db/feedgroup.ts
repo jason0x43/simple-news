@@ -1,6 +1,6 @@
 import { createId } from '@paralleldrive/cuid2';
-import db from './lib/db.js';
 import type { Feed, FeedGroup, FeedGroupFeed, User } from './lib/db';
+import db from './lib/db.js';
 
 export type { FeedGroup, FeedGroupFeed };
 
@@ -14,6 +14,9 @@ type CreateFeedGroupData = {
 	feeds: Feed['id'][];
 };
 
+/**
+ * Create a user feed group
+ */
 export async function createFeedGroup(
 	data: CreateFeedGroupData
 ): Promise<FeedGroup['id']> {
@@ -28,12 +31,14 @@ export async function createFeedGroup(
 				id: feedGroupId
 			})
 			.executeTakeFirst();
+
 		for (const feedId of data.feeds) {
 			await trx
 				.insertInto('feed_group_feed')
 				.values({
 					feed_group_id: feedGroupId,
-					feed_id: feedId
+					feed_id: feedId,
+					user_id: data.userId
 				})
 				.executeTakeFirst();
 		}
@@ -42,37 +47,10 @@ export async function createFeedGroup(
 	return feedGroupId;
 }
 
-export async function getFeedGroup(id: FeedGroup['id']): Promise<FeedGroup> {
-	return db
-		.selectFrom('feed_group')
-		.selectAll()
-		.where('id', '=', id)
-		.executeTakeFirstOrThrow();
-}
-
-export async function getUserFeedGroup(
-	userId: User['id'],
-	name: FeedGroup['name']
-): Promise<FeedGroup | undefined> {
-	return db
-		.selectFrom('feed_group')
-		.selectAll()
-		.where('user_id', '=', userId)
-		.where('name', '=', name)
-		.executeTakeFirst();
-}
-
-export async function getUserFeedGroups(
-	userId: User['id']
-): Promise<FeedGroup[]> {
-	return db
-		.selectFrom('feed_group')
-		.selectAll()
-		.where('user_id', '=', userId)
-		.execute();
-}
-
-export async function getFeedGroupWithFeeds(
+/**
+ * Get a specific feed group, including feeds.
+ */
+export async function getFeedGroup(
 	id: FeedGroup['id']
 ): Promise<FeedGroupWithFeeds> {
 	const feedGroup = await db
@@ -88,7 +66,10 @@ export async function getFeedGroupWithFeeds(
 	};
 }
 
-export async function getUserFeedGroupsWithFeeds(
+/**
+ * Get all user feed groups, including feeds.
+ */
+export async function getUserFeedGroups(
 	userId: User['id']
 ): Promise<FeedGroupWithFeeds[]> {
 	const feedGroups = await db
@@ -107,23 +88,18 @@ export async function getUserFeedGroupsWithFeeds(
 	return feedGroupsWithFeeds;
 }
 
-type FindGroupContainingFeedData = {
+/**
+ * Find the user feed group containing a feed.
+ */
+export async function findUserFeedGroupContainingFeed(data: {
 	userId: User['id'];
 	feedId: Feed['id'];
-};
-
-export async function findUserFeedGroupContainingFeed(
-	data: FindGroupContainingFeedData
-): Promise<FeedGroup | undefined> {
+}): Promise<FeedGroup | undefined> {
 	const feedGroupId = await db
 		.selectFrom('feed_group_feed')
 		.select('feed_group_id')
-		.distinct()
-		.innerJoin('feed_group', (join) =>
-			join.on('feed_group.user_id', '=', data.userId)
-		)
-		.where('feed_group.id', '=', 'feed_group_feed.feed_group_id')
-		.where('feed_group_feed.feed_id', '=', data.feedId)
+		.where('feed_id', '=', data.feedId)
+		.where('user_id', '=', data.userId)
 		.executeTakeFirst();
 
 	if (feedGroupId) {
@@ -137,6 +113,9 @@ export async function findUserFeedGroupContainingFeed(
 
 type DeleteFeedGroupData = Pick<FeedGroup, 'user_id' | 'name'>;
 
+/**
+ * Delete a feed group.
+ */
 export async function deleteFeedGroup(
 	data: DeleteFeedGroupData
 ): Promise<void> {
@@ -147,19 +126,24 @@ export async function deleteFeedGroup(
 		.executeTakeFirst();
 }
 
+/**
+ * Return all the feeds a user is subscribed to.
+ */
 export async function getUserFeeds(userId: User['id']): Promise<Feed[]> {
 	const feedIds = (
 		await db
 			.selectFrom('feed_group_feed')
 			.select('feed_id')
-			.innerJoin('feed_group', 'feed_group.id', 'feed_group_feed.feed_group_id')
-			.where('feed_group.user_id', '=', userId)
+			.where('user_id', '=', userId)
 			.execute()
 	).map(({ feed_id }) => feed_id);
 
 	return db.selectFrom('feed').selectAll().where('id', 'in', feedIds).execute();
 }
 
+/**
+ * Return all the feeds in a group.
+ */
 export async function getGroupFeeds(
 	groupId: FeedGroupFeed['feed_group_id']
 ): Promise<Feed[]> {
@@ -177,41 +161,50 @@ export async function getGroupFeeds(
 /**
  * Add feeds to a feed group.
  *
+ * If a feed is already in a group, it will be removed from that group.
+ *
  * @param groupId ID of the group to add feeds to
  * @param feedIds feed IDs to add to the group
  */
-export async function addFeedsToGroup(
-	groupId: FeedGroupFeed['feed_group_id'],
-	feedIds: Feed['id'][]
-): Promise<void> {
+export async function addFeedToGroup(data: {
+	groupId: FeedGroup['id'];
+	feedId: Feed['id'];
+}): Promise<void> {
 	await db.transaction().execute(async (trx) => {
-		for (const feedId of feedIds) {
-			await trx
-				.insertInto('feed_group_feed')
-				.values({
-					feed_group_id: groupId,
-					feed_id: feedId
-				})
-				.executeTakeFirst();
-		}
+		const groupUserId = await trx
+			.selectFrom('feed_group')
+			.select('user_id')
+			.where('id', '=', data.groupId)
+			.executeTakeFirstOrThrow();
+		const { user_id } = groupUserId;
+
+		await trx
+			.deleteFrom('feed_group_feed')
+			.where('feed_id', '=', data.feedId)
+			.where('user_id', '=', user_id)
+			.executeTakeFirst();
+
+		await trx
+			.insertInto('feed_group_feed')
+			.values({
+				feed_group_id: data.groupId,
+				feed_id: data.feedId,
+				user_id
+			})
+			.executeTakeFirst();
 	});
 }
 
 /**
- * Remove feeds from a feed group.
- *
- * @param groupId ID of the group to remove feeds from
- * @param feedIds feed IDs to remove from the group
+ * Remove a feed from the user group it belongs to, if any.
  */
-export async function removeFeedsFromGroup(
-	groupId: FeedGroupFeed['feed_group_id'],
-	feedIds: Feed['id'][]
-): Promise<void> {
-	for (const feedId of feedIds) {
-		await db
-			.deleteFrom('feed_group_feed')
-			.where('feed_group_id', '=', groupId)
-			.where('feed_id', '=', feedId)
-			.executeTakeFirst();
-	}
+export async function removeFeedFromUser(data: {
+	userId: User['id'];
+	feedId: Feed['id'];
+}): Promise<void> {
+	await db
+		.deleteFrom('feed_group_feed')
+		.where('feed_id', '=', data.feedId)
+		.where('user_id', '=', data.userId)
+		.executeTakeFirst();
 }

@@ -47,7 +47,8 @@ export type FeedGroup = z.infer<typeof FeedGroupSchema>;
 
 export const FeedGroupFeedSchema = z.object({
 	feed_group_id: z.string(),
-	feed_id: z.string()
+	feed_id: z.string(),
+	user_id: z.string()
 });
 export type FeedGroupFeed = z.infer<typeof FeedGroupFeedSchema>;
 

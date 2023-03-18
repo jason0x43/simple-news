@@ -1,5 +1,5 @@
 import { getFeeds, getFeedStats } from '$lib/db/feed';
-import { getUserFeedGroupsWithFeeds, getUserFeeds } from '$lib/db/feedgroup';
+import { getUserFeedGroups, getUserFeeds } from '$lib/db/feedgroup';
 import type { SessionWithUser } from '$lib/db/session';
 import { getSessionOrThrow } from '$lib/session';
 import { redirect } from '@sveltejs/kit';
@@ -15,7 +15,7 @@ export async function load({ depends, locals }) {
 	}
 
 	const { user, data: sessionData } = session;
-	const feedGroups = await getUserFeedGroupsWithFeeds(user.id);
+	const feedGroups = await getUserFeedGroups(user.id);
 	const feeds = await getFeeds();
 	const userFeeds = await getUserFeeds(user.id);
 	const feedStats = await getFeedStats(user.id, { feeds });

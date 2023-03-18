@@ -4,8 +4,7 @@ import { json } from '$lib/kit';
 import {
 	AddFeedRequestSchema,
 	type AddFeedRequest,
-	type AddFeedResponse,
-	type GetFeedsResponse
+	type AddFeedResponse
 } from '$lib/types';
 import { error } from '@sveltejs/kit';
 
@@ -13,7 +12,7 @@ import { error } from '@sveltejs/kit';
  * Get all feeds
  */
 export async function GET() {
-	const resp: GetFeedsResponse = await getFeeds();
+	const resp = await getFeeds();
 	return json(resp);
 }
 

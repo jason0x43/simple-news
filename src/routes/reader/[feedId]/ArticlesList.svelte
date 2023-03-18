@@ -1,7 +1,12 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { z } from 'zod';
+	import { browser } from '$app/environment';
 	import ContextMenu from '$lib/components/ContextMenu.svelte';
+	import { getAppContext } from '$lib/contexts';
 	import { getAge } from '$lib/date';
-	import type { ArticleHeadingWithUserData } from '$lib/db/article';
+	import type { Article, ArticleHeadingWithUserData } from '$lib/db/article';
+	import type { Feed } from '$lib/db/feed';
 	import {
 		clearValue,
 		loadValue,
@@ -9,14 +14,7 @@
 		unescapeHtml,
 		uniquify
 	} from '$lib/util';
-	import { onMount } from 'svelte';
-	import { getAppContext } from '$lib/contexts';
-	import type { Article } from '$lib/db/article';
-	import type { Feed } from '$lib/db/feed';
-	import { browser } from '$app/environment';
-	import { put } from '$lib/request';
-	import { z } from 'zod';
-	import type { ArticleUpdateRequest, ArticleUpdateResponse } from '$lib/types';
+	import { put as putArticles } from '../../api/articles';
 
 	export let feedId: Feed['id'] | undefined;
 
@@ -220,13 +218,10 @@
 		}
 
 		try {
-			const update = await put<ArticleUpdateRequest, ArticleUpdateResponse>(
-				'/api/articles',
-				{
-					articleIds,
-					userData: mark
-				}
-			);
+			const update = await putArticles({
+				articleIds,
+				userData: mark
+			});
 
 			$feedStats = update.feedStats;
 

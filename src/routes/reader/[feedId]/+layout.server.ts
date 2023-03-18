@@ -4,7 +4,7 @@ import {
 	type ArticleHeadingWithUserData
 } from '$lib/db/article';
 import { getFeed, type Feed } from '$lib/db/feed';
-import { getFeedGroupWithFeeds } from '$lib/db/feedgroup';
+import { getFeedGroup } from '$lib/db/feedgroup';
 import type { User } from '$lib/db/user';
 import { getUserOrThrow } from '$lib/session';
 import { redirect } from '@sveltejs/kit';
@@ -32,7 +32,7 @@ export async function load({ locals, params }) {
 	} else {
 		const [type, id] = feedId.split('-');
 		if (type === 'group') {
-			const group = await getFeedGroupWithFeeds(id);
+			const group = await getFeedGroup(id);
 			selectedFeedIds = group?.feeds.map(({ id }) => id) ?? [];
 			feedName = group.name;
 		} else {

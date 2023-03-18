@@ -1,9 +1,8 @@
 <script lang="ts">
-	import ArticlesList from './ArticlesList.svelte';
-	import { getAppContext } from '$lib/contexts';
 	import { onMount } from 'svelte';
-	import { get } from '$lib/request';
-	import type { ArticleHeadingWithUserData } from '$lib/db/article';
+	import { getAppContext } from '$lib/contexts';
+	import ArticlesList from './ArticlesList.svelte';
+	import { get as getFeedArticles } from '../../api/feedgroups/[groupId]/articles';
 
 	export let data;
 
@@ -31,10 +30,10 @@
 	onMount(() => {
 		const interval = setInterval(async () => {
 			try {
-				const resp = await get<ArticleHeadingWithUserData[]>(
-					`/api/feedgroups/${$feedId}/articles`
-				);
-				$articles = resp;
+				if ($feedId) {
+					const resp = await getFeedArticles($feedId);
+					$articles = resp;
+				}
 			} catch (error) {
 				console.warn('Error updating articles list');
 			}

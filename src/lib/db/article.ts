@@ -1,7 +1,7 @@
 import { createId } from '@paralleldrive/cuid2';
 import type { Transaction } from 'kysely';
 import { isDefined } from '../util';
-import { getFeedGroupWithFeeds } from './feedgroup';
+import { getFeedGroup } from './feedgroup';
 import type {
 	Article,
 	Database,
@@ -113,7 +113,7 @@ export async function getGroupArticleHeadings(
 		maxAge?: number;
 	}
 ): Promise<ArticleHeadingWithUserData[]> {
-	const group = await getFeedGroupWithFeeds(feedGroupId);
+	const group = await getFeedGroup(feedGroupId);
 	const feedIds = group?.feeds.map(({ id }) => id) ?? [];
 	return getArticleHeadings(userId, {
 		feedIds,

@@ -1,8 +1,9 @@
+import { getFeedStats, type FeedStats } from '$lib/db/feed';
 import {
-	addFeedsToGroup,
-	findUserFeedGroupContainingFeed,
-	getUserFeedGroupsWithFeeds,
-	removeFeedsFromGroup
+	addFeedToGroup,
+	getUserFeedGroups,
+	removeFeedFromUser,
+	type FeedGroupWithFeeds
 } from '$lib/db/feedgroup';
 import { json } from '$lib/kit';
 import { getUserOrThrow } from '$lib/session';
@@ -11,11 +12,11 @@ import { error } from '@sveltejs/kit';
 import { z } from 'zod';
 
 /**
- * Get all feeds
+ * Get all feed groups
  */
 export async function GET({ locals }) {
 	const user = getUserOrThrow(locals);
-	const resp: GetFeedGroupsResponse = await getUserFeedGroupsWithFeeds(user.id);
+	const resp: GetFeedGroupsResponse = await getUserFeedGroups(user.id);
 	return json(resp);
 }
 
@@ -25,7 +26,10 @@ const AddGroupFeedRequestSchema = z.object({
 });
 export type AddGroupFeedRequest = z.infer<typeof AddGroupFeedRequestSchema>;
 
-export type AddGroupFeedResponse = Record<string, never>;
+export type AddGroupFeedResponse = {
+	feedStats: FeedStats;
+	feedGroups: FeedGroupWithFeeds[];
+};
 
 /**
  * Add a feed to a feed group
@@ -43,18 +47,16 @@ export async function PUT({ locals, request }) {
 		throw error(400, 'A feed ID and feed group ID must be provided');
 	}
 
-	const existingGroup = await findUserFeedGroupContainingFeed({
-		userId: user.id,
-		feedId: data.feedId
-	});
-
-	if (existingGroup) {
-		await removeFeedsFromGroup(existingGroup.id, [data.feedId]);
+	if (data.groupId === 'not subscribed') {
+		await removeFeedFromUser({ userId: user.id, feedId: data.feedId });
+	} else {
+		await addFeedToGroup(data);
 	}
 
-	if (data.groupId !== 'not subscribed') {
-		await addFeedsToGroup(data.groupId, [data.feedId]);
-	}
+	const rdata = {
+		feedGroups: await getUserFeedGroups(user.id),
+		feedStats: await getFeedStats(user.id)
+	};
 
-	return new Response();
+	return json<AddGroupFeedResponse>(rdata);
 }

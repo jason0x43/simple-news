@@ -1,21 +1,18 @@
 <script lang="ts">
-	import { post, put } from '$lib/request';
 	import Button from '$lib/components/Button.svelte';
 	import Dialog from '$lib/components/Dialog.svelte';
 	import Portal from '$lib/components/Portal.svelte';
 	import Select from '$lib/components/Select.svelte';
-	import { invalidate } from '$app/navigation';
 	import { showToast } from '$lib/toast';
 	import { getEventValue } from '$lib/util';
 	import { getAppContext } from '$lib/contexts';
 	import type { Feed } from '$lib/db/feed';
 	import type { FeedGroup } from '$lib/db/feedgroup';
-	import type {
-		AddGroupFeedRequest,
-		AddGroupFeedResponse
-	} from '../../routes/api/feedgroups/+server';
+	import { post as postFeeds } from '../api/feeds';
+	import { put as putFeedGroup } from '../api/feedgroups';
 
-	const { feeds, feedGroups, managingFeeds } = getAppContext().stores;
+	const { feeds, feedGroups, feedStats, managingFeeds } =
+		getAppContext().stores;
 
 	/** A mapping of feed IDs to their containing group IDs */
 	let groups: { [feedId: string]: string } = {};
@@ -39,9 +36,9 @@
 		let err: unknown | undefined;
 
 		try {
-			await post('/api/feeds', { url: feedUrl });
+			const updatedFeeds = await postFeeds(feedUrl);
+			$feeds = updatedFeeds;
 			feedUrl = '';
-			invalidate('/api/feeds');
 		} catch (error) {
 			err = error;
 			console.warn(error);
@@ -68,12 +65,12 @@
 		let err: unknown | undefined;
 
 		try {
-			await put<AddGroupFeedRequest, AddGroupFeedResponse>('/api/feedgroups', {
+			const updates = await putFeedGroup({
 				feedId,
 				groupId
 			});
-			invalidate('/api/feedstats');
-			invalidate('/api/feedgroups');
+			$feedStats = updates.feedStats;
+			$feedGroups = updates.feedGroups;
 		} catch (error) {
 			err = error;
 			console.warn(error);

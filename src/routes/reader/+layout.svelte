@@ -3,10 +3,10 @@
 	import { onMount } from 'svelte';
 	import { getAppContext, setReaderContext } from '$lib/contexts';
 	import ManageFeeds from './ManageFeeds.svelte';
-	import { get, put } from '$lib/request';
 	import Sidebar from './Sidebar.svelte';
 	import { browser } from '$app/environment';
-	import type { GetFeedStatsResponse, UpdateSessionRequest } from '$lib/types';
+	import { put as putSessionData } from '../api/session';
+	import { get as getFeedStats } from '../api/feedstats';
 
 	export let data;
 
@@ -45,18 +45,16 @@
 
 	if (browser) {
 		articleFilter.subscribe((value) => {
-			put<UpdateSessionRequest>('/api/session', { articleFilter: value }).catch(
-				(error) => {
-					console.warn('Error updating session data:', error);
-				}
-			);
+			putSessionData({ articleFilter: value }).catch((error) => {
+				console.warn('Error updating session data:', error);
+			});
 		});
 	}
 
 	onMount(() => {
 		const interval = setInterval(async () => {
 			try {
-				const resp = await get<GetFeedStatsResponse>('/api/feedstats');
+				const resp = await getFeedStats();
 				$feedStats = resp;
 			} catch (error) {
 				console.warn('Error updating feedstats');

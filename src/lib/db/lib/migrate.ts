@@ -1,6 +1,12 @@
 import sqlite3 from 'better-sqlite3';
 import { promises as fs } from 'fs';
-import { FileMigrationProvider, Kysely, Migrator, SqliteDialect } from 'kysely';
+import {
+	FileMigrationProvider,
+	Kysely,
+	Migrator,
+	SqliteDialect,
+	type MigrationResultSet
+} from 'kysely';
 import * as path from 'path';
 import * as url from 'url';
 import log from '../../log.js';
@@ -11,6 +17,21 @@ const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 export async function migrateToLatest() {
 	log.info('Starting db migration...');
 
+	const { db, migrator } = createMigrator();
+	const migrationResult = await migrator.migrateToLatest();
+	await finishMigration(db, migrationResult);
+}
+
+export async function migrateDown() {
+	log.info('Starting db migration...');
+
+	const { db, migrator } = createMigrator();
+
+	const migrationResult = await migrator.migrateDown();
+	await finishMigration(db, migrationResult);
+}
+
+function createMigrator() {
 	const db = new Kysely<Database>({
 		dialect: new SqliteDialect({
 			database: async () => {
@@ -33,7 +54,14 @@ export async function migrateToLatest() {
 		})
 	});
 
-	const { error, results } = await migrator.migrateToLatest();
+	return { db, migrator };
+}
+
+async function finishMigration(
+	db: Kysely<Database>,
+	migrationResult: MigrationResultSet
+) {
+	const { results, error } = migrationResult;
 
 	results?.forEach((it) => {
 		if (it.status === 'Success') {
