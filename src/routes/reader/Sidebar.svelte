@@ -48,7 +48,7 @@
 
 <style>
 	.sidebar {
-		background: var(--highlight-text);
+		background: var(--background);
 		color: var(--highlight);
 		width: var(--sidebar-width);
 		display: flex;
@@ -57,6 +57,7 @@
 		position: absolute;
 		left: 0;
 		z-index: 30;
+		border-right: 1px solid var(--border);
 	}
 
 	.sidebar-feeds {
