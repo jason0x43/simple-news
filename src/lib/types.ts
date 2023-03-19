@@ -36,10 +36,17 @@ export const AddFeedRequestSchema = z.object({
 });
 export type AddFeedRequest = z.infer<typeof AddFeedRequestSchema>;
 
-export type AddFeedResponse = {
-	errors?: Record<string, string>;
-	feed?: Feed;
-};
+export type AddFeedResponse = Feed;
+
+export const UpdateFeedRequestSchema = z.object({
+	feed: z.object({
+		id: z.string(),
+		url: z.string().optional()
+	})
+});
+export type UpdateFeedRequest = z.infer<typeof UpdateFeedRequestSchema>;
+
+export type UpdateFeedResponse = Feed;
 
 export type UpdateSessionRequest = SessionData;
 

@@ -186,7 +186,7 @@ async function getIconUrl(feed: ParsedFeed): Promise<string | null> {
 		const response = await fetchWithTimeout(feed.image.url, { method: 'HEAD' });
 		await response.body?.cancel();
 		if (response.status === 200) {
-			log.debug(`Using feed icon ${feed.image} for ${feed.title} icon URL`);
+			log.debug(`Using feed icon ${feed.image.url} for ${feed.title} icon URL`);
 			return feed.image.url;
 		}
 	}

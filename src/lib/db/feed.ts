@@ -30,16 +30,18 @@ export async function createFeed(data: CreateFeedData): Promise<Feed> {
 		.executeTakeFirstOrThrow();
 }
 
-export async function createOrGetFeed(data: CreateFeedData): Promise<Feed> {
+type UpdateFeedData = {
+	feed: Pick<InsertableFeed, 'id'> &
+		Partial<Pick<InsertableFeed, 'url' | 'title'>>;
+};
+
+export async function updateFeed(data: UpdateFeedData): Promise<Feed> {
+	const { id, ...values } = data.feed;
+
 	return db
-		.insertInto('feed')
-		.values({
-			id: createId(),
-			icon: '',
-			html_url: '',
-			...data
-		})
-		.onConflict((conflict) => conflict.column('url').doNothing())
+		.updateTable('feed')
+		.set(values)
+		.where('id', '=', id)
 		.returningAll()
 		.executeTakeFirstOrThrow();
 }

@@ -8,7 +8,7 @@
 	import { getAppContext } from '$lib/contexts';
 	import type { Feed } from '$lib/db/feed';
 	import type { FeedGroup } from '$lib/db/feedgroup';
-	import { post as postFeeds } from '../api/feeds';
+	import { post as postFeed, put as putFeed } from '../api/feeds';
 	import { put as putFeedGroup } from '../api/feedgroups';
 
 	const { feeds, feedGroups, feedStats, managingFeeds } =
@@ -29,16 +29,52 @@
 	}
 
 	let busy = false;
-	let feedUrl = '';
+	let addFeedUrl = '';
+	let updateFeedId = $feeds[0].id;
+	let updateFeedUrl = $feeds[0].url;
 
 	async function addFeed() {
 		busy = true;
 		let err: unknown | undefined;
 
 		try {
-			const updatedFeeds = await postFeeds(feedUrl);
+			const updatedFeeds = await postFeed(addFeedUrl);
 			$feeds = updatedFeeds;
-			feedUrl = '';
+			addFeedUrl = '';
+		} catch (error) {
+			err = error;
+			console.warn(error);
+		}
+
+		setTimeout(() => {
+			busy = false;
+			if (err) {
+				showToast('Unable to add feed', { type: 'bad', duration: 2000 });
+			} else {
+				showToast('Feed added', { type: 'good', duration: 2000 });
+			}
+		}, 500);
+	}
+
+	async function updateFeed() {
+		if (!updateFeedId || !updateFeedUrl) {
+			return;
+		}
+
+		busy = true;
+		let err: unknown | undefined;
+
+		try {
+			const feed = {
+				id: updateFeedId,
+				url: updateFeedUrl
+			};
+			const updatedFeed = await putFeed(feed);
+			const index = $feeds.findIndex(({ id }) => id === feed.id);
+			if (index) {
+				$feeds[index] = updatedFeed;
+			}
+			addFeedUrl = '';
 		} catch (error) {
 			err = error;
 			console.warn(error);
@@ -140,7 +176,33 @@
 				<section>
 					<h3>Add Feed</h3>
 					<form on:submit|preventDefault={addFeed}>
-						<input bind:value={feedUrl} placeholder="https://..." />
+						<input bind:value={addFeedUrl} placeholder="https://..." />
+						<Button type="submit">Save</Button>
+					</form>
+
+					<h3>Update Feed URL</h3>
+					<form on:submit|preventDefault={updateFeed}>
+						<div class="feed-select">
+							<Select
+								value={updateFeedId}
+								on:change={(event) => {
+									updateFeedId = getEventValue(event) ?? '';
+									const feed = $feeds.find(({ id }) => id === updateFeedId);
+									updateFeedUrl = feed?.url ?? '';
+								}}
+							>
+								{#each $feeds as feed (feed.id)}
+									<option value={feed.id}>{feed.title}</option>
+								{/each}
+							</Select>
+						</div>
+						<input
+							value={updateFeedUrl}
+							on:change={(event) => {
+								updateFeedUrl = getEventValue(event) ?? '';
+							}}
+							placeholder="https://..."
+						/>
 						<Button type="submit">Save</Button>
 					</form>
 
@@ -260,6 +322,10 @@
 		display: flex;
 		flex-direction: row;
 		align-items: flex-start;
+	}
+
+	.feed-select {
+		max-width: 30%;
 	}
 
 	/* Mobile */

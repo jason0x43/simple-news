@@ -26,6 +26,8 @@
 		font-size: var(--font-size);
 		margin: 0;
 		padding: 4px 1.8em 4px 6px;
+		text-overflow: ellipsis;
+		overflow: hidden;
 	}
 
 	.select::after {
