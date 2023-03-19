@@ -112,12 +112,10 @@
 					<div class="list-wrapper">
 						<div class="table">
 							{#each sortedFeeds as feed (feed.id)}
-								<div class="row">
-									<div class="feed">
-										{feed.title}
-										<div class="feed-url">{feed.url}</div>
-									</div>
-									<div>
+								<div class="feed">
+									<span class="feed-title">{feed.title}</span>
+									<span class="feed-url">{feed.url}</span>
+									<div class="controls">
 										<Select
 											value={groups[feed.id] ?? 'not subscribed'}
 											on:change={(event) => {
@@ -217,41 +215,51 @@
 		min-width: 1em;
 	}
 
-	.feed-url {
-		font-style: italic;
-		font-size: 90%;
-		margin-top: 4px;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
 	.table {
-		display: grid;
-		grid-template-columns: 1fr min-content;
-		grid-auto-rows: min-content;
+		display: flex;
+		flex-direction: column;
 		width: 100%;
 	}
 
-	.row {
-		display: contents;
+	.feed {
+		display: flex;
+		flex-direction: column;
+		border-bottom: solid 1px var(--border);
+		padding: 0.5em 0;
+		gap: 0.5rem;
 	}
 
-	.row > * {
-		border-bottom: solid 1px var(--border);
+	.feed:first-child {
+		padding-top: 0;
+	}
+
+	.feed:last-child {
+		border-bottom: none;
+		padding-bottom: 0;
+	}
+
+	.feed-title {
+		display: block;
+		overflow: hidden;
 		white-space: nowrap;
 		text-overflow: ellipsis;
-		padding: 0.5em 0;
 	}
 
-	.row:last-child > * {
-		border-bottom: none;
-		padding-bottom: none;
-	}
-
-	.feed {
+	.feed-url {
 		overflow: hidden;
-		padding-right: 1em;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		font-style: italic;
+		font-size: 90%;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.controls {
+		display: flex;
+		flex-direction: row;
+		align-items: flex-start;
 	}
 
 	/* Mobile */
