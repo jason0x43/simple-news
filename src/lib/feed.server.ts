@@ -2,7 +2,7 @@ import * as cheerio from 'cheerio';
 import { createHash } from 'crypto';
 import Parser, { type Item } from 'rss-parser';
 import { upsertArticle } from './db/article.js';
-import { getEnabledFeeds, updateFeedIcon } from './db/feed.js';
+import { getSubscribedFeeds, updateFeedIcon } from './db/feed.js';
 import log from './log.js';
 
 export type ParsedFeed = Parser.Output<Record<string, unknown>>;
@@ -68,7 +68,7 @@ export async function downloadFeed(url: string): Promise<ParsedFeed> {
  */
 async function downloadFeeds(signal?: AbortSignal) {
 	log.info('Downloading feeds...');
-	const feeds = await getEnabledFeeds();
+	const feeds = await getSubscribedFeeds();
 	for (const feed of feeds) {
 		if (signal?.aborted) {
 			log.warn('Aborting download');

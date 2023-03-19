@@ -49,13 +49,16 @@ export async function getFeeds(): Promise<Feed[]> {
 	return feeds;
 }
 
-export async function getEnabledFeeds(): Promise<Feed[]> {
-	const feeds = await db
-		.selectFrom('feed')
-		.selectAll()
-		.where('disabled', 'is not', 1)
+export async function getSubscribedFeeds(): Promise<Feed[]> {
+	const feedGroupFeedIds = await db
+		.selectFrom('feed_group_feed')
+		.select(['feed_id'])
+		.distinct()
 		.execute();
-	return feeds;
+
+	const feedIds = feedGroupFeedIds.map(({ feed_id }) => feed_id);
+
+	return db.selectFrom('feed').selectAll().where('id', 'in', feedIds).execute();
 }
 
 export async function getFeed(id: string): Promise<Feed> {
