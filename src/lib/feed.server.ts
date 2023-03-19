@@ -79,15 +79,13 @@ async function downloadFeeds(signal?: AbortSignal) {
 			log.debug(`Starting feed ${feed.title}`);
 
 			const parsedFeed = await downloadFeed(feed.url);
-			if (!feed.icon) {
-				const icon = await getIcon(parsedFeed);
-				if (icon) {
-					await updateFeedIcon({
-						feedId: feed.id,
-						icon
-					});
-					log.debug(`Updated icon for ${feed.url}`);
-				}
+			const icon = await getIcon(parsedFeed);
+			if (icon) {
+				await updateFeedIcon({
+					feedId: feed.id,
+					icon
+				});
+				log.debug(`Updated icon for ${feed.url}`);
 			}
 
 			for (const entry of parsedFeed.items) {
@@ -159,14 +157,36 @@ function getArticleId(article: Item & { [key: string]: unknown }): string {
 }
 
 /**
- * Get the icon for a feed
+ * Get the icon for a feed as a data URL
  */
 async function getIcon(feed: ParsedFeed): Promise<string | null> {
+	const url = await getIconUrl(feed);
+
+	if (url) {
+		log.debug(`Getting icon data for ${url}`);
+
+		try {
+			const resp = await fetch(url);
+			const buf = Buffer.from(await resp.arrayBuffer());
+			const type = resp.headers.get('content-type');
+			return `data:${type};base64,${buf.toString('base64')}`;
+		} catch (error) {
+			log.warn(`Error downloading icon: ${error}`);
+		}
+	}
+
+	return url;
+}
+
+/**
+ * Get the icon URL for a feed
+ */
+async function getIconUrl(feed: ParsedFeed): Promise<string | null> {
 	if (feed.image) {
 		const response = await fetchWithTimeout(feed.image.url, { method: 'HEAD' });
 		await response.body?.cancel();
 		if (response.status === 200) {
-			log.debug(`Using feed icon ${feed.image} for ${feed.title}`);
+			log.debug(`Using feed icon ${feed.image} for ${feed.title} icon URL`);
 			return feed.image.url;
 		}
 	}
@@ -189,7 +209,7 @@ async function getIcon(feed: ParsedFeed): Promise<string | null> {
 			});
 			await iconResponse.body?.cancel();
 			if (iconResponse.status === 200) {
-				log.debug(`Using link ${iconUrl} for ${feed.title}`);
+				log.debug(`Using link ${iconUrl} for ${feed.title} icon URL`);
 				return `${iconUrl}`;
 			}
 
@@ -199,7 +219,7 @@ async function getIcon(feed: ParsedFeed): Promise<string | null> {
 			});
 			await httpIconResponse.body?.cancel();
 			if (httpIconResponse.status === 200) {
-				log.debug(`Using link ${iconUrl} for ${feed.title}`);
+				log.debug(`Using link ${iconUrl} for ${feed.title} icon URL`);
 				return `${iconUrl}`;
 			}
 		}
@@ -211,7 +231,7 @@ async function getIcon(feed: ParsedFeed): Promise<string | null> {
 			response.status === 200 &&
 			response.headers.get('content-length') !== '0'
 		) {
-			log.debug(`Using favicon ${favicon} for ${feed.title}`);
+			log.debug(`Using favicon ${favicon} for ${feed.title} icon URL`);
 			return `${favicon}`;
 		}
 	}
