@@ -7,13 +7,7 @@
 	import { getAge } from '$lib/date';
 	import type { Article, ArticleHeadingWithUserData } from '$lib/db/article';
 	import type { Feed } from '$lib/db/feed';
-	import {
-		clearValue,
-		loadValue,
-		storeValue,
-		unescapeHtml,
-		uniquify
-	} from '$lib/util';
+	import { clearValue, loadValue, storeValue, unescapeHtml } from '$lib/util';
 	import { put as putArticles } from '../../api/articles';
 
 	export let feedId: Feed['id'] | undefined;
@@ -35,13 +29,6 @@
 	type ScrollData = z.infer<typeof ScrollDataSchema>;
 
 	const scrollDataKey = 'scrollData';
-
-	$: articleFeedIds = uniquify(
-		$articles?.slice(0, 40).map(({ feed_id }) => feed_id) ?? []
-	);
-	$: icons = $feeds
-		.filter(({ id }) => articleFeedIds.includes(id))
-		.map(({ icon }) => icon);
 
 	let visibleCount = 40;
 	let scrollBox: HTMLElement | undefined;
@@ -251,12 +238,6 @@
 		}
 	});
 </script>
-
-<svelte:head>
-	{#each icons as icon}
-		<link rel="preload" as="image" href={icon} />
-	{/each}
-</svelte:head>
 
 <div class="articles" on:scroll={handleListScroll} bind:this={scrollBox}>
 	{#if renderedArticles.length > 0}
