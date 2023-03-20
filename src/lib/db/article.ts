@@ -192,10 +192,18 @@ export async function markArticles({
 		data.saved = userData.saved ? 1 : 0;
 	}
 
-	const updates = await Promise.all(
-		articleIds.map((id) => markArticle(db, { userId, id, userData: data }))
-	);
-	return updates.filter(isDefined);
+	const updates: UserArticle[] = [];
+
+	await db.transaction().execute(async (trx) => {
+		for (const id of articleIds) {
+			const update = await markArticle(trx, { userId, id, userData: data });
+			if (update) {
+				updates.push(update);
+			}
+		}
+	});
+
+	return updates;
 }
 
 type ArticleUpsert = Pick<
