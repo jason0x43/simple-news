@@ -58,23 +58,19 @@
 	})[] = [];
 
 	$: {
-		// Don't update the articles list until the sidebar has finished sliding
-		// out of view
-		if (!$sidebarVisible) {
-			if (!articles) {
-				// there are no articles
-				filteredArticles = [];
-			} else if ($articleFilter === 'all' || feedId === 'saved') {
-				// show all articles
-				filteredArticles = $articles ?? [];
-			} else {
-				// show unread (and recently updated) articles
-				filteredArticles =
-					$articles?.filter(
-						({ id, read }) =>
-							!read || $updatedArticleIds[id] || id === $selectedArticleId
-					) ?? [];
-			}
+		if (!articles) {
+			// there are no articles
+			filteredArticles = [];
+		} else if ($articleFilter === 'all' || feedId === 'saved') {
+			// show all articles
+			filteredArticles = $articles ?? [];
+		} else {
+			// show unread (and recently updated) articles
+			filteredArticles =
+				$articles?.filter(
+					({ id, read }) =>
+						!read || $updatedArticleIds[id] || id === $selectedArticleId
+				) ?? [];
 		}
 	}
 
