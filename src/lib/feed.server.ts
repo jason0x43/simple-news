@@ -3,7 +3,10 @@ import { createHash } from 'crypto';
 import Parser, { type Item } from 'rss-parser';
 import { upsertArticle } from './db/article.js';
 import { getSubscribedFeeds, updateFeedIcon } from './db/feed.js';
-import log from './log.js';
+import { createLog } from './log.js';
+import { isValidUrl } from './util.js';
+
+const log = createLog('info');
 
 export type ParsedFeed = Parser.Output<Record<string, unknown>>;
 export type FeedItem = Parser.Item & {
@@ -79,13 +82,19 @@ async function downloadFeeds(signal?: AbortSignal) {
 			log.debug(`Starting feed ${feed.title}`);
 
 			const parsedFeed = await downloadFeed(feed.url);
-			const icon = await getIcon(parsedFeed);
-			if (icon) {
-				await updateFeedIcon({
-					feedId: feed.id,
-					icon
-				});
-				log.debug(`Updated icon for ${feed.url}`);
+			let icon: string | null;
+
+			try {
+				icon = await getIcon(parsedFeed);
+				if (icon) {
+					await updateFeedIcon({
+						feedId: feed.id,
+						icon
+					});
+					log.debug(`Updated icon for ${feed.title}`);
+				}
+			} catch (error) {
+				log.warn(`Error getting icon for ${feed.title}: ${error}`);
 			}
 
 			for (const entry of parsedFeed.items) {
@@ -182,7 +191,8 @@ async function getIcon(feed: ParsedFeed): Promise<string | null> {
  * Get the icon URL for a feed
  */
 async function getIconUrl(feed: ParsedFeed): Promise<string | null> {
-	if (feed.image) {
+	if (feed.image && isValidUrl(feed.image.url)) {
+		log.debug(`Trying feed image URL ${feed.image.url} for icon`);
 		const response = await fetchWithTimeout(feed.image.url, { method: 'HEAD' });
 		await response.body?.cancel();
 		if (response.status === 200) {
@@ -191,16 +201,22 @@ async function getIconUrl(feed: ParsedFeed): Promise<string | null> {
 		}
 	}
 
-	if (feed.link) {
+	if (feed.link && isValidUrl(feed.link)) {
+		log.debug(
+			`Looking in content of ${feed.link} (${typeof feed.link}) for icon`
+		);
 		const feedBase = new URL(feed.link).origin;
 		const htmlResponse = await fetchWithTimeout(feedBase);
 		const html = await htmlResponse.text();
 		const $ = cheerio.load(html);
 		const iconLink = $('link[rel*="icon"]');
 
-		if (iconLink) {
+		if (iconLink.length > 0) {
+			log.debug(`Trying iconLink ${iconLink}`);
 			const iconHref = iconLink.attr('href') as string;
 			const iconUrl = new URL(iconHref, feedBase);
+
+			log.debug(`Made iconUrl ${iconUrl}`);
 
 			// Try https by default
 			iconUrl.protocol = 'https';

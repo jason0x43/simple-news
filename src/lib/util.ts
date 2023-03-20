@@ -61,3 +61,19 @@ export function isActionEvent(event: Event) {
 		(event instanceof KeyboardEvent && event.key === 'Enter')
 	);
 }
+
+/**
+ * Indicate whether a given string is a valid URL
+ */
+export function isValidUrl(url: string | undefined): boolean {
+	if (!url) {
+		return false;
+	}
+
+	try {
+		const u = new URL(url);
+		return Boolean(u);
+	} catch (error) {
+		return false;
+	}
+}
