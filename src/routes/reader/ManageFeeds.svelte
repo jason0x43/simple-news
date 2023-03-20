@@ -38,8 +38,8 @@
 		let err: unknown | undefined;
 
 		try {
-			const updatedFeeds = await postFeed(addFeedUrl);
-			$feeds = updatedFeeds;
+			const newFeed = await postFeed(addFeedUrl);
+			$feeds = [...$feeds, newFeed];
 			addFeedUrl = '';
 		} catch (error) {
 			err = error;
@@ -85,7 +85,7 @@
 			if (err) {
 				showToast('Unable to add feed', { type: 'bad', duration: 2000 });
 			} else {
-				showToast('Feed added', { type: 'good', duration: 2000 });
+				showToast('Feed updated', { type: 'good', duration: 2000 });
 			}
 		}, 500);
 	}

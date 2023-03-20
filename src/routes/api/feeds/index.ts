@@ -1,4 +1,5 @@
 import type {
+	AddFeedResponse,
 	GetFeedsResponse,
 	UpdateFeedRequest,
 	UpdateFeedResponse
@@ -16,12 +17,12 @@ export async function get(): Promise<GetFeedsResponse> {
 /**
  * Add a new feed
  */
-export async function post(feedUrl: string): Promise<GetFeedsResponse> {
+export async function post(feedUrl: string): Promise<AddFeedResponse> {
 	const resp = await fetch('/api/feeds', {
 		method: 'POST',
 		body: JSON.stringify({ url: feedUrl })
 	});
-	const rdata = (await resp.json()) as GetFeedsResponse;
+	const rdata = (await resp.json()) as AddFeedResponse;
 	return rdata;
 }
 
