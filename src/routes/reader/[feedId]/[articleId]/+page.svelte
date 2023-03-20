@@ -6,21 +6,12 @@
 
 	export let data;
 
-	const { feedStats, articles, updatedArticleIds } = getAppContext().stores;
+	const { feedStats, updatedArticleIds } = getAppContext().stores;
 
 	$: $feedStats = data.feedStats;
+	$: $updatedArticleIds[data.article.id] = true;
 	$: article = data.article;
 	$: feed = data.feed;
-	$: $updatedArticleIds[article.id] = true;
-
-	$: {
-		if ($articles) {
-			const i = $articles.findIndex(({ id }) => id === article.id);
-			if (i !== -1) {
-				$articles[i] = article;
-			}
-		}
-	}
 
 	const context = getReaderContext();
 	const { displayType } = getAppContext().stores;
