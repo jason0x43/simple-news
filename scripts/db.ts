@@ -1,6 +1,6 @@
+import { exec as _exec } from 'child_process';
 import { readFileSync, writeFileSync } from 'fs';
 import { mkdir } from 'fs/promises';
-import { exec as _exec } from 'child_process';
 import { dirname } from 'path';
 import readline from 'readline';
 import { Writable } from 'stream';
@@ -12,14 +12,14 @@ import { deleteFeedArticles } from '../src/lib/db/article.js';
 import type { Feed } from '../src/lib/db/feed.js';
 import { createFeed, getFeedByUrl, getFeeds } from '../src/lib/db/feed.js';
 import {
-	addFeedsToGroup,
+	addFeedToGroup,
 	createFeedGroup,
 	deleteFeedGroup,
+	findFeedGroup,
 	getGroupFeeds,
-	getUserFeedGroup,
 	getUserFeedGroups,
 	getUserFeeds,
-	removeFeedsFromGroup
+	removeFeedFromUser
 } from '../src/lib/db/feedgroup.js';
 import {
 	FeedGroupFeedSchema,
@@ -477,10 +477,14 @@ yargs(hideBin(process.argv))
 						}
 					}
 
-					const group = await getUserFeedGroup(user.id, argv.name);
+					const group = await findFeedGroup(user.id, argv.name);
 					if (group) {
-						addFeedsToGroup(group.id, toAdd);
-						removeFeedsFromGroup(group.id, toRemove);
+						for (const feedId of toAdd) {
+							addFeedToGroup({ groupId: group.id, feedId });
+						}
+						for (const feedId of toRemove) {
+							removeFeedFromUser({ userId: user.id, feedId });
+						}
 					}
 
 					rl.close();

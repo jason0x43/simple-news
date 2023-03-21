@@ -67,6 +67,29 @@ export async function getFeedGroup(
 }
 
 /**
+ * Find a feed group by name
+ */
+export async function findFeedGroup(
+	userId: FeedGroup['user_id'],
+	name: string
+): Promise<FeedGroupWithFeeds | undefined> {
+	const feedGroup = await db
+		.selectFrom('feed_group')
+		.selectAll()
+		.where('user_id', '=', userId)
+		.where('name', '=', name)
+		.executeTakeFirst();
+
+	if (feedGroup) {
+		const feeds = await getGroupFeeds(feedGroup.id);
+		return {
+			...feedGroup,
+			feeds
+		};
+	}
+}
+
+/**
  * Get all user feed groups, including feeds.
  */
 export async function getUserFeedGroups(
