@@ -16,7 +16,6 @@
 		articles,
 		feeds,
 		feedStats,
-		sidebarVisible,
 		articleFilter,
 		selectedArticleId,
 		updatedArticleIds

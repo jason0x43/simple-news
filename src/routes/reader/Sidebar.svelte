@@ -11,7 +11,7 @@
 	let ref: HTMLElement;
 
 	function handleClick(event: MouseEvent) {
-		// hide the sidebar if the user clicks outside of the sidebar
+		// immediately hide the sidebar if the user clicks outside of the sidebar
 		if (!event.target || !ref.contains(event.target as HTMLElement)) {
 			$sidebarVisible = false;
 		}
@@ -30,8 +30,8 @@
 
 <div
 	class="sidebar"
-	in:slide={{ direction: 'right' }}
-	out:slide={{ direction: 'right' }}
+	in:slide={{ direction: 'right', duration: 100 }}
+	out:slide={{ direction: 'right', duration: 100 }}
 	bind:this={ref}
 >
 	<div class="sidebar-feeds">
