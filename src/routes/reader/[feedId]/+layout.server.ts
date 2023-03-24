@@ -1,7 +1,8 @@
+import { getArticleContent } from '$lib/article';
 import {
-	getArticleHeadings,
-	getSavedArticleHeadings,
-	type ArticleHeadingWithUserData
+	getArticles,
+	getSavedArticles,
+	type ArticleWithUserData
 } from '$lib/db/article';
 import { getFeed, type Feed } from '$lib/db/feed';
 import { getFeedGroup } from '$lib/db/feedgroup';
@@ -23,10 +24,10 @@ export async function load({ locals, params }) {
 
 	let feedName: string;
 	let selectedFeedIds: Feed['id'][];
-	let articleHeadings: ArticleHeadingWithUserData[];
+	let articles: ArticleWithUserData[];
 
 	if (feedId === 'saved') {
-		articleHeadings = await getSavedArticleHeadings(userId);
+		articles = await getSavedArticles(userId);
 		selectedFeedIds = [];
 		feedName = 'Saved';
 	} else {
@@ -41,14 +42,16 @@ export async function load({ locals, params }) {
 			feedName = feed.title;
 		}
 
-		articleHeadings = await getArticleHeadings(userId, {
+		articles = await getArticles(userId, {
 			feedIds: selectedFeedIds
 		});
 	}
 
 	return {
-		articleHeadings,
-		articleId: params.articleId,
+		articles: articles.map((article) => ({
+			...article,
+			content: getArticleContent(article)
+		})),
 		feedId,
 		feedName,
 		selectedFeedIds

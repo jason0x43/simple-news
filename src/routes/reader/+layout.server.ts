@@ -4,9 +4,7 @@ import type { SessionWithUser } from '$lib/db/session';
 import { getSessionOrThrow } from '$lib/session';
 import { redirect } from '@sveltejs/kit';
 
-export async function load({ depends, locals }) {
-	depends('reader:feedstats');
-
+export async function load({ locals }) {
 	let session: SessionWithUser;
 	try {
 		session = getSessionOrThrow(locals);

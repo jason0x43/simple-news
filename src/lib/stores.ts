@@ -1,9 +1,7 @@
 import { writable } from 'svelte/store';
-import type { ArticleHeadingWithUserData } from './db/article';
-import type { FeedStats } from './db/feed';
+import type { Article, ArticleWithUserData } from './db/article';
+import type { Feed, FeedStats } from './db/feed';
 import type { FeedGroupWithFeeds } from './db/feedgroup';
-import type { Article } from './db/article';
-import type { Feed } from './db/feed';
 import type { ArticleFilter } from './types';
 
 export function createStores() {
@@ -11,8 +9,8 @@ export function createStores() {
 		/** The filter applied to the set of loaded article headings */
 		articleFilter: writable<ArticleFilter>('unread'),
 
-		/** The currently loaded article headings */
-		articles: writable<ArticleHeadingWithUserData[]>([]),
+		/** The currently loaded articles */
+		articles: writable<ArticleWithUserData[]>([]),
 
 		/** What the app is being displayed on */
 		displayType: writable<'mobile' | 'desktop'>('desktop'),

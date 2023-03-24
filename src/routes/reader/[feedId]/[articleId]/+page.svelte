@@ -3,15 +3,44 @@
 	import { slide } from '$lib/transition';
 	import { onMount } from 'svelte';
 	import { getAppContext, getReaderContext } from '$lib/contexts';
+	import { put as putArticles } from '../../../api/articles';
 
 	export let data;
 
-	const { feedStats, updatedArticleIds } = getAppContext().stores;
+	const { articles, feeds, feedStats, selectedArticleId, updatedArticleIds } =
+		getAppContext().stores;
 
+	let articleId = data.articleId;
+
+	$: $selectedArticleId = data.articleId;
 	$: $feedStats = data.feedStats;
-	$: $updatedArticleIds[data.article.id] = true;
-	$: article = data.article;
-	$: feed = data.feed;
+	$: $updatedArticleIds[data.articleId] = true;
+	$: article = $articles.find(({ id }) => id === data.articleId);
+	$: feed = $feeds.find(({ id }) => id === article?.feed_id);
+
+	$: {
+		if (articleId !== data.articleId) {
+			putArticles({
+				articleIds: [data.articleId],
+				userData: { read: true }
+			}).then((updates) => {
+				$feedStats = updates.feedStats;
+				const updatedArticle = updates.updatedArticles[0];
+				if (updatedArticle) {
+					const idx = $articles.findIndex(
+						({ id }) => updatedArticle.article_id === id
+					);
+					if (idx !== -1) {
+						$articles[idx] = {
+							...$articles[idx],
+							...updatedArticle
+						};
+					}
+					articleId = updatedArticle.article_id;
+				}
+			});
+		}
+	}
 
 	const context = getReaderContext();
 	const { displayType } = getAppContext().stores;
@@ -22,9 +51,7 @@
 			articleView?.resetScroll();
 		});
 
-		return () => {
-			remove();
-		};
+		return remove;
 	});
 </script>
 
@@ -35,7 +62,7 @@
 				{article}
 				{feed}
 				bind:this={articleView}
-				selectedFeedId={data.feedId}
+				selectedFeedId={feed?.id}
 			/>
 		{/if}
 	</div>
@@ -48,7 +75,7 @@
 				{article}
 				{feed}
 				bind:this={articleView}
-				selectedFeedId={data.feedId}
+				selectedFeedId={feed?.id}
 			/>
 		{/if}
 	</div>

@@ -1,6 +1,5 @@
 import { createId } from '@paralleldrive/cuid2';
 import type { Transaction } from 'kysely';
-import { isDefined } from '../util';
 import { getFeedGroup } from './feedgroup';
 import type {
 	Article,
@@ -93,6 +92,48 @@ export async function getArticleHeadings(
 	return articles;
 }
 
+export async function getArticles(
+	userId: User['id'],
+	options?: {
+		feedIds?: Feed['id'][];
+		maxAge?: number;
+	}
+): Promise<ArticleWithUserData[]> {
+	let query = db
+		.selectFrom('article')
+		.leftJoin('user_article', (join) =>
+			join
+				.onRef('user_article.article_id', '=', 'article.id')
+				.on('user_article.user_id', '=', userId)
+		)
+		.select([
+			'id',
+			'content',
+			'feed_id',
+			'article.article_id',
+			'title',
+			'link',
+			'published',
+			'read',
+			'saved'
+		]);
+
+	if (options?.feedIds) {
+		query = query.where('feed_id', 'in', options.feedIds);
+	}
+
+	const maxAge = options?.maxAge ?? 6 * 7 * 24 * 60 * 60 * 1000;
+	const cutoff = BigInt(Date.now() - maxAge);
+	query = query.where('published', '>', cutoff);
+
+	// sort in descending order by publish date for maxAge, then sort the
+	// result in ascending order
+	const articles = await query.orderBy('published', 'desc').execute();
+	articles.sort((a, b) => Number(a.published - b.published));
+
+	return articles;
+}
+
 export async function getFeedArticleHeadings(
 	userId: User['id'],
 	feedId: Feed['id'],
@@ -133,6 +174,32 @@ export async function getSavedArticleHeadings(
 		)
 		.select([
 			'id',
+			'feed_id',
+			'article.article_id',
+			'title',
+			'link',
+			'published',
+			'read',
+			'saved'
+		])
+		.where('saved', '=', 1)
+		.orderBy('published', 'asc')
+		.execute();
+}
+
+export async function getSavedArticles(
+	userId: User['id']
+): Promise<ArticleWithUserData[]> {
+	return db
+		.selectFrom('article')
+		.leftJoin('user_article', (join) =>
+			join
+				.onRef('user_article.article_id', '=', 'article.id')
+				.on('user_article.user_id', '=', userId)
+		)
+		.select([
+			'id',
+			'content',
 			'feed_id',
 			'article.article_id',
 			'title',

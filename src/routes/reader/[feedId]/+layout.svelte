@@ -6,17 +6,10 @@
 
 	export let data;
 
-	const {
-		articles,
-		feedId,
-		feedName,
-		selectedFeedIds,
-		sidebarVisible,
-		selectedArticleId
-	} = getAppContext().stores;
+	const { articles, feedId, feedName, selectedFeedIds, sidebarVisible } =
+		getAppContext().stores;
 
-	$: $selectedArticleId = data.articleId;
-	$: $articles = data.articleHeadings;
+	$: $articles = data.articles;
 	$: $feedName = data.feedName;
 	$: $feedId = data.feedId;
 	$: $selectedFeedIds = data.selectedFeedIds;
