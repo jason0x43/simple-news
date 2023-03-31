@@ -1,8 +1,6 @@
 <script lang="ts">
 	import { getAppContext } from '$lib/contexts';
-	const { feedId, sidebarVisible } = getAppContext().stores;
-
-	$feedId = undefined;
+	const { sidebarVisible } = getAppContext().stores;
 
 	if ($sidebarVisible === undefined) {
 		$sidebarVisible = true;

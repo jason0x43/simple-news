@@ -1,17 +1,15 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import { getAppContext } from '$lib/contexts';
 	import type { Feed } from '$lib/db/feed';
 	import { allAreIdentified, getArticleCount, getGroupFeeds } from '$lib/feed';
 
-	const {
-		articleFilter,
-		feedId,
-		userFeeds,
-		feedGroups,
-		feedStats,
-		selectedFeedIds
-	} = getAppContext().stores;
+	const { articleFilter, userFeeds, feedGroups, feedStats, selectedFeedIds } =
+		getAppContext().stores;
+
 	let expanded: { [title: string]: boolean } = {};
+
+	$: feedId = $page.data.feedId;
 
 	function containsFeed(groupFeeds: Feed[], feedIds: string[]) {
 		return feedIds.some((id) => groupFeeds.find((f) => f.id === id));
@@ -19,7 +17,7 @@
 </script>
 
 <ul class="feeds">
-	<li class:group-selected={$feedId === 'saved'}>
+	<li class:group-selected={feedId === 'saved'}>
 		<div class="group">
 			<span class="saved" />
 			<a class="title" href="/reader/saved">Saved</a>

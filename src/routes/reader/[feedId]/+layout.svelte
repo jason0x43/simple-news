@@ -1,16 +1,15 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { page } from '$app/stores';
 	import { getAppContext } from '$lib/contexts';
 	import ArticlesList from './ArticlesList.svelte';
 	import { get as getFeedArticles } from '../../api/feedgroups/[groupId]/articles';
 
 	export let data;
 
-	const { articles, feedId, selectedFeedIds, sidebarVisible } =
-		getAppContext().stores;
+	const { articles, selectedFeedIds, sidebarVisible } = getAppContext().stores;
 
 	$: $articles = data.articles;
-	$: $feedId = data.feedId;
 	$: $selectedFeedIds = data.selectedFeedIds;
 
 	$: {
@@ -22,8 +21,8 @@
 	onMount(() => {
 		const interval = setInterval(async () => {
 			try {
-				if ($feedId) {
-					const resp = await getFeedArticles($feedId);
+				if ($page.data.feedId) {
+					const resp = await getFeedArticles($page.data.feedId);
 					$articles = resp;
 				}
 			} catch (error) {
