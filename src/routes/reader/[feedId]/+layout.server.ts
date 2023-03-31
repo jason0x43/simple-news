@@ -22,24 +22,20 @@ export async function load({ locals, params }) {
 	const userId = user.id;
 	const feedId = params.feedId;
 
-	let feedName: string;
 	let selectedFeedIds: Feed['id'][];
 	let articles: ArticleWithUserData[];
 
 	if (feedId === 'saved') {
 		articles = await getSavedArticles(userId);
 		selectedFeedIds = [];
-		feedName = 'Saved';
 	} else {
 		const [type, id] = feedId.split('-');
 		if (type === 'group') {
 			const group = await getFeedGroup(id);
 			selectedFeedIds = group?.feeds.map(({ id }) => id) ?? [];
-			feedName = group.name;
 		} else {
 			const feed = await getFeed(id);
 			selectedFeedIds = [id];
-			feedName = feed.title;
 		}
 
 		articles = await getArticles(userId, {
@@ -53,7 +49,6 @@ export async function load({ locals, params }) {
 			content: getArticleContent(article)
 		})),
 		feedId,
-		feedName,
 		selectedFeedIds
 	};
 }

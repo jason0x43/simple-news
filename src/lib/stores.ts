@@ -21,9 +21,6 @@ export function createStores() {
 		/** The active feed or feed group ID */
 		feedId: writable<string | undefined>(),
 
-		/** The display name for the active feed or feed group */
-		feedName: writable<string>(),
-
 		/** Stats for the user's feeds */
 		feedStats: writable<FeedStats>({ feeds: {}, saved: 0 }),
 

@@ -16,7 +16,6 @@ declare global {
 			articles?: ArticleWithUserData[];
 			feedGroups?: FeedGroupWithFeeds[];
 			feedId?: string;
-			feedName?: string;
 			feedStats?: FeedStats;
 			feeds?: Feed[];
 			selectedFeedIds?: Feed['id'][];

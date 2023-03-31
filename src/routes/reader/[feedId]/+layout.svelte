@@ -6,11 +6,10 @@
 
 	export let data;
 
-	const { articles, feedId, feedName, selectedFeedIds, sidebarVisible } =
+	const { articles, feedId, selectedFeedIds, sidebarVisible } =
 		getAppContext().stores;
 
 	$: $articles = data.articles;
-	$: $feedName = data.feedName;
 	$: $feedId = data.feedId;
 	$: $selectedFeedIds = data.selectedFeedIds;
 

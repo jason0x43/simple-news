@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import UserIcon from '$lib/icons/User.svelte';
 	import RssIcon from '$lib/icons/Rss.svelte';
 	import { getAppContext } from '$lib/contexts';
@@ -6,7 +7,26 @@
 
 	export let onTitlePress: () => void;
 
-	const { feedName, sidebarVisible } = getAppContext().stores;
+	const { sidebarVisible } = getAppContext().stores;
+
+	let title = '';
+
+	$: {
+		if ($page.data.feedId) {
+			if ($page.data.feedId === 'saved') {
+				title = 'Saved';
+			} else {
+				const [type, id] = $page.data.feedId.split('-');
+				if (type === 'group') {
+					const group = $page.data.feedGroups?.find((group) => group.id === id);
+					title = group?.name ?? '';
+				} else {
+					const feed = $page.data.feeds?.find((feed) => feed.id === id);
+					title = feed?.title ?? '';
+				}
+			}
+		}
+	}
 
 	function toggleSidebar() {
 		$sidebarVisible = !$sidebarVisible;
@@ -27,7 +47,7 @@
 	</div>
 	<div class="center">
 		<Button variant="invisible" on:click={onTitlePress}>
-			<h2>{$feedName ?? ''}</h2>
+			<h2>{title}</h2>
 		</Button>
 	</div>
 	<div class="right">
