@@ -1,18 +1,19 @@
 <script lang="ts">
-	import ArticleView from './ArticleView.svelte';
-	import { slide } from '$lib/transition';
 	import { onMount } from 'svelte';
+	import { browser } from '$app/environment';
+	import type { Article } from '$lib/db/article';
 	import { getAppContext, getReaderContext } from '$lib/contexts';
+	import { slide } from '$lib/transition';
 	import { put as putArticles } from '../../../api/articles';
+	import ArticleView from './ArticleView.svelte';
 
 	export let data;
 
-	const { articles, feeds, feedStats, selectedArticleId, updatedArticleIds } =
+	const { articles, feeds, feedStats, updatedArticleIds } =
 		getAppContext().stores;
 
-	let articleId = data.articleId;
+	let articleId: Article['id'] | undefined;
 
-	$: $selectedArticleId = data.articleId;
 	$: $feedStats = data.feedStats;
 	$: $updatedArticleIds[data.articleId] = true;
 	$: article = $articles.find(({ id }) => id === data.articleId);
@@ -20,25 +21,7 @@
 
 	$: {
 		if (articleId !== data.articleId) {
-			putArticles({
-				articleIds: [data.articleId],
-				userData: { read: true }
-			}).then((updates) => {
-				$feedStats = updates.feedStats;
-				const updatedArticle = updates.updatedArticles[0];
-				if (updatedArticle) {
-					const idx = $articles.findIndex(
-						({ id }) => updatedArticle.article_id === id
-					);
-					if (idx !== -1) {
-						$articles[idx] = {
-							...$articles[idx],
-							...updatedArticle
-						};
-					}
-					articleId = updatedArticle.article_id;
-				}
-			});
+			markArticle();
 		}
 	}
 
@@ -53,6 +36,32 @@
 
 		return remove;
 	});
+
+	async function markArticle() {
+		if (!browser) {
+			return;
+		}
+
+		const updates = await putArticles({
+			articleIds: [data.articleId],
+			userData: { read: true }
+		});
+
+		$feedStats = updates.feedStats;
+		const updatedArticle = updates.updatedArticles[0];
+		if (updatedArticle) {
+			const idx = $articles.findIndex(
+				({ id }) => updatedArticle.article_id === id
+			);
+			if (idx !== -1) {
+				$articles[idx] = {
+					...$articles[idx],
+					...updatedArticle
+				};
+			}
+			articleId = updatedArticle.article_id;
+		}
+	}
 </script>
 
 {#if $displayType === 'mobile'}

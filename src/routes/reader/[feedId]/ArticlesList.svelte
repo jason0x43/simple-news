@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { z } from 'zod';
 	import { browser } from '$app/environment';
+	import { page } from '$app/stores';
 	import ContextMenu from '$lib/components/ContextMenu.svelte';
 	import { getAppContext } from '$lib/contexts';
 	import { getAge } from '$lib/date';
@@ -12,14 +13,8 @@
 
 	export let feedId: Feed['id'] | undefined;
 
-	const {
-		articles,
-		feeds,
-		feedStats,
-		articleFilter,
-		selectedArticleId,
-		updatedArticleIds
-	} = getAppContext().stores;
+	const { articles, feeds, feedStats, articleFilter, updatedArticleIds } =
+		getAppContext().stores;
 
 	const ScrollDataSchema = z.object({
 		visibleCount: z.number(),
@@ -32,6 +27,8 @@
 	let visibleCount = 40;
 	let scrollBox: HTMLElement | undefined;
 	let prevFeedId = feedId;
+
+	$: selectedArticleId = $page.data.articleId;
 
 	$: {
 		if (prevFeedId !== feedId) {
@@ -68,7 +65,7 @@
 			filteredArticles =
 				$articles?.filter(
 					({ id, read }) =>
-						!read || $updatedArticleIds[id] || id === $selectedArticleId
+						!read || $updatedArticleIds[id] || id === selectedArticleId
 				) ?? [];
 		}
 	}
@@ -80,7 +77,7 @@
 				...article,
 				feed: $feeds.find(({ id }) => id === article.feed_id),
 				isActive: activeArticle?.id === article.id,
-				isSelected: $selectedArticleId === article.id
+				isSelected: selectedArticleId === article.id
 			}));
 	}
 

@@ -30,9 +30,6 @@ export function createStores() {
 		/** True if the feed management UI should be active */
 		managingFeeds: writable<boolean>(false),
 
-		/** ID of the selected article */
-		selectedArticleId: writable<Article['id'] | undefined>(),
-
 		/** IDs of the feeds in the active feed group, or the active feed ID */
 		selectedFeedIds: writable<Feed['id'][]>([]),
 
