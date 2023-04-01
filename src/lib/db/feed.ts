@@ -2,7 +2,7 @@ import { createId } from '@paralleldrive/cuid2';
 import { sql } from 'kysely';
 import db from './lib/db.js';
 import type { Feed, InsertableFeed, User } from './lib/db';
-import { getUserFeeds } from './feedgroup.js';
+import { getSubscribedFeeds } from './feedgroup.js';
 
 export type { Feed };
 
@@ -51,7 +51,10 @@ export async function getFeeds(): Promise<Feed[]> {
 	return feeds;
 }
 
-export async function getSubscribedFeeds(): Promise<Feed[]> {
+/**
+ * Get all the feeds with active subscriptions
+ */
+export async function getActiveFeeds(): Promise<Feed[]> {
 	const feedGroupFeedIds = await db
 		.selectFrom('feed_group_feed')
 		.select(['feed_id'])
@@ -90,7 +93,7 @@ export async function getFeedStats(
 		feeds: {},
 		saved: 0
 	};
-	const feeds = options?.feeds ?? (await getUserFeeds(userId));
+	const feeds = options?.feeds ?? (await getSubscribedFeeds(userId));
 	const { maxAge = 6 * 7 * 24 * 60 * 60 * 1000 } = options ?? {};
 
 	await Promise.all(

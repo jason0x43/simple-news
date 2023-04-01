@@ -152,7 +152,7 @@ export async function deleteFeedGroup(
 /**
  * Return all the feeds a user is subscribed to.
  */
-export async function getUserFeeds(userId: User['id']): Promise<Feed[]> {
+export async function getSubscribedFeeds(userId: User['id']): Promise<Feed[]> {
 	const feedIds = (
 		await db
 			.selectFrom('feed_group_feed')
