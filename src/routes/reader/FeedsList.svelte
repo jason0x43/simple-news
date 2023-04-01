@@ -4,12 +4,26 @@
 	import type { Feed } from '$lib/db/feed';
 	import { allAreIdentified, getArticleCount, getGroupFeeds } from '$lib/feed';
 
-	const { articleFilter, userFeeds, feedGroups, feedStats, selectedFeedIds } =
+	const { articleFilter, userFeeds, feedGroups, feedStats } =
 		getAppContext().stores;
 
 	let expanded: { [title: string]: boolean } = {};
+	let selectedFeedIds: Feed['id'][];
 
 	$: feedId = $page.data.feedId;
+	$: {
+		if (feedId === 'saved') {
+			selectedFeedIds = [];
+		} else if (feedId) {
+			const [type, id] = feedId.split('-');
+			if (type === 'group') {
+				const group = $feedGroups.find((g) => g.id === id);
+				selectedFeedIds = group?.feeds.map(({ id }) => id) ?? [];
+			} else {
+				selectedFeedIds = [id];
+			}
+		}
+	}
 
 	function containsFeed(groupFeeds: Feed[], feedIds: string[]) {
 		return feedIds.some((id) => groupFeeds.find((f) => f.id === id));
@@ -33,9 +47,9 @@
 		{#if getArticleCount(groupFeeds, $feedStats, $articleFilter) > 0}
 			<li
 				class:expanded={expanded[group.name] ||
-					(containsFeed(groupFeeds, $selectedFeedIds) &&
-						!allAreIdentified(groupFeeds, $selectedFeedIds))}
-				class:group-selected={allAreIdentified(groupFeeds, $selectedFeedIds)}
+					(containsFeed(groupFeeds, selectedFeedIds) &&
+						!allAreIdentified(groupFeeds, selectedFeedIds))}
+				class:group-selected={allAreIdentified(groupFeeds, selectedFeedIds)}
 			>
 				<div class="group">
 					<button
@@ -62,7 +76,7 @@
 						{#if getArticleCount([feed], $feedStats, $articleFilter) > 0}
 							<li
 								class="feed"
-								class:selected={allAreIdentified([feed], $selectedFeedIds)}
+								class:selected={allAreIdentified([feed], selectedFeedIds)}
 							>
 								<a href={`/reader/feed-${feed.id}`} class="title">
 									{$userFeeds.find((f) => f.id === feed.id)?.title}
@@ -92,7 +106,7 @@
 
 	.selected,
 	.group-selected > .group {
-		background: rgba(255, 255, 255, 0.1);
+		background: var(--hover-matte);
 	}
 
 	.group,

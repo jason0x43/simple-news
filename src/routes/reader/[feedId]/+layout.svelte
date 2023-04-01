@@ -7,10 +7,9 @@
 
 	export let data;
 
-	const { articles, selectedFeedIds, sidebarVisible } = getAppContext().stores;
+	const { articles, sidebarVisible } = getAppContext().stores;
 
 	$: $articles = data.articles;
-	$: $selectedFeedIds = data.selectedFeedIds;
 
 	$: {
 		if (data.feedId) {

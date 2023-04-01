@@ -27,9 +27,6 @@ export function createStores() {
 		/** True if the feed management UI should be active */
 		managingFeeds: writable<boolean>(false),
 
-		/** IDs of the feeds in the active feed group, or the active feed ID */
-		selectedFeedIds: writable<Feed['id'][]>([]),
-
 		/** True if the sidebar should be visible */
 		sidebarVisible: writable<boolean>(),
 
