@@ -14,14 +14,12 @@
 		articleFilter,
 		sidebarVisible,
 		feeds,
-		userFeeds,
 		feedGroups,
 		feedStats,
 		managingFeeds
 	} = getAppContext().stores;
 
 	$: $feeds = data.feeds ?? [];
-	$: $userFeeds = data.userFeeds ?? [];
 	$: $feedStats = data.feedStats ?? {};
 	$: $feedGroups = data.feedGroups ?? [];
 	$: $articleFilter = data.articleFilter ?? 'unread';

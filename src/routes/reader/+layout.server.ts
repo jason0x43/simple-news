@@ -14,15 +14,13 @@ export async function load({ locals }) {
 
 	const { user, data: sessionData } = session;
 	const feedGroups = await getUserFeedGroups(user.id);
-	const feeds = await getFeeds();
-	const userFeeds = await getUserFeeds(user.id);
+	const feeds = await getUserFeeds(user.id);
 	const feedStats = await getFeedStats(user.id, { feeds });
 
 	return {
 		user,
 		articleFilter: sessionData?.articleFilter,
 		feeds,
-		userFeeds,
 		feedStats,
 		feedGroups
 	};

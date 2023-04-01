@@ -4,7 +4,7 @@
 	import type { Feed } from '$lib/db/feed';
 	import { allAreIdentified, getArticleCount, getGroupFeeds } from '$lib/feed';
 
-	const { articleFilter, userFeeds, feedGroups, feedStats } =
+	const { articleFilter, feeds, feedGroups, feedStats } =
 		getAppContext().stores;
 
 	let expanded: { [title: string]: boolean } = {};
@@ -43,7 +43,7 @@
 		</div>
 	</li>
 	{#each $feedGroups as group (group.name)}
-		{@const groupFeeds = getGroupFeeds(group, $userFeeds)}
+		{@const groupFeeds = getGroupFeeds(group, $feeds)}
 		{#if getArticleCount(groupFeeds, $feedStats, $articleFilter) > 0}
 			<li
 				class:expanded={expanded[group.name] ||
@@ -79,7 +79,7 @@
 								class:selected={allAreIdentified([feed], selectedFeedIds)}
 							>
 								<a href={`/reader/feed-${feed.id}`} class="title">
-									{$userFeeds.find((f) => f.id === feed.id)?.title}
+									{$feeds.find((f) => f.id === feed.id)?.title}
 								</a>
 								<div class="unread">
 									{($feedStats.feeds[feed.id].total ?? 0) -

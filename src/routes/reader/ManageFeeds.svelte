@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import Button from '$lib/components/Button.svelte';
 	import Dialog from '$lib/components/Dialog.svelte';
 	import Portal from '$lib/components/Portal.svelte';
@@ -8,11 +9,26 @@
 	import { getAppContext } from '$lib/contexts';
 	import type { Feed } from '$lib/db/feed';
 	import type { FeedGroup } from '$lib/db/feedgroup';
-	import { post as postFeed, put as putFeed } from '../api/feeds';
+	import {
+		get as getFeeds,
+		post as postFeed,
+		put as putFeed
+	} from '../api/feeds';
 	import { put as putFeedGroup } from '../api/feedgroups';
 
-	const { feeds, feedGroups, feedStats, managingFeeds } =
-		getAppContext().stores;
+	const { feedGroups, feedStats, managingFeeds } = getAppContext().stores;
+
+	let feeds: Feed[] = [];
+
+	onMount(() => {
+		getFeeds()
+			.then((allFeeds) => {
+				feeds = allFeeds;
+			})
+			.catch((error) => {
+				console.warn(`Error getting feeds: ${error}`);
+			});
+	});
 
 	/** A mapping of feed IDs to their containing group IDs */
 	let groups: { [feedId: string]: string } = {};
@@ -30,8 +46,9 @@
 
 	let busy = false;
 	let addFeedUrl = '';
-	let updateFeedId = $feeds[0].id;
-	let updateFeedUrl = $feeds[0].url;
+
+	$: updateFeedId = feeds[0]?.id;
+	$: updateFeedUrl = feeds[0]?.url;
 
 	async function addFeed() {
 		busy = true;
@@ -39,7 +56,7 @@
 
 		try {
 			const newFeed = await postFeed(addFeedUrl);
-			$feeds = [...$feeds, newFeed];
+			feeds = [...feeds, newFeed];
 			addFeedUrl = '';
 		} catch (error) {
 			err = error;
@@ -70,9 +87,9 @@
 				url: updateFeedUrl
 			};
 			const updatedFeed = await putFeed(feed);
-			const index = $feeds.findIndex(({ id }) => id === feed.id);
+			const index = feeds.findIndex(({ id }) => id === feed.id);
 			if (index) {
-				$feeds[index] = updatedFeed;
+				feeds[index] = updatedFeed;
 			}
 			addFeedUrl = '';
 		} catch (error) {
@@ -122,7 +139,7 @@
 		}, 500);
 	}
 
-	$: sortedFeeds = $feeds.sort((a, b) => {
+	$: sortedFeeds = feeds.sort((a, b) => {
 		if (a.title.toLowerCase() === b.title.toLowerCase()) {
 			return 0;
 		}
@@ -187,11 +204,11 @@
 								value={updateFeedId}
 								on:change={(event) => {
 									updateFeedId = getEventValue(event) ?? '';
-									const feed = $feeds.find(({ id }) => id === updateFeedId);
+									const feed = feeds.find(({ id }) => id === updateFeedId);
 									updateFeedUrl = feed?.url ?? '';
 								}}
 							>
-								{#each $feeds as feed (feed.id)}
+								{#each feeds as feed (feed.id)}
 									<option value={feed.id}>{feed.title}</option>
 								{/each}
 							</Select>

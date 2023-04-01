@@ -21,9 +21,6 @@ export function createStores() {
 		/** Stats for the user's feeds */
 		feedStats: writable<FeedStats>({ feeds: {}, saved: 0 }),
 
-		/** All available feeds */
-		feeds: writable<Feed[]>([]),
-
 		/** True if the feed management UI should be active */
 		managingFeeds: writable<boolean>(false),
 
@@ -39,7 +36,7 @@ export function createStores() {
 		/**
 		 * The user's subscribed feeds
 		 */
-		userFeeds: writable<Feed[]>([])
+		feeds: writable<Feed[]>([])
 	};
 }
 
