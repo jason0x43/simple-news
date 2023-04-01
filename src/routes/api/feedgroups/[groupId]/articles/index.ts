@@ -1,9 +1,7 @@
-import type { ArticleHeadingWithUserData } from '$lib/db/article';
+import type { ArticleWithUserData } from '$lib/db/article';
 
-export async function get(
-	groupId: string
-): Promise<ArticleHeadingWithUserData[]> {
+export async function get(groupId: string): Promise<ArticleWithUserData[]> {
 	const resp = await fetch(`/api/feedgroups/${groupId}/articles`);
-	const rdata = (await resp.json()) as ArticleHeadingWithUserData[];
+	const rdata = (await resp.json()) as ArticleWithUserData[];
 	return rdata;
 }

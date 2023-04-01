@@ -1,10 +1,5 @@
-import { getArticleContent } from '$lib/article';
-import {
-	getArticles,
-	getSavedArticles,
-	type ArticleWithUserData
-} from '$lib/db/article';
-import { getFeed, type Feed } from '$lib/db/feed';
+import { getArticles, type ArticleWithUserData } from '$lib/db/article';
+import type { Feed } from '$lib/db/feed';
 import { getFeedGroup } from '$lib/db/feedgroup';
 import type { User } from '$lib/db/user';
 import { getUserOrThrow } from '$lib/session';
@@ -26,28 +21,26 @@ export async function load({ locals, params }) {
 	let articles: ArticleWithUserData[];
 
 	if (feedId === 'saved') {
-		articles = await getSavedArticles(userId);
+		articles = await getArticles(userId, { filter: 'saved' });
 		selectedFeedIds = [];
 	} else {
 		const [type, id] = feedId.split('-');
 		if (type === 'group') {
+			articles = await getArticles(userId, {
+				feeds: { group: id }
+			});
 			const group = await getFeedGroup(id);
 			selectedFeedIds = group?.feeds.map(({ id }) => id) ?? [];
 		} else {
-			const feed = await getFeed(id);
+			articles = await getArticles(userId, {
+				feeds: { ids: [id] }
+			});
 			selectedFeedIds = [id];
 		}
-
-		articles = await getArticles(userId, {
-			feedIds: selectedFeedIds
-		});
 	}
 
 	return {
-		articles: articles.map((article) => ({
-			...article,
-			content: getArticleContent(article)
-		})),
+		articles,
 		feedId,
 		selectedFeedIds
 	};

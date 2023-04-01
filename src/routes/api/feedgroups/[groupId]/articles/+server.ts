@@ -1,9 +1,4 @@
-import {
-	getFeedArticleHeadings,
-	getGroupArticleHeadings,
-	getSavedArticleHeadings,
-	type ArticleHeadingWithUserData
-} from '$lib/db/article';
+import { getArticles, type ArticleWithUserData } from '$lib/db/article';
 import { json } from '$lib/kit';
 import { getUserOrThrow } from '$lib/session';
 
@@ -14,18 +9,18 @@ export async function GET({ locals, params }) {
 	const user = getUserOrThrow(locals);
 	const { groupId } = params;
 
-	let articleHeadings: ArticleHeadingWithUserData[];
+	let articles: ArticleWithUserData[];
 
 	if (groupId === 'saved') {
-		articleHeadings = await getSavedArticleHeadings(user.id);
+		articles = await getArticles(user.id, { filter: 'saved' });
 	} else {
 		const [type, id] = groupId.split('-');
 		if (type === 'group') {
-			articleHeadings = await getGroupArticleHeadings(user.id, id);
+			articles = await getArticles(user.id, { feeds: { group: id } });
 		} else {
-			articleHeadings = await getFeedArticleHeadings(user.id, id);
+			articles = await getArticles(user.id, { feeds: { ids: [id] } });
 		}
 	}
 
-	return json<ArticleHeadingWithUserData[]>(articleHeadings);
+	return json<ArticleWithUserData[]>(articles);
 }

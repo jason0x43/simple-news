@@ -13,15 +13,7 @@ import db from './lib/db.js';
 
 export type { Article };
 
-export type ArticleHeading = Pick<
-	Article,
-	'id' | 'feed_id' | 'article_id' | 'title' | 'link' | 'published'
->;
-
 export type ArticleUserData = Omit<UserArticle, 'user_id' | 'article_id'>;
-
-export type ArticleHeadingWithUserData = Omit<Article, 'content'> &
-	ArticleUserData;
 
 export type ArticleWithUserData = Article & Partial<ArticleUserData>;
 
@@ -51,52 +43,14 @@ export async function getArticle({
 	};
 }
 
-export async function getArticleHeadings(
-	userId: User['id'],
-	options?: {
-		feedIds?: Feed['id'][];
-		maxAge?: number;
-	}
-): Promise<ArticleHeadingWithUserData[]> {
-	let query = db
-		.selectFrom('article')
-		.leftJoin('user_article', (join) =>
-			join
-				.onRef('user_article.article_id', '=', 'article.id')
-				.on('user_article.user_id', '=', userId)
-		)
-		.select([
-			'id',
-			'feed_id',
-			'article.article_id',
-			'title',
-			'link',
-			'published',
-			'read',
-			'saved'
-		]);
-
-	if (options?.feedIds) {
-		query = query.where('feed_id', 'in', options.feedIds);
-	}
-
-	const maxAge = options?.maxAge ?? 6 * 7 * 24 * 60 * 60 * 1000;
-	const cutoff = BigInt(Date.now() - maxAge);
-	query = query.where('published', '>', cutoff);
-
-	// sort in descending order by publish date for maxAge, then sort the
-	// result in ascending order
-	const articles = await query.orderBy('published', 'desc').execute();
-	articles.sort((a, b) => Number(a.published - b.published));
-
-	return articles;
-}
-
 export async function getArticles(
 	userId: User['id'],
 	options?: {
-		feedIds?: Feed['id'][];
+		feeds?: { ids: Feed['id'][] } | { group: FeedGroup['id'] };
+		offset?: number;
+		limit?: number;
 		maxAge?: number;
+		filter?: 'unread' | 'saved';
 	}
 ): Promise<ArticleWithUserData[]> {
 	let query = db
@@ -108,9 +62,9 @@ export async function getArticles(
 		)
 		.select([
 			'id',
-			'content',
 			'feed_id',
 			'article.article_id',
+			'content',
 			'title',
 			'link',
 			'published',
@@ -118,11 +72,32 @@ export async function getArticles(
 			'saved'
 		]);
 
-	if (options?.feedIds) {
-		query = query.where('feed_id', 'in', options.feedIds);
+	if (options?.filter === 'unread') {
+		query = query.where('user_article.read', 'is not', 1);
+	} else if (options?.filter === 'saved') {
+		query = query.where('user_article.saved', 'is', 1);
 	}
 
-	const maxAge = options?.maxAge ?? 6 * 7 * 24 * 60 * 60 * 1000;
+	if (options?.feeds) {
+		let feedIds: Feed['id'][];
+		if ('group' in options.feeds) {
+			const group = await getFeedGroup(options.feeds.group);
+			feedIds = group?.feeds.map(({ id }) => id) ?? [];
+		} else {
+			feedIds = options.feeds.ids;
+		}
+		query = query.where('feed_id', 'in', feedIds);
+	}
+
+	if (options?.offset) {
+		query = query.offset(options.offset);
+	}
+
+	if (options?.limit) {
+		query = query.limit(options.limit);
+	}
+
+	const maxAge = options?.maxAge ?? 30 * 24 * 60 * 60 * 1000;
 	const cutoff = BigInt(Date.now() - maxAge);
 	query = query.where('published', '>', cutoff);
 
@@ -132,85 +107,6 @@ export async function getArticles(
 	articles.sort((a, b) => Number(a.published - b.published));
 
 	return articles;
-}
-
-export async function getFeedArticleHeadings(
-	userId: User['id'],
-	feedId: Feed['id'],
-	options?: {
-		maxAge?: number;
-	}
-): Promise<ArticleHeadingWithUserData[]> {
-	return getArticleHeadings(userId, {
-		feedIds: [feedId],
-		maxAge: options?.maxAge
-	});
-}
-
-export async function getGroupArticleHeadings(
-	userId: User['id'],
-	feedGroupId: FeedGroup['id'],
-	options?: {
-		maxAge?: number;
-	}
-): Promise<ArticleHeadingWithUserData[]> {
-	const group = await getFeedGroup(feedGroupId);
-	const feedIds = group?.feeds.map(({ id }) => id) ?? [];
-	return getArticleHeadings(userId, {
-		feedIds,
-		maxAge: options?.maxAge
-	});
-}
-
-export async function getSavedArticleHeadings(
-	userId: User['id']
-): Promise<ArticleHeadingWithUserData[]> {
-	return db
-		.selectFrom('article')
-		.leftJoin('user_article', (join) =>
-			join
-				.onRef('user_article.article_id', '=', 'article.id')
-				.on('user_article.user_id', '=', userId)
-		)
-		.select([
-			'id',
-			'feed_id',
-			'article.article_id',
-			'title',
-			'link',
-			'published',
-			'read',
-			'saved'
-		])
-		.where('saved', '=', 1)
-		.orderBy('published', 'asc')
-		.execute();
-}
-
-export async function getSavedArticles(
-	userId: User['id']
-): Promise<ArticleWithUserData[]> {
-	return db
-		.selectFrom('article')
-		.leftJoin('user_article', (join) =>
-			join
-				.onRef('user_article.article_id', '=', 'article.id')
-				.on('user_article.user_id', '=', userId)
-		)
-		.select([
-			'id',
-			'content',
-			'feed_id',
-			'article.article_id',
-			'title',
-			'link',
-			'published',
-			'read',
-			'saved'
-		])
-		.where('saved', '=', 1)
-		.orderBy('published', 'asc')
-		.execute();
 }
 
 async function markArticle(

@@ -6,7 +6,7 @@
 	import ContextMenu from '$lib/components/ContextMenu.svelte';
 	import { getAppContext } from '$lib/contexts';
 	import { getAge } from '$lib/date';
-	import type { Article, ArticleHeadingWithUserData } from '$lib/db/article';
+	import type { Article, ArticleWithUserData } from '$lib/db/article';
 	import type { Feed } from '$lib/db/feed';
 	import { clearValue, loadValue, storeValue, unescapeHtml } from '$lib/util';
 	import { put as putArticles } from '../../api/articles';
@@ -45,9 +45,9 @@
 	}
 
 	let menuAnchor: { x: number; y: number } | undefined;
-	let activeArticle: ArticleHeadingWithUserData | undefined;
-	let filteredArticles: ArticleHeadingWithUserData[] = [];
-	let renderedArticles: (ArticleHeadingWithUserData & {
+	let activeArticle: ArticleWithUserData | undefined;
+	let filteredArticles: ArticleWithUserData[] = [];
+	let renderedArticles: (ArticleWithUserData & {
 		feed: Feed | undefined;
 		isActive: boolean;
 		isSelected: boolean;
