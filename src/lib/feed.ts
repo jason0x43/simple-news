@@ -21,31 +21,21 @@ export function getArticleCount(
 }
 
 /**
- * Get the feeds identified by a feed group
+ * Return true if all feed IDs are in a given group
  */
-export function getGroupFeeds(
+export function allFeedsAreSelected(
 	group: FeedGroupWithFeeds,
-	feeds: Feed[]
-): Feed[] {
-	const groupFeeds: Feed[] = [];
-	for (const feedGroupFeed of group.feeds) {
-		const feed = feeds.find(({ id }) => id === feedGroupFeed.id);
-		if (feed) {
-			groupFeeds.push(feed);
-		}
-	}
-	return groupFeeds;
+	feedIds: Feed['id'][]
+): boolean {
+	return group.feeds.every(({ id }) => feedIds.includes(id));
 }
 
 /**
- * Return true if all the item IDs are contained in the given list of IDs
+ * Return true if some feed IDs are in a given group
  */
-export function allAreIdentified<T>(
-	items: { id: T }[],
-	ids: T[] | undefined
-): boolean {
-	if (!ids) {
-		return false;
-	}
-	return items.every(({ id }) => ids.includes(id));
+export function someFeedsAreSelected(
+	group: FeedGroupWithFeeds,
+	feedIds: Feed['id'][]
+) {
+	return group.feeds.some(({ id }) => feedIds.includes(id));
 }

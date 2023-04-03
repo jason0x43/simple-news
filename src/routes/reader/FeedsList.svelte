@@ -2,7 +2,11 @@
 	import { page } from '$app/stores';
 	import { getAppContext } from '$lib/contexts';
 	import type { Feed } from '$lib/db/feed';
-	import { allAreIdentified, getArticleCount, getGroupFeeds } from '$lib/feed';
+	import {
+		allFeedsAreSelected,
+		someFeedsAreSelected,
+		getArticleCount
+	} from '$lib/feed';
 
 	const { articleFilter, feeds, feedGroups, feedStats } =
 		getAppContext().stores;
@@ -24,10 +28,6 @@
 			}
 		}
 	}
-
-	function containsFeed(groupFeeds: Feed[], feedIds: string[]) {
-		return feedIds.some((id) => groupFeeds.find((f) => f.id === id));
-	}
 </script>
 
 <ul class="feeds">
@@ -43,13 +43,12 @@
 		</div>
 	</li>
 	{#each $feedGroups as group (group.name)}
-		{@const groupFeeds = getGroupFeeds(group, $feeds)}
-		{#if getArticleCount(groupFeeds, $feedStats, $articleFilter) > 0}
+		{#if getArticleCount(group.feeds, $feedStats, $articleFilter) > 0}
 			<li
 				class:expanded={expanded[group.name] ||
-					(containsFeed(groupFeeds, selectedFeedIds) &&
-						!allAreIdentified(groupFeeds, selectedFeedIds))}
-				class:group-selected={allAreIdentified(groupFeeds, selectedFeedIds)}
+					(someFeedsAreSelected(group, selectedFeedIds) &&
+						!allFeedsAreSelected(group, selectedFeedIds))}
+				class:group-selected={allFeedsAreSelected(group, selectedFeedIds)}
 			>
 				<div class="group">
 					<button
@@ -66,17 +65,17 @@
 					</a>
 					{#if $feedStats}
 						<span class="Feeds-unread">
-							{getArticleCount(groupFeeds, $feedStats, $articleFilter)}
+							{getArticleCount(group.feeds, $feedStats, $articleFilter)}
 						</span>
 					{/if}
 				</div>
 
 				<ul>
-					{#each groupFeeds as feed (feed.id)}
+					{#each group.feeds as feed (feed.id)}
 						{#if getArticleCount([feed], $feedStats, $articleFilter) > 0}
 							<li
 								class="feed"
-								class:selected={allAreIdentified([feed], selectedFeedIds)}
+								class:selected={selectedFeedIds.includes(feed.id)}
 							>
 								<a href={`/reader/feed-${feed.id}`} class="title">
 									{$feeds.find((f) => f.id === feed.id)?.title}
