@@ -1,8 +1,7 @@
 import { createId } from '@paralleldrive/cuid2';
-import { sql } from 'kysely';
-import db from './lib/db.js';
-import type { Feed, InsertableFeed, User } from './lib/db';
 import { getSubscribedFeeds } from './feedgroup.js';
+import type { Feed, InsertableFeed, User } from './lib/db';
+import db from './lib/db.js';
 
 export type { Feed };
 
@@ -112,7 +111,7 @@ export async function getFeedStats(
 
 			const numRead = await db
 				.selectFrom('user_article')
-				.select(sql<number>`count(*)`.as('count'))
+				.select(db.fn.countAll().as('count'))
 				.where('user_id', '=', userId)
 				.where('article_id', 'in', articleIds)
 				.where('read', '=', 1)
@@ -120,19 +119,19 @@ export async function getFeedStats(
 
 			stats.feeds[feed.id] = {
 				total: articleIds.length,
-				read: numRead?.count ?? 0
+				read: Number(numRead?.count ?? 0)
 			};
 		})
 	);
 
 	const numSaved = await db
 		.selectFrom('user_article')
-		.select(sql<number>`count(*)`.as('count'))
+		.select(db.fn.countAll().as('count'))
 		.where('user_id', '=', userId)
 		.where('saved', '=', 1)
 		.executeTakeFirst();
 
-	stats.saved = numSaved?.count ?? 0;
+	stats.saved = Number(numSaved?.count ?? 0);
 
 	return stats;
 }
