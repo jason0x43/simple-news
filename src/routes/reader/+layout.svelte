@@ -4,9 +4,9 @@
 	import { getAppContext, setReaderContext } from '$lib/contexts';
 	import ManageFeeds from './ManageFeeds.svelte';
 	import Sidebar from './Sidebar.svelte';
-	import { browser } from '$app/environment';
-	import { put as putSessionData } from '../api/session';
 	import { get as getFeedStats } from '../api/feedstats';
+	import { storeValue } from '$lib/util';
+	import type { ArticleFilter } from '$lib/types';
 
 	export let data;
 
@@ -22,7 +22,6 @@
 	$: $feeds = data.feeds ?? [];
 	$: $feedStats = data.feedStats ?? {};
 	$: $feedGroups = data.feedGroups ?? [];
-	$: $articleFilter = data.articleFilter ?? 'unread';
 
 	const titleListeners = new Set<() => void>();
 
@@ -41,14 +40,6 @@
 		onTitlePress
 	});
 
-	if (browser) {
-		articleFilter.subscribe((value) => {
-			putSessionData({ articleFilter: value }).catch((error) => {
-				console.warn('Error updating session data:', error);
-			});
-		});
-	}
-
 	onMount(() => {
 		const interval = setInterval(async () => {
 			try {
@@ -58,6 +49,10 @@
 				console.warn('Error updating feedstats');
 			}
 		}, 600_000);
+
+		articleFilter.subscribe((val) => {
+			storeValue<ArticleFilter>('simple-news:articleFilter', val);
+		});
 
 		return () => {
 			clearInterval(interval);

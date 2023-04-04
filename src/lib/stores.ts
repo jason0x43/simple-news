@@ -3,11 +3,14 @@ import type { Article, ArticleWithUserData } from './db/article';
 import type { Feed, FeedStats } from './db/feed';
 import type { FeedGroupWithFeeds } from './db/feedgroup';
 import type { ArticleFilter } from './types';
+import { loadValue } from './util';
 
 export function createStores() {
 	return {
 		/** The filter applied to the set of loaded article headings */
-		articleFilter: writable<ArticleFilter>('unread'),
+		articleFilter: writable<ArticleFilter>(
+			loadValue('simple-news:articleFilter') ?? 'unread'
+		),
 
 		/** The currently loaded articles */
 		articles: writable<ArticleWithUserData[]>([]),

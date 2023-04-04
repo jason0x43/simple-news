@@ -48,15 +48,4 @@ export type UpdateFeedRequest = z.infer<typeof UpdateFeedRequestSchema>;
 
 export type UpdateFeedResponse = Feed;
 
-export type UpdateSessionRequest = SessionData;
-
-export const ArticleFilterSchema = z.union([
-	z.literal('all'),
-	z.literal('unread')
-]);
-export type ArticleFilter = z.infer<typeof ArticleFilterSchema>;
-
-export const SessionDataSchema = z.object({
-	articleFilter: ArticleFilterSchema
-});
-export type SessionData = z.infer<typeof SessionDataSchema>;
+export type ArticleFilter = 'unread' | 'all';

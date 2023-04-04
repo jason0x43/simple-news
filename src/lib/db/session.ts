@@ -1,25 +1,14 @@
-import { SessionDataSchema, type SessionData } from '$lib/types.js';
 import { createId } from '@paralleldrive/cuid2';
 import type { Session, User } from './lib/db.js';
 import db from './lib/db.js';
 
 export type { Session };
 
-export const defaultSessionData: SessionData = {
-	articleFilter: 'unread'
-};
-
-export type SessionWithData = Omit<Session, 'data'> & {
-	data: SessionData | undefined;
-};
-
-export type SessionWithUser = SessionWithData & {
+export type SessionWithUser = Session & {
 	user: User;
 };
 
-export async function createUserSession(
-	userId: User['id']
-): Promise<SessionWithData> {
+export async function createUserSession(userId: User['id']): Promise<Session> {
 	const expires = Number(new Date(Date.now() + 1000 * 60 * 60 * 24 * 7));
 	const sess = await db
 		.insertInto('session')
@@ -27,14 +16,11 @@ export async function createUserSession(
 			id: createId(),
 			expires,
 			user_id: userId,
-			data: JSON.stringify(defaultSessionData)
+			data: '{}'
 		})
 		.returningAll()
 		.executeTakeFirstOrThrow();
-	return {
-		...sess,
-		data: defaultSessionData
-	};
+	return sess;
 }
 
 export async function getSessionWithUser(
@@ -60,16 +46,13 @@ export async function getSessionWithUser(
 
 	return {
 		...session,
-		data: session.data
-			? SessionDataSchema.parse(JSON.parse(session.data))
-			: undefined,
 		user
 	};
 }
 
 export async function setSessionData(
 	id: Session['id'],
-	data: SessionData
+	data: unknown
 ): Promise<Session> {
 	return await db
 		.updateTable('session')
