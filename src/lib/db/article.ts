@@ -1,6 +1,7 @@
 import { createId } from '@paralleldrive/cuid2';
 import type { Transaction } from 'kysely';
 import { getFeedGroup } from './feedgroup';
+import { getArticleContent } from '../article';
 import type {
 	Article,
 	Database,
@@ -106,7 +107,10 @@ export async function getArticles(
 	const articles = await query.orderBy('published', 'desc').execute();
 	articles.sort((a, b) => Number(a.published - b.published));
 
-	return articles;
+	return articles.map((article) => ({
+		...article,
+		content: getArticleContent(article)
+	}));
 }
 
 async function markArticle(
