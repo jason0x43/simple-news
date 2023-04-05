@@ -12,7 +12,7 @@
 		getAppContext().stores;
 
 	let expanded: { [title: string]: boolean } = {};
-	let selectedFeedIds: Feed['id'][];
+	let selectedFeedIds: Feed['id'][] = [];
 
 	$: feedId = $page.data.feedId;
 	$: {
