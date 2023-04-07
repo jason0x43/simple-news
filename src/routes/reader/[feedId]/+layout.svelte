@@ -22,7 +22,11 @@
 			try {
 				if ($page.data.feedId) {
 					const resp = await getFeedArticles($page.data.feedId);
-					$articles = resp;
+					for (const article of resp) {
+						if (!$articles.find((a) => a.id === article.id)) {
+							$articles.push(article);
+						}
+					}
 				}
 			} catch (error) {
 				console.warn('Error updating articles list');
