@@ -58,5 +58,6 @@
     "rss-parser": "^3.13.0",
     "zod": "^3.21.4"
   },
-  "type": "module"
+  "type": "module",
+	"packageManager": "pnpm@8.5.0"
 }
