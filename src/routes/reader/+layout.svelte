@@ -4,9 +4,9 @@
 	import { getAppContext, setReaderContext } from '$lib/contexts';
 	import ManageFeeds from './ManageFeeds.svelte';
 	import Sidebar from './Sidebar.svelte';
-	import { get as getFeedStats } from '../api/feedstats';
 	import { storeValue } from '$lib/util';
-	import type { ArticleFilter } from '$lib/types';
+	import type { ArticleFilter, GetFeedStatsResponse } from '$lib/types';
+	import { responseJson } from '$lib/kit';
 
 	export let data;
 
@@ -43,7 +43,9 @@
 	onMount(() => {
 		const interval = setInterval(async () => {
 			try {
-				const resp = await getFeedStats();
+				const resp = await responseJson<GetFeedStatsResponse>(
+					fetch('/api/feedstats')
+				);
 				$feedStats = resp;
 			} catch (error) {
 				console.warn('Error updating feedstats');

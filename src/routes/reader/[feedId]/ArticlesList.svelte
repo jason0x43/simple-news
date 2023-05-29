@@ -9,7 +9,8 @@
 	import type { Article, ArticleWithUserData } from '$lib/db/article';
 	import type { Feed } from '$lib/db/feed';
 	import { clearValue, loadValue, storeValue, unescapeHtml } from '$lib/util';
-	import { put as putArticles } from '../../api/articles';
+	import { responseJson } from '$lib/kit';
+	import type { ArticleUpdateResponse } from '$lib/types';
 
 	export let feedId: Feed['id'] | undefined;
 
@@ -28,7 +29,7 @@
 	let scrollBox: HTMLElement | undefined;
 	let prevFeedId = feedId;
 
-	$: selectedArticleId = $page.data.articleId;
+	$: selectedArticleId = $page.data.article?.id;
 
 	$: {
 		if (prevFeedId !== feedId) {
@@ -197,10 +198,15 @@
 		}
 
 		try {
-			const update = await putArticles({
-				articleIds,
-				userData: mark
-			});
+			const update = await responseJson<ArticleUpdateResponse>(
+				fetch('/api/articles', {
+					method: 'PUT',
+					body: JSON.stringify({
+						articleIds,
+						userData: mark
+					})
+				})
+			);
 
 			$feedStats = update.feedStats;
 

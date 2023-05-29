@@ -12,8 +12,8 @@ declare global {
 
 		interface PageData {
 			articleFilter?: 'unread' | 'all';
-			articleId?: Article['id'];
 			articles?: ArticleWithUserData[];
+			article?: ArticleWithUserData;
 			feedGroups?: FeedGroupWithFeeds[];
 			feedId?: string;
 			feedStats?: FeedStats;

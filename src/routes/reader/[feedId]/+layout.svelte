@@ -3,7 +3,8 @@
 	import { page } from '$app/stores';
 	import { getAppContext } from '$lib/contexts';
 	import ArticlesList from './ArticlesList.svelte';
-	import { get as getFeedArticles } from '../../api/feedgroups/[groupId]/articles';
+	import { responseJson } from '$lib/kit';
+	import type { ArticleWithUserData } from '$lib/db/article';
 
 	export let data;
 
@@ -21,7 +22,9 @@
 		const interval = setInterval(async () => {
 			try {
 				if ($page.data.feedId) {
-					const resp = await getFeedArticles($page.data.feedId);
+					const resp = await responseJson<ArticleWithUserData[]>(
+						fetch(`/api/feedgroups/${$page.data.feedId}/articles`)
+					);
 					for (const article of resp) {
 						if (!$articles.find((a) => a.id === article.id)) {
 							$articles.push(article);

@@ -9,19 +9,16 @@
 	import { getAppContext } from '$lib/contexts';
 	import type { Feed } from '$lib/db/feed';
 	import type { FeedGroup } from '$lib/db/feedgroup';
-	import {
-		get as getFeeds,
-		post as postFeed,
-		put as putFeed
-	} from '../api/feeds';
-	import { put as putFeedGroup } from '../api/feedgroups';
+	import { responseJson } from '$lib/kit';
+	import type { UpdateFeedResponse } from '$lib/types';
+	import type { AddGroupFeedResponse } from '../api/feedgroups/+server';
 
 	const { feedGroups, feedStats, managingFeeds } = getAppContext().stores;
 
 	let feeds: Feed[] = [];
 
 	onMount(() => {
-		getFeeds()
+		responseJson<Feed[]>(fetch('/api/feeds'))
 			.then((allFeeds) => {
 				feeds = allFeeds;
 			})
@@ -55,7 +52,12 @@
 		let err: unknown | undefined;
 
 		try {
-			const newFeed = await postFeed(addFeedUrl);
+			const newFeed = await responseJson<Feed>(
+				fetch('/api/feeds', {
+					method: 'POST',
+					body: JSON.stringify({ url: addFeedUrl })
+				})
+			);
 			feeds = [...feeds, newFeed];
 			addFeedUrl = '';
 		} catch (error) {
@@ -86,7 +88,12 @@
 				id: updateFeedId,
 				url: updateFeedUrl
 			};
-			const updatedFeed = await putFeed(feed);
+			const updatedFeed = await responseJson<UpdateFeedResponse>(
+				fetch('/api/feeds', {
+					method: 'PUT',
+					body: JSON.stringify({ feed })
+				})
+			);
 			const index = feeds.findIndex(({ id }) => id === feed.id);
 			if (index) {
 				feeds[index] = updatedFeed;
@@ -118,10 +125,12 @@
 		let err: unknown | undefined;
 
 		try {
-			const updates = await putFeedGroup({
-				feedId,
-				groupId
-			});
+			const updates = await responseJson<AddGroupFeedResponse>(
+				fetch('/api/feedgroups', {
+					method: 'PUT',
+					body: JSON.stringify({ feedId, groupId })
+				})
+			);
 			$feedStats = updates.feedStats;
 			$feedGroups = updates.feedGroups;
 		} catch (error) {

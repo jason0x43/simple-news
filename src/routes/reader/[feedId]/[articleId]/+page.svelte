@@ -4,8 +4,9 @@
 	import type { Article } from '$lib/db/article';
 	import { getAppContext, getReaderContext } from '$lib/contexts';
 	import { slide } from '$lib/transition';
-	import { put as putArticles } from '../../../api/articles';
 	import ArticleView from './ArticleView.svelte';
+	import { responseJson } from '$lib/kit';
+	import type { ArticleUpdateResponse } from '$lib/types';
 
 	export let data;
 
@@ -15,12 +16,12 @@
 	let articleId: Article['id'] | undefined;
 
 	$: $feedStats = data.feedStats;
-	$: $updatedArticleIds[data.articleId] = true;
-	$: article = $articles.find(({ id }) => id === data.articleId);
+	$: $updatedArticleIds[data.article.id] = true;
+	$: article = $articles.find(({ id }) => id === data.article.id);
 	$: feed = $feeds.find(({ id }) => id === article?.feed_id);
 
 	$: {
-		if (articleId !== data.articleId) {
+		if (articleId !== data.article.id) {
 			markArticle();
 		}
 	}
@@ -42,10 +43,15 @@
 			return;
 		}
 
-		const updates = await putArticles({
-			articleIds: [data.articleId],
-			userData: { read: true }
-		});
+		const updates = await responseJson<ArticleUpdateResponse>(
+			fetch('/api/articles', {
+				method: 'PUT',
+				body: JSON.stringify({
+					articleIds: [data.article.id],
+					userData: { read: true }
+				})
+			})
+		);
 
 		$feedStats = updates.feedStats;
 		const updatedArticle = updates.updatedArticles[0];
