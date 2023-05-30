@@ -13,7 +13,9 @@
 	import type { UpdateFeedResponse } from '$lib/types';
 	import type { AddGroupFeedResponse } from '../api/feedgroups/+server';
 
-	const { feedGroups, feedStats, managingFeeds } = getAppContext().stores;
+	const feedGroups = getAppContext('feedGroups');
+	const feedStats = getAppContext('feedStats');
+	const managingFeeds = getAppContext('managingFeeds');
 
 	let feeds: Feed[] = [];
 

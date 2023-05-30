@@ -3,8 +3,6 @@
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
 
-	const context = getAppContext();
-
 	export let target: HTMLElement | null | undefined = undefined;
 	export let anchor: { x?: number; y?: number } | 'modal' | undefined =
 		undefined;
@@ -64,8 +62,10 @@
 		}
 	}
 
+	const root = getAppContext('root');
+
 	onMount(() => {
-		const elem = target ?? context.getRoot() ?? globalThis.document?.body;
+		const elem = target ?? root ?? window.document?.body;
 		elem?.append(ref);
 	});
 </script>

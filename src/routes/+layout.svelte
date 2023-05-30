@@ -1,32 +1,13 @@
 <script lang="ts">
 	import '../app.css';
-	import { onMount } from 'svelte';
-	import { createStores } from '$lib/stores';
-	import { setAppContext } from '$lib/contexts';
 	import Toast from '$lib/components/Toast.svelte';
+	import { setAppContext } from '$lib/contexts';
 
 	let ref: HTMLElement;
-	const stores = createStores();
 
-	setAppContext({
-		getRoot: () => ref,
-		stores
-	});
-
-	const { displayType } = stores;
-
-	onMount(() => {
-		const matcher = window.matchMedia('(max-width: 800px)');
-		const listener = (event: MediaQueryListEvent) => {
-			$displayType = event.matches ? 'mobile' : 'desktop';
-		};
-		matcher.addEventListener('change', listener);
-		$displayType = matcher.matches ? 'mobile' : 'desktop';
-
-		return () => {
-			matcher.removeEventListener('change', listener);
-		};
-	});
+	$: {
+		setAppContext('root', ref);
+	}
 </script>
 
 <div id="root" bind:this={ref}>

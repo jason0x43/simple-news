@@ -1,31 +1,31 @@
 import { getContext, setContext } from 'svelte';
-import type { AppStores } from './stores';
+import type { Writable } from 'svelte/store';
+import type { ArticleFilter } from './types';
+import type { Feed, FeedStats } from './db/feed';
+import type { FeedGroupWithFeeds } from './db/feedgroup';
+import type { Article, ArticleWithUserData } from './db/article';
 
-type ReaderContext = {
-	onTitlePress(listener: () => void): () => void;
+type Contexts = {
+	articleFilter: Writable<ArticleFilter>;
+	articles: Writable<ArticleWithUserData[]>;
+	displayType: Writable<'mobile' | 'desktop'>;
+	feedGroups: Writable<FeedGroupWithFeeds[]>;
+	feedStats: Writable<FeedStats>;
+	feeds: Writable<Feed[]>;
+	managingFeeds: Writable<boolean>;
+	onTitlePress: (listener: () => void) => () => void;
+	root: HTMLElement;
+	sidebarVisible: Writable<boolean>;
+	updatedArticleIds: Writable<Record<Article['id'], boolean>>;
 };
 
-export const readerContextKey = Symbol('reader');
-
-export function getReaderContext() {
-	return getContext<ReaderContext>(readerContextKey);
+export function getAppContext<K extends keyof Contexts>(key: K): Contexts[K] {
+	return getContext(key);
 }
 
-export function setReaderContext(value: ReaderContext) {
-	return setContext<ReaderContext>(readerContextKey, value);
-}
-
-type AppContext = {
-	getRoot(): HTMLElement;
-	stores: AppStores;
-};
-
-export const appContextKey = Symbol('app');
-
-export function getAppContext() {
-	return getContext<AppContext>(appContextKey);
-}
-
-export function setAppContext(value: AppContext) {
-	return setContext<AppContext>(appContextKey, value);
+export function setAppContext<K extends keyof Contexts>(
+	key: K,
+	value: Contexts[K]
+): Contexts[K] {
+	return setContext(key, value);
 }

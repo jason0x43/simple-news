@@ -1,20 +1,28 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-	import { getAppContext } from '$lib/contexts';
-	import ArticlesList from './ArticlesList.svelte';
-	import { responseJson } from '$lib/kit';
+	import { getAppContext, setAppContext } from '$lib/contexts';
 	import type { ArticleWithUserData } from '$lib/db/article';
+	import { responseJson } from '$lib/kit';
+	import { onMount } from 'svelte';
+	import ArticlesList from './ArticlesList.svelte';
+	import { writable } from 'svelte/store';
 
 	export let data;
 
-	const { articles, sidebarVisible } = getAppContext().stores;
+	const sidebarVisible = getAppContext('sidebarVisible');
+
+	// Ids of articles that have been updated while viewing a feed ID
+	const updatedArticleIds = setAppContext('updatedArticleIds', writable({}));
+
+	// The currently loaded article headings
+	const articles = setAppContext('articles', writable([]));
 
 	$: $articles = data.articles;
 
 	$: {
 		if (data.feedId) {
 			$sidebarVisible = false;
+			$updatedArticleIds = {};
 		}
 	}
 

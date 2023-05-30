@@ -1,13 +1,14 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import UserIcon from '$lib/icons/User.svelte';
-	import RssIcon from '$lib/icons/Rss.svelte';
-	import { getAppContext } from '$lib/contexts';
 	import Button from '$lib/components/Button.svelte';
+	import RssIcon from '$lib/icons/Rss.svelte';
+	import UserIcon from '$lib/icons/User.svelte';
+	import { getContext } from 'svelte';
+	import type { Writable } from 'svelte/store';
 
 	export let onTitlePress: () => void;
 
-	const { sidebarVisible } = getAppContext().stores;
+	const sidebarVisible = getContext<Writable<boolean>>('sidebarVisible');
 
 	let title = '';
 

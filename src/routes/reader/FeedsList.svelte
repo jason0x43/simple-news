@@ -8,8 +8,10 @@
 		getArticleCount
 	} from '$lib/feed';
 
-	const { articleFilter, feeds, feedGroups, feedStats } =
-		getAppContext().stores;
+	const articleFilter = getAppContext('articleFilter');
+	const feeds = getAppContext('feeds');
+	const feedGroups = getAppContext('feedGroups');
+	const feedStats = getAppContext('feedStats');
 
 	let expanded: { [title: string]: boolean } = {};
 	let selectedFeedIds: Feed['id'][] = [];

@@ -1,17 +1,19 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
+	import { getAppContext } from '$lib/contexts';
 	import type { Article } from '$lib/db/article';
-	import { getAppContext, getReaderContext } from '$lib/contexts';
-	import { slide } from '$lib/transition';
-	import ArticleView from './ArticleView.svelte';
 	import { responseJson } from '$lib/kit';
+	import { slide } from '$lib/transition';
 	import type { ArticleUpdateResponse } from '$lib/types';
+	import { onMount } from 'svelte';
+	import ArticleView from './ArticleView.svelte';
 
 	export let data;
 
-	const { articles, feeds, feedStats, updatedArticleIds } =
-		getAppContext().stores;
+	const articles = getAppContext('articles');
+	const feeds = getAppContext('feeds');
+	const feedStats = getAppContext('feedStats');
+	const updatedArticleIds = getAppContext('updatedArticleIds');
 
 	let articleId: Article['id'] | undefined;
 
@@ -26,12 +28,13 @@
 		}
 	}
 
-	const context = getReaderContext();
-	const { displayType } = getAppContext().stores;
+	const displayType = getAppContext('displayType');
+	const onTitlePress = getAppContext('onTitlePress');
+
 	let articleView: ArticleView;
 
 	onMount(() => {
-		const remove = context.onTitlePress(() => {
+		const remove = onTitlePress(() => {
 			articleView?.resetScroll();
 		});
 

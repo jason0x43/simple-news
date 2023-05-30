@@ -5,8 +5,9 @@
 	import FeedsList from './FeedsList.svelte';
 	import Select from '$lib/components/Select.svelte';
 
-	const { articleFilter, sidebarVisible, managingFeeds } =
-		getAppContext().stores;
+	const articleFilter = getAppContext('articleFilter');
+	const sidebarVisible = getAppContext('sidebarVisible');
+	const managingFeeds = getAppContext('managingFeeds');
 
 	let ref: HTMLElement;
 

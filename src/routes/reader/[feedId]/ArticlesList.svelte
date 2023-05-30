@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { z } from 'zod';
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
 	import ContextMenu from '$lib/components/ContextMenu.svelte';
@@ -8,14 +6,19 @@
 	import { getAge } from '$lib/date';
 	import type { Article, ArticleWithUserData } from '$lib/db/article';
 	import type { Feed } from '$lib/db/feed';
-	import { clearValue, loadValue, storeValue, unescapeHtml } from '$lib/util';
 	import { responseJson } from '$lib/kit';
 	import type { ArticleUpdateResponse } from '$lib/types';
+	import { clearValue, loadValue, storeValue, unescapeHtml } from '$lib/util';
+	import { onMount } from 'svelte';
+	import { z } from 'zod';
 
 	export let feedId: Feed['id'] | undefined;
 
-	const { articles, feeds, feedStats, articleFilter, updatedArticleIds } =
-		getAppContext().stores;
+	const articles = getAppContext('articles');
+	const feeds = getAppContext('feeds');
+	const feedStats = getAppContext('feedStats');
+	const articleFilter = getAppContext('articleFilter');
+	const updatedArticleIds = getAppContext('updatedArticleIds');
 
 	const ScrollDataSchema = z.object({
 		visibleCount: z.number(),

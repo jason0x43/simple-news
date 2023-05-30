@@ -1,23 +1,42 @@
 <script lang="ts">
-	import Header from './Header.svelte';
+	import { setAppContext } from '$lib/contexts';
+	import { responseJson } from '$lib/kit';
+	import type { ArticleFilter, GetFeedStatsResponse } from '$lib/types';
+	import { loadValue, storeValue } from '$lib/util';
 	import { onMount } from 'svelte';
-	import { getAppContext, setReaderContext } from '$lib/contexts';
+	import { writable } from 'svelte/store';
+	import Header from './Header.svelte';
 	import ManageFeeds from './ManageFeeds.svelte';
 	import Sidebar from './Sidebar.svelte';
-	import { storeValue } from '$lib/util';
-	import type { ArticleFilter, GetFeedStatsResponse } from '$lib/types';
-	import { responseJson } from '$lib/kit';
 
 	export let data;
 
-	const {
-		articleFilter,
-		sidebarVisible,
-		feeds,
-		feedGroups,
-		feedStats,
-		managingFeeds
-	} = getAppContext().stores;
+	// The filter applied to the set of loaded article headings
+	const articleFilter = setAppContext(
+		'articleFilter',
+		writable(loadValue('simple-news:articleFilter') ?? 'unread')
+	);
+
+	// True if the sidebar should be visible
+	const sidebarVisible = setAppContext('sidebarVisible', writable());
+
+	// True if the feed management UI should be active
+	const managingFeeds = setAppContext('managingFeeds', writable(false));
+
+	// The user's subscribed feeds
+	const feeds = setAppContext('feeds', writable([]));
+
+	// Stats for the user's feeds
+	const feedStats = setAppContext(
+		'feedStats',
+		writable({ feeds: {}, saved: 0 })
+	);
+
+	// The user's feed groups
+	const feedGroups = setAppContext('feedGroups', writable([]));
+
+	// What the app is being displayed on
+	const displayType = setAppContext('displayType', writable('desktop'));
 
 	$: $feeds = data.feeds ?? [];
 	$: $feedStats = data.feedStats ?? {};
@@ -29,18 +48,21 @@
 		titleListeners.forEach((listener) => listener());
 	}
 
-	function onTitlePress(listener: () => void) {
+	setAppContext('onTitlePress', (listener: () => void) => {
 		titleListeners.add(listener);
 		return () => {
 			titleListeners.delete(listener);
 		};
-	}
-
-	setReaderContext({
-		onTitlePress
 	});
 
 	onMount(() => {
+		const matcher = window.matchMedia('(max-width: 800px)');
+		const listener = (event: MediaQueryListEvent) => {
+			$displayType = event.matches ? 'mobile' : 'desktop';
+		};
+		matcher.addEventListener('change', listener);
+		$displayType = matcher.matches ? 'mobile' : 'desktop';
+
 		const interval = setInterval(async () => {
 			try {
 				const resp = await responseJson<GetFeedStatsResponse>(
@@ -58,6 +80,7 @@
 
 		return () => {
 			clearInterval(interval);
+			matcher.removeEventListener('change', listener);
 		};
 	});
 </script>
