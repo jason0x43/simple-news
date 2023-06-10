@@ -35,7 +35,7 @@
 					);
 					for (const article of resp) {
 						if (!$articles.find((a) => a.id === article.id)) {
-							$articles.push(article);
+							$articles = [...$articles, article];
 						}
 					}
 				}
