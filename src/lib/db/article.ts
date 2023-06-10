@@ -1,7 +1,8 @@
 import { createId } from '@paralleldrive/cuid2';
 import type { Transaction } from 'kysely';
-import { getFeedGroup } from './feedgroup';
 import { getArticleContent } from '../article';
+import { getFeedGroup } from './feedgroup';
+import { defaultMaxAge } from './lib/const';
 import type {
 	Article,
 	Database,
@@ -103,7 +104,7 @@ export async function getArticles(
 		query = query.limit(options.limit);
 	}
 
-	const maxAge = options?.maxAge ?? 30 * 24 * 60 * 60 * 1000;
+	const maxAge = options?.maxAge ?? defaultMaxAge;
 	const cutoff = BigInt(Date.now() - maxAge);
 	query = query.where('published', '>', cutoff);
 

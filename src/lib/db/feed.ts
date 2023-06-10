@@ -1,5 +1,6 @@
 import { createId } from '@paralleldrive/cuid2';
 import { getSubscribedFeeds } from './feedgroup.js';
+import { defaultMaxAge } from './lib/const.js';
 import type { Feed, InsertableFeed, User } from './lib/db';
 import db from './lib/db.js';
 
@@ -93,7 +94,7 @@ export async function getFeedStats(
 		saved: 0
 	};
 	const feeds = options?.feeds ?? (await getSubscribedFeeds(userId));
-	const { maxAge = 6 * 7 * 24 * 60 * 60 * 1000 } = options ?? {};
+	const { maxAge = defaultMaxAge } = options ?? {};
 
 	await Promise.all(
 		feeds.map(async (feed) => {
