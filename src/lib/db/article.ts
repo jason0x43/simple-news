@@ -14,9 +14,14 @@ import db from './lib/db.js';
 
 export type { Article };
 
+export type ArticleHeading = Omit<Article, 'content'>;
+
 export type ArticleUserData = Omit<UserArticle, 'user_id' | 'article_id'>;
 
 export type ArticleWithUserData = Article & Partial<ArticleUserData>;
+
+export type ArticleHeadingWithUserData = ArticleHeading &
+	Partial<ArticleUserData>;
 
 export async function getArticle({
 	id,
@@ -40,7 +45,8 @@ export async function getArticle({
 
 	return {
 		...article,
-		...userArticle
+		...userArticle,
+		content: getArticleContent(article)
 	};
 }
 
@@ -53,7 +59,7 @@ export async function getArticles(
 		maxAge?: number;
 		filter?: 'unread' | 'saved';
 	}
-): Promise<ArticleWithUserData[]> {
+): Promise<ArticleHeadingWithUserData[]> {
 	let query = db
 		.selectFrom('article')
 		.leftJoin('user_article', (join) =>
@@ -65,7 +71,6 @@ export async function getArticles(
 			'id',
 			'feed_id',
 			'article.article_id',
-			'content',
 			'title',
 			'link',
 			'published',
@@ -107,10 +112,7 @@ export async function getArticles(
 	const articles = await query.orderBy('published', 'desc').execute();
 	articles.sort((a, b) => Number(a.published - b.published));
 
-	return articles.map((article) => ({
-		...article,
-		content: getArticleContent(article)
-	}));
+	return articles;
 }
 
 async function markArticle(

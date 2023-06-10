@@ -19,7 +19,7 @@
 
 	$: $feedStats = data.feedStats;
 	$: $updatedArticleIds[data.article.id] = true;
-	$: article = $articles.find(({ id }) => id === data.article.id);
+	$: article = data.article;
 	$: feed = $feeds.find(({ id }) => id === article?.feed_id);
 
 	$: {

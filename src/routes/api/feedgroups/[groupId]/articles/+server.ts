@@ -1,4 +1,4 @@
-import { getArticles, type ArticleWithUserData } from '$lib/db/article';
+import { getArticles, type ArticleHeadingWithUserData } from '$lib/db/article';
 import { json } from '$lib/kit';
 import { getUserOrThrow } from '$lib/session';
 
@@ -9,7 +9,7 @@ export async function GET({ locals, params }) {
 	const user = getUserOrThrow(locals);
 	const { groupId } = params;
 
-	let articles: ArticleWithUserData[];
+	let articles: ArticleHeadingWithUserData[];
 
 	if (groupId === 'saved') {
 		articles = await getArticles(user.id, { filter: 'saved' });
@@ -22,5 +22,5 @@ export async function GET({ locals, params }) {
 		}
 	}
 
-	return json<ArticleWithUserData[]>(articles);
+	return json<ArticleHeadingWithUserData[]>(articles);
 }

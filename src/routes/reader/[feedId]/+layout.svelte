@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { getAppContext, setAppContext } from '$lib/contexts';
-	import type { ArticleWithUserData } from '$lib/db/article';
+	import type { ArticleHeadingWithUserData } from '$lib/db/article';
 	import { responseJson } from '$lib/kit';
 	import { onMount } from 'svelte';
 	import ArticlesList from './ArticlesList.svelte';
@@ -30,7 +30,7 @@
 		const interval = setInterval(async () => {
 			try {
 				if ($page.data.feedId) {
-					const resp = await responseJson<ArticleWithUserData[]>(
+					const resp = await responseJson<ArticleHeadingWithUserData[]>(
 						fetch(`/api/feedgroups/${$page.data.feedId}/articles`)
 					);
 					for (const article of resp) {

@@ -4,7 +4,7 @@
 	import ContextMenu from '$lib/components/ContextMenu.svelte';
 	import { getAppContext } from '$lib/contexts';
 	import { getAge } from '$lib/date';
-	import type { Article, ArticleWithUserData } from '$lib/db/article';
+	import type { Article, ArticleHeadingWithUserData } from '$lib/db/article';
 	import type { Feed } from '$lib/db/feed';
 	import { responseJson } from '$lib/kit';
 	import type { ArticleUpdateResponse } from '$lib/types';
@@ -49,9 +49,9 @@
 	}
 
 	let menuAnchor: { x: number; y: number } | undefined;
-	let activeArticle: ArticleWithUserData | undefined;
-	let filteredArticles: ArticleWithUserData[] = [];
-	let renderedArticles: (ArticleWithUserData & {
+	let activeArticle: ArticleHeadingWithUserData | undefined;
+	let filteredArticles: ArticleHeadingWithUserData[] = [];
+	let renderedArticles: (ArticleHeadingWithUserData & {
 		feed: Feed | undefined;
 		isActive: boolean;
 		isSelected: boolean;

@@ -3,11 +3,11 @@ import type { Writable } from 'svelte/store';
 import type { ArticleFilter } from './types';
 import type { Feed, FeedStats } from './db/feed';
 import type { FeedGroupWithFeeds } from './db/feedgroup';
-import type { Article, ArticleWithUserData } from './db/article';
+import type { Article, ArticleHeadingWithUserData } from './db/article';
 
 type Contexts = {
 	articleFilter: Writable<ArticleFilter>;
-	articles: Writable<ArticleWithUserData[]>;
+	articles: Writable<ArticleHeadingWithUserData[]>;
 	displayType: Writable<'mobile' | 'desktop'>;
 	feedGroups: Writable<FeedGroupWithFeeds[]>;
 	feedStats: Writable<FeedStats>;
