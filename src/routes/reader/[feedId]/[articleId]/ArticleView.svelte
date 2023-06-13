@@ -10,8 +10,6 @@
 	export let feed: Feed;
 	export let selectedFeedId: Feed['id'];
 
-	const target = 'SimpleNews_ArticleView';
-
 	let scrollBox: HTMLElement | undefined;
 	let prevArticle = article;
 
@@ -30,7 +28,11 @@
 			const elem = event.target as HTMLElement;
 			const href = elem.getAttribute('href') ?? undefined;
 			if (href) {
-				window.open(href, target);
+				if (href.startsWith('#')) {
+					window.open(href, '_self');
+				} else {
+					window.open(href, '_blank');
+				}
 			}
 		}
 	}
@@ -77,7 +79,7 @@
 	<div class="article">
 		<div class="scroller" bind:this={scrollBox} on:scroll={handleScroll}>
 			<div class="header">
-				<a href={article.link ?? undefined} {target}>
+				<a href={article.link ?? undefined} target="_blank">
 					<h2>{article.title}</h2>
 				</a>
 				<h3>{feed.title}</h3>
