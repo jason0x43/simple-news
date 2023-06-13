@@ -2,11 +2,15 @@
 	import '../app.css';
 	import Toast from '$lib/components/Toast.svelte';
 	import { setAppContext } from '$lib/contexts';
+	import { readonly, writable } from 'svelte/store';
 
 	let ref: HTMLElement;
 
+	const root = writable<HTMLElement>();
+	setAppContext('root', readonly(root));
+
 	$: {
-		setAppContext('root', ref);
+		$root = ref;
 	}
 </script>
 

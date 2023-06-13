@@ -65,7 +65,7 @@
 	const root = getAppContext('root');
 
 	onMount(() => {
-		const elem = target ?? root ?? window.document?.body;
+		const elem = target ?? $root ?? window.document?.body;
 		elem?.append(ref);
 	});
 </script>

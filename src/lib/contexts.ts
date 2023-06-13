@@ -1,5 +1,5 @@
 import { getContext, setContext } from 'svelte';
-import type { Writable } from 'svelte/store';
+import type { Readable, Writable } from 'svelte/store';
 import type { ArticleFilter } from './types';
 import type { Feed, FeedStats } from './db/feed';
 import type { FeedGroupWithFeeds } from './db/feedgroup';
@@ -14,7 +14,7 @@ type Contexts = {
 	feeds: Writable<Feed[]>;
 	managingFeeds: Writable<boolean>;
 	onTitlePress: (listener: () => void) => () => void;
-	root: HTMLElement;
+	root: Readable<HTMLElement>;
 	sidebarVisible: Writable<boolean>;
 	updatedArticleIds: Writable<Record<Article['id'], boolean>>;
 };
