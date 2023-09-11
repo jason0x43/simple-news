@@ -80,7 +80,7 @@
 				{article}
 				{feed}
 				bind:this={articleView}
-				selectedFeedId={feed?.id}
+				selectedFeedId={data.feedId}
 			/>
 		{/if}
 	</div>
@@ -93,7 +93,7 @@
 				{article}
 				{feed}
 				bind:this={articleView}
-				selectedFeedId={feed?.id}
+				selectedFeedId={data.feedId}
 			/>
 		{/if}
 	</div>
