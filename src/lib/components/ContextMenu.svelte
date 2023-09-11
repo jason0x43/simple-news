@@ -36,6 +36,7 @@
 	<ul class="contextmenu" bind:this={ref}>
 		{#each items as item}
 			<li
+				role="menuitem"
 				on:click={handleItemClick}
 				on:keypress={handleItemClick}
 				data-value={item.value}

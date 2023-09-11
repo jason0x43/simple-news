@@ -84,6 +84,7 @@
 				</a>
 				<h3>{feed.title}</h3>
 			</div>
+			<!-- svelte-ignore a11y-no-static-element-interactions -->
 			<div class="content" on:click={onLinkClick} on:keypress={onLinkClick}>
 				{@html article.content}
 			</div>

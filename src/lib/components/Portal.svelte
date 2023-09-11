@@ -70,6 +70,7 @@
 	});
 </script>
 
+<!-- svelte-ignore a11y-no-static-element-interactions -->
 <div
 	class="portal"
 	class:modal={anchor === 'modal'}
