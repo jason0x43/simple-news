@@ -6,13 +6,6 @@ import {
 } from './db/session';
 import type { User } from './db/user';
 
-const cookieOpts = {
-	path: '/',
-	httpOnly: true,
-	sameSite: 'strict' as const,
-	secure: process.env.NODE_ENV === 'production'
-};
-
 export function getSessionOrThrow(locals: App.Locals): SessionWithUser {
 	const { session } = locals;
 	if (!session) {
@@ -35,7 +28,7 @@ export async function getSession(
 
 export function clearSessionCookie(cookies: Cookies): void {
 	cookies.set('session', '', {
-		...cookieOpts,
+		path: '/',
 		expires: new Date(0)
 	});
 }
@@ -45,7 +38,10 @@ export function setSessionCookie(
 	session: Pick<Session, 'id' | 'expires'>
 ): void {
 	cookies.set('session', session.id, {
-		...cookieOpts,
-		expires: new Date(session.expires)
+		path: '/',
+		httpOnly: true,
+		sameSite: 'strict',
+		secure: process.env.NODE_ENV === 'production',
+		maxAge: 60 * 60 * 24 * 7
 	});
 }
