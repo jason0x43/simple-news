@@ -8,7 +8,7 @@ mod util;
 
 use axum::{
     routing::{get, post},
-    Router, ServiceExt,
+    Router, ServiceExt, Extension,
 };
 use dotenvy::dotenv;
 use log::info;
@@ -16,7 +16,7 @@ use sqlx::sqlite::SqlitePoolOptions;
 use tower_http::{normalize_path::NormalizePath, trace::TraceLayer};
 
 use crate::{
-    api::{create_user, get_articles},
+    api::{create_session, create_user, get_articles},
     spa::static_handler,
     state::AppState,
 };
@@ -39,9 +39,10 @@ async fn main() -> Result<(), sqlx::Error> {
     let app = NormalizePath::trim_trailing_slash(
         Router::new()
             .route("/users", post(create_user))
+            .route("/login", post(create_session))
             .route("/articles", get(get_articles))
             .fallback(static_handler)
-            .with_state(app_state)
+            .layer(Extension(app_state))
             .layer(TraceLayer::new_for_http()),
     );
 

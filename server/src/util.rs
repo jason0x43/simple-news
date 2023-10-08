@@ -1,5 +1,7 @@
 use rand::{distributions::Alphanumeric, Rng};
-use sha2::{Sha512, Digest};
+use sha2::{Digest, Sha512};
+
+use crate::error::AppError;
 
 pub(crate) struct HashedPassword {
     pub(crate) hash: String,
@@ -7,12 +9,19 @@ pub(crate) struct HashedPassword {
 }
 
 /// Hash a password, returning the hash and salt values
-pub(crate) fn hash_password(password: String) -> HashedPassword {
-    let salt: String = rand::thread_rng()
-        .sample_iter(&Alphanumeric)
-        .take(8)
-        .map(char::from)
-        .collect();
+pub(crate) fn hash_password(
+    password: String,
+    salt: Option<String>,
+) -> HashedPassword {
+    let salt = if let Some(salt) = salt {
+        salt
+    } else {
+        rand::thread_rng()
+            .sample_iter(&Alphanumeric)
+            .take(8)
+            .map(char::from)
+            .collect()
+    };
 
     HashedPassword {
         hash: sha512(password + &salt),
@@ -26,4 +35,17 @@ fn sha512(text: String) -> String {
     hasher.update(text);
     let hash = hasher.finalize();
     hex::encode(hash)
+}
+
+pub(crate) fn check_password(
+    password: String,
+    hash: String,
+    salt: String,
+) -> Result<(), AppError> {
+    let check = hash_password(password, Some(salt));
+    if check.hash != hash {
+        Err(AppError::Unauthorized)
+    } else {
+        Ok(())
+    }
 }
