@@ -12,7 +12,7 @@ pub(crate) enum AppError {
     #[error("No password set")]
     NoPassword,
 
-    #[error("User not found")]
+    #[error("Unauthorized")]
     Unauthorized,
 
     #[error("sqlx error: {0}")]

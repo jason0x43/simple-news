@@ -8,7 +8,7 @@ mod util;
 
 use axum::{
     routing::{get, post},
-    Router, ServiceExt, Extension,
+    Extension, Router, ServiceExt,
 };
 use dotenvy::dotenv;
 use log::info;
@@ -29,7 +29,6 @@ async fn main() -> Result<(), sqlx::Error> {
 
     let db_url =
         std::env::var("DATABASE_URL").expect("DATABASE_URL must be set.");
-
     let pool = SqlitePoolOptions::new()
         .max_connections(5)
         .connect(&db_url)

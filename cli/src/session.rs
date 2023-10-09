@@ -1,7 +1,10 @@
-use crate::error::AppError;
+use crate::{
+    error::AppError,
+    util::{assert_ok, load_cache, save_cache},
+};
 use clap::{arg, ArgMatches, Command};
 use reqwest::Client;
-use server::CreateSessionRequest;
+use server::{CreateSessionRequest, SessionResponse};
 use std::io::{stdout, Write};
 
 pub(crate) fn login_command() -> Command {
@@ -24,12 +27,34 @@ pub(crate) async fn create_session(
         password,
     };
 
-    let client = Client::new();
-    let _body = client
-        .post("http://localhost:3000/login")
-        .json(&body)
-        .send()
-        .await?;
+    let client = Client::builder().cookie_store(true).build()?;
+    let resp = assert_ok(
+        client
+            .post("http://localhost:3000/login")
+            .json(&body)
+            .send()
+            .await?,
+    )
+    .await?;
+    let session = resp.json::<SessionResponse>().await?;
 
+    println!("Logged in as {}", username);
+
+    let mut cache = load_cache()?;
+    cache.session_id = Some(session.id);
+    save_cache(cache)?;
+
+    Ok(())
+}
+
+pub(crate) fn logout_command() -> Command {
+    Command::new("logout").about("Logout")
+}
+
+pub(crate) async fn clear_session() -> Result<(), AppError> {
+    let mut cache = load_cache()?;
+    cache.session_id = None;
+    save_cache(cache)?;
+    println!("Logged out");
     Ok(())
 }

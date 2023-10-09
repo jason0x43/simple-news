@@ -1,4 +1,5 @@
 use axum::{response::IntoResponse, Extension, Json};
+use axum_extra::extract::{cookie::Cookie, CookieJar};
 use log::{error, info};
 use sqlx::query;
 use uuid::Uuid;
@@ -6,7 +7,10 @@ use uuid::Uuid;
 use crate::{
     error::AppError,
     state::AppState,
-    types::{CreateSessionRequest, CreateUserRequest, Password, Session, User},
+    types::{
+        CreateSessionRequest, CreateUserRequest, Password, Session,
+        SessionResponse, User,
+    },
     util::check_password,
 };
 
@@ -18,7 +22,11 @@ impl IntoResponse for User {
 
 impl IntoResponse for Session {
     fn into_response(self) -> axum::response::Response {
-        Json(self).into_response()
+        let sess = SessionResponse {
+            id: self.id,
+            expires: self.expires,
+        };
+        Json(sess).into_response()
     }
 }
 
@@ -66,8 +74,9 @@ pub(crate) async fn create_user(
 
 pub(crate) async fn create_session(
     Extension(state): Extension<AppState>,
+    jar: CookieJar,
     Json(body): Json<CreateSessionRequest>,
-) -> Result<Session, AppError> {
+) -> Result<(CookieJar, Session), AppError> {
     info!("Logging in user {}", body.username);
 
     let user = query!(
@@ -111,9 +120,17 @@ pub(crate) async fn create_session(
         AppError::SqlxError(err)
     })?;
 
-    Ok(session)
+    Ok((
+        jar.add(Cookie::new("session_id", session.id.to_string())),
+        session,
+    ))
 }
 
-pub(crate) async fn get_articles() -> Result<String, AppError> {
-    Ok("Some articles".into())
+pub(crate) async fn get_articles(jar: CookieJar) -> Result<String, AppError> {
+    if let Some(_) = jar.get("session_id") {
+        info!("Got articles");
+        Ok("Some articles".into())
+    } else {
+        Err(AppError::Unauthorized)
+    }
 }

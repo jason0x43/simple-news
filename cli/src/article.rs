@@ -1,15 +1,15 @@
+use crate::{error::AppError, util::{get_client, load_cache}};
 use clap::Command;
-use reqwest::Client;
-
-use crate::error::AppError;
 
 pub(crate) fn get_articles_command() -> Command {
     Command::new("articles-get").about("Get the list of articles")
 }
 
 pub(crate) async fn get_articles() -> Result<(), AppError> {
-    let client = Client::new();
-    let body = client.get("http://localhost:3000/articles").send().await?;
+    let client = get_client()?;
+    let cache = load_cache()?;
+    let host = cache.get_host()?;
+    let body = client.get(format!("{}/articles", host)).send().await?;
     print!("{}", body.text().await?);
     Ok(())
 }

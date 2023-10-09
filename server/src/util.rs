@@ -1,3 +1,4 @@
+use log::error;
 use rand::{distributions::Alphanumeric, Rng};
 use sha2::{Digest, Sha512};
 
@@ -44,6 +45,7 @@ pub(crate) fn check_password(
 ) -> Result<(), AppError> {
     let check = hash_password(password, Some(salt));
     if check.hash != hash {
+        error!("Incorrect password");
         Err(AppError::Unauthorized)
     } else {
         Ok(())
