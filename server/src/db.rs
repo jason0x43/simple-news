@@ -1,11 +1,8 @@
-use std::ops::Add;
-
 use crate::{
     types::{Password, Session, User},
-    util::hash_password,
+    util::{get_future_time, hash_password},
 };
 use serde_json::json;
-use time::{Duration, OffsetDateTime};
 use uuid::Uuid;
 
 impl User {
@@ -33,13 +30,11 @@ impl Password {
 
 impl Session {
     pub(crate) fn create(user_id: Uuid) -> Self {
-        let seven_days = Duration::new(604800, 0);
-
         Session {
             id: Uuid::new_v4(),
             data: json!("{}"),
             user_id,
-            expires: OffsetDateTime::now_utc().add(seven_days),
+            expires: get_future_time(604800),
         }
     }
 }

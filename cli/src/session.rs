@@ -9,8 +9,8 @@ use std::io::{stdout, Write};
 
 pub(crate) fn login_command() -> Command {
     Command::new("login")
-        .about("Login (create a session)")
-        .arg(arg!(<USERNAME> "A username for the user"))
+        .about("Create a session")
+        .arg(arg!(<USERNAME> "The user to login as"))
         .arg_required_else_help(true)
 }
 
@@ -48,7 +48,7 @@ pub(crate) async fn create_session(
 }
 
 pub(crate) fn logout_command() -> Command {
-    Command::new("logout").about("Logout")
+    Command::new("logout").about("Clear the current session")
 }
 
 pub(crate) async fn clear_session() -> Result<(), AppError> {

@@ -1,5 +1,5 @@
+use reqwest::Url;
 use serde::{Deserialize, Serialize};
-use time::OffsetDateTime;
 use uuid::Uuid;
 
 #[derive(Deserialize, Serialize)]
@@ -10,9 +10,16 @@ pub struct CreateUserRequest {
 }
 
 #[derive(Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateSessionRequest {
     pub username: String,
     pub password: String,
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AddFeedRequest {
+    pub url: Url,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -38,7 +45,7 @@ pub struct Password {
 pub struct Session {
     pub id: Uuid,
     pub data: serde_json::Value,
-    pub expires: OffsetDateTime,
+    pub expires: i64,
     pub user_id: Uuid,
 }
 
@@ -46,5 +53,5 @@ pub struct Session {
 #[serde(rename_all = "camelCase")]
 pub struct SessionResponse {
     pub id: Uuid,
-    pub expires: OffsetDateTime,
+    pub expires: i64,
 }

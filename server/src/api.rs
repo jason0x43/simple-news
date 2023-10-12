@@ -1,4 +1,6 @@
-use axum::{response::IntoResponse, Extension, Json};
+use std::sync::Arc;
+
+use axum::{extract::State, response::IntoResponse, Json};
 use axum_extra::extract::{cookie::Cookie, CookieJar};
 use log::{error, info};
 use sqlx::query;
@@ -31,7 +33,7 @@ impl IntoResponse for Session {
 }
 
 pub(crate) async fn create_user(
-    Extension(state): Extension<AppState>,
+    state: State<Arc<AppState>>,
     Json(body): Json<CreateUserRequest>,
 ) -> Result<User, AppError> {
     let user = User::create(body.email.clone(), body.username.clone());
@@ -40,6 +42,8 @@ pub(crate) async fn create_user(
     info!("Creating user {}", body.username);
 
     let mut tx = state.pool.begin().await?;
+
+    info!("Started transaction");
 
     query!(
         r#"
@@ -51,7 +55,13 @@ pub(crate) async fn create_user(
         user.username
     )
     .execute(&mut *tx)
-    .await?;
+    .await
+    .map_err(|err| {
+        println!("Error: {}", err);
+        AppError::SqlxError(err)
+    })?;
+
+    info!("Created user");
 
     query!(
         r#"
@@ -66,14 +76,16 @@ pub(crate) async fn create_user(
     .execute(&mut *tx)
     .await?;
 
+    info!("Created password");
+
     tx.commit().await?;
-    info!("Created user: {}", user.username);
+    info!("Done creating user {}", user.username);
 
     Ok(user)
 }
 
 pub(crate) async fn create_session(
-    Extension(state): Extension<AppState>,
+    state: State<Arc<AppState>>,
     jar: CookieJar,
     Json(body): Json<CreateSessionRequest>,
 ) -> Result<(CookieJar, Session), AppError> {
@@ -87,6 +99,8 @@ pub(crate) async fn create_session(
     .await
     .map_err(|_| AppError::UserNotFound)?;
 
+    info!("Found user");
+
     let password = query!(
         r#"SELECT hash, salt FROM passwords WHERE user_id = ?1"#,
         user.id
@@ -94,6 +108,8 @@ pub(crate) async fn create_session(
     .fetch_one(&state.pool)
     .await
     .map_err(|_| AppError::NoPassword)?;
+
+    info!("Found password");
 
     check_password(body.password, password.hash, password.salt)?;
 
@@ -126,11 +142,17 @@ pub(crate) async fn create_session(
     ))
 }
 
-pub(crate) async fn get_articles(jar: CookieJar) -> Result<String, AppError> {
-    if let Some(_) = jar.get("session_id") {
-        info!("Got articles");
-        Ok("Some articles".into())
-    } else {
-        Err(AppError::Unauthorized)
-    }
+pub(crate) async fn get_articles(
+    _session: Session,
+) -> Result<String, AppError> {
+    info!("Got articles");
+    Ok("Some articles".into())
 }
+
+// pub(crate) async fn add_feed(
+//     _session: Session,
+//     Json(_body): Json<AddFeedRequest>,
+// ) -> Result<String, AppError> {
+//     info!("Got articles");
+//     Ok("Some articles".into())
+// }

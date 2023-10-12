@@ -1,19 +1,23 @@
 mod api;
 mod db;
 mod error;
+mod extractors;
+mod rss;
 mod spa;
 mod state;
 mod types;
 mod util;
 
+use std::sync::Arc;
+
 use axum::{
     routing::{get, post},
-    Extension, Router, ServiceExt,
+    Router,
 };
 use dotenvy::dotenv;
 use log::info;
 use sqlx::sqlite::SqlitePoolOptions;
-use tower_http::{normalize_path::NormalizePath, trace::TraceLayer};
+use tower_http::trace::TraceLayer;
 
 use crate::{
     api::{create_session, create_user, get_articles},
@@ -35,15 +39,13 @@ async fn main() -> Result<(), sqlx::Error> {
         .await?;
     let app_state = AppState { pool };
 
-    let app = NormalizePath::trim_trailing_slash(
-        Router::new()
-            .route("/users", post(create_user))
-            .route("/login", post(create_session))
-            .route("/articles", get(get_articles))
-            .fallback(static_handler)
-            .layer(Extension(app_state))
-            .layer(TraceLayer::new_for_http()),
-    );
+    let app = Router::new()
+        .route("/users", post(create_user))
+        .route("/login", post(create_session))
+        .route("/articles", get(get_articles))
+        .fallback(static_handler)
+        .with_state(Arc::new(app_state))
+        .layer(TraceLayer::new_for_http());
 
     let server = axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
         .serve(app.into_make_service());

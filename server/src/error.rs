@@ -17,6 +17,12 @@ pub(crate) enum AppError {
 
     #[error("sqlx error: {0}")]
     SqlxError(sqlx::Error),
+
+    #[error("reqwest error: {0}")]
+    ReqwestError(reqwest::Error),
+
+    #[error("rss error: {0}")]
+    RssError(rss::Error),
 }
 
 impl IntoResponse for AppError {
@@ -31,7 +37,15 @@ impl IntoResponse for AppError {
             AppError::NoPassword => {
                 (StatusCode::NOT_FOUND, self.to_string()).into_response()
             }
+            AppError::ReqwestError(err) => {
+                (StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
+                    .into_response()
+            }
             AppError::SqlxError(err) => {
+                (StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
+                    .into_response()
+            }
+            AppError::RssError(err) => {
                 (StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
                     .into_response()
             }
@@ -42,5 +56,17 @@ impl IntoResponse for AppError {
 impl From<sqlx::Error> for AppError {
     fn from(err: sqlx::Error) -> AppError {
         AppError::SqlxError(err)
+    }
+}
+
+impl From<reqwest::Error> for AppError {
+    fn from(err: reqwest::Error) -> AppError {
+        AppError::ReqwestError(err)
+    }
+}
+
+impl From<rss::Error> for AppError {
+    fn from(err: rss::Error) -> AppError {
+        AppError::RssError(err)
     }
 }

@@ -1,3 +1,9 @@
+use std::{
+    ops::Add,
+    time::{SystemTime, UNIX_EPOCH},
+};
+use time::Duration;
+
 use log::error;
 use rand::{distributions::Alphanumeric, Rng};
 use sha2::{Digest, Sha512};
@@ -50,4 +56,9 @@ pub(crate) fn check_password(
     } else {
         Ok(())
     }
+}
+
+pub(crate) fn get_future_time(seconds: i64) -> i64 {
+    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+    now.add(Duration::new(seconds, 0)).whole_seconds()
 }

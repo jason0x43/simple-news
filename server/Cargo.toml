@@ -33,3 +33,6 @@ tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
 uuid = { version = "1.4.1", features = ["serde"] }
 axum-macros = "0.3.8"
 axum-extra = { version = "0.8.0", features = ["cookie"] }
+rss = "2.0.6"
+reqwest = "0.11.22"
+url = { version = "2.4.1", features = ["serde"] }
