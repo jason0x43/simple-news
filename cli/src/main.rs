@@ -11,6 +11,7 @@ use error::AppError;
 fn cli() -> Command {
     Command::new("sn")
         .subcommand(user::create_user_command())
+        .subcommand(user::list_users_command())
         .subcommand(session::login_command())
         .subcommand(session::logout_command())
         .subcommand(article::get_articles_command())
@@ -25,6 +26,9 @@ async fn main() -> Result<(), AppError> {
     match matches.subcommand() {
         Some(("user-create", sub_matches)) => {
             user::create_user(sub_matches).await
+        }
+        Some(("user-list", _)) => {
+            user::list_users().await
         }
         Some(("login", sub_matches)) => {
             session::create_session(sub_matches).await

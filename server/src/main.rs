@@ -20,7 +20,7 @@ use sqlx::sqlite::SqlitePoolOptions;
 use tower_http::trace::TraceLayer;
 
 use crate::{
-    api::{create_session, create_user, get_articles},
+    api::{create_session, create_user, get_articles, list_users},
     spa::static_handler,
     state::AppState,
 };
@@ -40,7 +40,7 @@ async fn main() -> Result<(), sqlx::Error> {
     let app_state = AppState { pool };
 
     let app = Router::new()
-        .route("/users", post(create_user))
+        .route("/users", post(create_user).get(list_users))
         .route("/login", post(create_session))
         .route("/articles", get(get_articles))
         .fallback(static_handler)

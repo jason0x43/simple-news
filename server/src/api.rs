@@ -1,41 +1,22 @@
 use std::sync::Arc;
 
-use axum::{extract::State, response::IntoResponse, Json};
+use axum::{extract::State, Json};
 use axum_extra::extract::{cookie::Cookie, CookieJar};
 use log::{error, info};
-use sqlx::query;
+use sqlx::{query, query_as};
 use uuid::Uuid;
 
 use crate::{
     error::AppError,
     state::AppState,
-    types::{
-        CreateSessionRequest, CreateUserRequest, Password, Session,
-        SessionResponse, User,
-    },
+    types::{CreateSessionRequest, CreateUserRequest, Password, Session, User},
     util::check_password,
 };
-
-impl IntoResponse for User {
-    fn into_response(self) -> axum::response::Response {
-        Json(self).into_response()
-    }
-}
-
-impl IntoResponse for Session {
-    fn into_response(self) -> axum::response::Response {
-        let sess = SessionResponse {
-            id: self.id,
-            expires: self.expires,
-        };
-        Json(sess).into_response()
-    }
-}
 
 pub(crate) async fn create_user(
     state: State<Arc<AppState>>,
     Json(body): Json<CreateUserRequest>,
-) -> Result<User, AppError> {
+) -> Result<Json<User>, AppError> {
     let user = User::create(body.email.clone(), body.username.clone());
     let password = Password::create(body.password.clone(), user.id.clone());
 
@@ -81,14 +62,29 @@ pub(crate) async fn create_user(
     tx.commit().await?;
     info!("Done creating user {}", user.username);
 
-    Ok(user)
+    Ok(Json(user))
+}
+
+pub(crate) async fn list_users(
+    state: State<Arc<AppState>>,
+) -> Result<Json<Vec<User>>, AppError> {
+    let users = query_as!(
+        User,
+        r#"SELECT id AS "id!: Uuid", email, username,
+        config AS "config: serde_json::Value" FROM users"#
+    )
+    .fetch_all(&state.pool)
+    .await
+    .map_err(|_| AppError::UserNotFound)?;
+
+    Ok(Json(users))
 }
 
 pub(crate) async fn create_session(
     state: State<Arc<AppState>>,
     jar: CookieJar,
     Json(body): Json<CreateSessionRequest>,
-) -> Result<(CookieJar, Session), AppError> {
+) -> Result<(CookieJar, Json<Session>), AppError> {
     info!("Logging in user {}", body.username);
 
     let user = query!(
@@ -138,7 +134,7 @@ pub(crate) async fn create_session(
 
     Ok((
         jar.add(Cookie::new("session_id", session.id.to_string())),
-        session,
+        Json(session),
     ))
 }
 

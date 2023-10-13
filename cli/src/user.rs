@@ -1,7 +1,8 @@
 use crate::error::AppError;
 use clap::{arg, ArgMatches, Command};
 use reqwest::Client;
-use server::CreateUserRequest;
+use serde_json::to_string_pretty;
+use server::{CreateUserRequest, User};
 use std::io::{stdout, Write};
 
 pub(crate) fn create_user_command() -> Command {
@@ -31,6 +32,22 @@ pub(crate) async fn create_user(matches: &ArgMatches) -> Result<(), AppError> {
         .json(&body)
         .send()
         .await?;
+
+    Ok(())
+}
+
+pub(crate) fn list_users_command() -> Command {
+    Command::new("user-list")
+        .about("List users")
+        .arg_required_else_help(false)
+}
+
+pub(crate) async fn list_users() -> Result<(), AppError> {
+    let client = Client::new();
+    let body = client.get("http://localhost:3000/users").send().await?;
+    let users: Vec<User> = body.json().await?;
+
+    println!("{}", to_string_pretty(&users).unwrap());
 
     Ok(())
 }
