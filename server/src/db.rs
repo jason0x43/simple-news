@@ -191,6 +191,42 @@ impl Session {
     }
 }
 
+struct DbFeed {
+    pub id: Uuid,
+    pub url: String,
+    pub title: String,
+    pub kind: FeedKind,
+    pub last_updated: i64,
+    pub disabled: bool,
+    pub icon: Option<String>,
+    pub html_url: Option<String>,
+}
+
+impl TryFrom<DbFeed> for Feed {
+    type Error = AppError;
+
+    fn try_from(value: DbFeed) -> Result<Self, AppError> {
+        let url = Url::parse(&value.url)
+            .map_err(|e| AppError::Error(e.to_string()))?;
+        let html_url = if let Some(u) = value.html_url {
+            Some(Url::parse(&u).map_err(|e| AppError::Error(e.to_string()))?)
+        } else {
+            None
+        };
+
+        Ok(Self {
+            id: value.id,
+            url,
+            title: value.title,
+            kind: value.kind,
+            last_updated: value.last_updated,
+            disabled: value.disabled,
+            icon: value.icon,
+            html_url,
+        })
+    }
+}
+
 impl Feed {
     pub(crate) async fn create<'c, E>(
         exec: E,
@@ -229,5 +265,27 @@ impl Feed {
         .await?;
 
         Ok(feed)
+    }
+
+    pub(crate) async fn find_all<'c, E>(exec: E) -> Result<Vec<Self>, AppError>
+    where
+        E: Executor<'c, Database = Sqlite>,
+    {
+        let feeds = query_as!(
+            DbFeed,
+            r#"
+            SELECT id AS "id!: Uuid", url,
+            title, kind AS "kind!: FeedKind", last_updated,
+            disabled AS "disabled!: bool", icon, html_url
+            FROM feeds
+            "#
+        )
+        .fetch_all(exec)
+        .await?
+        .into_iter()
+        .map(|f| f.try_into())
+        .collect::<Result<Vec<Feed>, AppError>>()?;
+
+        Ok(feeds)
     }
 }

@@ -18,7 +18,10 @@ pub(crate) enum AppError {
     JsonError(serde_json::Error),
 
     #[error("Bad response: {0}")]
-    BadResponse(String)
+    BadResponse(String),
+
+    #[error("Error: {0}")]
+    Error(String)
 }
 
 impl From<reqwest::Error> for AppError {

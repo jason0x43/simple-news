@@ -26,7 +26,8 @@ pub(crate) async fn create_user(
     Ok(Json(user))
 }
 
-pub(crate) async fn list_users(
+pub(crate) async fn get_users(
+    _session: Session,
     state: State<AppState>,
 ) -> Result<Json<Vec<User>>, AppError> {
     let users = User::find_all(&state.pool).await?;
@@ -67,4 +68,12 @@ pub(crate) async fn add_feed(
 ) -> Result<(), AppError> {
     Feed::create(&state.pool, body.url, body.title, body.kind).await?;
     Ok(())
+}
+
+pub(crate) async fn get_feeds(
+    _session: Session,
+    state: State<AppState>,
+) -> Result<Json<Vec<Feed>>, AppError> {
+    let feeds = Feed::find_all(&state.pool).await?;
+    Ok(Json(feeds))
 }

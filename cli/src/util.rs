@@ -79,6 +79,7 @@ pub(crate) fn get_client() -> Result<Client, AppError> {
         session_id,
         url.domain().unwrap()
     );
+    println!("Cookie: {:?}", cookie);
     jar.add_cookie_str(&cookie, &url);
     let client = Client::builder().cookie_provider(Arc::new(jar)).build()?;
     Ok(client)

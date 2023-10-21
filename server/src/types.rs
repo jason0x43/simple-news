@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, Encode};
+use sqlx::{FromRow, Encode, Decode};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
@@ -39,7 +39,7 @@ pub struct Session {
     pub user_id: Uuid,
 }
 
-#[derive(Clone, Serialize, Deserialize, Encode)]
+#[derive(Clone, Serialize, Deserialize, Encode, Decode)]
 #[serde(rename_all = "camelCase")]
 pub enum FeedKind {
     Rss

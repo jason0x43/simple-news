@@ -23,7 +23,7 @@ impl FromRequestParts<AppState> for Session {
             .await
             .map_err(|err| err.into_response())?;
         if let Some(id_cookie) = jar.get("session_id") {
-            let id = Uuid::parse_str(&id_cookie.to_string())
+            let id = Uuid::parse_str(&id_cookie.value().to_string())
                 .map_err(|err| AppError::UuidError(err).into_response())?;
             Session::get(&state.pool, id).await.map_err(|err| {
                 error!("Error creating session: {}", err);

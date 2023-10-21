@@ -12,7 +12,7 @@ pub(crate) enum AppError {
     #[error("No password set")]
     NoPassword,
 
-    #[error("SessionNotFound")]
+    #[error("Session not found")]
     SessionNotFound,
 
     #[error("Unauthorized")]
@@ -29,6 +29,9 @@ pub(crate) enum AppError {
 
     #[error("rss error: {0}")]
     RssError(rss::Error),
+
+    #[error("error: {0}")]
+    Error(String),
 }
 
 impl IntoResponse for AppError {
@@ -61,6 +64,9 @@ impl IntoResponse for AppError {
             AppError::UuidError(err) => {
                 (StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
                     .into_response()
+            }
+            AppError::Error(err) => {
+                (StatusCode::INTERNAL_SERVER_ERROR, err).into_response()
             }
         }
     }

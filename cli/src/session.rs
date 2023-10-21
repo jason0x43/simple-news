@@ -14,7 +14,7 @@ pub(crate) fn login_command() -> Command {
         .arg_required_else_help(true)
 }
 
-pub(crate) async fn create_session(
+pub(crate) async fn create(
     matches: &ArgMatches,
 ) -> Result<(), AppError> {
     print!("Password: ");
@@ -51,7 +51,7 @@ pub(crate) fn logout_command() -> Command {
     Command::new("logout").about("Clear the current session")
 }
 
-pub(crate) async fn clear_session() -> Result<(), AppError> {
+pub(crate) async fn clear() -> Result<(), AppError> {
     let mut cache = load_cache()?;
     cache.session_id = None;
     save_cache(cache)?;
