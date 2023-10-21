@@ -2,7 +2,7 @@ use axum::{response::{IntoResponse, Response, Html}, http::{Uri, header, StatusC
 use rust_embed::RustEmbed;
 
 #[derive(RustEmbed)]
-#[folder = "../client/dist/"]
+#[folder = "../app/dist/"]
 struct Assets;
 
 static INDEX_HTML: &str = "index.html";
