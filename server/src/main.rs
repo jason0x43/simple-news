@@ -8,8 +8,6 @@ mod state;
 mod types;
 mod util;
 
-use std::sync::Arc;
-
 use axum::{
     routing::{get, post},
     Router,
@@ -20,7 +18,7 @@ use sqlx::sqlite::SqlitePoolOptions;
 use tower_http::trace::TraceLayer;
 
 use crate::{
-    api::{create_session, create_user, get_articles, list_users},
+    api::{create_session, create_user, get_articles, list_users, add_feed},
     spa::static_handler,
     state::AppState,
 };
@@ -43,8 +41,9 @@ async fn main() -> Result<(), sqlx::Error> {
         .route("/users", post(create_user).get(list_users))
         .route("/login", post(create_session))
         .route("/articles", get(get_articles))
+        .route("/feeds", post(add_feed))
         .fallback(static_handler)
-        .with_state(Arc::new(app_state))
+        .with_state(app_state)
         .layer(TraceLayer::new_for_http());
 
     let server = axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())

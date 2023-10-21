@@ -24,9 +24,9 @@ CREATE TABLE feeds (
   id BLOB PRIMARY KEY,
   url TEXT UNIQUE NOT NULL,
   title TEXT NOT NULL,
-  type TEXT NOT NULL DEFAULT 'rss',
+  kind TEXT NOT NULL DEFAULT 'rss',
   last_updated INTEGER NOT NULL,
-  disabled INTEGER,
+  disabled INTEGER NOT NULL,
   icon TEXT,
   html_url TEXT
 ) STRICT;

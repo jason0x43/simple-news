@@ -2,7 +2,7 @@ use crate::{error::AppError, util::{get_client, load_cache}};
 use clap::Command;
 
 pub(crate) fn get_articles_command() -> Command {
-    Command::new("articles-get").about("Get the list of articles")
+    Command::new("article-get").about("Get the list of articles")
 }
 
 pub(crate) async fn get_articles() -> Result<(), AppError> {

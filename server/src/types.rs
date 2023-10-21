@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
+use sqlx::{FromRow, Encode};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
@@ -39,6 +39,32 @@ pub struct Session {
     pub user_id: Uuid,
 }
 
+#[derive(Clone, Serialize, Deserialize, Encode)]
+#[serde(rename_all = "camelCase")]
+pub enum FeedKind {
+    Rss
+}
+
+impl Display for FeedKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let str = serde_json::to_string(self).unwrap();
+        f.write_str(&str)
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize, FromRow)]
+#[serde(rename_all = "camelCase")]
+pub struct Feed {
+    pub id: Uuid,
+    pub url: Url,
+    pub title: String,
+    pub kind: FeedKind,
+    pub last_updated: i64,
+    pub disabled: bool,
+    pub icon: Option<String>,
+    pub html_url: Option<Url>,
+}
+
 #[derive(Deserialize, Serialize)]
 pub struct CreateUserRequest {
     pub email: String,
@@ -57,6 +83,8 @@ pub struct CreateSessionRequest {
 #[serde(rename_all = "camelCase")]
 pub struct AddFeedRequest {
     pub url: Url,
+    pub title: String,
+    pub kind: FeedKind,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
