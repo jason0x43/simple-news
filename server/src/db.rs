@@ -250,19 +250,26 @@ impl Feed {
 
         let feed_url = feed.url.to_string();
         let feed_kind = feed.kind.to_string();
+        let now = get_future_time(0);
 
         query!(
             r#"
-            INSERT INTO feeds (id, url, title, kind)
-            VALUES (?1, ?2, ?3, ?4)
+            INSERT INTO feeds (id, url, title, kind, last_updated, disabled)
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6)
             "#,
             feed.id,
             feed_url,
             feed.title,
             feed_kind,
+            now,
+            0,
         )
         .execute(exec)
-        .await?;
+        .await
+        .map_err(|err| {
+            log::warn!("Error inserting feed: {}", err);
+            err
+        })?;
 
         Ok(feed)
     }

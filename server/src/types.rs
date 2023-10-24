@@ -39,7 +39,7 @@ pub struct Session {
     pub user_id: Uuid,
 }
 
-#[derive(Clone, Serialize, Deserialize, Encode, Decode)]
+#[derive(Clone, Debug, Serialize, Deserialize, Encode, Decode)]
 #[serde(rename_all = "camelCase")]
 pub enum FeedKind {
     Rss
@@ -79,7 +79,7 @@ pub struct CreateSessionRequest {
     pub password: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AddFeedRequest {
     pub url: Url,

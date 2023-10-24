@@ -66,6 +66,7 @@ pub(crate) async fn add_feed(
     state: State<AppState>,
     Json(body): Json<AddFeedRequest>,
 ) -> Result<(), AppError> {
+    log::debug!("Adding feed with {:?}", body);
     Feed::create(&state.pool, body.url, body.title, body.kind).await?;
     Ok(())
 }
