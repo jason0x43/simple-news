@@ -7,16 +7,28 @@ use reqwest::Client;
 use server::{CreateSessionRequest, SessionResponse};
 use std::io::{stdout, Write};
 
-pub(crate) fn login_command() -> Command {
-    Command::new("login")
-        .about("Create a session")
-        .arg(arg!(<USERNAME> "The user to login as"))
+pub(crate) fn command() -> Command {
+    Command::new("session")
+        .about("Manage sessions")
         .arg_required_else_help(true)
+        .subcommand(
+            Command::new("login")
+                .about("Create a session")
+                .arg(arg!(<USERNAME> "The user to login as"))
+                .arg_required_else_help(true),
+        )
+        .subcommand(Command::new("logout").about("Clear the current session"))
 }
 
-pub(crate) async fn create(
-    matches: &ArgMatches,
-) -> Result<(), AppError> {
+pub(crate) async fn handle(matches: &ArgMatches) -> Result<(), AppError> {
+    match matches.subcommand() {
+        Some(("login", sub_matches)) => create(sub_matches).await,
+        Some(("logout", _)) => clear().await,
+        _ => unreachable!()
+    }
+}
+
+async fn create(matches: &ArgMatches) -> Result<(), AppError> {
     print!("Password: ");
     stdout().flush()?;
     let password = rpassword::read_password().unwrap();
@@ -47,11 +59,7 @@ pub(crate) async fn create(
     Ok(())
 }
 
-pub(crate) fn logout_command() -> Command {
-    Command::new("logout").about("Clear the current session")
-}
-
-pub(crate) async fn clear() -> Result<(), AppError> {
+async fn clear() -> Result<(), AppError> {
     let mut cache = load_cache()?;
     cache.session_id = None;
     save_cache(cache)?;

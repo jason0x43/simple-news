@@ -10,7 +10,7 @@ mod types_ts;
 mod util;
 
 use axum::{
-    routing::{get, post},
+    routing::{get, post, delete},
     Router,
 };
 use dotenvy::dotenv;
@@ -19,7 +19,7 @@ use sqlx::sqlite::SqlitePoolOptions;
 use tower_http::trace::TraceLayer;
 
 use crate::{
-    api::{create_session, create_user, get_articles, get_users, add_feed, get_feeds},
+    api::{create_session, create_user, get_articles, get_users, add_feed, get_feeds, delete_feed},
     spa::static_handler,
     state::AppState,
 };
@@ -43,6 +43,7 @@ async fn main() -> Result<(), sqlx::Error> {
         .route("/login", post(create_session))
         .route("/articles", get(get_articles))
         .route("/feeds", get(get_feeds).post(add_feed))
+        .route("/feeds/:id", delete(delete_feed))
         .fallback(static_handler)
         .with_state(app_state)
         .layer(TraceLayer::new_for_http());

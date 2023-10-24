@@ -4,15 +4,33 @@ use serde_json::to_string_pretty;
 use server::{CreateUserRequest, User};
 use std::io::{stdout, Write};
 
-pub(crate) fn create_command() -> Command {
-    Command::new("user-create")
-        .about("Create a user")
-        .arg(arg!(<USERNAME> "A username for the user"))
-        .arg(arg!(<EMAIL> "The user's email address"))
+pub(crate) fn command() -> Command {
+    Command::new("user")
+        .about("Manage users")
         .arg_required_else_help(true)
+        .subcommand(
+            Command::new("create")
+                .about("Create a user")
+                .arg(arg!(<USERNAME> "A username for the user"))
+                .arg(arg!(<EMAIL> "The user's email address"))
+                .arg_required_else_help(true),
+        )
+        .subcommand(
+            Command::new("list")
+                .about("List users")
+                .arg_required_else_help(false),
+        )
 }
 
-pub(crate) async fn create(matches: &ArgMatches) -> Result<(), AppError> {
+pub(crate) async fn handle(matches: &ArgMatches) -> Result<(), AppError> {
+    match matches.subcommand() {
+        Some(("create", sub_matches)) => create(sub_matches).await,
+        Some(("list", _)) => list().await,
+        _ => unreachable!()
+    }
+}
+
+async fn create(matches: &ArgMatches) -> Result<(), AppError> {
     print!("Password: ");
     stdout().flush()?;
     let password = rpassword::read_password().unwrap();
@@ -35,13 +53,7 @@ pub(crate) async fn create(matches: &ArgMatches) -> Result<(), AppError> {
     Ok(())
 }
 
-pub(crate) fn list_command() -> Command {
-    Command::new("user-list")
-        .about("List users")
-        .arg_required_else_help(false)
-}
-
-pub(crate) async fn list() -> Result<(), AppError> {
+async fn list() -> Result<(), AppError> {
     let client = get_client()?;
     let body = client.get("http://localhost:3000/users").send().await?;
     let users: Vec<User> = body.json().await?;

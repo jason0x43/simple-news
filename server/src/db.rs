@@ -280,6 +280,19 @@ impl Feed {
         Ok(feed)
     }
 
+    pub(crate) async fn delete<'c, E>(
+        exec: E,
+        id: Uuid,
+    ) -> Result<(), AppError>
+    where
+        E: Executor<'c, Database = Sqlite>,
+    {
+        query!("DELETE FROM feeds WHERE id = ?1", id)
+            .execute(exec)
+            .await?;
+        Ok(())
+    }
+
     pub(crate) async fn find_all<'c, E>(exec: E) -> Result<Vec<Self>, AppError>
     where
         E: Executor<'c, Database = Sqlite>,

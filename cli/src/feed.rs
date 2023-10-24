@@ -3,16 +3,42 @@ use clap::{arg, ArgMatches, Command};
 use reqwest::Url;
 use serde_json::to_string_pretty;
 use server::{AddFeedRequest, Feed, FeedKind};
+use uuid::Uuid;
 
-pub(crate) fn add_command() -> Command {
-    Command::new("feed-add")
-        .about("Create a feed")
-        .arg(arg!(<FEEDNAME> "A name for the feed"))
-        .arg(arg!(<URL> "The feed's URL"))
+pub(crate) fn command() -> Command {
+    Command::new("feed")
+        .about("Manage feeds")
         .arg_required_else_help(true)
+        .subcommand(
+            Command::new("add")
+                .about("Add a feed")
+                .arg(arg!(<FEEDNAME> "A name for the feed"))
+                .arg(arg!(<URL> "The feed's URL"))
+                .arg_required_else_help(true),
+        )
+        .subcommand(
+            Command::new("delete")
+                .about("Delete a feed")
+                .arg(arg!(<FEED_ID> "A feed ID"))
+                .arg_required_else_help(true),
+        )
+        .subcommand(
+            Command::new("list")
+                .about("List feeds")
+                .arg_required_else_help(false),
+        )
 }
 
-pub(crate) async fn add(matches: &ArgMatches) -> Result<(), AppError> {
+pub(crate) async fn handle(matches: &ArgMatches) -> Result<(), AppError> {
+    match matches.subcommand() {
+        Some(("add", sub_matches)) => add(sub_matches).await,
+        Some(("delete", sub_matches)) => delete(sub_matches).await,
+        Some(("list", _)) => list().await,
+        _ => unreachable!(),
+    }
+}
+
+async fn add(matches: &ArgMatches) -> Result<(), AppError> {
     let title = matches.get_one::<String>("FEEDNAME").unwrap();
     let url = matches.get_one::<String>("URL").unwrap();
     let url =
@@ -34,13 +60,20 @@ pub(crate) async fn add(matches: &ArgMatches) -> Result<(), AppError> {
     Ok(())
 }
 
-pub(crate) fn list_command() -> Command {
-    Command::new("feed-list")
-        .about("List feeds")
-        .arg_required_else_help(false)
+async fn delete(matches: &ArgMatches) -> Result<(), AppError> {
+    let id = matches.get_one::<String>("FEED_ID").unwrap();
+    let id = Uuid::parse_str(&id)?;
+
+    let client = get_client()?;
+    let _body = client
+        .delete(format!("http://localhost:3000/feeds/{}", id))
+        .send()
+        .await?;
+
+    Ok(())
 }
 
-pub(crate) async fn list() -> Result<(), AppError> {
+async fn list() -> Result<(), AppError> {
     let client = get_client()?;
     let body = client.get("http://localhost:3000/feeds").send().await?;
     let feeds: Vec<Feed> = body.json().await?;

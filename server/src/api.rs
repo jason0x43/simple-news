@@ -1,6 +1,7 @@
-use axum::{extract::State, Json};
+use axum::{extract::{State, Path}, Json};
 use axum_extra::extract::{cookie::Cookie, CookieJar};
 use log::info;
+use uuid::Uuid;
 
 use crate::{
     error::AppError,
@@ -68,6 +69,15 @@ pub(crate) async fn add_feed(
 ) -> Result<(), AppError> {
     log::debug!("Adding feed with {:?}", body);
     Feed::create(&state.pool, body.url, body.title, body.kind).await?;
+    Ok(())
+}
+
+pub(crate) async fn delete_feed(
+    _session: Session,
+    state: State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<(), AppError> {
+    Feed::delete(&state.pool, id).await?;
     Ok(())
 }
 
