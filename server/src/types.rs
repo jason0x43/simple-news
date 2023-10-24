@@ -3,10 +3,12 @@ use std::fmt::Display;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Encode, Decode};
+use tsync::tsync;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 #[serde(rename_all = "camelCase")]
+#[tsync]
 pub struct User {
     pub id: Uuid,
     pub email: String,
@@ -41,6 +43,7 @@ pub struct Session {
 
 #[derive(Clone, Debug, Serialize, Deserialize, Encode, Decode)]
 #[serde(rename_all = "camelCase")]
+#[tsync]
 pub enum FeedKind {
     Rss
 }
@@ -54,6 +57,7 @@ impl Display for FeedKind {
 
 #[derive(Clone, Serialize, Deserialize, FromRow)]
 #[serde(rename_all = "camelCase")]
+#[tsync]
 pub struct Feed {
     pub id: Uuid,
     pub url: Url,
@@ -66,6 +70,8 @@ pub struct Feed {
 }
 
 #[derive(Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+#[tsync]
 pub struct CreateUserRequest {
     pub email: String,
     pub username: String,
@@ -74,6 +80,7 @@ pub struct CreateUserRequest {
 
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
+#[tsync]
 pub struct CreateSessionRequest {
     pub username: String,
     pub password: String,
@@ -81,6 +88,7 @@ pub struct CreateSessionRequest {
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
+#[tsync]
 pub struct AddFeedRequest {
     pub url: Url,
     pub title: String,
@@ -89,6 +97,7 @@ pub struct AddFeedRequest {
 
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[tsync]
 pub struct SessionResponse {
     pub id: Uuid,
     pub expires: i64,

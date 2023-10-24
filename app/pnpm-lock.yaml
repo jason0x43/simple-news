@@ -11,6 +11,9 @@ devDependencies:
   '@tsconfig/svelte':
     specifier: ^5.0.0
     version: 5.0.2
+  server:
+    specifier: ../server
+    version: link:../server
   svelte:
     specifier: ^4.0.5
     version: 4.2.1
