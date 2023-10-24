@@ -177,7 +177,7 @@ impl Session {
     where
         E: Executor<'c, Database = Sqlite>,
     {
-        query_as!(
+        let session = query_as!(
             Session,
             r#"
             SELECT id as "id: Uuid", data, expires, user_id as "user_id: Uuid"
@@ -187,7 +187,11 @@ impl Session {
         )
         .fetch_one(exec)
         .await
-        .map_err(|_| AppError::SessionNotFound)
+        .map_err(|_| AppError::SessionNotFound)?;
+
+        log::debug!("got session: {:?}", session);
+
+        Ok(session)
     }
 }
 
@@ -252,6 +256,8 @@ impl Feed {
         let feed_kind = feed.kind.to_string();
         let now = get_future_time(0);
 
+        log::debug!("inserting feed kind {}", feed_kind);
+
         query!(
             r#"
             INSERT INTO feeds (id, url, title, kind, last_updated, disabled)
@@ -278,7 +284,7 @@ impl Feed {
     where
         E: Executor<'c, Database = Sqlite>,
     {
-        let feeds = query_as!(
+        let db_feeds = query_as!(
             DbFeed,
             r#"
             SELECT id AS "id!: Uuid", url,
@@ -288,10 +294,20 @@ impl Feed {
             "#
         )
         .fetch_all(exec)
-        .await?
-        .into_iter()
-        .map(|f| f.try_into())
-        .collect::<Result<Vec<Feed>, AppError>>()?;
+        .await
+        .map_err(|err| {
+            log::warn!("error loading feeds: {}", err);
+            err
+        })?;
+
+        log::debug!("got db feeds");
+
+        let feeds = db_feeds
+            .into_iter()
+            .map(|f| f.try_into())
+            .collect::<Result<Vec<Feed>, AppError>>()?;
+
+        log::debug!("got feeds");
 
         Ok(feeds)
     }

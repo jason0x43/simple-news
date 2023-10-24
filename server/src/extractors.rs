@@ -5,7 +5,6 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use axum_extra::extract::CookieJar;
-use log::error;
 use uuid::Uuid;
 
 use crate::{error::AppError, state::AppState, types::Session};
@@ -26,7 +25,7 @@ impl FromRequestParts<AppState> for Session {
             let id = Uuid::parse_str(&id_cookie.value().to_string())
                 .map_err(|err| AppError::UuidError(err).into_response())?;
             Session::get(&state.pool, id).await.map_err(|err| {
-                error!("Error creating session: {}", err);
+                log::error!("Error loading session: {}", err);
                 err.into_response()
             })
         } else {

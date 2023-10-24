@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, Encode, Decode};
+use sqlx::{Decode, Encode, FromRow};
 use tsync::tsync;
 use uuid::Uuid;
 
@@ -32,7 +32,7 @@ pub struct Password {
     pub user_id: Uuid,
 }
 
-#[derive(Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 #[serde(rename_all = "camelCase")]
 pub struct Session {
     pub id: Uuid,
@@ -45,17 +45,29 @@ pub struct Session {
 #[serde(rename_all = "camelCase")]
 #[tsync]
 pub enum FeedKind {
-    Rss
+    #[sqlx(rename = "rss")]
+    Rss,
 }
 
 impl Display for FeedKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let str = serde_json::to_string(self).unwrap();
+        let str = match self {
+            FeedKind::Rss => "rss"
+        };
         f.write_str(&str)
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, FromRow)]
+impl From<String> for FeedKind {
+    fn from(value: String) -> Self {
+        match value.as_str() {
+            "rss" => FeedKind::Rss,
+            _ => panic!("Unknown feed kind {}", value),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 #[serde(rename_all = "camelCase")]
 #[tsync]
 pub struct Feed {
