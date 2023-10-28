@@ -10,7 +10,7 @@ mod types_ts;
 mod util;
 
 use axum::{
-    routing::{get, post, delete},
+    routing::{delete, get, post},
     Router,
 };
 use dotenvy::dotenv;
@@ -18,11 +18,7 @@ use log::info;
 use sqlx::sqlite::SqlitePoolOptions;
 use tower_http::trace::TraceLayer;
 
-use crate::{
-    api::{create_session, create_user, get_articles, get_users, add_feed, get_feeds, delete_feed},
-    spa::static_handler,
-    state::AppState,
-};
+use crate::{spa::static_handler, state::AppState};
 
 #[tokio::main]
 async fn main() -> Result<(), sqlx::Error> {
@@ -39,11 +35,15 @@ async fn main() -> Result<(), sqlx::Error> {
     let app_state = AppState { pool };
 
     let app = Router::new()
-        .route("/users", post(create_user).get(get_users))
-        .route("/login", post(create_session))
-        .route("/articles", get(get_articles))
-        .route("/feeds", get(get_feeds).post(add_feed))
-        .route("/feeds/:id", delete(delete_feed))
+        .route("/users", post(api::create_user))
+        .route("/users", get(api::get_users))
+        .route("/login", post(api::create_session))
+        .route("/articles", get(api::get_articles))
+        .route("/feeds/:id/refresh", get(api::refresh_feed))
+        .route("/feeds/:id", get(api::get_feed))
+        .route("/feeds/:id", delete(api::delete_feed))
+        .route("/feeds", get(api::get_feeds))
+        .route("/feeds", post(api::add_feed))
         .fallback(static_handler)
         .with_state(app_state)
         .layer(TraceLayer::new_for_http());

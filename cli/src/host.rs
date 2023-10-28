@@ -1,9 +1,6 @@
 use clap::{arg, ArgMatches, Command};
 
-use crate::{
-    error::AppError,
-    util::{load_cache, save_cache},
-};
+use crate::{error::AppError, util::Cache};
 
 pub(crate) fn command() -> Command {
     Command::new("host")
@@ -22,19 +19,19 @@ pub(crate) async fn handle(matches: &ArgMatches) -> Result<(), AppError> {
     match matches.subcommand() {
         Some(("set", sub_matches)) => set(sub_matches).await,
         Some(("show", _)) => show().await,
-        _ => unreachable!()
+        _ => unreachable!(),
     }
 }
 
 async fn set(matches: &ArgMatches) -> Result<(), AppError> {
-    let mut cache = load_cache()?;
+    let mut cache = Cache::load()?;
     cache.host = Some(matches.get_one::<String>("HOST").unwrap().into());
-    save_cache(cache)?;
+    cache.save()?;
     Ok(())
 }
 
 async fn show() -> Result<(), AppError> {
-    let cache = load_cache()?;
+    let cache = Cache::load()?;
     if let Some(host) = cache.host {
         println!("{}", host);
     } else {

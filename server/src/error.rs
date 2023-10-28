@@ -2,6 +2,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
+use reqwest::header::ToStrError;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -93,5 +94,17 @@ impl From<rss::Error> for AppError {
 impl From<uuid::Error> for AppError {
     fn from(err: uuid::Error) -> AppError {
         AppError::UuidError(err)
+    }
+}
+
+impl From<url::ParseError> for AppError {
+    fn from(err: url::ParseError) -> AppError {
+        AppError::Error(format!("URL: {}", err))
+    }
+}
+
+impl From<ToStrError> for AppError {
+    fn from(err: ToStrError) -> AppError {
+        AppError::Error(format!("to string: {}", err))
     }
 }

@@ -33,7 +33,7 @@ CREATE TABLE feeds (
 
 CREATE TABLE articles (
   id BLOB PRIMARY KEY,
-  article_id BLOB NOT NULL,
+  article_id TEXT NOT NULL,
   feed_id BLOB NOT NULL REFERENCES feeds(id) ON DELETE CASCADE,
   title TEXT,
   link TEXT,

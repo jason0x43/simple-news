@@ -52,7 +52,7 @@ pub enum FeedKind {
 impl Display for FeedKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let str = match self {
-            FeedKind::Rss => "rss"
+            FeedKind::Rss => "rss",
         };
         f.write_str(&str)
     }
@@ -79,6 +79,19 @@ pub struct Feed {
     pub disabled: bool,
     pub icon: Option<String>,
     pub html_url: Option<Url>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[serde(rename_all = "camelCase")]
+#[tsync]
+pub struct Article {
+    pub id: Uuid,
+    pub article_id: String,
+    pub feed_id: Uuid,
+    pub title: Option<String>,
+    pub link: Option<Url>,
+    pub published: i64,
+    pub content: Option<String>,
 }
 
 #[derive(Deserialize, Serialize)]

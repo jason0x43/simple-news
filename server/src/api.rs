@@ -1,5 +1,9 @@
-use axum::{extract::{State, Path}, Json};
+use axum::{
+    extract::{Path, State},
+    Json,
+};
 use axum_extra::extract::{cookie::Cookie, CookieJar};
+use axum_macros::debug_handler;
 use log::info;
 use uuid::Uuid;
 
@@ -31,7 +35,8 @@ pub(crate) async fn get_users(
     _session: Session,
     state: State<AppState>,
 ) -> Result<Json<Vec<User>>, AppError> {
-    let users = User::find_all(&state.pool).await?;
+    let mut conn = state.pool.acquire().await?;
+    let users = User::find_all(&mut conn).await?;
     Ok(Json(users))
 }
 
@@ -42,12 +47,13 @@ pub(crate) async fn create_session(
 ) -> Result<(CookieJar, Json<Session>), AppError> {
     info!("Logging in user {}", body.username);
 
-    let user = User::get_by_username(&state.pool, body.username).await?;
-    let password = Password::get_by_user_id(&state.pool, user.id).await?;
+    let mut conn = state.pool.acquire().await?;
+    let user = User::get_by_username(&mut conn, body.username).await?;
+    let password = Password::get_by_user_id(&mut conn, user.id).await?;
 
     check_password(body.password, password.hash, password.salt)?;
 
-    let session = Session::create(&state.pool, user.id).await?;
+    let session = Session::create(&mut conn, user.id).await?;
 
     Ok((
         jar.add(Cookie::new("session_id", session.id.to_string())),
@@ -67,8 +73,9 @@ pub(crate) async fn add_feed(
     state: State<AppState>,
     Json(body): Json<AddFeedRequest>,
 ) -> Result<(), AppError> {
-    log::debug!("Adding feed with {:?}", body);
-    Feed::create(&state.pool, body.url, body.title, body.kind).await?;
+    log::debug!("adding feed with {:?}", body);
+    let mut conn = state.pool.acquire().await?;
+    Feed::create(&mut conn, body.url, body.title, body.kind).await?;
     Ok(())
 }
 
@@ -77,14 +84,41 @@ pub(crate) async fn delete_feed(
     state: State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<(), AppError> {
-    Feed::delete(&state.pool, id).await?;
+    let mut conn = state.pool.acquire().await?;
+    Feed::delete(&mut conn, id).await?;
     Ok(())
+}
+
+pub(crate) async fn get_feed(
+    _session: Session,
+    state: State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<Feed>, AppError> {
+    log::debug!("getting feed {}", id);
+    let mut conn = state.pool.acquire().await?;
+    let feed = Feed::get(&mut conn, id).await?;
+    Ok(Json(feed))
 }
 
 pub(crate) async fn get_feeds(
     _session: Session,
     state: State<AppState>,
 ) -> Result<Json<Vec<Feed>>, AppError> {
-    let feeds = Feed::find_all(&state.pool).await?;
+    let mut conn = state.pool.acquire().await?;
+    let feeds = Feed::find_all(&mut conn).await?;
     Ok(Json(feeds))
+}
+
+#[debug_handler]
+pub(crate) async fn refresh_feed(
+    _session: Session,
+    state: State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<(), AppError> {
+    let mut tx = state.pool.begin().await?;
+    let feed = Feed::get(&mut *tx, id).await?;
+    log::debug!("refreshing feed at {}", feed.url);
+    feed.refresh(&mut *tx).await?;
+    tx.commit().await?;
+    Ok(())
 }

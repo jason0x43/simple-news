@@ -1,6 +1,6 @@
 use crate::{
     error::AppError,
-    util::{assert_ok, load_cache, save_cache},
+    util::{assert_ok, Cache},
 };
 use clap::{arg, ArgMatches, Command};
 use reqwest::Client;
@@ -52,17 +52,17 @@ async fn create(matches: &ArgMatches) -> Result<(), AppError> {
 
     println!("Logged in as {}", username);
 
-    let mut cache = load_cache()?;
+    let mut cache = Cache::load()?;
     cache.session_id = Some(session.id);
-    save_cache(cache)?;
+    cache.save()?;
 
     Ok(())
 }
 
 async fn clear() -> Result<(), AppError> {
-    let mut cache = load_cache()?;
+    let mut cache = Cache::load()?;
     cache.session_id = None;
-    save_cache(cache)?;
+    cache.save()?;
     println!("Logged out");
     Ok(())
 }

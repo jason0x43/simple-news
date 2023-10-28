@@ -38,3 +38,9 @@ impl From<uuid::Error> for AppError {
         AppError::Error(format!("UUID: {}", err))
     }
 }
+
+impl From<url::ParseError> for AppError {
+    fn from(err: url::ParseError) -> AppError {
+        AppError::Error(format!("UUID: {}", err))
+    }
+}

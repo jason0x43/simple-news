@@ -1,16 +1,119 @@
-// use reqwest::{Client, Url};
-// use rss::Channel;
+use base64::{engine::general_purpose, Engine};
+use reqwest::{Client, Url};
+use rss::{Channel, Item};
+use sha2::{Digest, Sha256};
+use time::{format_description::well_known::Rfc2822, OffsetDateTime};
+use url::Origin;
 
-// use crate::error::AppError;
+use crate::{error::AppError, util::get_future_time};
 
-// pub(crate) async fn download_feed(url: Url) -> Result<Channel, AppError> {
-//     let client = Client::new();
-//     let bytes = client.get(url).send().await?.bytes().await?;
-//     let channel = Channel::read_from(&bytes[..])?;
-//     Ok(channel)
-// }
+pub(crate) struct ItemContent {
+    pub(crate) title: String,
+    pub(crate) link: Option<String>,
+    pub(crate) content: Option<String>,
+    pub(crate) article_id: String,
+    pub(crate) published: i64,
+}
 
-// pub(crate) async fn download_feeds() -> Result<(), AppError> {
-//     // let feeds = get_active_feeds();
-//     Ok(())
-// }
+/// Return the content of an Item
+pub(crate) fn get_content(item: &Item) -> Result<ItemContent, AppError> {
+    let title = item.title.clone().unwrap_or("Untitled".into());
+    let link = item.link.clone();
+    let content = item.content().map(|c| c.to_string());
+    let article_id = item
+        .guid
+        .clone()
+        .map_or(link.clone(), |v| Some(v.value))
+        .unwrap_or_else(|| {
+            let mut hasher = Sha256::new();
+            let content = content.clone().unwrap_or("".into());
+            let summary = item.description.clone().unwrap_or("".into());
+            hasher.update(format!("{}{}{}", title, summary, content));
+            let hash = hasher.finalize();
+            format!("sha256:{}", hex::encode(hash))
+        });
+    let published = item.pub_date.clone().map_or_else(
+        || get_future_time(0),
+        |pub_date| {
+            let date = OffsetDateTime::parse(&pub_date, &Rfc2822);
+            if date.is_err() {
+                log::warn!("invalid pub date for {}: {}", article_id, pub_date);
+            }
+            0
+        },
+    );
+
+    Ok(ItemContent {
+        title,
+        link,
+        content,
+        article_id,
+        published,
+    })
+}
+
+/// Return the icon as a data URL, if found
+pub(crate) async fn get_icon(
+    channel: &Channel,
+) -> Result<Option<Url>, AppError> {
+    let url = get_icon_url(channel).await?;
+    if url.is_none() {
+        return Ok(None);
+    }
+
+    // TODO: request icon data, convert to data URI
+    // see https://stackoverflow.com/a/19996331/141531
+
+    let url = url.unwrap();
+    let client = Client::builder().build()?;
+    let resp = client.get(url.clone()).send().await?;
+    if resp.status() != 200 {
+        log::warn!("error downloading icon from {}: [{}]", url, resp.status());
+        return Err(AppError::Error(format!(
+            "error downloading icon ({})",
+            resp.status()
+        )));
+    }
+
+    let ctype_hdr = resp.headers().get("content-type");
+    let ctype: Option<String> = if let Some(ctype_hdr) = ctype_hdr {
+        Some(ctype_hdr.to_str()?.into())
+    } else {
+        None
+    };
+
+    if let Some(ctype) = ctype {
+        let bytes = resp.bytes().await?;
+        let b64 = general_purpose::STANDARD.encode(&bytes);
+        let url = Url::parse(&format!("data:{};base64,{}", ctype, b64))?;
+        Ok(Some(url))
+    } else {
+        Ok(None)
+    }
+}
+
+/// Return a URL for the channel icon, if available
+async fn get_icon_url(channel: &Channel) -> Result<Option<Url>, AppError> {
+    if let Some(image) = channel.image() {
+        let url = Url::parse(&image.url)?;
+        return Ok(Some(url));
+    }
+
+    let link = channel.link();
+    let url = Url::parse(&link)?;
+    let origin = url.origin();
+    let favico_url = if let Origin::Tuple(scheme, host, port) = origin {
+        Some(Url::parse(&format!(
+            "{}://{}:{}/favicon.ico",
+            scheme, host, port
+        ))?)
+    } else {
+        None
+    };
+
+    if let Some(favico_url) = favico_url {
+        Ok(Some(favico_url))
+    } else {
+        Ok(None)
+    }
+}
