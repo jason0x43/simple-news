@@ -1,13 +1,17 @@
 use crate::{
     error::AppError,
     rss::{get_content, get_icon},
-    types::{Article, Feed, FeedKind, Password, Session, User},
-    util::{get_future_time, hash_password},
+    types::{
+        Article, ArticleId, Feed, FeedId, FeedKind, Password, PasswordId,
+        Session, SessionId, User, UserId,
+    },
+    util::{get_future_datetime, hash_password},
 };
 use reqwest::Client;
 use rss::Channel;
 use serde_json::json;
 use sqlx::{query, query_as, SqliteConnection};
+use time::OffsetDateTime;
 use url::Url;
 use uuid::Uuid;
 
@@ -18,7 +22,7 @@ impl User {
         username: String,
     ) -> Result<Self, AppError> {
         let user = Self {
-            id: Uuid::new_v4(),
+            id: UserId(Uuid::new_v4()),
             email,
             username,
             config: None,
@@ -26,12 +30,13 @@ impl User {
 
         query!(
             r#"
-            INSERT INTO users (id, email, username)
-            VALUES (?1, ?2, ?3)
+            INSERT INTO users (id, email, username, config)
+            VALUES (?1, ?2, ?3, ?4)
             "#,
             user.id,
             user.email,
-            user.username
+            user.username,
+            user.config
         )
         .execute(conn)
         .await?;
@@ -43,11 +48,14 @@ impl User {
         conn: &mut SqliteConnection,
         username: String,
     ) -> Result<Self, AppError> {
-        let user = query_as!(
-            Self,
+        query_as!(
+            User,
             r#"
-            SELECT id AS "id!: Uuid", email, username,
-            config as "config: serde_json::Value"
+            SELECT
+              id AS "id!: Uuid",
+              email,
+              username,
+              config AS "config: serde_json::Value"
             FROM users
             WHERE username = ?1
             "#,
@@ -55,26 +63,26 @@ impl User {
         )
         .fetch_one(conn)
         .await
-        .map_err(|_| AppError::UserNotFound)?;
-
-        Ok(user)
+        .map_err(|_| AppError::UserNotFound)
     }
 
     pub(crate) async fn find_all(
         conn: &mut SqliteConnection,
     ) -> Result<Vec<Self>, AppError> {
-        let users = query_as!(
-            Self,
+        query_as!(
+            User,
             r#"
-            SELECT id AS "id!: Uuid", email, username,
-            config AS "config: serde_json::Value"
+            SELECT
+              id AS "id!: Uuid",
+              email,
+              username,
+              config AS "config: serde_json::Value"
             FROM users
             "#
         )
         .fetch_all(conn)
-        .await?;
-
-        Ok(users)
+        .await
+        .map_err(AppError::SqlxError)
     }
 }
 
@@ -82,11 +90,11 @@ impl Password {
     pub(crate) async fn create(
         conn: &mut SqliteConnection,
         password: String,
-        user_id: Uuid,
+        user_id: UserId,
     ) -> Result<Self, AppError> {
         let pword = hash_password(password, None);
         let password = Password {
-            id: Uuid::new_v4(),
+            id: PasswordId(Uuid::new_v4()),
             hash: pword.hash,
             salt: pword.salt,
             user_id,
@@ -110,12 +118,16 @@ impl Password {
 
     pub(crate) async fn get_by_user_id(
         conn: &mut SqliteConnection,
-        user_id: Uuid,
+        user_id: UserId,
     ) -> Result<Self, AppError> {
-        let password = query_as!(
-            Self,
+        query_as!(
+            Password,
             r#"
-            SELECT id AS "id!: Uuid", hash, salt, user_id AS "user_id!: Uuid"
+            SELECT
+              id AS "id!: Uuid",
+              hash,
+              salt,
+              user_id AS "user_id!: Uuid"
             FROM passwords
             WHERE user_id = ?1
             "#,
@@ -123,23 +135,23 @@ impl Password {
         )
         .fetch_one(conn)
         .await
-        .map_err(|_| AppError::NoPassword)?;
-
-        Ok(password)
+        .map_err(|_| AppError::NoPassword)
     }
 }
 
 impl Session {
     pub(crate) async fn create(
         conn: &mut SqliteConnection,
-        user_id: Uuid,
+        user_id: UserId,
     ) -> Result<Self, AppError> {
         let session = Self {
-            id: Uuid::new_v4(),
+            id: SessionId(Uuid::new_v4()),
             data: json!("{}"),
             user_id,
-            expires: get_future_time(604800),
+            expires: get_future_datetime(604800),
         };
+
+        log::debug!("creating session {:?}", session);
 
         query!(
             r#"
@@ -161,57 +173,22 @@ impl Session {
         conn: &mut SqliteConnection,
         session_id: Uuid,
     ) -> Result<Self, AppError> {
-        let session = query_as!(
+        query_as!(
             Session,
             r#"
-            SELECT id as "id: Uuid", data, expires, user_id as "user_id: Uuid"
-            FROM sessions WHERE id = ?1
+            SELECT
+              id AS "id!: Uuid",
+              data AS "data: serde_json::Value",
+              expires AS "expires!: OffsetDateTime",
+              user_id AS "user_id!: Uuid"
+            FROM sessions
+            WHERE id = ?1
             "#,
             session_id
         )
         .fetch_one(conn)
         .await
-        .map_err(|_| AppError::SessionNotFound)?;
-
-        log::debug!("got session: {:?}", session);
-
-        Ok(session)
-    }
-}
-
-struct DbFeed {
-    pub id: Uuid,
-    pub url: String,
-    pub title: String,
-    pub kind: FeedKind,
-    pub last_updated: i64,
-    pub disabled: bool,
-    pub icon: Option<String>,
-    pub html_url: Option<String>,
-}
-
-impl TryFrom<DbFeed> for Feed {
-    type Error = AppError;
-
-    fn try_from(value: DbFeed) -> Result<Self, AppError> {
-        let url = Url::parse(&value.url)
-            .map_err(|e| AppError::Error(e.to_string()))?;
-        let html_url = if let Some(u) = value.html_url {
-            Some(Url::parse(&u).map_err(|e| AppError::Error(e.to_string()))?)
-        } else {
-            None
-        };
-
-        Ok(Self {
-            id: value.id,
-            url,
-            title: value.title,
-            kind: value.kind,
-            last_updated: value.last_updated,
-            disabled: value.disabled,
-            icon: value.icon,
-            html_url,
-        })
+        .map_err(|_| AppError::SessionNotFound)
     }
 }
 
@@ -223,21 +200,15 @@ impl Feed {
         kind: FeedKind,
     ) -> Result<Self, AppError> {
         let feed = Self {
-            id: Uuid::new_v4(),
-            url,
+            id: FeedId(Uuid::new_v4()),
+            url: url.to_string(),
             title,
             kind,
-            last_updated: get_future_time(0),
+            last_updated: get_future_datetime(0),
             disabled: false,
             icon: None,
             html_url: None,
         };
-
-        let feed_url = feed.url.to_string();
-        let feed_kind = feed.kind.to_string();
-        let now = get_future_time(0);
-
-        log::debug!("inserting feed kind {}", feed_kind);
 
         query!(
             r#"
@@ -245,11 +216,11 @@ impl Feed {
             VALUES (?1, ?2, ?3, ?4, ?5, ?6)
             "#,
             feed.id,
-            feed_url,
+            feed.url,
             feed.title,
-            feed_kind,
-            now,
-            0,
+            feed.kind,
+            feed.last_updated,
+            feed.disabled,
         )
         .execute(conn)
         .await
@@ -275,12 +246,18 @@ impl Feed {
         conn: &mut SqliteConnection,
         id: Uuid,
     ) -> Result<Feed, AppError> {
-        let db_feed = query_as!(
-            DbFeed,
+        Ok(query_as!(
+            Feed,
             r#"
-            SELECT id AS "id!: Uuid", url,
-            title, kind AS "kind!: FeedKind", last_updated,
-            disabled AS "disabled!: bool", icon, html_url
+            SELECT
+              id AS "id!: Uuid",
+              url,
+              title,
+              kind,
+              last_updated AS "last_updated!: OffsetDateTime",
+              disabled AS "disabled!: bool",
+              icon,
+              html_url
             FROM feeds
             WHERE id = ?1
             "#,
@@ -291,20 +268,24 @@ impl Feed {
         .map_err(|err| {
             log::warn!("error getting feed {}: {}", id, err);
             err
-        })?;
-
-        db_feed.try_into()
+        })?)
     }
 
     pub(crate) async fn find_all(
         conn: &mut SqliteConnection,
     ) -> Result<Vec<Self>, AppError> {
-        let db_feeds = query_as!(
-            DbFeed,
+        Ok(query_as!(
+            Feed,
             r#"
-            SELECT id AS "id!: Uuid", url,
-            title, kind AS "kind!: FeedKind", last_updated,
-            disabled AS "disabled!: bool", icon, html_url
+            SELECT
+              id AS "id!: Uuid",
+              url,
+              title,
+              kind,
+              last_updated AS "last_updated!: OffsetDateTime",
+              disabled AS "disabled!: bool",
+              icon,
+              html_url
             FROM feeds
             "#
         )
@@ -313,18 +294,7 @@ impl Feed {
         .map_err(|err| {
             log::warn!("error loading feeds: {}", err);
             err
-        })?;
-
-        log::debug!("got db feeds");
-
-        let feeds = db_feeds
-            .into_iter()
-            .map(|f| f.try_into())
-            .collect::<Result<Vec<Feed>, AppError>>()?;
-
-        log::debug!("got feeds");
-
-        Ok(feeds)
+        })?)
     }
 
     pub(crate) async fn refresh(
@@ -350,80 +320,67 @@ impl Feed {
             log::warn!("error getting icon for {}: {}", self.url, err);
         }
 
+        log::debug!("processing items");
+
         for item in &channel.items {
+            log::debug!("processing item {:?}", item);
             let item_content = get_content(&item)?;
+            log::debug!("got item content");
 
             if let Some(content) = item_content.content {
                 Article::create(
                     &mut *conn,
-                    content,
-                    self.id,
-                    item_content.article_id.clone(),
-                    item_content.title,
-                    item_content.link,
-                    item_content.published,
+                    ArticleNew {
+                        content,
+                        feed_id: self.id.clone(),
+                        article_id: item_content.article_id.clone(),
+                        title: item_content.title,
+                        link: item_content.link,
+                        published: item_content.published,
+                    },
                 )
-                .await?;
+                .await
+                .map_err(|err| {
+                    log::warn!("error creating article: {}", err);
+                    err
+                })?;
             }
+
+            log::debug!("added item");
         }
 
         Ok(())
     }
 }
 
-struct DbArticle {
-    pub id: Uuid,
-    pub feed_id: Uuid,
-    pub article_id: String,
-    pub title: String,
-    pub content: String,
-    pub published: i64,
-    pub link: Option<String>,
-}
-
-impl TryFrom<DbArticle> for Article {
-    type Error = AppError;
-
-    fn try_from(value: DbArticle) -> Result<Self, AppError> {
-        let link = if let Some(link) = value.link {
-            Some(Url::parse(&link)?)
-        } else {
-            None
-        };
-
-        Ok(Self {
-            id: value.id,
-            feed_id: value.feed_id,
-            article_id: value.article_id,
-            title: value.title,
-            content: value.content,
-            published: value.published,
-            link,
-        })
-    }
+#[derive(Debug)]
+pub(crate) struct ArticleNew {
+    pub(crate) content: String,
+    pub(crate) feed_id: FeedId,
+    pub(crate) article_id: String,
+    pub(crate) title: String,
+    pub(crate) link: Option<Url>,
+    pub(crate) published: OffsetDateTime,
 }
 
 impl Article {
     pub(crate) async fn create(
         conn: &mut SqliteConnection,
-        content: String,
-        feed_id: Uuid,
-        article_id: String,
-        title: String,
-        link: Option<Url>,
-        published: i64,
+        data: ArticleNew,
     ) -> Result<Self, AppError> {
+        log::debug!("creating article with: {:?}", data);
         let article = Self {
-            id: Uuid::new_v4(),
-            content,
-            feed_id,
-            article_id,
-            title,
-            link,
-            published,
+            id: ArticleId(Uuid::new_v4()),
+            content: data.content.clone(),
+            feed_id: data.feed_id,
+            article_id: data.article_id.clone(),
+            title: data.title.clone(),
+            link: data.link.map(|l| l.into()),
+            published: data.published,
         };
 
-        let link_str = article.link.clone().map(|l| l.to_string());
+        log::debug!("inserting into articles: {:?}", article);
+
         query!(
             r#"
             INSERT INTO articles(
@@ -431,14 +388,15 @@ impl Article {
             )
             VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7)
             ON CONFLICT(article_id, feed_id)
-            DO UPDATE SET content = ?1
+            DO UPDATE
+            SET content = ?1, published = ?7, title = ?5, link = ?6
             "#,
             article.content,
             article.id,
-            feed_id,
+            article.feed_id,
             article.article_id,
             article.title,
-            link_str,
+            article.link,
             article.published
         )
         .execute(&mut *conn)
@@ -450,47 +408,45 @@ impl Article {
     pub(crate) async fn find_all(
         conn: &mut SqliteConnection,
     ) -> Result<Vec<Self>, AppError> {
-        let db_articles = query_as!(
-            DbArticle,
+        Ok(query_as!(
+            Article,
             r#"
-            SELECT id AS "id!: Uuid", article_id, feed_id AS "feed_id!: Uuid",
-            title, content, published, link
+            SELECT
+              id AS "id!: Uuid",
+              article_id,
+              feed_id AS "feed_id!: Uuid",
+              title,
+              content,
+              published AS "published: OffsetDateTime",
+              link
             FROM articles
             "#
         )
         .fetch_all(conn)
-        .await?;
-
-        let articles = db_articles
-            .into_iter()
-            .map(|a| a.try_into())
-            .collect::<Result<Vec<Article>, AppError>>()?;
-
-        Ok(articles)
+        .await?)
     }
 
     pub(crate) async fn find_all_for_feed(
         conn: &mut SqliteConnection,
         feed_id: Uuid,
     ) -> Result<Vec<Self>, AppError> {
-        let db_articles = query_as!(
-            DbArticle,
+        Ok(query_as!(
+            Article,
             r#"
-            SELECT id AS "id!: Uuid", article_id, feed_id AS "feed_id!: Uuid",
-            title, content, published, link
+            SELECT
+              id AS "id!: Uuid",
+              article_id,
+              feed_id AS "feed_id!: Uuid",
+              title,
+              content,
+              published AS "published: OffsetDateTime",
+              link
             FROM articles
             WHERE feed_id = ?1
             "#,
             feed_id
         )
         .fetch_all(conn)
-        .await?;
-
-        let articles = db_articles
-            .into_iter()
-            .map(|a| a.try_into())
-            .collect::<Result<Vec<Article>, AppError>>()?;
-
-        Ok(articles)
+        .await?)
     }
 }

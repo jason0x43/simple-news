@@ -1,9 +1,12 @@
+use std::fs;
+
 use crate::{
     error::AppError,
-    util::{get_client, get_host, Cache},
+    util::{assert_ok, get_client, get_host, Cache},
 };
 use clap::{arg, ArgMatches, Command};
 use reqwest::Url;
+use serde::Deserialize;
 use serde_json::to_string_pretty;
 use server::{AddFeedRequest, Feed, FeedKind};
 
@@ -16,6 +19,12 @@ pub(crate) fn command() -> Command {
                 .about("Add a feed")
                 .arg(arg!(<FEEDNAME> "A name for the feed"))
                 .arg(arg!(<URL> "The feed's URL"))
+                .arg_required_else_help(true),
+        )
+        .subcommand(
+            Command::new("load")
+                .about("Add feeds from a file")
+                .arg(arg!(<FILE> "A JSON file containing feeds"))
                 .arg_required_else_help(true),
         )
         .subcommand(
@@ -46,6 +55,7 @@ pub(crate) fn command() -> Command {
 pub(crate) async fn handle(matches: &ArgMatches) -> Result<(), AppError> {
     match matches.subcommand() {
         Some(("add", sub_matches)) => add(sub_matches).await,
+        Some(("load", sub_matches)) => load(sub_matches).await,
         Some(("show", sub_matches)) => show(sub_matches).await,
         Some(("delete", sub_matches)) => delete(sub_matches).await,
         Some(("list", _)) => list().await,
@@ -57,6 +67,10 @@ pub(crate) async fn handle(matches: &ArgMatches) -> Result<(), AppError> {
 async fn add(matches: &ArgMatches) -> Result<(), AppError> {
     let title = matches.get_one::<String>("FEEDNAME").unwrap();
     let url = matches.get_one::<String>("URL").unwrap();
+    add_feed(title, url).await
+}
+
+async fn add_feed(title: &String, url: &String) -> Result<(), AppError> {
     let url =
         Url::parse(&url).map_err(|err| AppError::Error(err.to_string()))?;
     let body = AddFeedRequest {
@@ -66,8 +80,26 @@ async fn add(matches: &ArgMatches) -> Result<(), AppError> {
     };
     let client = get_client()?;
     let url = get_host()?.join("/feeds")?;
-    let _body = client.post(url).json(&body).send().await?;
+    assert_ok(client.post(url.clone()).json(&body).send().await?).await?;
 
+    println!("Added feed {} ({})", title, url);
+
+    Ok(())
+}
+
+#[derive(Deserialize)]
+struct FeedInfo {
+    title: String,
+    url: String,
+}
+
+async fn load(matches: &ArgMatches) -> Result<(), AppError> {
+    let file = matches.get_one::<String>("FILE").unwrap();
+    let json = fs::read_to_string(file)?;
+    let feeds = serde_json::from_str::<Vec<FeedInfo>>(&json)?;
+    for feed in feeds {
+        add_feed(&feed.title, &feed.url).await?;
+    }
     Ok(())
 }
 
@@ -77,9 +109,9 @@ async fn show(matches: &ArgMatches) -> Result<(), AppError> {
     let id = cache.get_matching_id(id)?;
     let client = get_client()?;
     let url = get_host()?.join(&format!("/feeds/{}", id))?;
-    let body = client.get(url).send().await?;
+    let resp = assert_ok(client.get(url).send().await?).await?;
 
-    let feed: Feed = body.json().await?;
+    let feed: Feed = resp.json().await?;
     println!("{}", to_string_pretty(&feed).unwrap());
 
     Ok(())
@@ -91,7 +123,7 @@ async fn delete(matches: &ArgMatches) -> Result<(), AppError> {
     let id = cache.get_matching_id(id)?;
     let client = get_client()?;
     let url = get_host()?.join(&format!("/feeds/{}", id))?;
-    let _body = client.delete(url).send().await?;
+    assert_ok(client.delete(url).send().await?).await?;
 
     Ok(())
 }
@@ -102,7 +134,7 @@ async fn refresh(matches: &ArgMatches) -> Result<(), AppError> {
     let id = cache.get_matching_id(id)?;
     let client = get_client()?;
     let url = get_host()?.join(&format!("/feeds/{}/refresh", id))?;
-    let _body = client.get(url).send().await?;
+    assert_ok(client.get(url).send().await?).await?;
 
     Ok(())
 }
@@ -110,8 +142,8 @@ async fn refresh(matches: &ArgMatches) -> Result<(), AppError> {
 async fn list() -> Result<(), AppError> {
     let client = get_client()?;
     let url = get_host()?.join("/feeds")?;
-    let body = client.get(url).send().await?;
-    let feeds: Vec<Feed> = body.json().await?;
+    let resp = assert_ok(client.get(url).send().await?).await?;
+    let feeds: Vec<Feed> = resp.json().await?;
 
     let mut cache = Cache::load()?;
     cache.add_ids(feeds.iter().map(|f| f.id).collect());

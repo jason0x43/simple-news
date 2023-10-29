@@ -4,9 +4,10 @@ use axum::{
 };
 use reqwest::header::ToStrError;
 use thiserror::Error;
+use time::error::ComponentRange;
 
 #[derive(Debug, Error)]
-pub(crate) enum AppError {
+pub enum AppError {
     #[error("User not found")]
     UserNotFound,
 
@@ -106,5 +107,23 @@ impl From<url::ParseError> for AppError {
 impl From<ToStrError> for AppError {
     fn from(err: ToStrError) -> AppError {
         AppError::Error(format!("to string: {}", err))
+    }
+}
+
+impl From<ComponentRange> for AppError {
+    fn from(err: ComponentRange) -> AppError {
+        AppError::Error(format!("time component range: {}", err))
+    }
+}
+
+impl From<serde_json::Error> for AppError {
+    fn from(err: serde_json::Error) -> AppError {
+        AppError::Error(format!("JSON: {}", err))
+    }
+}
+
+impl From<time::error::Parse> for AppError {
+    fn from(err: time::error::Parse) -> AppError {
+        AppError::Error(format!("time: {}", err))
     }
 }

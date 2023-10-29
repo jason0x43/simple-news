@@ -3,6 +3,8 @@ use crate::{
     util::{get_client, Cache},
 };
 use clap::{arg, ArgMatches, Command};
+use serde_json::to_string_pretty;
+use server::Article;
 
 pub(crate) fn command() -> Command {
     Command::new("article")
@@ -38,6 +40,9 @@ async fn list(matches: &ArgMatches) -> Result<(), AppError> {
     } else {
         client.get(format!("{}/articles", host)).send().await?
     };
-    print!("{}", body.text().await?);
+    let articles = body.json::<Vec<Article>>().await?;
+
+    println!("{}", to_string_pretty(&articles).unwrap());
+
     Ok(())
 }

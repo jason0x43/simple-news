@@ -1,4 +1,7 @@
-use crate::{error::AppError, util::get_client};
+use crate::{
+    error::AppError,
+    util::{assert_ok, get_client},
+};
 use clap::{arg, ArgMatches, Command};
 use serde_json::to_string_pretty;
 use server::{CreateUserRequest, User};
@@ -26,7 +29,7 @@ pub(crate) async fn handle(matches: &ArgMatches) -> Result<(), AppError> {
     match matches.subcommand() {
         Some(("create", sub_matches)) => create(sub_matches).await,
         Some(("list", _)) => list().await,
-        _ => unreachable!()
+        _ => unreachable!(),
     }
 }
 
@@ -44,20 +47,25 @@ async fn create(matches: &ArgMatches) -> Result<(), AppError> {
     };
 
     let client = get_client()?;
-    let _body = client
-        .post("http://localhost:3000/users")
-        .json(&body)
-        .send()
-        .await?;
+    assert_ok(
+        client
+            .post("http://localhost:3000/users")
+            .json(&body)
+            .send()
+            .await?,
+    )
+    .await?;
 
     Ok(())
 }
 
 async fn list() -> Result<(), AppError> {
     let client = get_client()?;
-    let body = client.get("http://localhost:3000/users").send().await?;
-    let users: Vec<User> = body.json().await?;
+    let resp =
+        assert_ok(client.get("http://localhost:3000/users").send().await?)
+            .await?;
 
+    let users: Vec<User> = resp.json().await?;
     println!("{}", to_string_pretty(&users).unwrap());
 
     Ok(())

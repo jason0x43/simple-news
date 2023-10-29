@@ -1,6 +1,8 @@
 use base64::{engine::general_purpose, Engine};
-use reqwest::{Client, Url};
+use reqwest::Client;
+use url::Url;
 use rss::{Channel, Item};
+use scraper::Html;
 use sha2::{Digest, Sha256};
 use time::{
     format_description::{well_known::Rfc2822, FormatItem},
@@ -9,7 +11,7 @@ use time::{
 };
 use url::Origin;
 
-use crate::{error::AppError, util::get_future_time};
+use crate::{error::AppError, util::get_future_datetime};
 
 #[derive(Debug)]
 pub(crate) struct ItemContent {
@@ -17,7 +19,7 @@ pub(crate) struct ItemContent {
     pub(crate) link: Option<Url>,
     pub(crate) content: Option<String>,
     pub(crate) article_id: String,
-    pub(crate) published: i64,
+    pub(crate) published: OffsetDateTime,
 }
 
 /// Rfc2822 without the optional weekday
@@ -39,6 +41,7 @@ pub(crate) fn get_content(item: &Item) -> Result<ItemContent, AppError> {
         || item.description().map(|d| d.to_string()),
         |c| Some(c.to_string()),
     );
+    let content = content.map(|c| process_content(&c));
 
     let article_id = item
         .guid
@@ -53,19 +56,22 @@ pub(crate) fn get_content(item: &Item) -> Result<ItemContent, AppError> {
             format!("sha256:{}", hex::encode(hash))
         });
     let published = item.pub_date.clone().map_or_else(
-        || get_future_time(0),
+        || get_future_datetime(0),
         |pub_date| {
             let date = OffsetDateTime::parse(&pub_date, &RSS_TIME_FORMAT)
                 .or_else(|_| OffsetDateTime::parse(&pub_date, &Rfc2822));
-            if let Err(err) = date {
-                log::warn!(
-                    "invalid pub date for {} ({}): {}",
-                    article_id,
-                    pub_date,
-                    err
-                );
+            match date {
+                Err(err) => {
+                    log::warn!(
+                        "invalid pub date for {} ({}): {}",
+                        article_id,
+                        pub_date,
+                        err
+                    );
+                    get_future_datetime(0)
+                }
+                Ok(date) => date,
             }
-            0
         },
     );
 
@@ -82,7 +88,7 @@ pub(crate) fn get_content(item: &Item) -> Result<ItemContent, AppError> {
 pub(crate) async fn get_icon(
     channel: &Channel,
 ) -> Result<Option<Url>, AppError> {
-    let url = get_icon_url(channel).await?;
+    let url = get_icon_url(channel)?;
     if url.is_none() {
         return Ok(None);
     }
@@ -119,7 +125,7 @@ pub(crate) async fn get_icon(
 }
 
 /// Return a URL for the channel icon, if available
-async fn get_icon_url(channel: &Channel) -> Result<Option<Url>, AppError> {
+fn get_icon_url(channel: &Channel) -> Result<Option<Url>, AppError> {
     if let Some(image) = channel.image() {
         let url = Url::parse(&image.url)?;
         return Ok(Some(url));
@@ -142,4 +148,13 @@ async fn get_icon_url(channel: &Channel) -> Result<Option<Url>, AppError> {
     } else {
         Ok(None)
     }
+}
+
+/// Process / cleanup document content
+fn process_content(content: &str) -> String {
+    let fragment = Html::parse_fragment(content);
+    if fragment.errors.len() > 0 {
+        log::warn!("error parsing fragment: {:?}", fragment.errors);
+    }
+    "".into()
 }

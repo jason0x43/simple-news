@@ -16,7 +16,7 @@ CREATE TABLE passwords (
 CREATE TABLE sessions (
   id BLOB PRIMARY KEY,
   data TEXT NOT NULL,
-  expires INTEGER NOT NULL,
+  expires TEXT NOT NULL,
   user_id BLOB NOT NULL REFERENCES users(id) ON DELETE CASCADE
 ) STRICT;
 
@@ -25,7 +25,7 @@ CREATE TABLE feeds (
   url TEXT UNIQUE NOT NULL,
   title TEXT NOT NULL,
   kind TEXT NOT NULL DEFAULT 'rss',
-  last_updated INTEGER NOT NULL,
+  last_updated TEXT NOT NULL,
   disabled INTEGER NOT NULL,
   icon TEXT,
   html_url TEXT
@@ -37,7 +37,7 @@ CREATE TABLE articles (
   feed_id BLOB NOT NULL REFERENCES feeds(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   content TEXT NOT NULL,
-  published INTEGER NOT NULL,
+  published TEXT NOT NULL,
   link TEXT,
   UNIQUE (feed_id, article_id)
 ) STRICT;

@@ -73,7 +73,7 @@ impl Cache {
         } else if let Some(ids) = &self.ids {
             let matches = ids
                 .iter()
-                .filter(|id| id.to_string().contains(id_part))
+                .filter(|id| id.to_string().starts_with(id_part))
                 .map(|id| id.clone())
                 .collect::<Vec<Uuid>>();
             if matches.len() == 1 {
