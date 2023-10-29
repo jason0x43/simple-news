@@ -2,28 +2,48 @@ use base64::{engine::general_purpose, Engine};
 use reqwest::{Client, Url};
 use rss::{Channel, Item};
 use sha2::{Digest, Sha256};
-use time::{format_description::well_known::Rfc2822, OffsetDateTime};
+use time::{
+    format_description::{well_known::Rfc2822, FormatItem},
+    macros::format_description,
+    OffsetDateTime,
+};
 use url::Origin;
 
 use crate::{error::AppError, util::get_future_time};
 
+#[derive(Debug)]
 pub(crate) struct ItemContent {
     pub(crate) title: String,
-    pub(crate) link: Option<String>,
+    pub(crate) link: Option<Url>,
     pub(crate) content: Option<String>,
     pub(crate) article_id: String,
     pub(crate) published: i64,
 }
 
+/// Rfc2822 without the optional weekday
+static RSS_TIME_FORMAT: &'static [FormatItem<'static>] = format_description!(
+    "[day] [month repr:short] [year] [hour repr:24]:[minute] [offset_hour sign:mandatory][offset_minute]"
+);
+
 /// Return the content of an Item
 pub(crate) fn get_content(item: &Item) -> Result<ItemContent, AppError> {
     let title = item.title.clone().unwrap_or("Untitled".into());
     let link = item.link.clone();
-    let content = item.content().map(|c| c.to_string());
+    let link = if let Some(url) = link {
+        Some(Url::parse(&url)?)
+    } else {
+        None
+    };
+
+    let content = item.content().map_or_else(
+        || item.description().map(|d| d.to_string()),
+        |c| Some(c.to_string()),
+    );
+
     let article_id = item
         .guid
         .clone()
-        .map_or(link.clone(), |v| Some(v.value))
+        .map_or(link.clone().map(|l| l.to_string()), |v| Some(v.value))
         .unwrap_or_else(|| {
             let mut hasher = Sha256::new();
             let content = content.clone().unwrap_or("".into());
@@ -35,9 +55,15 @@ pub(crate) fn get_content(item: &Item) -> Result<ItemContent, AppError> {
     let published = item.pub_date.clone().map_or_else(
         || get_future_time(0),
         |pub_date| {
-            let date = OffsetDateTime::parse(&pub_date, &Rfc2822);
-            if date.is_err() {
-                log::warn!("invalid pub date for {}: {}", article_id, pub_date);
+            let date = OffsetDateTime::parse(&pub_date, &RSS_TIME_FORMAT)
+                .or_else(|_| OffsetDateTime::parse(&pub_date, &Rfc2822));
+            if let Err(err) = date {
+                log::warn!(
+                    "invalid pub date for {} ({}): {}",
+                    article_id,
+                    pub_date,
+                    err
+                );
             }
             0
         },

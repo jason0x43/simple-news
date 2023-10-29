@@ -35,10 +35,10 @@ CREATE TABLE articles (
   id BLOB PRIMARY KEY,
   article_id TEXT NOT NULL,
   feed_id BLOB NOT NULL REFERENCES feeds(id) ON DELETE CASCADE,
-  title TEXT,
-  link TEXT,
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
   published INTEGER NOT NULL,
-  content TEXT,
+  link TEXT,
   UNIQUE (feed_id, article_id)
 ) STRICT;
 

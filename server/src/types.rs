@@ -88,10 +88,10 @@ pub struct Article {
     pub id: Uuid,
     pub article_id: String,
     pub feed_id: Uuid,
-    pub title: Option<String>,
-    pub link: Option<Url>,
+    pub title: String,
+    pub content: String,
     pub published: i64,
-    pub content: Option<String>,
+    pub link: Option<Url>,
 }
 
 #[derive(Deserialize, Serialize)]

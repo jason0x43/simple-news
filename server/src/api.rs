@@ -12,7 +12,7 @@ use crate::{
     state::AppState,
     types::{
         AddFeedRequest, CreateSessionRequest, CreateUserRequest, Feed,
-        Password, Session, User,
+        Password, Session, User, Article,
     },
     util::check_password,
 };
@@ -61,11 +61,24 @@ pub(crate) async fn create_session(
     ))
 }
 
+#[debug_handler]
 pub(crate) async fn get_articles(
     _session: Session,
-) -> Result<String, AppError> {
-    info!("Got articles");
-    Ok("Some articles".into())
+    state: State<AppState>,
+) -> Result<Json<Vec<Article>>, AppError> {
+    let mut conn = state.pool.acquire().await?;
+    let articles = Article::find_all(&mut *conn).await?;
+    Ok(Json(articles))
+}
+
+pub(crate) async fn get_feed_articles(
+    _session: Session,
+    state: State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<Vec<Article>>, AppError> {
+    let mut conn = state.pool.acquire().await?;
+    let articles = Article::find_all_for_feed(&mut *conn, id).await?;
+    Ok(Json(articles))
 }
 
 pub(crate) async fn add_feed(
@@ -109,7 +122,6 @@ pub(crate) async fn get_feeds(
     Ok(Json(feeds))
 }
 
-#[debug_handler]
 pub(crate) async fn refresh_feed(
     _session: Session,
     state: State<AppState>,

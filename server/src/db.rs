@@ -1,6 +1,6 @@
 use crate::{
     error::AppError,
-    rss::{get_icon, get_content},
+    rss::{get_content, get_icon},
     types::{Article, Feed, FeedKind, Password, Session, User},
     util::{get_future_time, hash_password},
 };
@@ -297,7 +297,7 @@ impl Feed {
     }
 
     pub(crate) async fn find_all(
-        conn: &mut SqliteConnection
+        conn: &mut SqliteConnection,
     ) -> Result<Vec<Self>, AppError> {
         let db_feeds = query_as!(
             DbFeed,
@@ -329,7 +329,7 @@ impl Feed {
 
     pub(crate) async fn refresh(
         self,
-        conn: &mut SqliteConnection
+        conn: &mut SqliteConnection,
     ) -> Result<(), AppError> {
         let client = Client::new();
         let bytes = client.get(self.url.clone()).send().await?.bytes().await?;
@@ -352,29 +352,18 @@ impl Feed {
 
         for item in &channel.items {
             let item_content = get_content(&item)?;
-            let feed_id = self.id;
 
             if let Some(content) = item_content.content {
-                let new_id = Uuid::new_v4();
-                let _result = query!(
-                    r#"
-                    INSERT INTO articles(
-                      content, id, feed_id, article_id, title, link, published
-                    )
-                    VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7)
-                    ON CONFLICT(article_id, feed_id)
-                    DO UPDATE SET content = ?1
-                    "#,
+                Article::create(
+                    &mut *conn,
                     content,
-                    new_id,
-                    feed_id,
-                    item_content.article_id,
+                    self.id,
+                    item_content.article_id.clone(),
                     item_content.title,
                     item_content.link,
-                    item_content.published
+                    item_content.published,
                 )
-                .execute(&mut *conn)
-                .await;
+                .await?;
             }
         }
 
@@ -382,4 +371,126 @@ impl Feed {
     }
 }
 
-impl Article {}
+struct DbArticle {
+    pub id: Uuid,
+    pub feed_id: Uuid,
+    pub article_id: String,
+    pub title: String,
+    pub content: String,
+    pub published: i64,
+    pub link: Option<String>,
+}
+
+impl TryFrom<DbArticle> for Article {
+    type Error = AppError;
+
+    fn try_from(value: DbArticle) -> Result<Self, AppError> {
+        let link = if let Some(link) = value.link {
+            Some(Url::parse(&link)?)
+        } else {
+            None
+        };
+
+        Ok(Self {
+            id: value.id,
+            feed_id: value.feed_id,
+            article_id: value.article_id,
+            title: value.title,
+            content: value.content,
+            published: value.published,
+            link,
+        })
+    }
+}
+
+impl Article {
+    pub(crate) async fn create(
+        conn: &mut SqliteConnection,
+        content: String,
+        feed_id: Uuid,
+        article_id: String,
+        title: String,
+        link: Option<Url>,
+        published: i64,
+    ) -> Result<Self, AppError> {
+        let article = Self {
+            id: Uuid::new_v4(),
+            content,
+            feed_id,
+            article_id,
+            title,
+            link,
+            published,
+        };
+
+        let link_str = article.link.clone().map(|l| l.to_string());
+        query!(
+            r#"
+            INSERT INTO articles(
+              content, id, feed_id, article_id, title, link, published
+            )
+            VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7)
+            ON CONFLICT(article_id, feed_id)
+            DO UPDATE SET content = ?1
+            "#,
+            article.content,
+            article.id,
+            feed_id,
+            article.article_id,
+            article.title,
+            link_str,
+            article.published
+        )
+        .execute(&mut *conn)
+        .await?;
+
+        Ok(article)
+    }
+
+    pub(crate) async fn find_all(
+        conn: &mut SqliteConnection,
+    ) -> Result<Vec<Self>, AppError> {
+        let db_articles = query_as!(
+            DbArticle,
+            r#"
+            SELECT id AS "id!: Uuid", article_id, feed_id AS "feed_id!: Uuid",
+            title, content, published, link
+            FROM articles
+            "#
+        )
+        .fetch_all(conn)
+        .await?;
+
+        let articles = db_articles
+            .into_iter()
+            .map(|a| a.try_into())
+            .collect::<Result<Vec<Article>, AppError>>()?;
+
+        Ok(articles)
+    }
+
+    pub(crate) async fn find_all_for_feed(
+        conn: &mut SqliteConnection,
+        feed_id: Uuid,
+    ) -> Result<Vec<Self>, AppError> {
+        let db_articles = query_as!(
+            DbArticle,
+            r#"
+            SELECT id AS "id!: Uuid", article_id, feed_id AS "feed_id!: Uuid",
+            title, content, published, link
+            FROM articles
+            WHERE feed_id = ?1
+            "#,
+            feed_id
+        )
+        .fetch_all(conn)
+        .await?;
+
+        let articles = db_articles
+            .into_iter()
+            .map(|a| a.try_into())
+            .collect::<Result<Vec<Article>, AppError>>()?;
+
+        Ok(articles)
+    }
+}
