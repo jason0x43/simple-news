@@ -134,3 +134,14 @@ pub(crate) async fn refresh_feed(
     tx.commit().await?;
     Ok(())
 }
+
+pub(crate) async fn refresh_feeds(
+    _session: Session,
+    state: State<AppState>,
+) -> Result<(), AppError> {
+    let mut tx = state.pool.begin().await?;
+    log::debug!("refreshing all feeds");
+    Feed::refresh_all(&mut *tx).await?;
+    tx.commit().await?;
+    Ok(())
+}

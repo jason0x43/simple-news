@@ -143,9 +143,15 @@ impl From<Uuid> for FeedId {
     }
 }
 
-impl Id  for FeedId {
+impl Id for FeedId {
     fn uuid(&self) -> Uuid {
         self.0
+    }
+}
+
+impl Display for FeedId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.uuid().to_string())
     }
 }
 

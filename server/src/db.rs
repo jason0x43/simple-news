@@ -345,6 +345,20 @@ impl Feed {
         log::debug!("added articles");
         Ok(())
     }
+
+    pub(crate) async fn refresh_all(
+        conn: &mut SqliteConnection,
+    ) -> Result<(), AppError> {
+        let feeds = Feed::find_all(conn).await?;
+        for feed in feeds {
+            let id = feed.id;
+            feed.refresh(conn).await.unwrap_or_else(|err| {
+                log::warn!("error refreshing feed {}: {}", id, err);
+            })
+        }
+
+        Ok(())
+    }
 }
 
 #[derive(Debug)]
@@ -372,8 +386,6 @@ impl Article {
             link: data.link.map(|l| l.into()),
             published: data.published,
         };
-
-        log::debug!("inserting into articles: {:?}", article);
 
         query!(
             r#"

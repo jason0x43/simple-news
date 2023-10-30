@@ -39,6 +39,7 @@ async fn main() -> Result<(), sqlx::Error> {
         .route("/users", get(api::get_users))
         .route("/login", post(api::create_session))
         .route("/articles", get(api::get_articles))
+        .route("/feeds/refresh", get(api::refresh_feeds))
         .route("/feeds/:id/refresh", get(api::refresh_feed))
         .route("/feeds/:id/articles", get(api::get_feed_articles))
         .route("/feeds/:id", get(api::get_feed))

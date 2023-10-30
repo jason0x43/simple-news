@@ -46,9 +46,9 @@ pub(crate) fn command() -> Command {
         )
         .subcommand(
             Command::new("refresh")
-                .about("Refresh a feed")
-                .arg(arg!(<FEED_ID> "A feed ID"))
-                .arg_required_else_help(true),
+                .about("Refresh a feed or all feeds")
+                .arg(arg!([FEED_ID] "A feed ID"))
+                .arg_required_else_help(false),
         )
 }
 
@@ -130,10 +130,14 @@ async fn delete(matches: &ArgMatches) -> Result<(), AppError> {
 
 async fn refresh(matches: &ArgMatches) -> Result<(), AppError> {
     let cache = Cache::load()?;
-    let id = matches.get_one::<String>("FEED_ID").unwrap();
-    let id = cache.get_matching_id(id)?;
     let client = get_client()?;
-    let url = get_host()?.join(&format!("/feeds/{}/refresh", id))?;
+    let id = matches.get_one::<String>("FEED_ID");
+    let url = if let Some(id) = id {
+        let id = cache.get_matching_id(id)?;
+        get_host()?.join(&format!("/feeds/{}/refresh", id))?
+    } else {
+        get_host()?.join("/feeds/refresh")?
+    };
     assert_ok(client.get(url).send().await?).await?;
 
     Ok(())
