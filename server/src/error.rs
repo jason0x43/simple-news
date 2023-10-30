@@ -1,7 +1,10 @@
+use std::string::FromUtf8Error;
+
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
+use lol_html::errors::RewritingError;
 use reqwest::header::ToStrError;
 use thiserror::Error;
 use time::error::ComponentRange;
@@ -125,5 +128,17 @@ impl From<serde_json::Error> for AppError {
 impl From<time::error::Parse> for AppError {
     fn from(err: time::error::Parse) -> AppError {
         AppError::Error(format!("time: {}", err))
+    }
+}
+
+impl From<RewritingError> for AppError {
+    fn from(err: RewritingError) -> AppError {
+        AppError::Error(format!("HTML rewriting: {}", err))
+    }
+}
+
+impl From<FromUtf8Error> for AppError {
+    fn from(err: FromUtf8Error) -> AppError {
+        AppError::Error(format!("UTF8: {}", err))
     }
 }

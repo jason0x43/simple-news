@@ -1,8 +1,7 @@
 use base64::{engine::general_purpose, Engine};
+use lol_html::{element, HtmlRewriter, Settings};
 use reqwest::Client;
-use url::Url;
 use rss::{Channel, Item};
-use scraper::Html;
 use sha2::{Digest, Sha256};
 use time::{
     format_description::{well_known::Rfc2822, FormatItem},
@@ -10,6 +9,7 @@ use time::{
     OffsetDateTime,
 };
 use url::Origin;
+use url::Url;
 
 use crate::{error::AppError, util::get_future_datetime};
 
@@ -37,11 +37,13 @@ pub(crate) fn get_content(item: &Item) -> Result<ItemContent, AppError> {
         None
     };
 
-    let content = item.content().map_or_else(
-        || item.description().map(|d| d.to_string()),
-        |c| Some(c.to_string()),
-    );
-    let content = content.map(|c| process_content(&c));
+    let content = item
+        .content()
+        .map_or_else(
+            || item.description().map(|d| d.to_string()),
+            |c| Some(c.to_string()),
+        )
+        .map(|c| process_content(&c).unwrap_or(c));
 
     let article_id = item
         .guid
@@ -55,6 +57,7 @@ pub(crate) fn get_content(item: &Item) -> Result<ItemContent, AppError> {
             let hash = hasher.finalize();
             format!("sha256:{}", hex::encode(hash))
         });
+
     let published = item.pub_date.clone().map_or_else(
         || get_future_datetime(0),
         |pub_date| {
@@ -151,10 +154,22 @@ fn get_icon_url(channel: &Channel) -> Result<Option<Url>, AppError> {
 }
 
 /// Process / cleanup document content
-fn process_content(content: &str) -> String {
-    let fragment = Html::parse_fragment(content);
-    if fragment.errors.len() > 0 {
-        log::warn!("error parsing fragment: {:?}", fragment.errors);
-    }
-    "".into()
+fn process_content(content: &str) -> Result<String, AppError> {
+    let mut output = vec![];
+
+    let mut rewriter = HtmlRewriter::new(
+        Settings {
+            element_content_handlers: vec![element!("a[style]", |el| {
+                el.remove_attribute("style");
+                Ok(())
+            })],
+            ..Settings::default()
+        },
+        |c: &[u8]| output.extend_from_slice(c),
+    );
+
+    rewriter.write(content.as_bytes())?;
+    rewriter.end()?;
+
+    Ok(String::from_utf8(output)?)
 }
