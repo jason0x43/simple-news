@@ -5,7 +5,7 @@ use crate::{
     util::{assert_ok, get_client, get_host, to_time_str, Cache},
 };
 use clap::{arg, ArgMatches, Command};
-use comfy_table::{presets::UTF8_FULL, ContentArrangement, Table};
+use comfy_table::{presets::UTF8_FULL, Cell, Color, ContentArrangement, Table};
 use reqwest::Url;
 use serde::Deserialize;
 use serde_json::to_string_pretty;
@@ -205,20 +205,26 @@ async fn log(matches: &ArgMatches) -> Result<(), AppError> {
         if id.is_some() {
             table.set_header(vec!["time", "success", "message"]);
             table.add_rows(updates.iter().map(|u| {
+                let color = if u.success { Color::Reset } else { Color::Red };
                 vec![
-                    to_time_str(&u.time),
-                    u.success.to_string(),
-                    u.message.clone().unwrap_or("".to_string()),
+                    Cell::new(to_time_str(&u.time)).fg(color),
+                    Cell::new(u.success.to_string()).fg(color),
+                    Cell::new(u.message.clone().unwrap_or("".to_string()))
+                        .fg(color),
                 ]
             }));
         } else {
             table.set_header(vec!["feed_id", "time", "success", "message"]);
             table.add_rows(updates.iter().map(|u| {
+                let color = if u.success { Color::Reset } else { Color::Red };
+                let feed_id: String =
+                    u.feed_id.to_string().chars().take(8).collect();
                 vec![
-                    u.feed_id.to_string().chars().take(8).collect(),
-                    to_time_str(&u.time),
-                    u.success.to_string(),
-                    u.message.clone().unwrap_or("".to_string()),
+                    Cell::new(feed_id).fg(color),
+                    Cell::new(to_time_str(&u.time)).fg(color),
+                    Cell::new(u.success.to_string()).fg(color),
+                    Cell::new(u.message.clone().unwrap_or("".to_string()))
+                        .fg(color),
                 ]
             }));
         }
