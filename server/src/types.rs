@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+use macros::UuidId;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use time::OffsetDateTime;
@@ -11,21 +12,9 @@ pub trait Id {
     fn uuid(&self) -> Uuid;
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, sqlx::Type)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, sqlx::Type, UuidId)]
 #[sqlx(transparent)]
 pub struct UserId(pub Uuid);
-
-impl From<Uuid> for UserId {
-    fn from(value: Uuid) -> Self {
-        UserId(value)
-    }
-}
-
-impl Id  for UserId {
-    fn uuid(&self) -> Uuid {
-        self.0
-    }
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 #[serde(rename_all = "camelCase")]
@@ -44,21 +33,9 @@ impl Display for User {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, sqlx::Type)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, sqlx::Type, UuidId)]
 #[sqlx(transparent)]
 pub struct PasswordId(pub Uuid);
-
-impl From<Uuid> for PasswordId {
-    fn from(value: Uuid) -> Self {
-        PasswordId(value)
-    }
-}
-
-impl Id  for PasswordId {
-    fn uuid(&self) -> Uuid {
-        self.0
-    }
-}
 
 #[derive(Clone, Serialize, Deserialize, FromRow)]
 #[serde(rename_all = "camelCase")]
@@ -69,33 +46,9 @@ pub struct Password {
     pub user_id: UserId,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, sqlx::Type)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, sqlx::Type, UuidId)]
 #[sqlx(transparent)]
 pub struct SessionId(pub Uuid);
-
-impl From<Uuid> for SessionId {
-    fn from(value: Uuid) -> Self {
-        SessionId(value)
-    }
-}
-
-impl Id  for SessionId {
-    fn uuid(&self) -> Uuid {
-        self.0
-    }
-}
-
-impl SessionId {
-    pub fn to_string(&self) -> String {
-        self.0.to_string()
-    }
-}
-
-impl Display for SessionId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.to_string())
-    }
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 #[serde(rename_all = "camelCase")]
@@ -133,27 +86,9 @@ impl From<String> for FeedKind {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, sqlx::Type)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, sqlx::Type, UuidId)]
 #[sqlx(transparent)]
 pub struct FeedId(pub Uuid);
-
-impl From<Uuid> for FeedId {
-    fn from(value: Uuid) -> Self {
-        FeedId(value)
-    }
-}
-
-impl Id for FeedId {
-    fn uuid(&self) -> Uuid {
-        self.0
-    }
-}
-
-impl Display for FeedId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.uuid().to_string())
-    }
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 #[serde(rename_all = "camelCase")]
@@ -163,28 +98,14 @@ pub struct Feed {
     pub url: String,
     pub title: String,
     pub kind: FeedKind,
-    #[serde(with = "time::serde::rfc3339")]
-    pub last_updated: OffsetDateTime,
     pub disabled: bool,
     pub icon: Option<String>,
     pub html_url: Option<String>,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, sqlx::Type)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, sqlx::Type, UuidId)]
 #[sqlx(transparent)]
 pub struct ArticleId(pub Uuid);
-
-impl From<Uuid> for ArticleId {
-    fn from(value: Uuid) -> Self {
-        ArticleId(value)
-    }
-}
-
-impl Id  for ArticleId {
-    fn uuid(&self) -> Uuid {
-        self.0
-    }
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 #[serde(rename_all = "camelCase")]
@@ -233,4 +154,19 @@ pub struct SessionResponse {
     pub id: SessionId,
     #[serde(with = "time::serde::rfc3339")]
     pub expires: OffsetDateTime,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, sqlx::Type, UuidId)]
+#[sqlx(transparent)]
+pub struct FeedLogId(pub Uuid);
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[serde(rename_all = "camelCase")]
+pub struct FeedLog {
+    pub id: FeedLogId,
+    pub feed_id: FeedId,
+    #[serde(with = "time::serde::rfc3339")]
+    pub time: OffsetDateTime,
+    pub success: bool,
+    pub message: Option<String>,
 }

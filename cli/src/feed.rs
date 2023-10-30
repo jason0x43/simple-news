@@ -2,14 +2,14 @@ use std::fs;
 
 use crate::{
     error::AppError,
-    util::{assert_ok, get_client, get_host, Cache, to_time_str},
+    util::{assert_ok, get_client, get_host, to_time_str, Cache},
 };
 use clap::{arg, ArgMatches, Command};
 use comfy_table::{presets::UTF8_FULL, ContentArrangement, Table};
 use reqwest::Url;
 use serde::Deserialize;
 use serde_json::to_string_pretty;
-use server::{AddFeedRequest, Feed, FeedKind};
+use server::{AddFeedRequest, Feed, FeedKind, FeedLog};
 
 pub(crate) fn command() -> Command {
     Command::new("feed")
@@ -37,7 +37,7 @@ pub(crate) fn command() -> Command {
         .subcommand(
             Command::new("list")
                 .about("List feeds")
-                .arg(arg!(-t --table "Output a table"))
+                .arg(arg!(-j --json "Output raw JSON"))
                 .arg_required_else_help(false),
         )
         .subcommand(
@@ -52,6 +52,13 @@ pub(crate) fn command() -> Command {
                 .arg(arg!([FEED_ID] "A feed ID"))
                 .arg_required_else_help(false),
         )
+        .subcommand(
+            Command::new("log")
+                .about("Show update log for a feed or all feeds")
+                .arg(arg!([FEED_ID] "A feed ID"))
+                .arg(arg!(-j --json "Output raw JSON"))
+                .arg_required_else_help(false),
+        )
 }
 
 pub(crate) async fn handle(matches: &ArgMatches) -> Result<(), AppError> {
@@ -62,6 +69,7 @@ pub(crate) async fn handle(matches: &ArgMatches) -> Result<(), AppError> {
         Some(("delete", sub_matches)) => delete(sub_matches).await,
         Some(("list", sub_matches)) => list(sub_matches).await,
         Some(("refresh", sub_matches)) => refresh(sub_matches).await,
+        Some(("log", sub_matches)) => log(sub_matches).await,
         _ => unreachable!(),
     }
 }
@@ -155,7 +163,9 @@ async fn list(matches: &ArgMatches) -> Result<(), AppError> {
     cache.add_ids(feeds.iter().map(|f| f.id).collect());
     cache.save()?;
 
-    if matches.get_flag("table") {
+    if matches.get_flag("json") {
+        println!("{}", to_string_pretty(&feeds).unwrap());
+    } else {
         let mut table = Table::new();
         table.load_preset(UTF8_FULL);
         table.set_content_arrangement(ContentArrangement::Dynamic);
@@ -164,12 +174,55 @@ async fn list(matches: &ArgMatches) -> Result<(), AppError> {
             vec![
                 f.id.to_string().chars().take(8).collect(),
                 f.title.to_string(),
-                to_time_str(&f.last_updated)
             ]
         }));
         println!("{table}");
+    }
+
+    Ok(())
+}
+
+async fn log(matches: &ArgMatches) -> Result<(), AppError> {
+    let client = get_client()?;
+    let cache = Cache::load()?;
+    let id = matches.get_one::<String>("FEED_ID");
+    let url = if let Some(id) = id {
+        let id = cache.get_matching_id(id)?;
+        get_host()?.join(&format!("/feeds/{}/log", id))?
     } else {
-        println!("{}", to_string_pretty(&feeds).unwrap());
+        get_host()?.join("/feeds/log")?
+    };
+
+    let resp = assert_ok(client.get(url).send().await?).await?;
+    let updates: Vec<FeedLog> = resp.json().await?;
+
+    if matches.get_flag("json") {
+        println!("{}", to_string_pretty(&updates).unwrap());
+    } else {
+        let mut table = Table::new();
+        table.load_preset(UTF8_FULL);
+        table.set_content_arrangement(ContentArrangement::Dynamic);
+        if id.is_some() {
+            table.set_header(vec!["time", "success", "message"]);
+            table.add_rows(updates.iter().map(|u| {
+                vec![
+                    to_time_str(&u.time),
+                    u.success.to_string(),
+                    u.message.clone().unwrap_or("".to_string()),
+                ]
+            }));
+        } else {
+            table.set_header(vec!["feed_id", "time", "success", "message"]);
+            table.add_rows(updates.iter().map(|u| {
+                vec![
+                    u.feed_id.to_string().chars().take(8).collect(),
+                    to_time_str(&u.time),
+                    u.success.to_string(),
+                    u.message.clone().unwrap_or("".to_string()),
+                ]
+            }));
+        }
+        println!("{table}");
     }
 
     Ok(())

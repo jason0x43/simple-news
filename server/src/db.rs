@@ -1,14 +1,12 @@
 use crate::{
     error::AppError,
-    rss::{get_content, get_icon},
+    rss::{get_content, get_icon, load_feed},
     types::{
-        Article, ArticleId, Feed, FeedId, FeedKind, Password, PasswordId,
-        Session, SessionId, User, UserId,
+        Article, ArticleId, Feed, FeedId, FeedKind, FeedLog, FeedLogId,
+        Password, PasswordId, Session, SessionId, User, UserId,
     },
     util::{get_timestamp, hash_password},
 };
-use reqwest::Client;
-use rss::Channel;
 use serde_json::json;
 use sqlx::{query, query_as, SqliteConnection};
 use time::OffsetDateTime;
@@ -204,7 +202,6 @@ impl Feed {
             url: url.to_string(),
             title,
             kind,
-            last_updated: get_timestamp(0),
             disabled: false,
             icon: None,
             html_url: None,
@@ -212,14 +209,13 @@ impl Feed {
 
         query!(
             r#"
-            INSERT INTO feeds (id, url, title, kind, last_updated, disabled)
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+            INSERT INTO feeds (id, url, title, kind, disabled)
+            VALUES (?1, ?2, ?3, ?4, ?5)
             "#,
             feed.id,
             feed.url,
             feed.title,
             feed.kind,
-            feed.last_updated,
             feed.disabled,
         )
         .execute(conn)
@@ -254,7 +250,6 @@ impl Feed {
               url,
               title,
               kind,
-              last_updated AS "last_updated!: OffsetDateTime",
               disabled AS "disabled!: bool",
               icon,
               html_url
@@ -282,7 +277,6 @@ impl Feed {
               url,
               title,
               kind,
-              last_updated AS "last_updated!: OffsetDateTime",
               disabled AS "disabled!: bool",
               icon,
               html_url
@@ -301,10 +295,22 @@ impl Feed {
         self,
         conn: &mut SqliteConnection,
     ) -> Result<(), AppError> {
-        let client = Client::new();
-        let bytes = client.get(self.url.clone()).send().await?.bytes().await?;
-        let channel = Channel::read_from(&bytes[..])?;
+        let channel = load_feed(self.url.clone()).await;
+        if let Err(err) = channel {
+            log::warn!("error downloading feed {}: {}", self.url, err);
+            FeedLog::create(conn, self.id, false, Some(err.to_string()))
+                .await
+                .err()
+                .map(|err| {
+                    log::debug!("error creating feed update: {}", err);
+                });
+            return Err(err);
+        }
+
+        let channel = channel.unwrap();
         log::debug!("downloaded feed at {}", self.url);
+
+        let mut errors: Vec<String> = vec![];
 
         let icon = get_icon(&channel).await;
         if let Ok(Some(icon)) = icon {
@@ -315,9 +321,14 @@ impl Feed {
                 self.id,
             )
             .execute(&mut *conn)
-            .await?;
+            .await
+            .err()
+            .map(|err| {
+                errors.push(format!("error updating icon: {}", err));
+            });
         } else if let Err(err) = icon {
             log::warn!("error getting icon for {}: {}", self.url, err);
+            errors.push(format!("error getting icon: {}", err));
         }
 
         for item in &channel.items {
@@ -335,31 +346,21 @@ impl Feed {
                     },
                 )
                 .await
-                .map_err(|err| {
-                    log::warn!("error creating article: {}", err);
-                    err
-                })?;
+                .err()
+                .map(|err| {
+                    errors.push(format!("error creating article: {}", err));
+                });
             }
         }
 
         log::debug!("added articles");
 
-        let now = get_timestamp(0);
-        query!(
-            "UPDATE feeds SET last_updated = ?1 WHERE id = ?2",
-            now,
-            self.id
-        )
-        .execute(&mut *conn)
-        .await
-        .map_err(|err| {
-            log::warn!(
-                "error updating last update time for feed {}: {}",
-                self.id,
-                err
-            );
-            err
-        })?;
+        FeedLog::create(conn, self.id, true, Some(errors.join("\n")))
+            .await
+            .err()
+            .map(|err| {
+                log::debug!("error creating feed update: {}", err);
+            });
 
         Ok(())
     }
@@ -472,5 +473,81 @@ impl Article {
         )
         .fetch_all(conn)
         .await?)
+    }
+}
+
+impl FeedLog {
+    pub(crate) async fn create(
+        conn: &mut SqliteConnection,
+        feed_id: FeedId,
+        success: bool,
+        message: Option<String>,
+    ) -> Result<Self, AppError> {
+        let update = FeedLog {
+            id: FeedLogId(Uuid::new_v4()),
+            time: get_timestamp(0),
+            feed_id,
+            success,
+            message,
+        };
+
+        query!(
+            r#"
+            INSERT INTO feed_logs(id, time, feed_id, success, message)
+            VALUES(?1, ?2, ?3, ?4, ?5)
+            "#,
+            update.id,
+            update.time,
+            update.feed_id,
+            update.success,
+            update.message,
+        )
+        .execute(&mut *conn)
+        .await?;
+
+        Ok(update)
+    }
+
+    pub(crate) async fn find_for_feed(
+        conn: &mut SqliteConnection,
+        feed_id: FeedId,
+    ) -> Result<Vec<Self>, AppError> {
+        query_as!(
+            FeedLog,
+            r#"
+            SELECT
+              id AS "id!: Uuid",
+              time AS "time!: OffsetDateTime",
+              feed_id AS "feed_id!: Uuid",
+              success AS "success!: bool",
+              message
+            FROM feed_logs
+            WHERE feed_id = ?1
+            "#,
+            feed_id
+        )
+        .fetch_all(conn)
+        .await
+        .map_err(AppError::SqlxError)
+    }
+
+    pub(crate) async fn find_all(
+        conn: &mut SqliteConnection,
+    ) -> Result<Vec<Self>, AppError> {
+        query_as!(
+            FeedLog,
+            r#"
+            SELECT
+              id AS "id!: Uuid",
+              time AS "time!: OffsetDateTime",
+              feed_id AS "feed_id!: Uuid",
+              success AS "success!: bool",
+              message
+            FROM feed_logs
+            "#,
+        )
+        .fetch_all(conn)
+        .await
+        .map_err(AppError::SqlxError)
     }
 }

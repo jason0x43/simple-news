@@ -12,7 +12,7 @@ use crate::{
     state::AppState,
     types::{
         AddFeedRequest, CreateSessionRequest, CreateUserRequest, Feed,
-        Password, Session, User, Article,
+        Password, Session, User, Article, FeedId, FeedLog,
     },
     util::check_password,
 };
@@ -144,4 +144,23 @@ pub(crate) async fn refresh_feeds(
     Feed::refresh_all(&mut *tx).await?;
     tx.commit().await?;
     Ok(())
+}
+
+pub(crate) async fn get_feed_log(
+    _session: Session,
+    state: State<AppState>,
+    Path(id): Path<FeedId>,
+) -> Result<Json<Vec<FeedLog>>, AppError> {
+    let mut conn = state.pool.acquire().await?;
+    let logs = FeedLog::find_for_feed(&mut conn, id).await?;
+    Ok(Json(logs))
+}
+
+pub(crate) async fn get_all_feed_logs(
+    _session: Session,
+    state: State<AppState>,
+) -> Result<Json<Vec<FeedLog>>, AppError> {
+    let mut conn = state.pool.acquire().await?;
+    let logs = FeedLog::find_all(&mut conn).await?;
+    Ok(Json(logs))
 }

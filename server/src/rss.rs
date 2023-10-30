@@ -27,6 +27,12 @@ static RSS_TIME_FORMAT: &'static [FormatItem<'static>] = format_description!(
     "[day] [month repr:short] [year] [hour repr:24]:[minute] [offset_hour sign:mandatory][offset_minute]"
 );
 
+pub(crate) async fn load_feed(url: String) -> Result<Channel, AppError> {
+    let client = Client::new();
+    let bytes = client.get(url).send().await?.bytes().await?;
+    Ok(Channel::read_from(&bytes[..])?)
+}
+
 /// Return the content of an Item
 pub(crate) fn get_content(item: &Item) -> Result<ItemContent, AppError> {
     let title = item.title.clone().unwrap_or("Untitled".into());

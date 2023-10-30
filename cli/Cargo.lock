@@ -1424,6 +1424,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "macros"
+version = "0.1.0"
+dependencies = [
+ "quote",
+ "syn 2.0.38",
+]
+
+[[package]]
 name = "matchers"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2502,6 +2510,7 @@ dependencies = [
  "hex",
  "log",
  "lol_html",
+ "macros",
  "mime_guess",
  "rand 0.8.5",
  "reqwest",

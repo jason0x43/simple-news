@@ -39,3 +39,4 @@ url = { version = "2.4.1", features = ["serde"] }
 tsync = "1"
 base64 = "0.21.5"
 lol_html = "1.2.0"
+macros = { path = "macros" }
