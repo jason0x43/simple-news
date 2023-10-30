@@ -9,7 +9,7 @@ use reqwest::{cookie::Jar, Client, Response, Url};
 use serde::{Deserialize, Serialize};
 use server::{Id, SessionId};
 use time::{
-    format_description::well_known::Rfc2822, OffsetDateTime,
+    format_description::{well_known::Rfc2822, FormatItem}, OffsetDateTime, macros::format_description,
 };
 use time_tz::OffsetDateTimeExt;
 use uuid::Uuid;
@@ -139,14 +139,16 @@ pub(crate) async fn assert_ok(
     }
 }
 
+static LOCAL_TIME_FORMAT: &'static [FormatItem<'static>] = format_description!(
+    "[weekday], [day] [month repr:short] [year] [hour repr:24]:[minute]"
+);
+
 pub(crate) fn to_time_str(time: &OffsetDateTime) -> String {
     if let Ok(tz) = time_tz::system::get_timezone() {
-        println!("using tz {:?}", tz);
         time.to_timezone(tz)
-            .format(&Rfc2822)
+            .format(&LOCAL_TIME_FORMAT)
             .unwrap_or_else(|u| u.to_string())
     } else {
-        println!("no local offset");
         time.format(&Rfc2822).unwrap_or_else(|u| u.to_string())
     }
 }
