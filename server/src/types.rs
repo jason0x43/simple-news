@@ -7,6 +7,10 @@ use tsync::tsync;
 use url::Url;
 use uuid::Uuid;
 
+pub trait Id {
+    fn uuid(&self) -> Uuid;
+}
+
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(transparent)]
 pub struct UserId(pub Uuid);
@@ -14,6 +18,12 @@ pub struct UserId(pub Uuid);
 impl From<Uuid> for UserId {
     fn from(value: Uuid) -> Self {
         UserId(value)
+    }
+}
+
+impl Id  for UserId {
+    fn uuid(&self) -> Uuid {
+        self.0
     }
 }
 
@@ -44,6 +54,12 @@ impl From<Uuid> for PasswordId {
     }
 }
 
+impl Id  for PasswordId {
+    fn uuid(&self) -> Uuid {
+        self.0
+    }
+}
+
 #[derive(Clone, Serialize, Deserialize, FromRow)]
 #[serde(rename_all = "camelCase")]
 pub struct Password {
@@ -63,9 +79,21 @@ impl From<Uuid> for SessionId {
     }
 }
 
+impl Id  for SessionId {
+    fn uuid(&self) -> Uuid {
+        self.0
+    }
+}
+
 impl SessionId {
     pub fn to_string(&self) -> String {
         self.0.to_string()
+    }
+}
+
+impl Display for SessionId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.to_string())
     }
 }
 
@@ -115,6 +143,12 @@ impl From<Uuid> for FeedId {
     }
 }
 
+impl Id  for FeedId {
+    fn uuid(&self) -> Uuid {
+        self.0
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 #[serde(rename_all = "camelCase")]
 #[tsync]
@@ -137,6 +171,12 @@ pub struct ArticleId(pub Uuid);
 impl From<Uuid> for ArticleId {
     fn from(value: Uuid) -> Self {
         ArticleId(value)
+    }
+}
+
+impl Id  for ArticleId {
+    fn uuid(&self) -> Uuid {
+        self.0
     }
 }
 

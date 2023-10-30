@@ -7,6 +7,7 @@ use std::{
 
 use reqwest::{cookie::Jar, Client, Response, Url};
 use serde::{Deserialize, Serialize};
+use server::{SessionId, Id};
 use uuid::Uuid;
 
 use crate::error::AppError;
@@ -14,7 +15,7 @@ use crate::error::AppError;
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct Cache {
-    pub(crate) session_id: Option<Uuid>,
+    pub(crate) session_id: Option<SessionId>,
     pub(crate) host: Option<String>,
     pub(crate) ids: Option<HashSet<Uuid>>,
 }
@@ -40,7 +41,7 @@ impl Cache {
         Ok(cache)
     }
 
-    pub(crate) fn get_session_id(&self) -> Result<Uuid, AppError> {
+    pub(crate) fn get_session_id(&self) -> Result<SessionId, AppError> {
         if let Some(session_id) = self.session_id {
             Ok(session_id)
         } else {
@@ -56,11 +57,12 @@ impl Cache {
         }
     }
 
-    pub(crate) fn add_ids(&mut self, new_ids: Vec<Uuid>) {
+    pub(crate) fn add_ids(&mut self, new_ids: Vec<impl Id>) {
+        let uuids: Vec<Uuid> = new_ids.iter().map(|i| i.uuid()).collect();
         if let Some(ids) = &mut self.ids {
-            ids.extend(new_ids);
+            ids.extend(uuids);
         } else {
-            self.ids = Some(HashSet::from_iter(new_ids));
+            self.ids = Some(HashSet::from_iter(uuids));
         }
     }
 

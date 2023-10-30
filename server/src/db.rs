@@ -320,13 +320,8 @@ impl Feed {
             log::warn!("error getting icon for {}: {}", self.url, err);
         }
 
-        log::debug!("processing items");
-
         for item in &channel.items {
-            log::debug!("processing item {:?}", item);
             let item_content = get_content(&item)?;
-            log::debug!("got item content");
-
             if let Some(content) = item_content.content {
                 Article::create(
                     &mut *conn,
@@ -345,10 +340,9 @@ impl Feed {
                     err
                 })?;
             }
-
-            log::debug!("added item");
         }
 
+        log::debug!("added articles");
         Ok(())
     }
 }
