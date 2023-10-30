@@ -2,9 +2,10 @@ use std::fs;
 
 use crate::{
     error::AppError,
-    util::{assert_ok, get_client, get_host, Cache},
+    util::{assert_ok, get_client, get_host, Cache, to_time_str},
 };
 use clap::{arg, ArgMatches, Command};
+use comfy_table::{presets::UTF8_FULL, ContentArrangement, Table};
 use reqwest::Url;
 use serde::Deserialize;
 use serde_json::to_string_pretty;
@@ -36,6 +37,7 @@ pub(crate) fn command() -> Command {
         .subcommand(
             Command::new("list")
                 .about("List feeds")
+                .arg(arg!(-t --table "Output a table"))
                 .arg_required_else_help(false),
         )
         .subcommand(
@@ -58,7 +60,7 @@ pub(crate) async fn handle(matches: &ArgMatches) -> Result<(), AppError> {
         Some(("load", sub_matches)) => load(sub_matches).await,
         Some(("show", sub_matches)) => show(sub_matches).await,
         Some(("delete", sub_matches)) => delete(sub_matches).await,
-        Some(("list", _)) => list().await,
+        Some(("list", sub_matches)) => list(sub_matches).await,
         Some(("refresh", sub_matches)) => refresh(sub_matches).await,
         _ => unreachable!(),
     }
@@ -143,7 +145,7 @@ async fn refresh(matches: &ArgMatches) -> Result<(), AppError> {
     Ok(())
 }
 
-async fn list() -> Result<(), AppError> {
+async fn list(matches: &ArgMatches) -> Result<(), AppError> {
     let client = get_client()?;
     let url = get_host()?.join("/feeds")?;
     let resp = assert_ok(client.get(url).send().await?).await?;
@@ -153,7 +155,22 @@ async fn list() -> Result<(), AppError> {
     cache.add_ids(feeds.iter().map(|f| f.id).collect());
     cache.save()?;
 
-    println!("{}", to_string_pretty(&feeds).unwrap());
+    if matches.get_flag("table") {
+        let mut table = Table::new();
+        table.load_preset(UTF8_FULL);
+        table.set_content_arrangement(ContentArrangement::Dynamic);
+        table.set_header(vec!["id", "title", "updated"]);
+        table.add_rows(feeds.iter().map(|f| {
+            vec![
+                f.id.to_string().chars().take(8).collect(),
+                f.title.to_string(),
+                to_time_str(&f.last_updated)
+            ]
+        }));
+        println!("{table}");
+    } else {
+        println!("{}", to_string_pretty(&feeds).unwrap());
+    }
 
     Ok(())
 }
