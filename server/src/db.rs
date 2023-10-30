@@ -395,7 +395,6 @@ impl Article {
         conn: &mut SqliteConnection,
         data: ArticleNew,
     ) -> Result<Self, AppError> {
-        log::debug!("creating article with: {:?}", data);
         let article = Self {
             id: ArticleId(Uuid::new_v4()),
             content: data.content.clone(),

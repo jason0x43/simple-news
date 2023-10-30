@@ -109,11 +109,10 @@ pub(crate) async fn get_icon(
     let client = Client::builder().build()?;
     let resp = client.get(url.clone()).send().await?;
     if resp.status() != 200 {
-        log::warn!("error downloading icon from {}: [{}]", url, resp.status());
-        return Err(AppError::Error(format!(
-            "error downloading icon ({})",
-            resp.status()
-        )));
+        let msg =
+            format!("error downloading icon from {}: [{}]", url, resp.status());
+        log::warn!("{}", msg);
+        return Err(AppError::Error(msg));
     }
 
     let ctype_hdr = resp.headers().get("content-type");
