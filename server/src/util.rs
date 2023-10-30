@@ -1,5 +1,5 @@
-use std::time::{SystemTime, UNIX_EPOCH};
-use time::OffsetDateTime;
+use std::ops::Add;
+use time::{Duration, OffsetDateTime};
 
 use log::error;
 use rand::{distributions::Alphanumeric, Rng};
@@ -55,12 +55,7 @@ pub(crate) fn check_password(
     }
 }
 
-pub(crate) fn get_future_datetime(seconds: i64) -> OffsetDateTime {
-    let now: i64 = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_secs()
-        .try_into()
-        .unwrap();
-    OffsetDateTime::from_unix_timestamp(now + seconds).unwrap()
+/// Return an OffsetDateTime in UTC offset by `offset` seconds
+pub(crate) fn get_timestamp(offset: i64) -> OffsetDateTime {
+    OffsetDateTime::now_utc().add(Duration::seconds(offset))
 }

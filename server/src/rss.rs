@@ -11,7 +11,7 @@ use time::{
 use url::Origin;
 use url::Url;
 
-use crate::{error::AppError, util::get_future_datetime};
+use crate::{error::AppError, util::get_timestamp};
 
 #[derive(Debug)]
 pub(crate) struct ItemContent {
@@ -59,7 +59,7 @@ pub(crate) fn get_content(item: &Item) -> Result<ItemContent, AppError> {
         });
 
     let published = item.pub_date.clone().map_or_else(
-        || get_future_datetime(0),
+        || get_timestamp(0),
         |pub_date| {
             let date = OffsetDateTime::parse(&pub_date, &RSS_TIME_FORMAT)
                 .or_else(|_| OffsetDateTime::parse(&pub_date, &Rfc2822));
@@ -71,7 +71,7 @@ pub(crate) fn get_content(item: &Item) -> Result<ItemContent, AppError> {
                         pub_date,
                         err
                     );
-                    get_future_datetime(0)
+                    get_timestamp(0)
                 }
                 Ok(date) => date,
             }

@@ -5,7 +5,7 @@ use crate::{
         Article, ArticleId, Feed, FeedId, FeedKind, Password, PasswordId,
         Session, SessionId, User, UserId,
     },
-    util::{get_future_datetime, hash_password},
+    util::{get_timestamp, hash_password},
 };
 use reqwest::Client;
 use rss::Channel;
@@ -148,7 +148,7 @@ impl Session {
             id: SessionId(Uuid::new_v4()),
             data: json!("{}"),
             user_id,
-            expires: get_future_datetime(604800),
+            expires: get_timestamp(604800),
         };
 
         log::debug!("creating session {:?}", session);
@@ -204,7 +204,7 @@ impl Feed {
             url: url.to_string(),
             title,
             kind,
-            last_updated: get_future_datetime(0),
+            last_updated: get_timestamp(0),
             disabled: false,
             icon: None,
             html_url: None,
@@ -343,6 +343,24 @@ impl Feed {
         }
 
         log::debug!("added articles");
+
+        let now = get_timestamp(0);
+        query!(
+            "UPDATE feeds SET last_updated = ?1 WHERE id = ?2",
+            now,
+            self.id
+        )
+        .execute(&mut *conn)
+        .await
+        .map_err(|err| {
+            log::warn!(
+                "error updating last update time for feed {}: {}",
+                self.id,
+                err
+            );
+            err
+        })?;
+
         Ok(())
     }
 
