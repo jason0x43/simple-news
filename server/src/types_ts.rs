@@ -11,6 +11,26 @@ type Uuid = String;
 type Url = String;
 
 #[tsync]
-#[allow(dead_code)]
 #[allow(non_camel_case_types)]
+#[allow(dead_code)]
 type Value<unknown> = HashMap<String, unknown>;
+
+#[tsync]
+#[allow(dead_code)]
+type UserId = Uuid;
+
+#[tsync]
+#[allow(dead_code)]
+type FeedId = Uuid;
+
+#[tsync]
+#[allow(dead_code)]
+type SessionId = Uuid;
+
+#[tsync]
+#[allow(dead_code)]
+type ArticleId = Uuid;
+
+#[tsync]
+#[allow(dead_code)]
+type OffsetDateTime = String;
