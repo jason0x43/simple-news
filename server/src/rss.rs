@@ -29,8 +29,10 @@ static RSS_TIME_FORMAT: &'static [FormatItem<'static>] = format_description!(
 
 pub(crate) async fn load_feed(url: String) -> Result<Channel, AppError> {
     let client = Client::new();
-    let bytes = client.get(url).send().await?.bytes().await?;
-    Ok(Channel::read_from(&bytes[..])?)
+    let bytes = client.get(url.clone()).send().await?.bytes().await?;
+    Ok(Channel::read_from(&bytes[..]).map_err(|err| {
+        AppError::Error(format!("error loading RSS from {}: {}", url, err))
+    })?)
 }
 
 /// Return the content of an Item
