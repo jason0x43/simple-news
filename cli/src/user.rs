@@ -1,6 +1,6 @@
 use crate::{
     error::AppError,
-    util::{assert_ok, get_client, get_host},
+    util::{assert_ok, get_client, get_host, new_table},
 };
 use clap::{arg, ArgMatches, Command};
 use serde_json::to_string_pretty;
@@ -21,18 +21,16 @@ pub(crate) fn command() -> Command {
         .subcommand(
             Command::new("list")
                 .about("List users")
+                .arg(arg!(-j --json "Output raw JSON"))
                 .arg_required_else_help(false),
         )
-        .subcommand(
-            Command::new("show")
-                .about("Show current user")
-        )
+        .subcommand(Command::new("show").about("Show current user"))
 }
 
 pub(crate) async fn handle(matches: &ArgMatches) -> Result<(), AppError> {
     match matches.subcommand() {
         Some(("create", sub_matches)) => create(sub_matches).await,
-        Some(("list", _)) => list().await,
+        Some(("list", sub_matches)) => list(sub_matches).await,
         Some(("show", _)) => show().await,
         _ => unreachable!(),
     }
@@ -64,14 +62,28 @@ async fn create(matches: &ArgMatches) -> Result<(), AppError> {
     Ok(())
 }
 
-async fn list() -> Result<(), AppError> {
+async fn list(matches: &ArgMatches) -> Result<(), AppError> {
     let client = get_client()?;
     let resp =
         assert_ok(client.get("http://localhost:3000/users").send().await?)
             .await?;
 
     let users: Vec<User> = resp.json().await?;
-    println!("{}", to_string_pretty(&users).unwrap());
+
+    if matches.get_flag("json") {
+        println!("{}", to_string_pretty(&users).unwrap());
+    } else {
+        let mut table = new_table();
+        table.set_header(vec!["id", "name", "email"]);
+        table.add_rows(users.iter().map(|u| {
+            vec![
+                u.id.to_string().chars().take(8).collect(),
+                u.username.clone(),
+                u.email.clone(),
+            ]
+        }));
+        println!("{table}");
+    }
 
     Ok(())
 }

@@ -1,9 +1,8 @@
 use crate::{
     error::AppError,
-    util::{assert_ok, get_client, get_host, Cache},
+    util::{assert_ok, get_client, get_host, new_table, Cache, substr},
 };
 use clap::{arg, ArgMatches, Command};
-use comfy_table::{presets::UTF8_FULL, ContentArrangement, Table};
 use serde_json::to_string_pretty;
 use server::{
     AddGroupFeedRequest, CreateFeedGroupRequest, Feed, FeedGroup, FeedGroupId,
@@ -103,13 +102,11 @@ async fn list(matches: &ArgMatches) -> Result<(), AppError> {
     if matches.get_flag("json") {
         println!("{}", to_string_pretty(&feeds).unwrap());
     } else {
-        let mut table = Table::new();
-        table.load_preset(UTF8_FULL);
-        table.set_content_arrangement(ContentArrangement::Dynamic);
+        let mut table = new_table();
         table.set_header(vec!["id", "name"]);
         table.add_rows(feeds.iter().map(|f| {
             vec![
-                f.id.to_string().chars().take(8).collect(),
+                substr(f.id.to_string(), 8),
                 f.name.to_string(),
             ]
         }));
@@ -132,13 +129,11 @@ async fn show(matches: &ArgMatches) -> Result<(), AppError> {
     if matches.get_flag("json") {
         println!("{}", to_string_pretty(&feeds).unwrap());
     } else {
-        let mut table = Table::new();
-        table.load_preset(UTF8_FULL);
-        table.set_content_arrangement(ContentArrangement::Dynamic);
+        let mut table = new_table();
         table.set_header(vec!["id", "name"]);
         table.add_rows(feeds.iter().map(|f| {
             vec![
-                f.id.to_string().chars().take(8).collect(),
+                substr(f.id.to_string(), 8),
                 f.title.to_string(),
             ]
         }));
@@ -154,7 +149,9 @@ async fn add(matches: &ArgMatches) -> Result<(), AppError> {
     let group_id: FeedGroupId = cache.get_matching_id(group_id)?.into();
     let feed_id = matches.get_one::<String>("FEED_ID").unwrap();
     let feed_id: FeedId = cache.get_matching_id(feed_id)?.into();
-    let body = AddGroupFeedRequest { feed_id: feed_id.clone() };
+    let body = AddGroupFeedRequest {
+        feed_id: feed_id.clone(),
+    };
     let client = get_client()?;
     let url = get_host()?.join(&format!("/feedgroups/{}", group_id))?;
     assert_ok(client.post(url.clone()).json(&body).send().await?).await?;

@@ -5,6 +5,7 @@ use std::{
     sync::Arc,
 };
 
+use comfy_table::{presets::UTF8_FULL, ContentArrangement, Table};
 use reqwest::{cookie::Jar, Client, Response, Url};
 use serde::{Deserialize, Serialize};
 use server::SessionId;
@@ -149,4 +150,15 @@ pub(crate) fn to_time_str(time: &OffsetDateTime) -> String {
     } else {
         time.format(&Rfc2822).unwrap_or_else(|u| u.to_string())
     }
+}
+
+pub(crate) fn new_table() -> Table {
+    let mut table = Table::new();
+    table.load_preset(UTF8_FULL);
+    table.set_content_arrangement(ContentArrangement::Dynamic);
+    table
+}
+
+pub(crate) fn substr(value: String, len: usize) -> String {
+    value.chars().take(len).collect()
 }

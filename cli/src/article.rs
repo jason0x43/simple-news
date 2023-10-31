@@ -1,9 +1,8 @@
 use crate::{
     error::AppError,
-    util::{get_client, Cache},
+    util::{get_client, Cache, new_table},
 };
 use clap::{arg, ArgMatches, Command};
-use comfy_table::{presets::UTF8_FULL, Table};
 use serde_json::to_string_pretty;
 use server::Article;
 
@@ -48,12 +47,13 @@ async fn list(matches: &ArgMatches) -> Result<(), AppError> {
     let articles = body.json::<Vec<Article>>().await?;
 
     if matches.get_flag("table") {
-        let mut table = Table::new();
-        table.load_preset(UTF8_FULL);
+        let mut table = new_table();
         table.set_header(vec!["published", "title"]);
-        table.add_rows(articles.iter().map(|a| {
-            vec![a.published.to_string(), a.title.to_string()]
-        }));
+        table.add_rows(
+            articles
+                .iter()
+                .map(|a| vec![a.published.to_string(), a.title.to_string()]),
+        );
         println!("{table}");
     } else {
         println!("{}", to_string_pretty(&articles).unwrap());

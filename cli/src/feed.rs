@@ -2,10 +2,10 @@ use std::fs;
 
 use crate::{
     error::AppError,
-    util::{assert_ok, get_client, get_host, to_time_str, Cache},
+    util::{assert_ok, get_client, get_host, to_time_str, Cache, new_table, substr},
 };
 use clap::{arg, ArgMatches, Command};
-use comfy_table::{presets::UTF8_FULL, Cell, Color, ContentArrangement, Table};
+use comfy_table::{Cell, Color};
 use reqwest::Url;
 use serde::Deserialize;
 use serde_json::to_string_pretty;
@@ -166,9 +166,7 @@ async fn list(matches: &ArgMatches) -> Result<(), AppError> {
     if matches.get_flag("json") {
         println!("{}", to_string_pretty(&feeds).unwrap());
     } else {
-        let mut table = Table::new();
-        table.load_preset(UTF8_FULL);
-        table.set_content_arrangement(ContentArrangement::Dynamic);
+        let mut table = new_table();
         table.set_header(vec!["id", "title", "updated"]);
         table.add_rows(feeds.iter().map(|f| {
             vec![
@@ -199,9 +197,7 @@ async fn log(matches: &ArgMatches) -> Result<(), AppError> {
     if matches.get_flag("json") {
         println!("{}", to_string_pretty(&updates).unwrap());
     } else {
-        let mut table = Table::new();
-        table.load_preset(UTF8_FULL);
-        table.set_content_arrangement(ContentArrangement::Dynamic);
+        let mut table = new_table();
         if id.is_some() {
             table.set_header(vec!["time", "success", "message"]);
             table.add_rows(updates.iter().map(|u| {
@@ -217,8 +213,7 @@ async fn log(matches: &ArgMatches) -> Result<(), AppError> {
             table.set_header(vec!["feed_id", "time", "success", "message"]);
             table.add_rows(updates.iter().map(|u| {
                 let color = if u.success { Color::Reset } else { Color::Red };
-                let feed_id: String =
-                    u.feed_id.to_string().chars().take(8).collect();
+                let feed_id: String = substr(u.feed_id.to_string(), 8);
                 vec![
                     Cell::new(feed_id).fg(color),
                     Cell::new(to_time_str(&u.time)).fg(color),
