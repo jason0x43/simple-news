@@ -42,6 +42,28 @@ impl User {
         Ok(user)
     }
 
+    pub(crate) async fn get(
+        conn: &mut SqliteConnection,
+        id: UserId,
+    ) -> Result<Self, AppError> {
+        query_as!(
+            User,
+            r#"
+            SELECT
+              id,
+              email,
+              username,
+              config AS "config: serde_json::Value"
+            FROM users
+            WHERE id = ?1
+            "#,
+            id
+        )
+        .fetch_one(conn)
+        .await
+        .map_err(|_| AppError::UserNotFound)
+    }
+
     pub(crate) async fn get_by_username(
         conn: &mut SqliteConnection,
         username: String,

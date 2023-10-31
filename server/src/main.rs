@@ -35,6 +35,7 @@ async fn main() -> Result<(), sqlx::Error> {
     let app_state = AppState { pool };
 
     let app = Router::new()
+        .route("/me", get(api::get_session_user))
         .route("/users", post(api::create_user))
         .route("/users", get(api::get_users))
         .route("/login", post(api::create_session))

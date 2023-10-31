@@ -1,6 +1,6 @@
 use crate::{
     error::AppError,
-    util::{assert_ok, get_client},
+    util::{assert_ok, get_client, get_host},
 };
 use clap::{arg, ArgMatches, Command};
 use serde_json::to_string_pretty;
@@ -23,12 +23,17 @@ pub(crate) fn command() -> Command {
                 .about("List users")
                 .arg_required_else_help(false),
         )
+        .subcommand(
+            Command::new("show")
+                .about("Show current user")
+        )
 }
 
 pub(crate) async fn handle(matches: &ArgMatches) -> Result<(), AppError> {
     match matches.subcommand() {
         Some(("create", sub_matches)) => create(sub_matches).await,
         Some(("list", _)) => list().await,
+        Some(("show", _)) => show().await,
         _ => unreachable!(),
     }
 }
@@ -68,5 +73,14 @@ async fn list() -> Result<(), AppError> {
     let users: Vec<User> = resp.json().await?;
     println!("{}", to_string_pretty(&users).unwrap());
 
+    Ok(())
+}
+
+async fn show() -> Result<(), AppError> {
+    let client = get_client()?;
+    let url = get_host()?.join("/me")?;
+    let resp = assert_ok(client.get(url).send().await?).await?;
+    let user: User = resp.json().await?;
+    println!("{}", to_string_pretty(&user).unwrap());
     Ok(())
 }

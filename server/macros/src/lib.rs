@@ -27,6 +27,14 @@ pub fn derive_id(input: TokenStream) -> TokenStream {
                 write!(f, "{}", self.0)
             }
         }
+
+        impl Eq for #ident {}
+
+        impl PartialEq for #ident {
+            fn eq(&self, other: &#ident) -> bool {
+                self.0 == other.0
+            }
+        }
     };
     output.into()
 }

@@ -39,6 +39,15 @@ pub(crate) async fn get_users(
     Ok(Json(users))
 }
 
+pub(crate) async fn get_session_user(
+    session: Session,
+    state: State<AppState>,
+) -> Result<Json<User>, AppError> {
+    let mut conn = state.pool.acquire().await?;
+    let user = User::get(&mut conn, session.user_id).await?;
+    Ok(Json(user))
+}
+
 pub(crate) async fn create_session(
     state: State<AppState>,
     jar: CookieJar,
