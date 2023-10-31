@@ -160,7 +160,7 @@ async fn list(matches: &ArgMatches) -> Result<(), AppError> {
     let feeds: Vec<Feed> = resp.json().await?;
 
     let mut cache = Cache::load()?;
-    cache.add_ids(feeds.iter().map(|f| f.id).collect());
+    cache.add_ids(feeds.iter().map(|f| f.id.to_string()).collect());
     cache.save()?;
 
     if matches.get_flag("json") {

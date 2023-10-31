@@ -1,20 +1,15 @@
 use std::fmt::Display;
 
-use macros::UuidId;
+use macros::Id;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use time::OffsetDateTime;
 use tsync::tsync;
 use url::Url;
-use uuid::Uuid;
 
-pub trait Id {
-    fn uuid(&self) -> Uuid;
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, sqlx::Type, UuidId)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type, Id)]
 #[sqlx(transparent)]
-pub struct UserId(pub Uuid);
+pub struct UserId(pub String);
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 #[serde(rename_all = "camelCase")]
@@ -33,9 +28,9 @@ impl Display for User {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, sqlx::Type, UuidId)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type, Id)]
 #[sqlx(transparent)]
-pub struct PasswordId(pub Uuid);
+pub struct PasswordId(pub String);
 
 #[derive(Clone, Serialize, Deserialize, FromRow)]
 #[serde(rename_all = "camelCase")]
@@ -46,9 +41,9 @@ pub struct Password {
     pub user_id: UserId,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, sqlx::Type, UuidId)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type, Id)]
 #[sqlx(transparent)]
-pub struct SessionId(pub Uuid);
+pub struct SessionId(pub String);
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 #[serde(rename_all = "camelCase")]
@@ -86,9 +81,9 @@ impl From<String> for FeedKind {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, sqlx::Type, UuidId)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type, Id)]
 #[sqlx(transparent)]
-pub struct FeedId(pub Uuid);
+pub struct FeedId(pub String);
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 #[serde(rename_all = "camelCase")]
@@ -103,9 +98,9 @@ pub struct Feed {
     pub html_url: Option<String>,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, sqlx::Type, UuidId)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type, Id)]
 #[sqlx(transparent)]
-pub struct ArticleId(pub Uuid);
+pub struct ArticleId(pub String);
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 #[serde(rename_all = "camelCase")]
@@ -156,9 +151,9 @@ pub struct SessionResponse {
     pub expires: OffsetDateTime,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, sqlx::Type, UuidId)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type, Id)]
 #[sqlx(transparent)]
-pub struct FeedLogId(pub Uuid);
+pub struct FeedLogId(pub String);
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 #[serde(rename_all = "camelCase")]
@@ -178,9 +173,9 @@ pub struct CreateFeedGroupRequest {
     pub name: String,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, sqlx::Type, UuidId)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type, Id)]
 #[sqlx(transparent)]
-pub struct FeedGroupId(pub Uuid);
+pub struct FeedGroupId(pub String);
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 #[serde(rename_all = "camelCase")]
@@ -197,9 +192,9 @@ pub struct AddGroupFeedRequest {
     pub feed_id: FeedId,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, sqlx::Type, UuidId)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type, Id)]
 #[sqlx(transparent)]
-pub struct FeedGroupFeedId(pub Uuid);
+pub struct FeedGroupFeedId(pub String);
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 #[serde(rename_all = "camelCase")]

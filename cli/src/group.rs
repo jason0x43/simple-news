@@ -97,7 +97,7 @@ async fn list(matches: &ArgMatches) -> Result<(), AppError> {
     let feeds: Vec<FeedGroup> = resp.json().await?;
 
     let mut cache = Cache::load()?;
-    cache.add_ids(feeds.iter().map(|f| f.id).collect());
+    cache.add_ids(feeds.iter().map(|f| f.id.to_string()).collect());
     cache.save()?;
 
     if matches.get_flag("json") {
@@ -154,7 +154,7 @@ async fn add(matches: &ArgMatches) -> Result<(), AppError> {
     let group_id: FeedGroupId = cache.get_matching_id(group_id)?.into();
     let feed_id = matches.get_one::<String>("FEED_ID").unwrap();
     let feed_id: FeedId = cache.get_matching_id(feed_id)?.into();
-    let body = AddGroupFeedRequest { feed_id };
+    let body = AddGroupFeedRequest { feed_id: feed_id.clone() };
     let client = get_client()?;
     let url = get_host()?.join(&format!("/feedgroups/{}", group_id))?;
     assert_ok(client.post(url.clone()).json(&body).send().await?).await?;

@@ -3,9 +3,7 @@ use axum::{
     Json,
 };
 use axum_extra::extract::{cookie::Cookie, CookieJar};
-use axum_macros::debug_handler;
 use log::info;
-use uuid::Uuid;
 
 use crate::{
     error::AppError,
@@ -25,7 +23,7 @@ pub(crate) async fn create_user(
     let mut tx = state.pool.begin().await?;
 
     let user = User::create(&mut *tx, body.email, body.username).await?;
-    Password::create(&mut *tx, body.password, user.id).await?;
+    Password::create(&mut *tx, body.password, user.id.clone()).await?;
 
     tx.commit().await?;
 
@@ -50,7 +48,7 @@ pub(crate) async fn create_session(
 
     let mut conn = state.pool.acquire().await?;
     let user = User::get_by_username(&mut conn, body.username).await?;
-    let password = Password::get_by_user_id(&mut conn, user.id).await?;
+    let password = Password::get_by_user_id(&mut conn, user.id.clone()).await?;
 
     check_password(body.password, password.hash, password.salt)?;
 
@@ -62,7 +60,6 @@ pub(crate) async fn create_session(
     ))
 }
 
-#[debug_handler]
 pub(crate) async fn get_articles(
     _session: Session,
     state: State<AppState>,
@@ -75,7 +72,7 @@ pub(crate) async fn get_articles(
 pub(crate) async fn get_feed_articles(
     _session: Session,
     state: State<AppState>,
-    Path(id): Path<Uuid>,
+    Path(id): Path<FeedId>,
 ) -> Result<Json<Vec<Article>>, AppError> {
     let mut conn = state.pool.acquire().await?;
     let articles = Article::find_all_for_feed(&mut *conn, id).await?;
@@ -96,7 +93,7 @@ pub(crate) async fn add_feed(
 pub(crate) async fn delete_feed(
     _session: Session,
     state: State<AppState>,
-    Path(id): Path<Uuid>,
+    Path(id): Path<FeedId>,
 ) -> Result<(), AppError> {
     let mut conn = state.pool.acquire().await?;
     Feed::delete(&mut conn, id).await?;

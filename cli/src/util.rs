@@ -7,12 +7,13 @@ use std::{
 
 use reqwest::{cookie::Jar, Client, Response, Url};
 use serde::{Deserialize, Serialize};
-use server::{Id, SessionId};
+use server::SessionId;
 use time::{
-    format_description::{well_known::Rfc2822, FormatItem}, OffsetDateTime, macros::format_description,
+    format_description::{well_known::Rfc2822, FormatItem},
+    macros::format_description,
+    OffsetDateTime,
 };
 use time_tz::OffsetDateTimeExt;
-use uuid::Uuid;
 
 use crate::error::AppError;
 
@@ -21,7 +22,7 @@ use crate::error::AppError;
 pub(crate) struct Cache {
     pub(crate) session_id: Option<SessionId>,
     pub(crate) host: Option<String>,
-    pub(crate) ids: Option<HashSet<Uuid>>,
+    pub(crate) ids: Option<HashSet<String>>,
 }
 
 impl Cache {
@@ -46,7 +47,7 @@ impl Cache {
     }
 
     pub(crate) fn get_session_id(&self) -> Result<SessionId, AppError> {
-        if let Some(session_id) = self.session_id {
+        if let Some(session_id) = self.session_id.clone() {
             Ok(session_id)
         } else {
             Err(AppError::NotLoggedIn)
@@ -61,29 +62,26 @@ impl Cache {
         }
     }
 
-    pub(crate) fn add_ids(&mut self, new_ids: Vec<impl Id>) {
-        let uuids: Vec<Uuid> = new_ids.iter().map(|i| i.uuid()).collect();
+    pub(crate) fn add_ids(&mut self, new_ids: Vec<String>) {
         if let Some(ids) = &mut self.ids {
-            ids.extend(uuids);
+            ids.extend(new_ids);
         } else {
-            self.ids = Some(HashSet::from_iter(uuids));
+            self.ids = Some(HashSet::from_iter(new_ids));
         }
     }
 
     pub(crate) fn get_matching_id(
         &self,
         id_part: &str,
-    ) -> Result<Uuid, AppError> {
-        if let Ok(uuid) = Uuid::parse_str(id_part) {
-            Ok(uuid)
-        } else if let Some(ids) = &self.ids {
+    ) -> Result<String, AppError> {
+        if let Some(ids) = &self.ids {
             let matches = ids
                 .iter()
                 .filter(|id| id.to_string().starts_with(id_part))
                 .map(|id| id.clone())
-                .collect::<Vec<Uuid>>();
+                .collect::<Vec<String>>();
             if matches.len() == 1 {
-                Ok(matches[0])
+                Ok(matches[0].clone())
             } else if matches.len() == 0 {
                 Err(AppError::Error("no matching ID".into()))
             } else {

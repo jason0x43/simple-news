@@ -21,5 +21,4 @@ time = { version = "0.3.30", features = [
 time-tz = { version = "2.0.0", features = ["system"] }
 tokio = "1.32.0"
 url = "2.4.1"
-uuid = "1.4.1"
 xdg = "2.5.2"

@@ -26,9 +26,6 @@ pub enum AppError {
     #[error("sqlx error: {0}")]
     SqlxError(sqlx::Error),
 
-    #[error("uuid error: {0}")]
-    UuidError(uuid::Error),
-
     #[error("reqwest error: {0}")]
     ReqwestError(reqwest::Error),
 
@@ -66,10 +63,6 @@ impl IntoResponse for AppError {
                 (StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
                     .into_response()
             }
-            AppError::UuidError(err) => {
-                (StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
-                    .into_response()
-            }
             AppError::Error(err) => {
                 (StatusCode::INTERNAL_SERVER_ERROR, err).into_response()
             }
@@ -92,12 +85,6 @@ impl From<reqwest::Error> for AppError {
 impl From<rss::Error> for AppError {
     fn from(err: rss::Error) -> AppError {
         AppError::RssError(err)
-    }
-}
-
-impl From<uuid::Error> for AppError {
-    fn from(err: uuid::Error) -> AppError {
-        AppError::UuidError(err)
     }
 }
 

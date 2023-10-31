@@ -33,14 +33,8 @@ impl From<serde_json::Error> for AppError {
     }
 }
 
-impl From<uuid::Error> for AppError {
-    fn from(err: uuid::Error) -> AppError {
-        AppError::Error(format!("UUID: {}", err))
-    }
-}
-
 impl From<url::ParseError> for AppError {
     fn from(err: url::ParseError) -> AppError {
-        AppError::Error(format!("UUID: {}", err))
+        AppError::Error(format!("URL: {}", err))
     }
 }

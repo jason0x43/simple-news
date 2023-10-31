@@ -18,19 +18,13 @@ rust-embed = { version = "8.0.0", features = ["axum-ex"] }
 serde = "1.0.188"
 serde_json = "1.0.107"
 sha2 = "0.10.8"
-sqlx = { version = "0.7.2", features = [
-  "runtime-tokio",
-  "sqlite",
-  "time",
-  "uuid",
-] }
+sqlx = { version = "0.7.2", features = ["runtime-tokio", "sqlite", "time"] }
 thiserror = "1.0.49"
 time = { version = "0.3.29", features = ["serde"] }
 tokio = { version = "1.32.0", features = ["full"] }
 tower-http = { version = "0.4.4", features = ["full"] }
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
-uuid = { version = "1.4.1", features = ["serde"] }
 axum-macros = "0.3.8"
 axum-extra = { version = "0.8.0", features = ["cookie"] }
 rss = "2.0.6"
@@ -40,3 +34,4 @@ tsync = "1"
 base64 = "0.21.5"
 lol_html = "1.2.0"
 macros = { path = "macros" }
+cuid2 = "0.1.2"

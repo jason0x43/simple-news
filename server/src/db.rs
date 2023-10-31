@@ -12,7 +12,6 @@ use serde_json::json;
 use sqlx::{query, query_as, SqliteConnection};
 use time::OffsetDateTime;
 use url::Url;
-use uuid::Uuid;
 
 impl User {
     pub(crate) async fn create(
@@ -21,7 +20,7 @@ impl User {
         username: String,
     ) -> Result<Self, AppError> {
         let user = Self {
-            id: UserId(Uuid::new_v4()),
+            id: UserId::new(),
             email,
             username,
             config: None,
@@ -51,7 +50,7 @@ impl User {
             User,
             r#"
             SELECT
-              id AS "id!: Uuid",
+              id,
               email,
               username,
               config AS "config: serde_json::Value"
@@ -72,7 +71,7 @@ impl User {
             User,
             r#"
             SELECT
-              id AS "id!: Uuid",
+              id,
               email,
               username,
               config AS "config: serde_json::Value"
@@ -93,7 +92,7 @@ impl Password {
     ) -> Result<Self, AppError> {
         let pword = hash_password(password, None);
         let password = Password {
-            id: PasswordId(Uuid::new_v4()),
+            id: PasswordId::new(),
             hash: pword.hash,
             salt: pword.salt,
             user_id,
@@ -123,10 +122,10 @@ impl Password {
             Password,
             r#"
             SELECT
-              id AS "id!: Uuid",
+              id,
               hash,
               salt,
-              user_id AS "user_id!: Uuid"
+              user_id
             FROM passwords
             WHERE user_id = ?1
             "#,
@@ -144,7 +143,7 @@ impl Session {
         user_id: UserId,
     ) -> Result<Self, AppError> {
         let session = Self {
-            id: SessionId(Uuid::new_v4()),
+            id: SessionId::new(),
             data: json!("{}"),
             user_id,
             expires: get_timestamp(604800),
@@ -176,10 +175,10 @@ impl Session {
             Self,
             r#"
             SELECT
-              id AS "id!: Uuid",
+              id,
               data AS "data: serde_json::Value",
               expires AS "expires!: OffsetDateTime",
-              user_id AS "user_id!: Uuid"
+              user_id
             FROM sessions
             WHERE id = ?1
             "#,
@@ -199,7 +198,7 @@ impl Feed {
         kind: FeedKind,
     ) -> Result<Self, AppError> {
         let feed = Self {
-            id: FeedId(Uuid::new_v4()),
+            id: FeedId::new(),
             url: url.to_string(),
             title,
             kind,
@@ -231,7 +230,7 @@ impl Feed {
 
     pub(crate) async fn delete(
         conn: &mut SqliteConnection,
-        id: Uuid,
+        id: FeedId,
     ) -> Result<(), AppError> {
         query!("DELETE FROM feeds WHERE id = ?1", id)
             .execute(conn)
@@ -247,7 +246,7 @@ impl Feed {
             Feed,
             r#"
             SELECT
-              id AS "id!: Uuid",
+              id,
               url,
               title,
               kind,
@@ -274,7 +273,7 @@ impl Feed {
             Feed,
             r#"
             SELECT
-              id AS "id!: Uuid",
+              id,
               url,
               title,
               kind,
@@ -300,7 +299,7 @@ impl Feed {
             Feed,
             r#"
             SELECT
-              feeds.id AS "id!: Uuid",
+              feeds.id,
               url,
               title,
               kind,
@@ -401,7 +400,7 @@ impl Feed {
     ) -> Result<(), AppError> {
         let feeds = Feed::get_all(conn).await?;
         for feed in feeds {
-            let id = feed.id;
+            let id = feed.id.clone();
             feed.refresh(conn).await.unwrap_or_else(|err| {
                 log::warn!("error refreshing feed {}: {}", id, err);
             })
@@ -427,7 +426,7 @@ impl Article {
         data: ArticleNew,
     ) -> Result<Self, AppError> {
         let article = Self {
-            id: ArticleId(Uuid::new_v4()),
+            id: ArticleId::new(),
             content: data.content.clone(),
             feed_id: data.feed_id,
             article_id: data.article_id.clone(),
@@ -467,9 +466,9 @@ impl Article {
             Article,
             r#"
             SELECT
-              id AS "id!: Uuid",
+              id,
               article_id,
-              feed_id AS "feed_id!: Uuid",
+              feed_id,
               title,
               content,
               published AS "published: OffsetDateTime",
@@ -483,15 +482,15 @@ impl Article {
 
     pub(crate) async fn find_all_for_feed(
         conn: &mut SqliteConnection,
-        feed_id: Uuid,
+        feed_id: FeedId,
     ) -> Result<Vec<Self>, AppError> {
         Ok(query_as!(
             Article,
             r#"
             SELECT
-              id AS "id!: Uuid",
+              id,
               article_id,
-              feed_id AS "feed_id!: Uuid",
+              feed_id,
               title,
               content,
               published AS "published: OffsetDateTime",
@@ -514,7 +513,7 @@ impl FeedLog {
         message: Option<String>,
     ) -> Result<Self, AppError> {
         let update = FeedLog {
-            id: FeedLogId(Uuid::new_v4()),
+            id: FeedLogId::new(),
             time: get_timestamp(0),
             feed_id,
             success,
@@ -546,9 +545,9 @@ impl FeedLog {
             FeedLog,
             r#"
             SELECT
-              id AS "id!: Uuid",
+              id,
               time AS "time!: OffsetDateTime",
-              feed_id AS "feed_id!: Uuid",
+              feed_id,
               success AS "success!: bool",
               message
             FROM feed_logs
@@ -568,9 +567,9 @@ impl FeedLog {
             FeedLog,
             r#"
             SELECT
-              id AS "id!: Uuid",
+              id,
               time AS "time!: OffsetDateTime",
-              feed_id AS "feed_id!: Uuid",
+              feed_id,
               success AS "success!: bool",
               message
             FROM feed_logs
@@ -589,7 +588,7 @@ impl FeedGroup {
         user_id: UserId,
     ) -> Result<Self, AppError> {
         let group = FeedGroup {
-            id: FeedGroupId(Uuid::new_v4()),
+            id: FeedGroupId::new(),
             name,
             user_id,
         };
@@ -617,9 +616,9 @@ impl FeedGroup {
             Self,
             r#"
             SELECT
-              id AS "id!: Uuid",
+              id,
               name,
-              user_id AS "user_id!: Uuid"
+              user_id
             FROM feed_groups
             WHERE id = ?1
             "#,
@@ -637,9 +636,9 @@ impl FeedGroup {
             FeedGroup,
             r#"
             SELECT
-              id AS "id!: Uuid",
+              id,
               name,
-              user_id AS "user_id!: Uuid"
+              user_id
             FROM feed_groups
             "#
         )
@@ -654,9 +653,9 @@ impl FeedGroup {
         feed_id: FeedId,
     ) -> Result<FeedGroupFeed, AppError> {
         let group_feed = FeedGroupFeed {
-            id: FeedGroupFeedId(Uuid::new_v4()),
+            id: FeedGroupFeedId::new(),
             feed_id,
-            feed_group_id: self.id,
+            feed_group_id: self.id.clone(),
         };
 
         query!(

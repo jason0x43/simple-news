@@ -4,10 +4,6 @@ use tsync::tsync;
 
 #[tsync]
 #[allow(dead_code)]
-type Uuid = String;
-
-#[tsync]
-#[allow(dead_code)]
 type Url = String;
 
 #[tsync]
@@ -17,19 +13,19 @@ type Value<unknown> = HashMap<String, unknown>;
 
 #[tsync]
 #[allow(dead_code)]
-type UserId = Uuid;
+type UserId = String;
 
 #[tsync]
 #[allow(dead_code)]
-type FeedId = Uuid;
+type FeedId = String;
 
 #[tsync]
 #[allow(dead_code)]
-type SessionId = Uuid;
+type SessionId = String;
 
 #[tsync]
 #[allow(dead_code)]
-type ArticleId = Uuid;
+type ArticleId = String;
 
 #[tsync]
 #[allow(dead_code)]

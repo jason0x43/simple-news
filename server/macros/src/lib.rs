@@ -2,27 +2,23 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, DeriveInput};
 
-#[proc_macro_derive(UuidId)]
-pub fn from_uuid(input: TokenStream) -> TokenStream {
+#[proc_macro_derive(Id)]
+pub fn derive_id(input: TokenStream) -> TokenStream {
     let DeriveInput { ident, .. } = parse_macro_input!(input);
     let output = quote! {
-        impl From<Uuid> for #ident {
-            fn from(value: Uuid) -> Self {
+        impl From<String> for #ident {
+            fn from(value: String) -> Self {
                 Self(value)
             }
         }
 
-        impl TryFrom<String> for #ident {
-            type Error = uuid::Error;
-         
-            fn try_from(value: String) -> Result<Self, Self::Error> {
-              Ok(Self(Uuid::parse_str(&value)?))
+        impl #ident {
+            pub fn new() -> Self {
+                Self(cuid2::create_id())
             }
-        }
 
-        impl Id for #ident {
-            fn uuid(&self) -> Uuid {
-                self.0
+            pub fn to_string(&self) -> String {
+                self.0.clone()
             }
         }
 
