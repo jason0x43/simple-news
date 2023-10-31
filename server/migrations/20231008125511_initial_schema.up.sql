@@ -25,7 +25,6 @@ CREATE TABLE feeds (
   url TEXT UNIQUE NOT NULL,
   title TEXT NOT NULL,
   kind TEXT NOT NULL DEFAULT 'rss',
-  last_updated TEXT NOT NULL,
   disabled INTEGER NOT NULL,
   icon TEXT,
   html_url TEXT
@@ -58,8 +57,16 @@ CREATE TABLE feed_groups (
   UNIQUE (user_id, name)
 ) STRICT;
 
-CREATE TABLE feed_group_feed (
+CREATE TABLE feed_group_feeds (
   id BLOB PRIMARY KEY,
   feed_group_id BLOB NOT NULL REFERENCES feed_groups(id) ON DELETE CASCADE,
   feed_id BLOB NOT NULL REFERENCES feeds(id) ON DELETE CASCADE
+) STRICT;
+
+CREATE TABLE feed_logs (
+  id BLOB PRIMARY KEY,
+  feed_id BLOB NOT NULL REFERENCES feeds(id) ON DELETE CASCADE,
+  time TEXT NOT NULL,
+  success INTEGER NOT NULL,
+  message TEXT
 ) STRICT;

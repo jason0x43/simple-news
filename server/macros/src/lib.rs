@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
-use syn::{parse_macro_input, DeriveInput};
 use quote::quote;
+use syn::{parse_macro_input, DeriveInput};
 
 #[proc_macro_derive(UuidId)]
 pub fn from_uuid(input: TokenStream) -> TokenStream {
@@ -9,6 +9,14 @@ pub fn from_uuid(input: TokenStream) -> TokenStream {
         impl From<Uuid> for #ident {
             fn from(value: Uuid) -> Self {
                 Self(value)
+            }
+        }
+
+        impl TryFrom<String> for #ident {
+            type Error = uuid::Error;
+         
+            fn try_from(value: String) -> Result<Self, Self::Error> {
+              Ok(Self(Uuid::parse_str(&value)?))
             }
         }
 

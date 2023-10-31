@@ -1,6 +1,7 @@
 mod article;
 mod error;
 mod feed;
+mod group;
 mod host;
 mod session;
 mod user;
@@ -16,6 +17,7 @@ fn cli() -> Command {
         .subcommand(article::command())
         .subcommand(host::command())
         .subcommand(feed::command())
+        .subcommand(group::command())
         .arg_required_else_help(true)
 }
 
@@ -29,6 +31,7 @@ async fn main() {
         Some(("article", matches)) => article::handle(matches).await,
         Some(("host", matches)) => host::handle(matches).await,
         Some(("feed", matches)) => feed::handle(matches).await,
+        Some(("group", matches)) => group::handle(matches).await,
         _ => unreachable!(),
     };
 

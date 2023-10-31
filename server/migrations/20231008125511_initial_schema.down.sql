@@ -1,4 +1,5 @@
-DROP TABLE feed_group_feed;
+DROP TABLE feed_logs;
+DROP TABLE feed_group_feeds;
 DROP TABLE feed_groups;
 DROP TABLE user_articles;
 DROP TABLE articles;

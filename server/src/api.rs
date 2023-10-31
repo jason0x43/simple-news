@@ -11,8 +11,9 @@ use crate::{
     error::AppError,
     state::AppState,
     types::{
-        AddFeedRequest, CreateSessionRequest, CreateUserRequest, Feed,
-        Password, Session, User, Article, FeedId, FeedLog,
+        AddFeedRequest, AddGroupFeedRequest, Article, CreateFeedGroupRequest,
+        CreateSessionRequest, CreateUserRequest, Feed, FeedGroup, FeedGroupId,
+        FeedId, FeedLog, Password, Session, User,
     },
     util::check_password,
 };
@@ -36,7 +37,7 @@ pub(crate) async fn get_users(
     state: State<AppState>,
 ) -> Result<Json<Vec<User>>, AppError> {
     let mut conn = state.pool.acquire().await?;
-    let users = User::find_all(&mut conn).await?;
+    let users = User::get_all(&mut conn).await?;
     Ok(Json(users))
 }
 
@@ -67,7 +68,7 @@ pub(crate) async fn get_articles(
     state: State<AppState>,
 ) -> Result<Json<Vec<Article>>, AppError> {
     let mut conn = state.pool.acquire().await?;
-    let articles = Article::find_all(&mut *conn).await?;
+    let articles = Article::get_all(&mut *conn).await?;
     Ok(Json(articles))
 }
 
@@ -105,7 +106,7 @@ pub(crate) async fn delete_feed(
 pub(crate) async fn get_feed(
     _session: Session,
     state: State<AppState>,
-    Path(id): Path<Uuid>,
+    Path(id): Path<FeedId>,
 ) -> Result<Json<Feed>, AppError> {
     log::debug!("getting feed {}", id);
     let mut conn = state.pool.acquire().await?;
@@ -118,14 +119,14 @@ pub(crate) async fn get_feeds(
     state: State<AppState>,
 ) -> Result<Json<Vec<Feed>>, AppError> {
     let mut conn = state.pool.acquire().await?;
-    let feeds = Feed::find_all(&mut conn).await?;
+    let feeds = Feed::get_all(&mut conn).await?;
     Ok(Json(feeds))
 }
 
 pub(crate) async fn refresh_feed(
     _session: Session,
     state: State<AppState>,
-    Path(id): Path<Uuid>,
+    Path(id): Path<FeedId>,
 ) -> Result<(), AppError> {
     let mut tx = state.pool.begin().await?;
     let feed = Feed::get(&mut *tx, id).await?;
@@ -161,6 +162,59 @@ pub(crate) async fn get_all_feed_logs(
     state: State<AppState>,
 ) -> Result<Json<Vec<FeedLog>>, AppError> {
     let mut conn = state.pool.acquire().await?;
-    let logs = FeedLog::find_all(&mut conn).await?;
+    let logs = FeedLog::get_all(&mut conn).await?;
     Ok(Json(logs))
+}
+
+pub(crate) async fn create_feed_group(
+    session: Session,
+    state: State<AppState>,
+    Json(body): Json<CreateFeedGroupRequest>,
+) -> Result<Json<FeedGroup>, AppError> {
+    let mut conn = state.pool.acquire().await?;
+    let user_id = session.user_id;
+    let group = FeedGroup::create(&mut conn, body.name, user_id).await?;
+    Ok(Json(group))
+}
+
+pub(crate) async fn get_feed_group(
+    _session: Session,
+    state: State<AppState>,
+    Path(id): Path<FeedGroupId>,
+) -> Result<Json<Vec<Feed>>, AppError> {
+    let mut conn = state.pool.acquire().await?;
+    let feeds = Feed::get_for_group(&mut conn, id).await?;
+    Ok(Json(feeds))
+}
+
+pub(crate) async fn get_all_feed_groups(
+    _session: Session,
+    state: State<AppState>,
+) -> Result<Json<Vec<FeedGroup>>, AppError> {
+    let mut conn = state.pool.acquire().await?;
+    let groups = FeedGroup::get_all(&mut conn).await?;
+    Ok(Json(groups))
+}
+
+pub(crate) async fn add_group_feed(
+    _session: Session,
+    state: State<AppState>,
+    Path(id): Path<FeedGroupId>,
+    Json(body): Json<AddGroupFeedRequest>,
+) -> Result<Json<FeedGroup>, AppError> {
+    let mut conn = state.pool.acquire().await?;
+    let group = FeedGroup::get(&mut conn, id).await?;
+    group.add_feed(&mut conn, body.feed_id).await?;
+    Ok(Json(group))
+}
+
+pub(crate) async fn remove_group_feed(
+    _session: Session,
+    state: State<AppState>,
+    Path((id, feed_id)): Path<(FeedGroupId, FeedId)>,
+) -> Result<Json<FeedGroup>, AppError> {
+    let mut conn = state.pool.acquire().await?;
+    let group = FeedGroup::get(&mut conn, id).await?;
+    group.remove_feed(&mut conn, feed_id).await?;
+    Ok(Json(group))
 }

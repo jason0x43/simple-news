@@ -170,3 +170,41 @@ pub struct FeedLog {
     pub success: bool,
     pub message: Option<String>,
 }
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+#[tsync]
+pub struct CreateFeedGroupRequest {
+    pub name: String,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, sqlx::Type, UuidId)]
+#[sqlx(transparent)]
+pub struct FeedGroupId(pub Uuid);
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[serde(rename_all = "camelCase")]
+pub struct FeedGroup {
+    pub id: FeedGroupId,
+    pub name: String,
+    pub user_id: UserId,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+#[tsync]
+pub struct AddGroupFeedRequest {
+    pub feed_id: FeedId,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, sqlx::Type, UuidId)]
+#[sqlx(transparent)]
+pub struct FeedGroupFeedId(pub Uuid);
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[serde(rename_all = "camelCase")]
+pub struct FeedGroupFeed {
+    pub id: FeedGroupFeedId,
+    pub feed_group_id: FeedGroupId,
+    pub feed_id: FeedId,
+}

@@ -48,6 +48,12 @@ async fn main() -> Result<(), sqlx::Error> {
         .route("/feeds/:id", delete(api::delete_feed))
         .route("/feeds", get(api::get_feeds))
         .route("/feeds", post(api::add_feed))
+        .route("/feedgroups", get(api::get_all_feed_groups))
+        .route("/feedgroups", post(api::create_feed_group))
+        .route("/feedgroups/:id", get(api::get_feed_group))
+        .route("/feedgroups/:id", post(api::add_group_feed))
+        .route("/feedgroups/:id/:feed_id", delete(api::remove_group_feed))
+        // .route("/feedstats", get(api::get_feed_stats))
         .fallback(static_handler)
         .with_state(app_state)
         .layer(TraceLayer::new_for_http());

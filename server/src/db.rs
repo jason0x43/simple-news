@@ -2,8 +2,9 @@ use crate::{
     error::AppError,
     rss::{get_content, get_icon, load_feed},
     types::{
-        Article, ArticleId, Feed, FeedId, FeedKind, FeedLog, FeedLogId,
-        Password, PasswordId, Session, SessionId, User, UserId,
+        Article, ArticleId, Feed, FeedGroup, FeedGroupFeed, FeedGroupFeedId,
+        FeedGroupId, FeedId, FeedKind, FeedLog, FeedLogId, Password,
+        PasswordId, Session, SessionId, User, UserId,
     },
     util::{get_timestamp, hash_password},
 };
@@ -64,7 +65,7 @@ impl User {
         .map_err(|_| AppError::UserNotFound)
     }
 
-    pub(crate) async fn find_all(
+    pub(crate) async fn get_all(
         conn: &mut SqliteConnection,
     ) -> Result<Vec<Self>, AppError> {
         query_as!(
@@ -169,10 +170,10 @@ impl Session {
 
     pub(crate) async fn get(
         conn: &mut SqliteConnection,
-        session_id: Uuid,
+        session_id: SessionId,
     ) -> Result<Self, AppError> {
         query_as!(
-            Session,
+            Self,
             r#"
             SELECT
               id AS "id!: Uuid",
@@ -240,7 +241,7 @@ impl Feed {
 
     pub(crate) async fn get(
         conn: &mut SqliteConnection,
-        id: Uuid,
+        id: FeedId,
     ) -> Result<Feed, AppError> {
         Ok(query_as!(
             Feed,
@@ -266,7 +267,7 @@ impl Feed {
         })?)
     }
 
-    pub(crate) async fn find_all(
+    pub(crate) async fn get_all(
         conn: &mut SqliteConnection,
     ) -> Result<Vec<Self>, AppError> {
         Ok(query_as!(
@@ -290,6 +291,36 @@ impl Feed {
             err
         })?)
     }
+
+    pub(crate) async fn get_for_group(
+        conn: &mut SqliteConnection,
+        group_id: FeedGroupId,
+    ) -> Result<Vec<Feed>, AppError> {
+        Ok(query_as!(
+            Feed,
+            r#"
+            SELECT
+              feeds.id AS "id!: Uuid",
+              url,
+              title,
+              kind,
+              disabled AS "disabled!: bool",
+              icon,
+              html_url
+            FROM feeds
+            INNER JOIN feed_group_feeds ON feeds.id = feed_group_feeds.feed_id
+            WHERE feed_group_feeds.feed_group_id = ?1
+            "#,
+            group_id
+        )
+        .fetch_all(conn)
+        .await
+        .map_err(|err| {
+            log::warn!("error getting feed for group {}: {}", group_id, err);
+            err
+        })?)
+    }
+
 
     pub(crate) async fn refresh(
         self,
@@ -368,7 +399,7 @@ impl Feed {
     pub(crate) async fn refresh_all(
         conn: &mut SqliteConnection,
     ) -> Result<(), AppError> {
-        let feeds = Feed::find_all(conn).await?;
+        let feeds = Feed::get_all(conn).await?;
         for feed in feeds {
             let id = feed.id;
             feed.refresh(conn).await.unwrap_or_else(|err| {
@@ -429,7 +460,7 @@ impl Article {
         Ok(article)
     }
 
-    pub(crate) async fn find_all(
+    pub(crate) async fn get_all(
         conn: &mut SqliteConnection,
     ) -> Result<Vec<Self>, AppError> {
         Ok(query_as!(
@@ -530,7 +561,7 @@ impl FeedLog {
         .map_err(AppError::SqlxError)
     }
 
-    pub(crate) async fn find_all(
+    pub(crate) async fn get_all(
         conn: &mut SqliteConnection,
     ) -> Result<Vec<Self>, AppError> {
         query_as!(
@@ -548,5 +579,117 @@ impl FeedLog {
         .fetch_all(conn)
         .await
         .map_err(AppError::SqlxError)
+    }
+}
+
+impl FeedGroup {
+    pub(crate) async fn create(
+        conn: &mut SqliteConnection,
+        name: String,
+        user_id: UserId,
+    ) -> Result<Self, AppError> {
+        let group = FeedGroup {
+            id: FeedGroupId(Uuid::new_v4()),
+            name,
+            user_id,
+        };
+
+        query!(
+            r#"
+            INSERT INTO feed_groups(id, name, user_id)
+            VALUES(?1, ?2, ?3)
+            "#,
+            group.id,
+            group.name,
+            group.user_id,
+        )
+        .execute(&mut *conn)
+        .await?;
+
+        Ok(group)
+    }
+
+    pub(crate) async fn get(
+        conn: &mut SqliteConnection,
+        feed_group_id: FeedGroupId,
+    ) -> Result<Self, AppError> {
+        query_as!(
+            Self,
+            r#"
+            SELECT
+              id AS "id!: Uuid",
+              name,
+              user_id AS "user_id!: Uuid"
+            FROM feed_groups
+            WHERE id = ?1
+            "#,
+            feed_group_id
+        )
+        .fetch_one(conn)
+        .await
+        .map_err(|_| AppError::SessionNotFound)
+    }
+
+    pub(crate) async fn get_all(
+        conn: &mut SqliteConnection,
+    ) -> Result<Vec<Self>, AppError> {
+        query_as!(
+            FeedGroup,
+            r#"
+            SELECT
+              id AS "id!: Uuid",
+              name,
+              user_id AS "user_id!: Uuid"
+            FROM feed_groups
+            "#
+        )
+        .fetch_all(conn)
+        .await
+        .map_err(AppError::SqlxError)
+    }
+
+    pub(crate) async fn add_feed(
+        &self,
+        conn: &mut SqliteConnection,
+        feed_id: FeedId,
+    ) -> Result<FeedGroupFeed, AppError> {
+        let group_feed = FeedGroupFeed {
+            id: FeedGroupFeedId(Uuid::new_v4()),
+            feed_id,
+            feed_group_id: self.id,
+        };
+
+        query!(
+            r#"
+            INSERT INTO feed_group_feeds(id, feed_id, feed_group_id)
+            VALUES(?1, ?2, ?3)
+            "#,
+            group_feed.id,
+            group_feed.feed_id,
+            group_feed.feed_group_id,
+        )
+        .execute(&mut *conn)
+        .await?;
+
+        Ok(group_feed)
+    }
+
+    pub(crate) async fn remove_feed(
+        &self,
+        conn: &mut SqliteConnection,
+        feed_id: FeedId,
+    ) -> Result<(), AppError> {
+        query!(
+            r#"
+            DELETE FROM feed_group_feeds
+            WHERE feed_group_id = ?1 AND feed_id = ?2
+            "#,
+            self.id,
+            feed_id,
+        )
+        .execute(&mut *conn)
+        .await?;
+
+        Ok(())
     }
 }
