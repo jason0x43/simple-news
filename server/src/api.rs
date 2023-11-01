@@ -1,9 +1,10 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Path, State, Query},
     Json,
 };
 use axum_extra::extract::{cookie::Cookie, CookieJar};
 use log::info;
+use serde::Deserialize;
 
 use crate::{
     error::AppError,
@@ -225,14 +226,24 @@ pub(crate) async fn remove_group_feed(
     Ok(Json(group))
 }
 
+#[derive(Deserialize)]
+pub(crate) struct GetFeedStatsParams {
+    pub(crate) all: Option<bool>
+}
+
 pub(crate) async fn get_feed_stats(
     session: Session,
     state: State<AppState>,
+    Query(query): Query<GetFeedStatsParams>,
 ) -> Result<Json<FeedStats>, AppError> {
     let mut conn = state.pool.acquire().await?;
-    let subscribed = Feed::get_subscribed(&mut conn, &session.user_id).await?;
+    let feeds = if query.all.unwrap_or(false) {
+        Feed::get_all(&mut conn).await?
+    } else {
+        Feed::get_subscribed(&mut conn, &session.user_id).await?
+    };
     let mut stats = FeedStats::new();
-    for feed in subscribed.iter() {
+    for feed in feeds.iter() {
         let num_articles = feed.article_count(&mut conn).await?;
         stats.feeds.insert(
             feed.id.clone(),

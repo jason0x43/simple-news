@@ -65,6 +65,7 @@ pub(crate) fn command() -> Command {
             Command::new("stats")
                 .about("Show user feed statistics")
                 .arg(arg!(-j --json "Output raw JSON"))
+                .arg(arg!(-a --all "Get stats for all feeds"))
                 .arg_required_else_help(false),
         )
 }
@@ -222,7 +223,7 @@ async fn log(matches: &ArgMatches) -> Result<(), AppError> {
             table.set_header(vec!["feed_id", "time", "success", "message"]);
             table.add_rows(updates.iter().map(|u| {
                 let color = if u.success { Color::Reset } else { Color::Red };
-                let feed_id: String = substr(&u.feed_id.to_string(), 8);
+                let feed_id = substr(&u.feed_id.to_string(), 8);
                 vec![
                     Cell::new(feed_id).fg(color),
                     Cell::new(to_time_str(&u.time)).fg(color),
@@ -240,21 +241,31 @@ async fn log(matches: &ArgMatches) -> Result<(), AppError> {
 
 async fn stats(matches: &ArgMatches) -> Result<(), AppError> {
     let client = get_client()?;
-    let url = get_host()?.join("/feedstats")?;
+    let path = if matches.get_flag("all") {
+        "/feedstats?all=true"
+    } else {
+        "/feedstats"
+    };
+    let url = get_host()?.join(path)?;
     let resp = assert_ok(client.get(url).send().await?).await?;
     let stats: FeedStats = resp.json().await?;
 
     if matches.get_flag("json") {
         println!("{}", to_string_pretty(&stats).unwrap());
     } else {
+        let url = get_host()?.join("/feeds")?;
+        let resp = assert_ok(client.get(url).send().await?).await?;
+        let feeds: Vec<Feed> = resp.json().await?;
+
         let mut table = new_table();
-        table.set_header(vec!["feed_id", "num_articles"]);
+        table.set_header(vec!["id", "title", "articles"]);
         table.add_rows(stats.feeds.iter().map(|(id, stat)| {
-            let feed_id: String = substr(&id.to_string(), 8);
-            vec![
-                feed_id,
-                stat.total.to_string(),
-            ]
+            let feed_id = substr(&id.to_string(), 8);
+            let feed_name = feeds
+                .iter()
+                .find(|f| &f.id == id)
+                .map_or("".into(), |f| f.title.clone());
+            vec![feed_id, feed_name, stat.total.to_string()]
         }));
         println!("{table}");
     }
