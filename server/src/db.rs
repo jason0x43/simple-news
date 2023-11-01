@@ -534,6 +534,7 @@ impl Article {
               published AS "published: OffsetDateTime",
               link
             FROM articles
+            ORDER BY published ASC
             "#
         )
         .fetch_all(conn)

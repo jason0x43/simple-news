@@ -1,10 +1,10 @@
 use crate::{
     error::AppError,
-    util::{get_client, Cache, new_table},
+    util::{assert_ok, get_client, get_host, new_table, to_time_str, Cache},
 };
 use clap::{arg, ArgMatches, Command};
 use serde_json::to_string_pretty;
-use server::Article;
+use server::{Article, Feed};
 
 pub(crate) fn command() -> Command {
     Command::new("article")
@@ -14,7 +14,7 @@ pub(crate) fn command() -> Command {
             Command::new("list")
                 .about("List of articles")
                 .arg(arg!([FEED_ID] "A feed ID"))
-                .arg(arg!(-t --table "Output a table"))
+                .arg(arg!(-j --json "Output raw JSON"))
                 .arg_required_else_help(false),
         )
 }
@@ -36,7 +36,7 @@ async fn list(matches: &ArgMatches) -> Result<(), AppError> {
 
     let client = get_client()?;
     let host = cache.get_host()?;
-    let body = if let Some(id) = feed_id {
+    let body = if let Some(id) = &feed_id {
         client
             .get(format!("{}/feeds/{}/articles", host, id))
             .send()
@@ -46,17 +46,33 @@ async fn list(matches: &ArgMatches) -> Result<(), AppError> {
     };
     let articles = body.json::<Vec<Article>>().await?;
 
-    if matches.get_flag("table") {
-        let mut table = new_table();
-        table.set_header(vec!["published", "title"]);
-        table.add_rows(
-            articles
-                .iter()
-                .map(|a| vec![a.published.to_string(), a.title.to_string()]),
-        );
-        println!("{table}");
-    } else {
+    if matches.get_flag("json") {
         println!("{}", to_string_pretty(&articles).unwrap());
+    } else {
+        let url = get_host()?.join("/feeds")?;
+        let resp = assert_ok(client.get(url).send().await?).await?;
+        let feeds: Vec<Feed> = resp.json().await?;
+
+        let mut table = new_table();
+        if feed_id.is_some() {
+            table.set_header(vec!["published", "title"]);
+            table.add_rows(
+                articles.iter().map(|a| {
+                    vec![to_time_str(&a.published), a.title.to_string()]
+                }),
+            );
+        } else {
+            table.set_header(vec!["published", "feed", "title"]);
+            table.add_rows(articles.iter().map(|a| {
+                let feed_id = &a.feed_id;
+                let feed_name = feeds
+                    .iter()
+                    .find(|f| &f.id == feed_id)
+                    .map_or("".into(), |f| f.title.clone());
+                vec![to_time_str(&a.published), feed_name, a.title.to_string()]
+            }));
+        }
+        println!("{table}");
     }
 
     Ok(())
