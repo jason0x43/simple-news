@@ -1,7 +1,7 @@
-mod api;
 mod db;
 mod error;
 mod extractors;
+mod handlers;
 mod rss;
 mod spa;
 mod state;
@@ -35,26 +35,29 @@ async fn main() -> Result<(), sqlx::Error> {
     let app_state = AppState { pool };
 
     let api = Router::new()
-        .route("/me", get(api::get_session_user))
-        .route("/users", post(api::create_user))
-        .route("/users", get(api::get_users))
-        .route("/login", post(api::create_session))
-        .route("/articles", get(api::get_articles))
-        .route("/feeds/log", get(api::get_all_feed_logs))
-        .route("/feeds/refresh", get(api::refresh_feeds))
-        .route("/feeds/:id/refresh", get(api::refresh_feed))
-        .route("/feeds/:id/articles", get(api::get_feed_articles))
-        .route("/feeds/:id/log", get(api::get_feed_log))
-        .route("/feeds/:id", get(api::get_feed))
-        .route("/feeds/:id", delete(api::delete_feed))
-        .route("/feeds", get(api::get_feeds))
-        .route("/feeds", post(api::add_feed))
-        .route("/feedgroups", get(api::get_all_feed_groups))
-        .route("/feedgroups", post(api::create_feed_group))
-        .route("/feedgroups/:id", get(api::get_feed_group))
-        .route("/feedgroups/:id", post(api::add_group_feed))
-        .route("/feedgroups/:id/:feed_id", delete(api::remove_group_feed))
-        .route("/feedstats", get(api::get_feed_stats));
+        .route("/me", get(handlers::get_session_user))
+        .route("/users", post(handlers::create_user))
+        .route("/users", get(handlers::get_users))
+        .route("/login", post(handlers::create_session))
+        .route("/articles", get(handlers::get_articles))
+        .route("/feeds/log", get(handlers::get_all_feed_logs))
+        .route("/feeds/refresh", get(handlers::refresh_feeds))
+        .route("/feeds/:id/refresh", get(handlers::refresh_feed))
+        .route("/feeds/:id/articles", get(handlers::get_feed_articles))
+        .route("/feeds/:id/log", get(handlers::get_feed_log))
+        .route("/feeds/:id", get(handlers::get_feed))
+        .route("/feeds/:id", delete(handlers::delete_feed))
+        .route("/feeds", get(handlers::get_feeds))
+        .route("/feeds", post(handlers::add_feed))
+        .route("/feedgroups", get(handlers::get_all_feed_groups))
+        .route("/feedgroups", post(handlers::create_feed_group))
+        .route("/feedgroups/:id", get(handlers::get_feed_group))
+        .route("/feedgroups/:id", post(handlers::add_group_feed))
+        .route(
+            "/feedgroups/:id/:feed_id",
+            delete(handlers::remove_group_feed),
+        )
+        .route("/feedstats", get(handlers::get_feed_stats));
 
     let app = Router::new()
         .nest("/api", api)
