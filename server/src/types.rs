@@ -1,3 +1,5 @@
+// These are types that are shared between the server, cli, and client
+
 use std::{collections::HashMap, fmt::Display};
 
 use macros::Id;

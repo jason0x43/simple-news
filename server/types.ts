@@ -15,7 +15,6 @@ export interface Feed {
   url: string;
   title: string;
   kind: FeedKind;
-  last_updated: OffsetDateTime;
   disabled: boolean;
   icon?: string;
   html_url?: string;
@@ -53,18 +52,34 @@ export interface SessionResponse {
   expires: OffsetDateTime;
 }
 
-export type Uuid = string
+export interface CreateFeedGroupRequest {
+  name: string;
+}
+
+export interface AddGroupFeedRequest {
+  feed_id: FeedId;
+}
+
+export interface FeedStat {
+  total: number;
+  read: number;
+}
+
+export interface FeedStats {
+  feeds: Record<FeedId, FeedStat>;
+  saved: number;
+}
 
 export type Url = string
 
 export type Value = Record<string, unknown>
 
-export type UserId = Uuid
+export type UserId = string
 
-export type FeedId = Uuid
+export type FeedId = string
 
-export type SessionId = Uuid
+export type SessionId = string
 
-export type ArticleId = Uuid
+export type ArticleId = string
 
 export type OffsetDateTime = string
