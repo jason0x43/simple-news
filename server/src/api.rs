@@ -11,7 +11,7 @@ use crate::{
     types::{
         AddFeedRequest, AddGroupFeedRequest, Article, CreateFeedGroupRequest,
         CreateSessionRequest, CreateUserRequest, Feed, FeedGroup, FeedGroupId,
-        FeedId, FeedLog, Password, Session, User,
+        FeedId, FeedLog, FeedStats, Password, Session, User, FeedStat,
     },
     util::check_password,
 };
@@ -23,7 +23,7 @@ pub(crate) async fn create_user(
     let mut tx = state.pool.begin().await?;
 
     let user = User::create(&mut *tx, body.email, body.username).await?;
-    Password::create(&mut *tx, body.password, user.id.clone()).await?;
+    Password::create(&mut *tx, &body.password, &user.id).await?;
 
     tx.commit().await?;
 
@@ -56,10 +56,10 @@ pub(crate) async fn create_session(
     info!("Logging in user {}", body.username);
 
     let mut conn = state.pool.acquire().await?;
-    let user = User::get_by_username(&mut conn, body.username).await?;
-    let password = Password::get_by_user_id(&mut conn, user.id.clone()).await?;
+    let user = User::get_by_username(&mut conn, &body.username).await?;
+    let password = Password::get_by_user_id(&mut conn, &user.id).await?;
 
-    check_password(body.password, password.hash, password.salt)?;
+    check_password(&body.password, &password.hash, &password.salt)?;
 
     let session = Session::create(&mut conn, user.id).await?;
 
@@ -84,7 +84,7 @@ pub(crate) async fn get_feed_articles(
     Path(id): Path<FeedId>,
 ) -> Result<Json<Vec<Article>>, AppError> {
     let mut conn = state.pool.acquire().await?;
-    let articles = Article::find_all_for_feed(&mut *conn, id).await?;
+    let articles = Article::find_all_for_feed(&mut *conn, &id).await?;
     Ok(Json(articles))
 }
 
@@ -105,7 +105,7 @@ pub(crate) async fn delete_feed(
     Path(id): Path<FeedId>,
 ) -> Result<(), AppError> {
     let mut conn = state.pool.acquire().await?;
-    Feed::delete(&mut conn, id).await?;
+    Feed::delete(&mut conn, &id).await?;
     Ok(())
 }
 
@@ -116,7 +116,7 @@ pub(crate) async fn get_feed(
 ) -> Result<Json<Feed>, AppError> {
     log::debug!("getting feed {}", id);
     let mut conn = state.pool.acquire().await?;
-    let feed = Feed::get(&mut conn, id).await?;
+    let feed = Feed::get(&mut conn, &id).await?;
     Ok(Json(feed))
 }
 
@@ -135,7 +135,7 @@ pub(crate) async fn refresh_feed(
     Path(id): Path<FeedId>,
 ) -> Result<(), AppError> {
     let mut tx = state.pool.begin().await?;
-    let feed = Feed::get(&mut *tx, id).await?;
+    let feed = Feed::get(&mut *tx, &id).await?;
     log::debug!("refreshing feed at {}", feed.url);
     feed.refresh(&mut *tx).await?;
     tx.commit().await?;
@@ -189,7 +189,7 @@ pub(crate) async fn get_feed_group(
     Path(id): Path<FeedGroupId>,
 ) -> Result<Json<Vec<Feed>>, AppError> {
     let mut conn = state.pool.acquire().await?;
-    let feeds = Feed::get_for_group(&mut conn, id).await?;
+    let feeds = Feed::get_for_group(&mut conn, &id).await?;
     Ok(Json(feeds))
 }
 
@@ -209,7 +209,7 @@ pub(crate) async fn add_group_feed(
     Json(body): Json<AddGroupFeedRequest>,
 ) -> Result<Json<FeedGroup>, AppError> {
     let mut conn = state.pool.acquire().await?;
-    let group = FeedGroup::get(&mut conn, id).await?;
+    let group = FeedGroup::get(&mut conn, &id).await?;
     group.add_feed(&mut conn, body.feed_id).await?;
     Ok(Json(group))
 }
@@ -220,7 +220,27 @@ pub(crate) async fn remove_group_feed(
     Path((id, feed_id)): Path<(FeedGroupId, FeedId)>,
 ) -> Result<Json<FeedGroup>, AppError> {
     let mut conn = state.pool.acquire().await?;
-    let group = FeedGroup::get(&mut conn, id).await?;
-    group.remove_feed(&mut conn, feed_id).await?;
+    let group = FeedGroup::get(&mut conn, &id).await?;
+    group.remove_feed(&mut conn, &feed_id).await?;
     Ok(Json(group))
+}
+
+pub(crate) async fn get_feed_stats(
+    session: Session,
+    state: State<AppState>,
+) -> Result<Json<FeedStats>, AppError> {
+    let mut conn = state.pool.acquire().await?;
+    let subscribed = Feed::get_subscribed(&mut conn, &session.user_id).await?;
+    let mut stats = FeedStats::new();
+    for feed in subscribed.iter() {
+        let num_articles = feed.article_count(&mut conn).await?;
+        stats.feeds.insert(
+            feed.id.clone(),
+            FeedStat {
+                total: num_articles,
+                read: 0,
+            },
+        );
+    }
+    Ok(Json(stats))
 }

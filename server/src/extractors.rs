@@ -30,7 +30,7 @@ impl FromRequestParts<AppState> for Session {
                 log::error!("Error getting db connection: {}", err);
                 AppError::SqlxError(err).into_response()
             })?;
-            Session::get(&mut conn, id).await.map_err(|err| {
+            Session::get(&mut conn, &id).await.map_err(|err| {
                 log::error!("Error loading session: {}", err);
                 err.into_response()
             })

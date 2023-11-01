@@ -14,11 +14,11 @@ pub(crate) struct HashedPassword {
 
 /// Hash a password, returning the hash and salt values
 pub(crate) fn hash_password(
-    password: String,
-    salt: Option<String>,
+    password: &str,
+    salt: Option<&str>,
 ) -> HashedPassword {
-    let salt = if let Some(salt) = salt {
-        salt
+    let salt: String = if let Some(salt) = salt {
+        salt.into()
     } else {
         rand::thread_rng()
             .sample_iter(&Alphanumeric)
@@ -28,13 +28,13 @@ pub(crate) fn hash_password(
     };
 
     HashedPassword {
-        hash: sha512(password + &salt),
+        hash: sha512(&(password.to_owned() + &salt)),
         salt,
     }
 }
 
 /// Return the SHA512 hash of a string
-fn sha512(text: String) -> String {
+fn sha512(text: &str) -> String {
     let mut hasher = Sha512::new();
     hasher.update(text);
     let hash = hasher.finalize();
@@ -42,12 +42,12 @@ fn sha512(text: String) -> String {
 }
 
 pub(crate) fn check_password(
-    password: String,
-    hash: String,
-    salt: String,
+    password: &str,
+    hash: &str,
+    salt: &str,
 ) -> Result<(), AppError> {
     let check = hash_password(password, Some(salt));
-    if check.hash != hash {
+    if &check.hash != hash {
         error!("Incorrect password");
         Err(AppError::Unauthorized)
     } else {

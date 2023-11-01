@@ -106,7 +106,7 @@ async fn list(matches: &ArgMatches) -> Result<(), AppError> {
         table.set_header(vec!["id", "name"]);
         table.add_rows(feeds.iter().map(|f| {
             vec![
-                substr(f.id.to_string(), 8),
+                substr(&f.id.to_string(), 8),
                 f.name.to_string(),
             ]
         }));
@@ -133,7 +133,7 @@ async fn show(matches: &ArgMatches) -> Result<(), AppError> {
         table.set_header(vec!["id", "name"]);
         table.add_rows(feeds.iter().map(|f| {
             vec![
-                substr(f.id.to_string(), 8),
+                substr(&f.id.to_string(), 8),
                 f.title.to_string(),
             ]
         }));

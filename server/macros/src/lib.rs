@@ -35,6 +35,12 @@ pub fn derive_id(input: TokenStream) -> TokenStream {
                 self.0 == other.0
             }
         }
+
+        impl std::hash::Hash for #ident {
+            fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+                self.0.hash(state);
+            }
+        }
     };
     output.into()
 }

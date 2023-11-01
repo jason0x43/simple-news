@@ -159,6 +159,6 @@ pub(crate) fn new_table() -> Table {
     table
 }
 
-pub(crate) fn substr(value: String, len: usize) -> String {
+pub(crate) fn substr(value: &str, len: usize) -> String {
     value.chars().take(len).collect()
 }

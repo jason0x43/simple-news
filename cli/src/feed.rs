@@ -2,14 +2,16 @@ use std::fs;
 
 use crate::{
     error::AppError,
-    util::{assert_ok, get_client, get_host, to_time_str, Cache, new_table, substr},
+    util::{
+        assert_ok, get_client, get_host, new_table, substr, to_time_str, Cache,
+    },
 };
 use clap::{arg, ArgMatches, Command};
 use comfy_table::{Cell, Color};
 use reqwest::Url;
 use serde::Deserialize;
 use serde_json::to_string_pretty;
-use server::{AddFeedRequest, Feed, FeedKind, FeedLog};
+use server::{AddFeedRequest, Feed, FeedKind, FeedLog, FeedStats};
 
 pub(crate) fn command() -> Command {
     Command::new("feed")
@@ -59,6 +61,12 @@ pub(crate) fn command() -> Command {
                 .arg(arg!(-j --json "Output raw JSON"))
                 .arg_required_else_help(false),
         )
+        .subcommand(
+            Command::new("stats")
+                .about("Show user feed statistics")
+                .arg(arg!(-j --json "Output raw JSON"))
+                .arg_required_else_help(false),
+        )
 }
 
 pub(crate) async fn handle(matches: &ArgMatches) -> Result<(), AppError> {
@@ -70,6 +78,7 @@ pub(crate) async fn handle(matches: &ArgMatches) -> Result<(), AppError> {
         Some(("list", sub_matches)) => list(sub_matches).await,
         Some(("refresh", sub_matches)) => refresh(sub_matches).await,
         Some(("log", sub_matches)) => log(sub_matches).await,
+        Some(("stats", sub_matches)) => stats(sub_matches).await,
         _ => unreachable!(),
     }
 }
@@ -213,7 +222,7 @@ async fn log(matches: &ArgMatches) -> Result<(), AppError> {
             table.set_header(vec!["feed_id", "time", "success", "message"]);
             table.add_rows(updates.iter().map(|u| {
                 let color = if u.success { Color::Reset } else { Color::Red };
-                let feed_id: String = substr(u.feed_id.to_string(), 8);
+                let feed_id: String = substr(&u.feed_id.to_string(), 8);
                 vec![
                     Cell::new(feed_id).fg(color),
                     Cell::new(to_time_str(&u.time)).fg(color),
@@ -223,6 +232,30 @@ async fn log(matches: &ArgMatches) -> Result<(), AppError> {
                 ]
             }));
         }
+        println!("{table}");
+    }
+
+    Ok(())
+}
+
+async fn stats(matches: &ArgMatches) -> Result<(), AppError> {
+    let client = get_client()?;
+    let url = get_host()?.join("/feedstats")?;
+    let resp = assert_ok(client.get(url).send().await?).await?;
+    let stats: FeedStats = resp.json().await?;
+
+    if matches.get_flag("json") {
+        println!("{}", to_string_pretty(&stats).unwrap());
+    } else {
+        let mut table = new_table();
+        table.set_header(vec!["feed_id", "num_articles"]);
+        table.add_rows(stats.feeds.iter().map(|(id, stat)| {
+            let feed_id: String = substr(&id.to_string(), 8);
+            vec![
+                feed_id,
+                stat.total.to_string(),
+            ]
+        }));
         println!("{table}");
     }
 

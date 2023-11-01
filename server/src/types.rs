@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{collections::HashMap, fmt::Display};
 
 use macros::Id;
 use serde::{Deserialize, Serialize};
@@ -202,4 +202,27 @@ pub struct FeedGroupFeed {
     pub id: FeedGroupFeedId,
     pub feed_group_id: FeedGroupId,
     pub feed_id: FeedId,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[tsync]
+pub struct FeedStat {
+    pub total: i32,
+    pub read: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[tsync]
+pub struct FeedStats {
+    pub feeds: HashMap<FeedId, FeedStat>,
+    pub saved: i32,
+}
+
+impl FeedStats {
+    pub fn new() -> Self {
+        Self {
+            feeds: HashMap::new(),
+            saved: 0,
+        }
+    }
 }
