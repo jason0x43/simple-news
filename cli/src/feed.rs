@@ -176,7 +176,7 @@ async fn list(matches: &ArgMatches) -> Result<(), AppError> {
         println!("{}", to_string_pretty(&feeds).unwrap());
     } else {
         let mut table = new_table();
-        table.set_header(vec!["id", "title", "updated"]);
+        table.set_header(vec!["id", "title"]);
         table.add_rows(feeds.iter().map(|f| {
             vec![
                 f.id.to_string().chars().take(8).collect(),

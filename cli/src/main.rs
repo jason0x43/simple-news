@@ -12,12 +12,12 @@ use colored::Colorize;
 
 fn cli() -> Command {
     Command::new("sn")
-        .subcommand(user::command())
-        .subcommand(session::command())
-        .subcommand(article::command())
         .subcommand(host::command())
+        .subcommand(session::command())
+        .subcommand(user::command())
         .subcommand(feed::command())
         .subcommand(group::command())
+        .subcommand(article::command())
         .arg_required_else_help(true)
 }
 
