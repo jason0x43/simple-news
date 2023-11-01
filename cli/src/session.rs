@@ -1,6 +1,6 @@
 use crate::{
     error::AppError,
-    util::{assert_ok, Cache},
+    util::{assert_ok, Cache, get_api},
 };
 use clap::{arg, ArgMatches, Command};
 use reqwest::Client;
@@ -24,7 +24,7 @@ pub(crate) async fn handle(matches: &ArgMatches) -> Result<(), AppError> {
     match matches.subcommand() {
         Some(("login", sub_matches)) => create(sub_matches).await,
         Some(("logout", _)) => clear().await,
-        _ => unreachable!()
+        _ => unreachable!(),
     }
 }
 
@@ -40,14 +40,8 @@ async fn create(matches: &ArgMatches) -> Result<(), AppError> {
     };
 
     let client = Client::builder().cookie_store(true).build()?;
-    let resp = assert_ok(
-        client
-            .post("http://localhost:3000/login")
-            .json(&body)
-            .send()
-            .await?,
-    )
-    .await?;
+    let url = get_api()?.join("login")?;
+    let resp = assert_ok(client.post(url).json(&body).send().await?).await?;
     let session = resp.json::<SessionResponse>().await?;
 
     println!("Logged in as {}", username);

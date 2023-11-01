@@ -104,10 +104,15 @@ impl Cache {
     }
 }
 
-pub(crate) fn get_host() -> Result<Url, AppError> {
+fn get_host() -> Result<Url, AppError> {
     let cache = Cache::load()?;
     let host = cache.get_host()?;
     Ok(host.parse::<Url>()?)
+}
+
+pub(crate) fn get_api() -> Result<Url, AppError> {
+    let base = get_host()?;
+    Ok(base.join("/api/")?)
 }
 
 pub(crate) fn get_client() -> Result<Client, AppError> {

@@ -34,7 +34,7 @@ async fn main() -> Result<(), sqlx::Error> {
         .await?;
     let app_state = AppState { pool };
 
-    let app = Router::new()
+    let api = Router::new()
         .route("/me", get(api::get_session_user))
         .route("/users", post(api::create_user))
         .route("/users", get(api::get_users))
@@ -54,7 +54,10 @@ async fn main() -> Result<(), sqlx::Error> {
         .route("/feedgroups/:id", get(api::get_feed_group))
         .route("/feedgroups/:id", post(api::add_group_feed))
         .route("/feedgroups/:id/:feed_id", delete(api::remove_group_feed))
-        .route("/feedstats", get(api::get_feed_stats))
+        .route("/feedstats", get(api::get_feed_stats));
+
+    let app = Router::new()
+        .nest("/api", api)
         .fallback(static_handler)
         .with_state(app_state)
         .layer(TraceLayer::new_for_http());

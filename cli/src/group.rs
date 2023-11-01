@@ -1,6 +1,6 @@
 use crate::{
     error::AppError,
-    util::{assert_ok, get_client, get_host, new_table, Cache, substr},
+    util::{assert_ok, get_api, get_client, new_table, substr, Cache},
 };
 use clap::{arg, ArgMatches, Command};
 use serde_json::to_string_pretty;
@@ -70,7 +70,7 @@ async fn create(matches: &ArgMatches) -> Result<(), AppError> {
     let name = matches.get_one::<String>("NAME").unwrap().clone();
     let body = CreateFeedGroupRequest { name: name.clone() };
     let client = get_client()?;
-    let url = get_host()?.join("/feedgroups")?;
+    let url = get_api()?.join("feedgroups")?;
     assert_ok(client.post(url.clone()).json(&body).send().await?).await?;
 
     println!("Added feed group {}", name);
@@ -83,7 +83,7 @@ async fn delete(matches: &ArgMatches) -> Result<(), AppError> {
     let id = matches.get_one::<String>("FEED_ID").unwrap();
     let id: FeedId = cache.get_matching_id(id)?.into();
     let client = get_client()?;
-    let url = get_host()?.join(&format!("/feedgroups/{}", id))?;
+    let url = get_api()?.join(&format!("/feedgroups/{}", id))?;
     assert_ok(client.delete(url).send().await?).await?;
 
     Ok(())
@@ -91,7 +91,7 @@ async fn delete(matches: &ArgMatches) -> Result<(), AppError> {
 
 async fn list(matches: &ArgMatches) -> Result<(), AppError> {
     let client = get_client()?;
-    let url = get_host()?.join("/feedgroups")?;
+    let url = get_api()?.join("feedgroups")?;
     let resp = assert_ok(client.get(url).send().await?).await?;
     let feeds: Vec<FeedGroup> = resp.json().await?;
 
@@ -104,12 +104,11 @@ async fn list(matches: &ArgMatches) -> Result<(), AppError> {
     } else {
         let mut table = new_table();
         table.set_header(vec!["id", "name"]);
-        table.add_rows(feeds.iter().map(|f| {
-            vec![
-                substr(&f.id.to_string(), 8),
-                f.name.to_string(),
-            ]
-        }));
+        table.add_rows(
+            feeds.iter().map(|f| {
+                vec![substr(&f.id.to_string(), 8), f.name.to_string()]
+            }),
+        );
         println!("{table}");
     }
 
@@ -121,7 +120,7 @@ async fn show(matches: &ArgMatches) -> Result<(), AppError> {
     let id = matches.get_one::<String>("FEED_GROUP_ID").unwrap();
     let id: FeedGroupId = cache.get_matching_id(id)?.into();
     let client = get_client()?;
-    let url = get_host()?.join(&format!("/feedgroups/{}", id))?;
+    let url = get_api()?.join(&format!("/feedgroups/{}", id))?;
     let resp = assert_ok(client.get(url).send().await?).await?;
 
     let feeds: Vec<Feed> = resp.json().await?;
@@ -131,12 +130,11 @@ async fn show(matches: &ArgMatches) -> Result<(), AppError> {
     } else {
         let mut table = new_table();
         table.set_header(vec!["id", "name"]);
-        table.add_rows(feeds.iter().map(|f| {
-            vec![
-                substr(&f.id.to_string(), 8),
-                f.title.to_string(),
-            ]
-        }));
+        table.add_rows(
+            feeds.iter().map(|f| {
+                vec![substr(&f.id.to_string(), 8), f.title.to_string()]
+            }),
+        );
         println!("{table}");
     }
 
@@ -153,7 +151,7 @@ async fn add(matches: &ArgMatches) -> Result<(), AppError> {
         feed_id: feed_id.clone(),
     };
     let client = get_client()?;
-    let url = get_host()?.join(&format!("/feedgroups/{}", group_id))?;
+    let url = get_api()?.join(&format!("/feedgroups/{}", group_id))?;
     assert_ok(client.post(url.clone()).json(&body).send().await?).await?;
 
     println!("Added feed {} to group {}", feed_id, group_id);
@@ -169,7 +167,7 @@ async fn remove(matches: &ArgMatches) -> Result<(), AppError> {
     let feed_id: FeedId = cache.get_matching_id(feed_id)?.into();
     let client = get_client()?;
     let url =
-        get_host()?.join(&format!("/feedgroups/{}/{}", group_id, feed_id))?;
+        get_api()?.join(&format!("/feedgroups/{}/{}", group_id, feed_id))?;
     assert_ok(client.delete(url.clone()).send().await?).await?;
 
     println!("Removed feed {} from group {}", feed_id, group_id);

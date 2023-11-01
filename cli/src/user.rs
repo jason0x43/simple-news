@@ -1,6 +1,6 @@
 use crate::{
     error::AppError,
-    util::{assert_ok, get_client, get_host, new_table},
+    util::{assert_ok, get_api, get_client, new_table},
 };
 use clap::{arg, ArgMatches, Command};
 use serde_json::to_string_pretty;
@@ -50,23 +50,16 @@ async fn create(matches: &ArgMatches) -> Result<(), AppError> {
     };
 
     let client = get_client()?;
-    assert_ok(
-        client
-            .post("http://localhost:3000/users")
-            .json(&body)
-            .send()
-            .await?,
-    )
-    .await?;
+    let url = get_api()?.join("users")?;
+    assert_ok(client.post(url).json(&body).send().await?).await?;
 
     Ok(())
 }
 
 async fn list(matches: &ArgMatches) -> Result<(), AppError> {
     let client = get_client()?;
-    let resp =
-        assert_ok(client.get("http://localhost:3000/users").send().await?)
-            .await?;
+    let url = get_api()?.join("users")?;
+    let resp = assert_ok(client.get(url).send().await?).await?;
 
     let users: Vec<User> = resp.json().await?;
 
@@ -90,7 +83,7 @@ async fn list(matches: &ArgMatches) -> Result<(), AppError> {
 
 async fn show() -> Result<(), AppError> {
     let client = get_client()?;
-    let url = get_host()?.join("/me")?;
+    let url = get_api()?.join("me")?;
     let resp = assert_ok(client.get(url).send().await?).await?;
     let user: User = resp.json().await?;
     println!("{}", to_string_pretty(&user).unwrap());

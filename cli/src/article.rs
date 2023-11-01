@@ -1,6 +1,6 @@
 use crate::{
     error::AppError,
-    util::{assert_ok, get_client, get_host, new_table, to_time_str, Cache},
+    util::{assert_ok, get_api, get_client, new_table, to_time_str, Cache},
 };
 use clap::{arg, ArgMatches, Command};
 use serde_json::to_string_pretty;
@@ -35,21 +35,19 @@ async fn list(matches: &ArgMatches) -> Result<(), AppError> {
     };
 
     let client = get_client()?;
-    let host = cache.get_host()?;
     let body = if let Some(id) = &feed_id {
-        client
-            .get(format!("{}/feeds/{}/articles", host, id))
-            .send()
-            .await?
+        let url = get_api()?.join(&format!("feeds/{}/articles", id))?;
+        client.get(url).send().await?
     } else {
-        client.get(format!("{}/articles", host)).send().await?
+        let url = get_api()?.join("articles")?;
+        client.get(url).send().await?
     };
     let articles = body.json::<Vec<Article>>().await?;
 
     if matches.get_flag("json") {
         println!("{}", to_string_pretty(&articles).unwrap());
     } else {
-        let url = get_host()?.join("/feeds")?;
+        let url = get_api()?.join("feeds")?;
         let resp = assert_ok(client.get(url).send().await?).await?;
         let feeds: Vec<Feed> = resp.json().await?;
 

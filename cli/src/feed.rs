@@ -3,7 +3,7 @@ use std::fs;
 use crate::{
     error::AppError,
     util::{
-        assert_ok, get_client, get_host, new_table, substr, to_time_str, Cache,
+        assert_ok, get_client, new_table, substr, to_time_str, Cache, get_api,
     },
 };
 use clap::{arg, ArgMatches, Command};
@@ -99,7 +99,7 @@ async fn add_feed(title: &String, url: &String) -> Result<(), AppError> {
         kind: FeedKind::Rss,
     };
     let client = get_client()?;
-    let url = get_host()?.join("/feeds")?;
+    let url = get_api()?.join("feeds")?;
     assert_ok(client.post(url.clone()).json(&body).send().await?).await?;
 
     println!("Added feed {} ({})", title, url);
@@ -128,7 +128,7 @@ async fn show(matches: &ArgMatches) -> Result<(), AppError> {
     let id = matches.get_one::<String>("FEED_ID").unwrap();
     let id = cache.get_matching_id(id)?;
     let client = get_client()?;
-    let url = get_host()?.join(&format!("/feeds/{}", id))?;
+    let url = get_api()?.join(&format!("feeds/{}", id))?;
     let resp = assert_ok(client.get(url).send().await?).await?;
 
     let feed: Feed = resp.json().await?;
@@ -142,7 +142,7 @@ async fn delete(matches: &ArgMatches) -> Result<(), AppError> {
     let id = matches.get_one::<String>("FEED_ID").unwrap();
     let id = cache.get_matching_id(id)?;
     let client = get_client()?;
-    let url = get_host()?.join(&format!("/feeds/{}", id))?;
+    let url = get_api()?.join(&format!("feeds/{}", id))?;
     assert_ok(client.delete(url).send().await?).await?;
 
     Ok(())
@@ -154,9 +154,9 @@ async fn refresh(matches: &ArgMatches) -> Result<(), AppError> {
     let id = matches.get_one::<String>("FEED_ID");
     let url = if let Some(id) = id {
         let id = cache.get_matching_id(id)?;
-        get_host()?.join(&format!("/feeds/{}/refresh", id))?
+        get_api()?.join(&format!("feeds/{}/refresh", id))?
     } else {
-        get_host()?.join("/feeds/refresh")?
+        get_api()?.join("feeds/refresh")?
     };
     assert_ok(client.get(url).send().await?).await?;
 
@@ -165,7 +165,7 @@ async fn refresh(matches: &ArgMatches) -> Result<(), AppError> {
 
 async fn list(matches: &ArgMatches) -> Result<(), AppError> {
     let client = get_client()?;
-    let url = get_host()?.join("/feeds")?;
+    let url = get_api()?.join("feeds")?;
     let resp = assert_ok(client.get(url).send().await?).await?;
     let feeds: Vec<Feed> = resp.json().await?;
 
@@ -196,9 +196,9 @@ async fn log(matches: &ArgMatches) -> Result<(), AppError> {
     let id = matches.get_one::<String>("FEED_ID");
     let url = if let Some(id) = id {
         let id = cache.get_matching_id(id)?;
-        get_host()?.join(&format!("/feeds/{}/log", id))?
+        get_api()?.join(&format!("feeds/{}/log", id))?
     } else {
-        get_host()?.join("/feeds/log")?
+        get_api()?.join("feeds/log")?
     };
 
     let resp = assert_ok(client.get(url).send().await?).await?;
@@ -246,14 +246,14 @@ async fn stats(matches: &ArgMatches) -> Result<(), AppError> {
     } else {
         "/feedstats"
     };
-    let url = get_host()?.join(path)?;
+    let url = get_api()?.join(path)?;
     let resp = assert_ok(client.get(url).send().await?).await?;
     let stats: FeedStats = resp.json().await?;
 
     if matches.get_flag("json") {
         println!("{}", to_string_pretty(&stats).unwrap());
     } else {
-        let url = get_host()?.join("/feeds")?;
+        let url = get_api()?.join("feeds")?;
         let resp = assert_ok(client.get(url).send().await?).await?;
         let feeds: Vec<Feed> = resp.json().await?;
 
