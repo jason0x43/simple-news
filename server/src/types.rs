@@ -208,6 +208,15 @@ pub struct FeedGroupFeed {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[tsync]
+pub struct FeedGroupWithFeeds {
+    pub id: FeedGroupId,
+    pub name: String,
+    pub user_id: UserId,
+    pub feeds: Vec<Feed>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[tsync]
 pub struct FeedStat {
     pub total: i32,
     pub read: i32,

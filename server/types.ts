@@ -60,6 +60,13 @@ export interface AddGroupFeedRequest {
   feed_id: FeedId;
 }
 
+export interface FeedGroupWithFeeds {
+  id: FeedGroupId;
+  name: string;
+  user_id: UserId;
+  feeds: Array<Feed>;
+}
+
 export interface FeedStat {
   total: number;
   read: number;

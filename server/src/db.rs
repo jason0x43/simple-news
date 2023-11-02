@@ -5,8 +5,8 @@ use crate::{
     rss::{get_content, get_icon, load_feed},
     types::{
         Article, ArticleId, Feed, FeedGroup, FeedGroupFeed, FeedGroupFeedId,
-        FeedGroupId, FeedId, FeedKind, FeedLog, FeedLogId, Password,
-        PasswordId, Session, SessionId, User, UserId,
+        FeedGroupId, FeedGroupWithFeeds, FeedId, FeedKind, FeedLog, FeedLogId,
+        Password, PasswordId, Session, SessionId, User, UserId,
     },
     util::{get_timestamp, hash_password},
 };
@@ -311,35 +311,6 @@ impl Feed {
         .await
         .map_err(|err| {
             log::warn!("error loading feeds: {}", err);
-            AppError::SqlxError(err)
-        })
-    }
-
-    pub(crate) async fn get_for_group(
-        conn: &mut SqliteConnection,
-        group_id: &FeedGroupId,
-    ) -> Result<Vec<Feed>, AppError> {
-        query_as!(
-            Feed,
-            r#"
-            SELECT
-              feeds.id,
-              url,
-              title,
-              kind,
-              disabled AS "disabled!: bool",
-              icon,
-              html_url
-            FROM feeds
-            INNER JOIN feed_group_feeds ON feeds.id = feed_group_feeds.feed_id
-            WHERE feed_group_feeds.feed_group_id = ?1
-            "#,
-            group_id
-        )
-        .fetch_all(conn)
-        .await
-        .map_err(|err| {
-            log::warn!("error getting feed for group {}: {}", group_id, err);
             AppError::SqlxError(err)
         })
     }
@@ -727,6 +698,19 @@ impl FeedGroup {
         .fetch_all(conn)
         .await
         .map_err(AppError::SqlxError)
+    }
+
+    pub(crate) async fn with_feeds(
+        &self,
+        conn: &mut SqliteConnection,
+    ) -> Result<FeedGroupWithFeeds, AppError> {
+        let feeds = self.get_feeds(conn).await?;
+        Ok(FeedGroupWithFeeds {
+            id: self.id.clone(),
+            name: self.name.clone(),
+            user_id: self.user_id.clone(),
+            feeds,
+        })
     }
 
     pub(crate) async fn add_feed(

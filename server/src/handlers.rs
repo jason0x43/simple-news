@@ -20,7 +20,8 @@ use crate::{
     types::{
         AddFeedRequest, AddGroupFeedRequest, Article, CreateFeedGroupRequest,
         CreateSessionRequest, CreateUserRequest, Feed, FeedGroup, FeedGroupId,
-        FeedId, FeedLog, FeedStat, FeedStats, Password, Session, User,
+        FeedGroupWithFeeds, FeedId, FeedLog, FeedStat, FeedStats, Password,
+        Session, User,
     },
     util::check_password,
 };
@@ -206,19 +207,28 @@ pub(crate) async fn get_feed_group(
     _session: Session,
     state: State<AppState>,
     Path(id): Path<FeedGroupId>,
-) -> Result<Json<Vec<Feed>>, AppError> {
+) -> Result<Json<FeedGroupWithFeeds>, AppError> {
     let mut conn = state.pool.acquire().await?;
-    let feeds = Feed::get_for_group(&mut conn, &id).await?;
-    Ok(Json(feeds))
+    let group = FeedGroup::get(&mut conn, &id)
+        .await?
+        .with_feeds(&mut conn)
+        .await?;
+    Ok(Json(group))
 }
 
 pub(crate) async fn get_all_feed_groups(
     _session: Session,
     state: State<AppState>,
-) -> Result<Json<Vec<FeedGroup>>, AppError> {
+) -> Result<Json<Vec<FeedGroupWithFeeds>>, AppError> {
     let mut conn = state.pool.acquire().await?;
-    let groups = FeedGroup::get_all(&mut conn).await?;
-    Ok(Json(groups))
+    let groups: Vec<FeedGroup> = FeedGroup::get_all(&mut conn)
+        .await?;
+    let mut groups_with_feeds: Vec<FeedGroupWithFeeds> = vec![];
+    for group in groups {
+        let group_with_feeds = group.with_feeds(&mut conn).await?;
+        groups_with_feeds.push(group_with_feeds);
+    }
+    Ok(Json(groups_with_feeds))
 }
 
 pub(crate) async fn add_group_feed(

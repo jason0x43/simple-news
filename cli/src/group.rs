@@ -89,6 +89,9 @@ async fn delete(matches: &ArgMatches) -> Result<(), AppError> {
     Ok(())
 }
 
+// TODO: get_feed_groups now returns FeedGroupWithFeeds to help with rendering
+// sidebar; update for that
+
 async fn list(matches: &ArgMatches) -> Result<(), AppError> {
     let client = get_client()?;
     let url = get_api()?.join("feedgroups")?;
