@@ -35,3 +35,4 @@ base64 = "0.21.5"
 lol_html = "1.2.0"
 macros = { path = "macros" }
 cuid2 = "0.1.2"
+handlebars = "4.4.0"

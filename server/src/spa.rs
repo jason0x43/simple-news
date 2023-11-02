@@ -4,14 +4,22 @@ use axum::{
 };
 use rust_embed::RustEmbed;
 
+use crate::types::Session;
+
 #[derive(RustEmbed)]
 #[folder = "../app/dist/"]
 struct Assets;
 
 static INDEX_HTML: &str = "index.html";
 
-pub(crate) async fn static_handler(uri: Uri) -> impl IntoResponse {
+pub(crate) async fn spa_handler(
+    _session: Session,
+    uri: Uri,
+) -> impl IntoResponse {
     let path = uri.path().trim_start_matches('/');
+
+    // TODO: also handled templates here so templates can share styles, or at
+    // least load stylesheets
 
     if path.is_empty() || path == INDEX_HTML {
         return index_html().await;

@@ -1,9 +1,10 @@
-use std::string::FromUtf8Error;
+use std::{string::FromUtf8Error, str::Utf8Error};
 
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
+use handlebars::RenderError;
 use lol_html::errors::RewritingError;
 use reqwest::header::ToStrError;
 use thiserror::Error;
@@ -32,6 +33,9 @@ pub enum AppError {
     #[error("rss error: {0}")]
     RssError(rss::Error),
 
+    #[error("file not found: {0}")]
+    FileNotFound(String),
+
     #[error("error: {0}")]
     Error(String),
 }
@@ -41,6 +45,9 @@ impl IntoResponse for AppError {
         match self {
             AppError::UserNotFound => {
                 (StatusCode::NOT_FOUND, self.to_string()).into_response()
+            }
+            AppError::FileNotFound(msg) => {
+                (StatusCode::NOT_FOUND, msg).into_response()
             }
             AppError::SessionNotFound => {
                 (StatusCode::NOT_FOUND, self.to_string()).into_response()
@@ -127,5 +134,17 @@ impl From<RewritingError> for AppError {
 impl From<FromUtf8Error> for AppError {
     fn from(err: FromUtf8Error) -> AppError {
         AppError::Error(format!("UTF8: {}", err))
+    }
+}
+
+impl From<Utf8Error> for AppError {
+    fn from(err: Utf8Error) -> AppError {
+        AppError::Error(format!("UTF8: {}", err))
+    }
+}
+
+impl From<RenderError> for AppError {
+    fn from(err: RenderError) -> AppError {
+        AppError::Error(format!("HTML rendering: {}", err))
     }
 }

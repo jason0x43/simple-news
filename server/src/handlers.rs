@@ -1,18 +1,26 @@
 use axum::{
-    extract::{Path, State, Query},
-    Json,
+    extract::{Path, Query, State},
+    http::Uri,
+    response::{Html, IntoResponse, Redirect},
+    Form, Json,
 };
 use axum_extra::extract::{cookie::Cookie, CookieJar};
+use handlebars::Handlebars;
 use log::info;
+use reqwest::{header, StatusCode};
+use rust_embed::RustEmbed;
 use serde::Deserialize;
+use serde_json::json;
+use sqlx::SqliteConnection;
 
 use crate::{
     error::AppError,
     state::AppState,
+    templates::get_template,
     types::{
         AddFeedRequest, AddGroupFeedRequest, Article, CreateFeedGroupRequest,
         CreateSessionRequest, CreateUserRequest, Feed, FeedGroup, FeedGroupId,
-        FeedId, FeedLog, FeedStats, Password, Session, User, FeedStat,
+        FeedId, FeedLog, FeedStat, FeedStats, Password, Session, User,
     },
     util::check_password,
 };
@@ -45,8 +53,25 @@ pub(crate) async fn get_session_user(
     state: State<AppState>,
 ) -> Result<Json<User>, AppError> {
     let mut conn = state.pool.acquire().await?;
+    log::debug!("session user ID: {}", session.user_id);
     let user = User::get(&mut conn, session.user_id).await?;
     Ok(Json(user))
+}
+
+async fn create_session_impl(
+    conn: &mut SqliteConnection,
+    jar: CookieJar,
+    data: &CreateSessionRequest,
+) -> Result<(CookieJar, Session), AppError> {
+    let user = User::get_by_username(conn, &data.username).await?;
+    let password = Password::get_by_user_id(conn, &user.id).await?;
+    check_password(&data.password, &password.hash, &password.salt)?;
+    let session = Session::create(conn, user.id).await?;
+
+    Ok((
+        jar.add(Cookie::new("session_id", session.id.to_string())),
+        session,
+    ))
 }
 
 pub(crate) async fn create_session(
@@ -57,17 +82,10 @@ pub(crate) async fn create_session(
     info!("Logging in user {}", body.username);
 
     let mut conn = state.pool.acquire().await?;
-    let user = User::get_by_username(&mut conn, &body.username).await?;
-    let password = Password::get_by_user_id(&mut conn, &user.id).await?;
+    let (jar, session) =
+        create_session_impl(&mut conn, jar.clone(), &body).await?;
 
-    check_password(&body.password, &password.hash, &password.salt)?;
-
-    let session = Session::create(&mut conn, user.id).await?;
-
-    Ok((
-        jar.add(Cookie::new("session_id", session.id.to_string())),
-        Json(session),
-    ))
+    Ok((jar, Json(session)))
 }
 
 pub(crate) async fn get_articles(
@@ -228,7 +246,7 @@ pub(crate) async fn remove_group_feed(
 
 #[derive(Deserialize)]
 pub(crate) struct GetFeedStatsParams {
-    pub(crate) all: Option<bool>
+    pub(crate) all: Option<bool>,
 }
 
 pub(crate) async fn get_feed_stats(
@@ -254,4 +272,41 @@ pub(crate) async fn get_feed_stats(
         );
     }
     Ok(Json(stats))
+}
+
+/// Clear any current session and display the login page
+pub(crate) async fn show_login_page(
+    jar: CookieJar,
+) -> Result<(CookieJar, Html<String>), AppError> {
+    let jar = jar.remove(Cookie::named("session_id"));
+    let login_tmpl = get_template("login.html")?;
+    let renderer = Handlebars::new();
+    let login_page = renderer.render_template(&login_tmpl, &json!({}))?;
+    Ok((jar, Html(login_page)))
+}
+
+/// Handle login form submission
+pub(crate) async fn login(
+    state: State<AppState>,
+    jar: CookieJar,
+    Form(login): Form<CreateSessionRequest>,
+) -> Result<(CookieJar, Redirect), AppError> {
+    let mut conn = state.pool.acquire().await?;
+    let (jar, _session) =
+        create_session_impl(&mut conn, jar.clone(), &login).await?;
+    Ok((jar, Redirect::temporary("/app")))
+}
+
+#[derive(RustEmbed)]
+#[folder = "public/"]
+struct Public;
+
+pub(crate) async fn public_files(uri: Uri) -> impl IntoResponse {
+    let path = uri.path().trim_start_matches('/');
+    if let Some(content) = Public::get(path) {
+        let mime = mime_guess::from_path(path).first_or_octet_stream();
+        ([(header::CONTENT_TYPE, mime.as_ref())], content.data).into_response()
+    } else {
+        (StatusCode::NOT_FOUND, "404").into_response()
+    }
 }

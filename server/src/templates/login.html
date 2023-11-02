@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<link rel="icon" href="/favicon.png" />
+		<link rel="manifest" href="/site.webmanifest" />
+		<link rel="stylesheet" href="/styles.css" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Simple News</title>
+		<style>
+			.login {
+				position: fixed;
+				height: 100%;
+				width: 100%;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+
+			form {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: var(--gap);
+			}
+		</style>
+	</head>
+	<body>
+		<main class="login">
+			<form method="post">
+				<input name="username" placeholder="Username" />
+				<input name="password" placeholder="Password" type="password" />
+				<button type="submit">Login</button>
+
+				{{#if errors}}
+				  <div class="error">{{errors}}</div>
+				{{/if}}
+			</form>
+		</main>
+	</body>
+</html>

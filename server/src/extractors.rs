@@ -2,7 +2,7 @@ use axum::{
     async_trait,
     extract::FromRequestParts,
     http::request::Parts,
-    response::{IntoResponse, Response},
+    response::{IntoResponse, Response, Redirect},
 };
 use axum_extra::extract::CookieJar;
 
@@ -35,7 +35,7 @@ impl FromRequestParts<AppState> for Session {
                 err.into_response()
             })
         } else {
-            Err(AppError::Unauthorized.into_response())
+            Err(Redirect::temporary("/login").into_response())
         }
     }
 }

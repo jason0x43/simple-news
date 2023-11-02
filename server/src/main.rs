@@ -5,6 +5,7 @@ mod handlers;
 mod rss;
 mod spa;
 mod state;
+mod templates;
 mod types;
 mod types_ts;
 mod util;
@@ -18,7 +19,7 @@ use log::info;
 use sqlx::sqlite::SqlitePoolOptions;
 use tower_http::trace::TraceLayer;
 
-use crate::{spa::static_handler, state::AppState};
+use crate::state::AppState;
 
 #[tokio::main]
 async fn main() -> Result<(), sqlx::Error> {
@@ -59,13 +60,18 @@ async fn main() -> Result<(), sqlx::Error> {
         )
         .route("/feedstats", get(handlers::get_feed_stats));
 
+    let spa = Router::new().fallback(spa::spa_handler);
+
     let app = Router::new()
+        .route("/login", get(handlers::show_login_page))
+        .route("/login", post(handlers::login))
         .nest("/api", api)
-        .fallback(static_handler)
+        .nest("/app", spa)
+        .fallback(handlers::public_files)
         .with_state(app_state)
         .layer(TraceLayer::new_for_http());
 
-    let server = axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
+    let server = axum::Server::bind(&"0.0.0.0:3333".parse().unwrap())
         .serve(app.into_make_service());
 
     info!("Listening on {}...", server.local_addr());
