@@ -56,6 +56,12 @@ export interface CreateFeedGroupRequest {
   name: string;
 }
 
+export interface FeedGroup {
+  id: FeedGroupId;
+  name: string;
+  user_id: UserId;
+}
+
 export interface AddGroupFeedRequest {
   feed_id: FeedId;
 }

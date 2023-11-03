@@ -17,7 +17,7 @@ use axum::{
 use dotenvy::dotenv;
 use log::info;
 use sqlx::sqlite::SqlitePoolOptions;
-use tower_http::trace::TraceLayer;
+use tower_http::{trace::TraceLayer, compression::CompressionLayer};
 
 use crate::state::AppState;
 
@@ -58,15 +58,20 @@ async fn main() -> Result<(), sqlx::Error> {
             "/feedgroups/:id/:feed_id",
             delete(handlers::remove_group_feed),
         )
-        .route("/feedstats", get(handlers::get_feed_stats));
+        .route("/feedstats", get(handlers::get_feed_stats))
+        .layer(CompressionLayer::new());
 
-    let spa = Router::new().fallback(spa::spa_handler);
+    let spa = Router::new()
+        .route("/", get(spa::index_html))
+        .route("/index.html", get(spa::index_html))
+        .fallback(spa::spa_handler)
+        .layer(CompressionLayer::new());
 
     let app = Router::new()
         .route("/login", get(handlers::show_login_page))
         .route("/login", post(handlers::login))
         .nest("/api", api)
-        .nest("/app", spa)
+        .nest("/reader", spa)
         .fallback(handlers::public_files)
         .with_state(app_state)
         .layer(TraceLayer::new_for_http());

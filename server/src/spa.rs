@@ -4,7 +4,7 @@ use axum::{
 };
 use rust_embed::RustEmbed;
 
-use crate::types::Session;
+use crate::{types::Session, util::add_cache_control};
 
 #[derive(RustEmbed)]
 #[folder = "../app/dist/"]
@@ -18,9 +18,6 @@ pub(crate) async fn spa_handler(
 ) -> impl IntoResponse {
     let path = uri.path().trim_start_matches('/');
 
-    // TODO: also handled templates here so templates can share styles, or at
-    // least load stylesheets
-
     if path.is_empty() || path == INDEX_HTML {
         return index_html().await;
     }
@@ -28,9 +25,10 @@ pub(crate) async fn spa_handler(
     match Assets::get(path) {
         Some(content) => {
             let mime = mime_guess::from_path(path).first_or_octet_stream();
-
-            ([(header::CONTENT_TYPE, mime.as_ref())], content.data)
-                .into_response()
+            add_cache_control(
+                ([(header::CONTENT_TYPE, mime.as_ref())], content.data)
+                    .into_response(),
+            )
         }
         None => {
             if path.contains('.') {
@@ -42,9 +40,9 @@ pub(crate) async fn spa_handler(
     }
 }
 
-async fn index_html() -> Response {
+pub(crate) async fn index_html() -> Response {
     match Assets::get(INDEX_HTML) {
-        Some(content) => Html(content.data).into_response(),
+        Some(content) => add_cache_control(Html(content.data).into_response()),
         None => not_found().await,
     }
 }

@@ -85,9 +85,3 @@ button {
 button:active {
 	background: var(--active-matte);
 }
-
-#app {
-	position: fixed;
-	height: 100%;
-	width: 100%;
-}

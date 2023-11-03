@@ -11,6 +11,9 @@ devDependencies:
   '@tsconfig/svelte':
     specifier: ^5.0.0
     version: 5.0.2
+  elegua:
+    specifier: ^2.2.1
+    version: 2.2.1
   server:
     specifier: ../server
     version: link:../server
@@ -457,6 +460,10 @@ packages:
   /detect-indent@6.1.0:
     resolution: {integrity: sha512-reYkTUJAZb9gUuZ2RvVCNhVHdg62RHnJ7WJl8ftMi4diZ6NWlciOzQN88pUhSELEwflJht4oQDv0F0BMlwaYtA==}
     engines: {node: '>=8'}
+    dev: true
+
+  /elegua@2.2.1:
+    resolution: {integrity: sha512-c+id/Yowv8c5qZXvO9I23cZGFfs2mz1koaGZrYmrPPUc3hhaXNyMdl6vlcNr0rxR65RSBkfPGCL4YpQK+6kc1Q==}
     dev: true
 
   /es6-promise@3.3.1:

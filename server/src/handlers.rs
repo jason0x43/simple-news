@@ -23,7 +23,7 @@ use crate::{
         FeedGroupWithFeeds, FeedId, FeedLog, FeedStat, FeedStats, Password,
         Session, User,
     },
-    util::check_password,
+    util::{check_password, add_cache_control},
 };
 
 pub(crate) async fn create_user(
@@ -221,8 +221,7 @@ pub(crate) async fn get_all_feed_groups(
     state: State<AppState>,
 ) -> Result<Json<Vec<FeedGroupWithFeeds>>, AppError> {
     let mut conn = state.pool.acquire().await?;
-    let groups: Vec<FeedGroup> = FeedGroup::get_all(&mut conn)
-        .await?;
+    let groups: Vec<FeedGroup> = FeedGroup::get_all(&mut conn).await?;
     let mut groups_with_feeds: Vec<FeedGroupWithFeeds> = vec![];
     for group in groups {
         let group_with_feeds = group.with_feeds(&mut conn).await?;
@@ -304,7 +303,7 @@ pub(crate) async fn login(
     let mut conn = state.pool.acquire().await?;
     let (jar, _session) =
         create_session_impl(&mut conn, jar.clone(), &login).await?;
-    Ok((jar, Redirect::temporary("/app")))
+    Ok((jar, Redirect::to("/reader")))
 }
 
 #[derive(RustEmbed)]
@@ -315,7 +314,10 @@ pub(crate) async fn public_files(uri: Uri) -> impl IntoResponse {
     let path = uri.path().trim_start_matches('/');
     if let Some(content) = Public::get(path) {
         let mime = mime_guess::from_path(path).first_or_octet_stream();
-        ([(header::CONTENT_TYPE, mime.as_ref())], content.data).into_response()
+        add_cache_control(
+            ([(header::CONTENT_TYPE, mime.as_ref())], content.data)
+                .into_response(),
+        )
     } else {
         (StatusCode::NOT_FOUND, "404").into_response()
     }

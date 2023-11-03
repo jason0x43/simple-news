@@ -181,6 +181,7 @@ pub struct FeedGroupId(pub String);
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 #[serde(rename_all = "camelCase")]
+#[tsync]
 pub struct FeedGroup {
     pub id: FeedGroupId,
     pub name: String,

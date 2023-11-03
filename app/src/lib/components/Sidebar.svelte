@@ -1,9 +1,16 @@
 <script lang="ts">
-	import { slide } from "svelte/transition";
+	import { slide } from "../transition";
+	import FeedsList from "./FeedsList.svelte";
 </script>
 
-<div class="sidebar" in:slide={{ axis: "x" }} out:slide={{ axis: "x" }}>
-	<div class="sidebar-feeds">Feeds</div>
+<div
+	class="sidebar"
+	in:slide={{ direction: "right", duration: 250 }}
+	out:slide={{ direction: "right", duration: 250 }}
+>
+	<div class="sidebar-feeds">
+		<FeedsList />
+	</div>
 </div>
 
 <style>

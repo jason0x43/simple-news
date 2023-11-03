@@ -1,69 +1,72 @@
 <script lang="ts">
-	import { feedStats, feedId } from '../stores';
+	import type { Feed, FeedGroup } from "server";
+	import { feedStats, feedGroups, feedId, feeds } from "../stores";
+	import { allFeedsAreSelected, someFeedsAreSelected } from "../util";
 
 	let expanded: { [title: string]: boolean } = {};
+	let selectedFeedIds: Feed["id"][] = [];
+	let selectedGroupId: FeedGroup["id"] | undefined;
+
+	$: {
+		if ($feedId) {
+			if ($feedId === "saved") {
+				selectedFeedIds = [];
+				selectedGroupId = undefined;
+			} else {
+				const [type, id] = $feedId.split("-");
+				if (type === "group") {
+					const group = $feedGroups.find((g) => g.id === id);
+					selectedFeedIds = group?.feeds.map(({ id }) => id) ?? [];
+					selectedGroupId = id;
+				} else {
+					selectedGroupId = undefined;
+					selectedFeedIds = [id];
+				}
+			}
+		}
+	}
 </script>
 
 <ul class="feeds">
-	<li class:group-selected={$feedId === 'saved'}>
-		<div class="group">
-			<span class="saved" />
-			<a class="title" href="/reader/saved">Saved</a>
-			{#if $feedStats}
-				<span class="Feeds-unread">
-					{$feedStats.saved}
-				</span>
-			{/if}
-		</div>
-	</li>
 	{#each $feedGroups as group (group.name)}
-		{#if getArticleCount(group.feeds, $feedStats, $articleFilter) > 0}
-			<li
-				class:expanded={expanded[group.name] ||
-					(someFeedsAreSelected(group, selectedFeedIds) &&
-						!allFeedsAreSelected(group, selectedFeedIds))}
-				class:group-selected={allFeedsAreSelected(group, selectedFeedIds)}
-			>
-				<div class="group">
-					<button
-						class="expander"
-						on:click={() => {
-							expanded = {
-								...expanded,
-								[group.name]: !expanded[group.name]
-							};
-						}}
-					/>
-					<a class="title" href={`/reader/group-${group.id}`}>
-						{group.name}
-					</a>
-					{#if $feedStats}
-						<span class="Feeds-unread">
-							{getArticleCount(group.feeds, $feedStats, $articleFilter)}
-						</span>
-					{/if}
-				</div>
+		<li
+			class:expanded={expanded[group.name] ||
+				(someFeedsAreSelected(group, selectedFeedIds) &&
+					!allFeedsAreSelected(group, selectedFeedIds))}
+			class:group-selected={group.id === selectedGroupId ||
+				allFeedsAreSelected(group, selectedFeedIds)}
+		>
+			<div class="group">
+				<button
+					class="expander"
+					on:click={() => {
+						expanded = {
+							...expanded,
+							[group.name]: !expanded[group.name],
+						};
+					}}
+				/>
+				<a class="title" href={`/reader/group-${group.id}`}>
+					{group.name}
+				</a>
+			</div>
 
-				<ul>
-					{#each group.feeds as feed (feed.id)}
-						{#if getArticleCount([feed], $feedStats, $articleFilter) > 0}
-							<li
-								class="feed"
-								class:selected={selectedFeedIds.includes(feed.id)}
-							>
-								<a href={`/reader/feed-${feed.id}`} class="title">
-									{$feeds.find((f) => f.id === feed.id)?.title}
-								</a>
-								<div class="unread">
-									{($feedStats.feeds[feed.id].total ?? 0) -
-										($feedStats.feeds[feed.id].read ?? 0)}
-								</div>
-							</li>
+			<ul>
+				{#each group.feeds as feed (feed.id)}
+					<li class="feed" class:selected={selectedFeedIds.includes(feed.id)}>
+						<a href={`/reader/feed-${feed.id}`} class="title">
+							{$feeds.find((f) => f.id === feed.id)?.title}
+						</a>
+						{#if $feedStats}
+							<div class="unread">
+								{($feedStats.feeds[feed.id].total ?? 0) -
+									($feedStats.feeds[feed.id].read ?? 0)}
+							</div>
 						{/if}
-					{/each}
-				</ul>
-			</li>
-		{/if}
+					</li>
+				{/each}
+			</ul>
+		</li>
 	{/each}
 </ul>
 
@@ -127,7 +130,7 @@
 		padding-left: calc(var(--expander-width) + 2 * var(--hpad));
 	}
 
-	.saved,
+	/* .saved, */
 	.expander {
 		border: none;
 		background: none;
@@ -135,18 +138,18 @@
 		padding-left: 4px;
 	}
 
-	.saved::before,
+	/* .saved::before, */
 	.expander::before {
-		content: '▷';
+		content: "▷";
 		display: inline-block;
 		text-align: center;
 		flex-grow: 0;
 		width: var(--expander-width);
 	}
 
-	.saved::before {
-		content: '⭐';
-	}
+	/* .saved::before { */
+	/* 	content: "⭐"; */
+	/* } */
 
 	.group-selected .expander::before {
 		color: var(--highlight);
@@ -178,13 +181,13 @@
 	}
 
 	.expanded .expander::before {
-		content: '▽';
+		content: "▽";
 	}
 
-	@media (hover: hover) {
-		.group:hover,
-		.feed:hover {
-			background: rgba(0, 0, 0, 0.1);
-		}
-	}
+	/* @media (hover: hover) { */
+	/* 	.group:hover, */
+	/* 	.feed:hover { */
+	/* 		background: rgba(0, 0, 0, 0.1); */
+	/* 	} */
+	/* } */
 </style>
