@@ -1,0 +1,2 @@
+[alias]
+dev = "watch --ignore types.ts -x run"
