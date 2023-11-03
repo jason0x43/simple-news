@@ -21,6 +21,10 @@ type FeedId = String;
 
 #[tsync]
 #[allow(dead_code)]
+type FeedGroupId = String;
+
+#[tsync]
+#[allow(dead_code)]
 type SessionId = String;
 
 #[tsync]

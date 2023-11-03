@@ -1,27 +1,47 @@
 <script lang="ts">
 	import "./app.css";
 	import { path, params, resolve } from "elegua";
+	import ArticlesList from "./lib/components/ArticlesList.svelte";
 	import Header from "./lib/components/Header.svelte";
 	import Sidebar from "./lib/components/Sidebar.svelte";
-	import { feedId, loadData, sidebarVisible } from "./lib/stores";
+	import { feedId, loadArticles, loadData, sidebarVisible } from "./lib/state";
+	import { setAppContext } from "./lib/context";
+	import { readonly, writable } from "svelte/store";
+
+	let rootRef: HTMLElement | undefined;
+	const root = writable<HTMLElement>();
+	setAppContext("root", readonly(root));
+
+	$: {
+		if (rootRef) {
+			$root = rootRef;
+		}
+	}
 
 	$: {
 		if (resolve($path, "/reader/:feedgroup")) {
 			$feedId = $params["feedgroup"];
+			loadArticles().catch((err) => {
+				console.error('Error loading articles:', err);
+			});
 		}
 	}
 
 	loadData().catch((err) => {
-		console.error(err);
+		console.error('Error loading data:', err);
 	});
 </script>
 
-<div class="root">
+<div class="root" bind:this={rootRef}>
 	<div class="header">
 		<Header />
 	</div>
 
 	<div class="content">
+		{#if $feedId}
+			<ArticlesList />
+		{/if}
+
 		{#if $sidebarVisible}
 			<Sidebar />
 		{/if}

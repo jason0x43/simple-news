@@ -41,6 +41,7 @@ async fn main() -> Result<(), sqlx::Error> {
         .route("/users", get(handlers::get_users))
         .route("/login", post(handlers::create_session))
         .route("/articles", get(handlers::get_articles))
+        .route("/articles/:id", get(handlers::get_article))
         .route("/feeds/log", get(handlers::get_all_feed_logs))
         .route("/feeds/refresh", get(handlers::refresh_feeds))
         .route("/feeds/:id/refresh", get(handlers::refresh_feed))

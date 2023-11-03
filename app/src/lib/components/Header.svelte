@@ -2,7 +2,7 @@
 	import Button from "./Button.svelte";
 	import RssIcon from "../icons/Rss.svelte";
 	import UserIcon from "../icons/User.svelte";
-	import { feedId, feeds, feedGroups, sidebarVisible } from "../stores";
+	import { feedId, feeds, feedGroups, sidebarVisible } from "../state";
 
 	let title = "";
 

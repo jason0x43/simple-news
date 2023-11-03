@@ -8,7 +8,7 @@ export interface User {
 }
 
 export type FeedKind =
-  | "rss";
+  | "Rss";
 
 export interface Feed {
   id: FeedId;
@@ -26,6 +26,15 @@ export interface Article {
   feed_id: FeedId;
   title: string;
   content: string;
+  published: OffsetDateTime;
+  link?: string;
+}
+
+export interface ArticleSummary {
+  id: ArticleId;
+  article_id: string;
+  feed_id: FeedId;
+  title: string;
   published: OffsetDateTime;
   link?: string;
 }
@@ -90,6 +99,8 @@ export type Value = Record<string, unknown>
 export type UserId = string
 
 export type FeedId = string
+
+export type FeedGroupId = string
 
 export type SessionId = string
 

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Feed, FeedGroup } from "server";
-	import { feedStats, feedGroups, feedId, feeds } from "../stores";
+	import { feedStats, feedGroups, feedId, feeds } from "../state";
 	import { allFeedsAreSelected, someFeedsAreSelected } from "../util";
 
 	let expanded: { [title: string]: boolean } = {};

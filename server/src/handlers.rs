@@ -18,12 +18,12 @@ use crate::{
     state::AppState,
     templates::get_template,
     types::{
-        AddFeedRequest, AddGroupFeedRequest, Article, CreateFeedGroupRequest,
-        CreateSessionRequest, CreateUserRequest, Feed, FeedGroup, FeedGroupId,
-        FeedGroupWithFeeds, FeedId, FeedLog, FeedStat, FeedStats, Password,
-        Session, User,
+        AddFeedRequest, AddGroupFeedRequest, Article, ArticleId,
+        ArticleSummary, CreateFeedGroupRequest, CreateSessionRequest,
+        CreateUserRequest, Feed, FeedGroup, FeedGroupId, FeedGroupWithFeeds,
+        FeedId, FeedLog, FeedStat, FeedStats, Password, Session, User,
     },
-    util::{check_password, add_cache_control},
+    util::{add_cache_control, check_password},
 };
 
 pub(crate) async fn create_user(
@@ -90,21 +90,32 @@ pub(crate) async fn create_session(
 }
 
 pub(crate) async fn get_articles(
+    session: Session,
+    state: State<AppState>,
+) -> Result<Json<Vec<ArticleSummary>>, AppError> {
+    let mut conn = state.pool.acquire().await?;
+    let articles =
+        ArticleSummary::get_all_for_user(&mut *conn, &session.user_id).await?;
+    Ok(Json(articles))
+}
+
+pub(crate) async fn get_article(
     _session: Session,
     state: State<AppState>,
-) -> Result<Json<Vec<Article>>, AppError> {
+    Path(id): Path<ArticleId>,
+) -> Result<Json<Article>, AppError> {
     let mut conn = state.pool.acquire().await?;
-    let articles = Article::get_all(&mut *conn).await?;
-    Ok(Json(articles))
+    let article = Article::get(&mut *conn, &id).await?;
+    Ok(Json(article))
 }
 
 pub(crate) async fn get_feed_articles(
     _session: Session,
     state: State<AppState>,
     Path(id): Path<FeedId>,
-) -> Result<Json<Vec<Article>>, AppError> {
+) -> Result<Json<Vec<ArticleSummary>>, AppError> {
     let mut conn = state.pool.acquire().await?;
-    let articles = Article::find_all_for_feed(&mut *conn, &id).await?;
+    let articles = ArticleSummary::find_all_for_feed(&mut *conn, &id).await?;
     Ok(Json(articles))
 }
 

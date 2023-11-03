@@ -6,7 +6,7 @@ use crate::{
     types::{
         Article, ArticleId, Feed, FeedGroup, FeedGroupFeed, FeedGroupFeedId,
         FeedGroupId, FeedGroupWithFeeds, FeedId, FeedKind, FeedLog, FeedLogId,
-        Password, PasswordId, Session, SessionId, User, UserId,
+        Password, PasswordId, Session, SessionId, User, UserId, ArticleSummary,
     },
     util::{get_timestamp, hash_password},
 };
@@ -412,7 +412,7 @@ impl Feed {
         conn: &mut SqliteConnection,
         user_id: &UserId,
     ) -> Result<Vec<Feed>, AppError> {
-        let feed_groups = FeedGroup::get_all_for_user(conn, user_id).await?;
+        let feed_groups = FeedGroup::find_all_for_user(conn, user_id).await?;
         let mut feed_ids: HashSet<FeedId> = HashSet::new();
         let mut feeds: Vec<Feed> = vec![];
         for group in feed_groups {
@@ -490,9 +490,10 @@ impl Article {
         Ok(article)
     }
 
-    pub(crate) async fn get_all(
+    pub(crate) async fn get(
         conn: &mut SqliteConnection,
-    ) -> Result<Vec<Self>, AppError> {
+        article_id: &ArticleId,
+    ) -> Result<Self, AppError> {
         Ok(query_as!(
             Article,
             r#"
@@ -505,8 +506,38 @@ impl Article {
               published AS "published: OffsetDateTime",
               link
             FROM articles
+            WHERE id = ?1
+            "#,
+            article_id
+        )
+        .fetch_one(conn)
+        .await?)
+    }
+}
+
+impl ArticleSummary {
+    pub(crate) async fn get_all_for_user(
+        conn: &mut SqliteConnection,
+        user_id: &UserId,
+    ) -> Result<Vec<Self>, AppError> {
+        Ok(query_as!(
+            ArticleSummary,
+            r#"
+            SELECT
+              a.id,
+              a.article_id,
+              a.feed_id,
+              a.title,
+              a.published AS "published: OffsetDateTime",
+              a.link
+            FROM articles AS a
+            INNER JOIN feeds AS f ON f.id = a.feed_id
+            INNER JOIN feed_groups AS fg ON fg.user_id = ?1
+            INNER JOIN feed_group_feeds AS fgf
+              ON fgf.feed_id = f.id AND fgf.feed_group_id = fg.id
             ORDER BY published ASC
-            "#
+            "#,
+            user_id
         )
         .fetch_all(conn)
         .await?)
@@ -517,14 +548,13 @@ impl Article {
         feed_id: &FeedId,
     ) -> Result<Vec<Self>, AppError> {
         Ok(query_as!(
-            Article,
+            ArticleSummary,
             r#"
             SELECT
               id,
               article_id,
               feed_id,
               title,
-              content,
               published AS "published: OffsetDateTime",
               link
             FROM articles
@@ -679,7 +709,7 @@ impl FeedGroup {
         .map_err(AppError::SqlxError)
     }
 
-    pub(crate) async fn get_all_for_user(
+    pub(crate) async fn find_all_for_user(
         conn: &mut SqliteConnection,
         user_id: &UserId,
     ) -> Result<Vec<Self>, AppError> {

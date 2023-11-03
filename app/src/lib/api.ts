@@ -1,4 +1,4 @@
-import type { Feed, FeedGroupWithFeeds, FeedStats } from "server";
+import type { ArticleSummary, Feed, FeedGroupWithFeeds, FeedStats } from "server";
 
 export async function getFeedGroups(): Promise<FeedGroupWithFeeds[]> {
 	const resp = await fetch("/api/feedgroups");
@@ -12,5 +12,10 @@ export async function getFeedStats(): Promise<FeedStats> {
 
 export async function getFeeds(): Promise<Feed[]> {
 	const resp = await fetch("/api/feeds");
+	return resp.json();
+}
+
+export async function getArticles(): Promise<ArticleSummary[]> {
+	const resp = await fetch("/api/articles");
 	return resp.json();
 }

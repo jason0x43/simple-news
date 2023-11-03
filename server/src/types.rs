@@ -14,7 +14,6 @@ use url::Url;
 pub struct UserId(pub String);
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
-#[serde(rename_all = "camelCase")]
 #[tsync]
 pub struct User {
     pub id: UserId,
@@ -35,7 +34,6 @@ impl Display for User {
 pub struct PasswordId(pub String);
 
 #[derive(Clone, Serialize, Deserialize, FromRow)]
-#[serde(rename_all = "camelCase")]
 pub struct Password {
     pub id: PasswordId,
     pub hash: String,
@@ -48,7 +46,6 @@ pub struct Password {
 pub struct SessionId(pub String);
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
-#[serde(rename_all = "camelCase")]
 pub struct Session {
     pub id: SessionId,
     pub data: serde_json::Value,
@@ -58,7 +55,6 @@ pub struct Session {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, sqlx::Type)]
-#[serde(rename_all = "camelCase")]
 #[tsync]
 pub enum FeedKind {
     #[sqlx(rename = "rss")]
@@ -88,7 +84,6 @@ impl From<String> for FeedKind {
 pub struct FeedId(pub String);
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
-#[serde(rename_all = "camelCase")]
 #[tsync]
 pub struct Feed {
     pub id: FeedId,
@@ -105,7 +100,6 @@ pub struct Feed {
 pub struct ArticleId(pub String);
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
-#[serde(rename_all = "camelCase")]
 #[tsync]
 pub struct Article {
     pub id: ArticleId,
@@ -118,8 +112,19 @@ pub struct Article {
     pub link: Option<String>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[tsync]
+pub struct ArticleSummary {
+    pub id: ArticleId,
+    pub article_id: String,
+    pub feed_id: FeedId,
+    pub title: String,
+    #[serde(with = "time::serde::rfc3339")]
+    pub published: OffsetDateTime,
+    pub link: Option<String>,
+}
+
 #[derive(Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
 #[tsync]
 pub struct CreateUserRequest {
     pub email: String,
@@ -128,7 +133,6 @@ pub struct CreateUserRequest {
 }
 
 #[derive(Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
 #[tsync]
 pub struct CreateSessionRequest {
     pub username: String,
@@ -136,7 +140,6 @@ pub struct CreateSessionRequest {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
 #[tsync]
 pub struct AddFeedRequest {
     pub url: Url,
@@ -145,7 +148,6 @@ pub struct AddFeedRequest {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
 #[tsync]
 pub struct SessionResponse {
     pub id: SessionId,
@@ -158,7 +160,6 @@ pub struct SessionResponse {
 pub struct FeedLogId(pub String);
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
-#[serde(rename_all = "camelCase")]
 pub struct FeedLog {
     pub id: FeedLogId,
     pub feed_id: FeedId,
@@ -169,7 +170,6 @@ pub struct FeedLog {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
 #[tsync]
 pub struct CreateFeedGroupRequest {
     pub name: String,
@@ -180,7 +180,6 @@ pub struct CreateFeedGroupRequest {
 pub struct FeedGroupId(pub String);
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
-#[serde(rename_all = "camelCase")]
 #[tsync]
 pub struct FeedGroup {
     pub id: FeedGroupId,
@@ -189,7 +188,6 @@ pub struct FeedGroup {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
 #[tsync]
 pub struct AddGroupFeedRequest {
     pub feed_id: FeedId,
@@ -200,7 +198,6 @@ pub struct AddGroupFeedRequest {
 pub struct FeedGroupFeedId(pub String);
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
-#[serde(rename_all = "camelCase")]
 pub struct FeedGroupFeed {
     pub id: FeedGroupFeedId,
     pub feed_group_id: FeedGroupId,

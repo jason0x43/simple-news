@@ -22,9 +22,11 @@
 		height: 100%;
 		flex-direction: column;
 		position: absolute;
+		top: 0;
 		left: 0;
 		z-index: 30;
 		border-right: 1px solid var(--border);
+		position: absolute;
 	}
 
 	.sidebar-feeds {
