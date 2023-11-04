@@ -51,21 +51,12 @@
 	$: {
 		renderedArticles = filteredArticles
 			.slice(0, visibleCount)
-			.map((article) => {
-				const feed = $feeds.find(({ id }) => {
-					console.log(`considering id ${id}`);
-					return id === article.feed_id;
-				});
-				console.log(`feed for article ${JSON.stringify(article, null, '  ')} is ${JSON.stringify(feed, null, ' ')}`);
-				return {
-					...article,
-					feed: $feeds.find(({ id }) => id === article.feed_id),
-					isActive: activeArticle?.id === article.id,
-					isSelected: $articleId === article.id,
-				};
-			});
-		console.log("feeds", $feeds);
-		console.log("renderedArticles", renderedArticles);
+			.map((article) => ({
+				...article,
+				feed: $feeds.find(({ id }) => id === article.feed_id),
+				isActive: activeArticle?.id === article.id,
+				isSelected: $articleId === article.id,
+			}));
 	}
 
 	function handleContextMenu(event: {
@@ -162,7 +153,7 @@
 					on:touchend={handleTouchEnd}
 					on:touchmove={handleTouchEnd}
 				>
-					<a href={`/reader/${feedId}/${article.id}`}>
+					<a href={`/reader/${$feedId}/${article.id}`}>
 						<div class="icon">
 							{#if article.feed?.icon}
 								<img

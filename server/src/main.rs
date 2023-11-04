@@ -17,7 +17,7 @@ use axum::{
 use dotenvy::dotenv;
 use log::info;
 use sqlx::sqlite::SqlitePoolOptions;
-use tower_http::{trace::TraceLayer, compression::CompressionLayer};
+use tower_http::{compression::CompressionLayer, trace::TraceLayer};
 
 use crate::state::AppState;
 
@@ -55,6 +55,10 @@ async fn main() -> Result<(), sqlx::Error> {
         .route("/feedgroups", post(handlers::create_feed_group))
         .route("/feedgroups/:id", get(handlers::get_feed_group))
         .route("/feedgroups/:id", post(handlers::add_group_feed))
+        .route(
+            "/feedgroups/:id/articles",
+            get(handlers::get_feed_group_articles),
+        )
         .route(
             "/feedgroups/:id/:feed_id",
             delete(handlers::remove_group_feed),

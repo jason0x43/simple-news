@@ -2,26 +2,7 @@
 	import Button from "./Button.svelte";
 	import RssIcon from "../icons/Rss.svelte";
 	import UserIcon from "../icons/User.svelte";
-	import { feedId, feeds, feedGroups, sidebarVisible } from "../state";
-
-	let title = "";
-
-	$: {
-		if ($feedId) {
-			if ($feedId === "saved") {
-				title = "Saved";
-			} else {
-				const [type, id] = $feedId.split("-");
-				if (type === "group") {
-					const group = $feedGroups?.find((group) => group.id === id);
-					title = group?.name ?? "";
-				} else {
-					const feed = $feeds?.find((feed) => feed.id === id);
-					title = feed?.title ?? "";
-				}
-			}
-		}
-	}
+	import { title, sidebarVisible } from "../state";
 </script>
 
 <header class="header">
@@ -38,7 +19,7 @@
 	</div>
 	<div class="center">
 		<Button variant="invisible">
-			<h2>{title}</h2>
+			<h2>{$title}</h2>
 		</Button>
 	</div>
 	<div class="right">

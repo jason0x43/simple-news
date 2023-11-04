@@ -264,6 +264,17 @@ pub(crate) async fn remove_group_feed(
     Ok(Json(group))
 }
 
+pub(crate) async fn get_feed_group_articles(
+    _session: Session,
+    state: State<AppState>,
+    Path(id): Path<FeedGroupId>,
+) -> Result<Json<Vec<ArticleSummary>>, AppError> {
+    let mut conn = state.pool.acquire().await?;
+    let articles =
+        ArticleSummary::find_all_for_feed_group(&mut *conn, &id).await?;
+    Ok(Json(articles))
+}
+
 #[derive(Deserialize)]
 pub(crate) struct GetFeedStatsParams {
     pub(crate) all: Option<bool>,

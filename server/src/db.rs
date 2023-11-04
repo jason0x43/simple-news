@@ -565,6 +565,33 @@ impl ArticleSummary {
         .fetch_all(conn)
         .await?)
     }
+
+    pub(crate) async fn find_all_for_feed_group(
+        conn: &mut SqliteConnection,
+        group_id: &FeedGroupId,
+    ) -> Result<Vec<Self>, AppError> {
+        Ok(query_as!(
+            ArticleSummary,
+            r#"
+            SELECT
+              a.id,
+              a.article_id,
+              a.feed_id,
+              a.title,
+              a.published AS "published: OffsetDateTime",
+              a.link
+            FROM articles AS a
+            INNER JOIN feed_groups AS fg ON fg.id = ?1
+            INNER JOIN feed_group_feeds AS fgf ON fgf.feed_group_id = fg.id
+            INNER JOIN feeds AS f ON f.id = fgf.feed_id
+            WHERE a.feed_id = f.id
+            ORDER BY published ASC
+            "#,
+            group_id
+        )
+        .fetch_all(conn)
+        .await?)
+    }
 }
 
 impl FeedLog {

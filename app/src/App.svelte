@@ -1,12 +1,24 @@
 <script lang="ts">
 	import "./app.css";
-	import { path, params, resolve } from "elegua";
+	import { init as initRouter } from "./lib/router";
 	import ArticlesList from "./lib/components/ArticlesList.svelte";
 	import Header from "./lib/components/Header.svelte";
 	import Sidebar from "./lib/components/Sidebar.svelte";
-	import { feedId, loadArticles, loadData, sidebarVisible } from "./lib/state";
+	import {
+		sidebarVisible,
+		init as initState,
+		article,
+		feed,
+		feedId,
+		displayType,
+	} from "./lib/state";
 	import { setAppContext } from "./lib/context";
 	import { readonly, writable } from "svelte/store";
+	import { slide } from "./lib/transition";
+	import ArticleView from "./lib/components/ArticleView.svelte";
+
+	initRouter();
+	initState();
 
 	let rootRef: HTMLElement | undefined;
 	const root = writable<HTMLElement>();
@@ -17,19 +29,6 @@
 			$root = rootRef;
 		}
 	}
-
-	$: {
-		if (resolve($path, "/reader/:feedgroup")) {
-			$feedId = $params["feedgroup"];
-			loadArticles().catch((err) => {
-				console.error('Error loading articles:', err);
-			});
-		}
-	}
-
-	loadData().catch((err) => {
-		console.error('Error loading data:', err);
-	});
 </script>
 
 <div class="root" bind:this={rootRef}>
@@ -44,6 +43,20 @@
 
 		{#if $sidebarVisible}
 			<Sidebar />
+		{/if}
+
+		{#if $displayType === "mobile"}
+			<div class="article" out:slide in:slide>
+				{#if $article && $feed}
+					<ArticleView />
+				{/if}
+			</div>
+		{:else}
+			<div class="article">
+				{#if article && feed}
+					<ArticleView />
+				{/if}
+			</div>
 		{/if}
 	</div>
 </div>
@@ -61,7 +74,6 @@
 		font-weight: var(--font-weight);
 		display: flex;
 		flex-direction: column;
-		height: 100%;
 		overflow: hidden;
 		color: var(--foreground);
 		position: fixed;
@@ -82,5 +94,12 @@
 		overflow-x: hidden;
 		position: relative;
 		background: var(--background);
+		display: flex;
+		flex-direction: row;
+	}
+
+	.article {
+		flex-grow: 1;
+		overflow: auto;
 	}
 </style>

@@ -1,40 +1,24 @@
 <script lang="ts">
-	import type { Feed, FeedGroup } from "server";
-	import { feedStats, feedGroups, feedId, feeds } from "../state";
+	import {
+		feedGroups,
+		feedStats,
+		feeds,
+		selectedFeedIds,
+		selectedGroupId,
+	} from "../state";
 	import { allFeedsAreSelected, someFeedsAreSelected } from "../util";
 
 	let expanded: { [title: string]: boolean } = {};
-	let selectedFeedIds: Feed["id"][] = [];
-	let selectedGroupId: FeedGroup["id"] | undefined;
-
-	$: {
-		if ($feedId) {
-			if ($feedId === "saved") {
-				selectedFeedIds = [];
-				selectedGroupId = undefined;
-			} else {
-				const [type, id] = $feedId.split("-");
-				if (type === "group") {
-					const group = $feedGroups.find((g) => g.id === id);
-					selectedFeedIds = group?.feeds.map(({ id }) => id) ?? [];
-					selectedGroupId = id;
-				} else {
-					selectedGroupId = undefined;
-					selectedFeedIds = [id];
-				}
-			}
-		}
-	}
 </script>
 
 <ul class="feeds">
 	{#each $feedGroups as group (group.name)}
 		<li
 			class:expanded={expanded[group.name] ||
-				(someFeedsAreSelected(group, selectedFeedIds) &&
-					!allFeedsAreSelected(group, selectedFeedIds))}
-			class:group-selected={group.id === selectedGroupId ||
-				allFeedsAreSelected(group, selectedFeedIds)}
+				(someFeedsAreSelected(group, $selectedFeedIds) &&
+					!allFeedsAreSelected(group, $selectedFeedIds))}
+			class:group-selected={group.id === $selectedGroupId ||
+				allFeedsAreSelected(group, $selectedFeedIds)}
 		>
 			<div class="group">
 				<button
@@ -53,7 +37,7 @@
 
 			<ul>
 				{#each group.feeds as feed (feed.id)}
-					<li class="feed" class:selected={selectedFeedIds.includes(feed.id)}>
+					<li class="feed" class:selected={$selectedFeedIds.includes(feed.id)}>
 						<a href={`/reader/feed-${feed.id}`} class="title">
 							{$feeds.find((f) => f.id === feed.id)?.title}
 						</a>
