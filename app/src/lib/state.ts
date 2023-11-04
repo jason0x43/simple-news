@@ -180,12 +180,18 @@ export const title = derived(
 			const [type, id] = $feedId.split("-");
 			if (type === "group") {
 				const group = $feedGroups.find((group) => group.id === id);
-				return group?.name ?? "News";
+				if (group?.name) {
+					return group.name;
+				}
 			}
 
 			const feed = $feeds.find((feed) => feed.id === id);
-			return feed?.title ?? "News";
+			if (feed?.title) {
+				return feed.title;
+			}
 		}
+
+		return "News";
 	},
 );
 export const updatedArticleIds = readonly(updatedArticleIdStore);
