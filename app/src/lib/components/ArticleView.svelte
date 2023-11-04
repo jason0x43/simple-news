@@ -170,6 +170,7 @@
 
 	.content :global(img) {
 		border-radius: 6px;
+		height: auto;
 	}
 
 	.content :global(p) :global(img) {
