@@ -74,15 +74,15 @@ export function init() {
 
 	// Update the feedId and articleId when the path changes
 	path.subscribe((p) => {
-		let match = matches(p, "/reader/:feedGroupId/:articleId");
-		if (match) {
-			feedIdStore.set(match.params["feedGroupId"]);
-			articleIdStore.set(match.params["articleId"]);
+		let params = matches(p, "/reader/:feedGroupId/:articleId");
+		if (params) {
+			feedIdStore.set(params["feedGroupId"]);
+			articleIdStore.set(params["articleId"]);
 		} else {
 			articleIdStore.set(undefined);
-			match = matches(p, "/reader/:feedGroupId");
-			if (match) {
-				feedIdStore.set(match.params["feedGroupId"]);
+			params = matches(p, "/reader/:feedGroupId");
+			if (params) {
+				feedIdStore.set(params["feedGroupId"]);
 			} else {
 				feedIdStore.set(undefined);
 			}

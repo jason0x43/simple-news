@@ -1,139 +1,45 @@
 /**
- * A simple router heavily based on the elegua router:
+ * A simple router based on the elegua router:
  * https://github.com/howesteve/elegua
  */
 
-import type { ComponentType } from "svelte";
-import {
-	derived,
-	get,
-	readable,
-	writable,
-	type Subscriber,
-	type Writable,
-} from "svelte/store";
+import { derived, get, writable, readonly } from "svelte/store";
 
-type Params = Record<string, string>;
-type RouteMatch = {
-	match: RegExpExecArray | undefined;
-	params: Params;
-};
+export type Params = Record<string, string>;
 
-let setPath: Subscriber<string>;
-let setHash: Subscriber<string>;
-let setUrl: (u: URL) => void;
-let setOldUrl: Subscriber<URL>;
 let shouldIgnoreChange: (() => boolean | undefined) | undefined;
+const urlStore = writable<URL>(new URL(location.href));
+const oldUrlStore = writable<URL>(new URL(window.location.href));
 
 /**
- * A writable store for the current path. If url is changed, subscribers will
- * be notified; if store value is set, current url will change as well and path
- * will be resolved.
+ * Set the current URL and update the old URL.
  */
-export const path: Writable<string> = (() => {
-	const { set, ...store } = writable("");
-	setPath = set;
-	return {
-		...store,
-		set: (x: string) => {
-			const u = get(url);
-			u.pathname = x;
-			url.set(u);
-			return set(x);
-		},
-	};
-})();
-
-/**
- * A store for the URL hash.
- */
-export const hash = (() => {
-	const { set, ...store } = writable("");
-	setHash = set;
-	return {
-		...store,
-		set: (x: string) => {
-			const u = get(url);
-			u.hash = x;
-			url.set(u);
-			return set(x);
-		},
-	};
-})();
-
-/**
- * A store for the full URL
- */
-export const url = (() => {
-	const { set, ...store } = writable(new URL(window.location.href));
-
-	setUrl = (u: URL) => {
-		const sset = u.searchParams.set;
-		const sdel = u.searchParams.delete;
-		const sapp = u.searchParams.append;
-		u.searchParams.set = (name, value) => {
-			const res = sset.call(u.searchParams, name, value);
-			set(u);
-			history.pushState({}, "", u.toString());
-			return res;
-		};
-		u.searchParams.append = (name, value) => {
-			const res = sapp.call(u.searchParams, name, value);
-			set(u);
-			history.pushState({}, "", u.toString());
-			return res;
-		};
-		u.searchParams.delete = (name) => {
-			const res = sdel.call(u.searchParams, name);
-			set(u);
-			history.pushState({}, "", u.toString());
-			return res;
-		};
-
-		setOldUrl(get(url));
-		set(u);
-
-		if (get(path) !== u.pathname) {
-			setPath(u.pathname);
-		}
-
-		if (get(hash) !== u.hash) {
-			setHash(u.hash.slice(1, u.hash.length));
-		}
-	};
-
-	return {
-		...store,
-		set: (u: URL) => {
-			history.pushState(null, "", u);
-			setUrl(u);
-		},
-	};
-})();
-
-/**
- * A store for the previous full url
- */
-export const oldUrl = readable<URL>(new URL(window.location.href), (set) => {
-	setOldUrl = set;
-});
-
-/**
- * A store for the query part of the current URL
- */
-export const searchParams = derived(url, (x) => x.searchParams);
+function setUrl(url: URL) {
+	oldUrlStore.set(get(urlStore));
+	urlStore.set(url);
+}
 
 const regExpEscape = (s: string) =>
 	s.replace(/[-[\]{}()*+!<=:?.\/\\^$|#\s,]/g, "\\$&");
 
 /**
- * Compile a named path such as /blog/:slug into a RegExp.
+ * Create a parser for a route containing placeholders, like /blog/:slug.
  *
- * Usually this will not be needed to be called directly since resolve()
- * will detect named paths automatically and call this internally, but
- * it's exported in case you want to use it.
+ * If a regex is passed in, it will be returned unchanged.
+ *
+ * @param route - a route string or regex
+ * @returns a regex if the route is a regex or has placeholders, otherwise
+ * undefined
  */
-function namedPath(route: string): RegExp {
+function parseRoute(route: string | RegExp): RegExp | undefined {
+	if (typeof route !== 'string') {
+		return route;
+	}
+
+	if (route.indexOf("/:") === -1) {
+		return;
+	}
+
 	return RegExp(
 		route
 			.split("/")
@@ -148,36 +54,15 @@ function namedPath(route: string): RegExp {
 	);
 }
 
-export type DynamicRoute = [string | RegExp, ComponentType, any?];
-
-/**
- * Used to create a dynamic router, like a <Route> component.
- *
- * <svelte:component this={dynamic([routes], error)} />
- *
- * If no route among [routes] is resolved, return the "defaultRoute" route.
- * If defaultRoute is not defined, undefined is returned.
- */
-export function dynamic(
-	path: string,
-	routes: DynamicRoute[],
-	defaultRoute?: ComponentType,
-): ComponentType | undefined {
-	for (let i = 0; i < routes.length; i++) {
-		const [route, component] = routes[i];
-		if (matches(path, route)) {
-			return component;
-		}
-	}
-	return defaultRoute;
-}
-
 /**
  * A global hook function for preventing routing/page changes.
  *
  * Use this to prevent routing changes using either goto() or <a> clicking on
  * undesirable situations, e.g, when a form is dirty and you want the user to
  * save changes before leaving the form.
+ *
+ * @param ignoreChange - a function that should return true if changes should
+ * be ignored
  */
 export function preventChange(ignoreChange?: typeof shouldIgnoreChange) {
 	shouldIgnoreChange = ignoreChange;
@@ -186,99 +71,48 @@ export function preventChange(ignoreChange?: typeof shouldIgnoreChange) {
 /**
  * Try to match the current URL against a given route.
  *
- * @param route - a string (fixed or dynamic) route, or a regexp route. If '/:'
- * is found in the route, it's considered a named route.
- * @param path - an optional param for providing a path to resolve to. Defaults
- * to $path
+ * @param path - the path to resolve against
+ * @param route - a route string or regex; strings may contain URL params
+ * @returns an object of route params, or undefined if the route didn't match
  */
 export function matches(
 	path: string,
 	route: string | RegExp,
-): RouteMatch | undefined {
-	if (typeof route === "string") {
-		if (route === path) {
-			return { match: undefined, params: {} };
-		}
-
-		if (route.indexOf("/:") === -1) {
-			return;
-		}
-
-		route = namedPath(route);
+): Params | undefined {
+	if (route === path) {
+		// The route matches the path
+		return {}
 	}
 
-	// trying a regexp match
-	const m = route.exec(path);
-	if (m) {
-		return {
-			match: m,
-			params: m.groups ? { ...m.groups } : {},
-		};
-	}
-}
-
-/**
- * Navigates to a new url and updates all related stores.
- *
- * @param href - the href/path to to go, ex: '/blog'
- * @param data - unused
- */
-export function goto(href: string | URL, _data: unknown = undefined) {
-	// preventing changes
-	if (shouldIgnoreChange?.()) {
+	const matcher = parseRoute(route);
+	if (!matcher) {
+		// The route wasn't a regex and had no paramters, and we already know it
+		// didn't match the path.
 		return;
 	}
 
-	url.set(new URL(`${href}`, window.location.href));
+	const match = matcher.exec(path);
+	if (match) {
+		return match.groups ? { ...match.groups } : {};
+	}
 }
 
 /**
- * Prevent unloading or focus change
+ * Navigate to a new url.
  *
- * If callback returns true, unfocusing is prevented. If callback returns a
- * string, unfocusing is prevented and a message is returned. Note that most
- * browsers will ignore the message.
+ * @param url - a URL to navigate to
  */
-export function preventUnload(
-	node: HTMLElement,
-	callback: () => boolean | string | undefined,
-) {
-	const handler = (ev: BeforeUnloadEvent) => {
-		const res = callback();
-
-		if (typeof res === "string") {
-			// If callback returns a string, send it to the browser. However as exposed,
-			// it's usually ignored by browsers.
-			ev.preventDefault();
-			ev.returnValue = res;
-			return res;
-		}
-
-		if (res) {
-			// If callback returns a truthy value, show the browser's default
-			// confirmation message to ask the user if they want to leave the page.
-			ev.preventDefault();
-			ev.returnValue = "";
-			return "";
-		}
-	};
-
-	node.addEventListener("beforeunload", handler, { capture: true });
-
-	return {
-		destroy() {
-			node.removeEventListener("beforeunload", handler);
-		},
-	};
+export function goto(url: string | URL) {
+	if (shouldIgnoreChange?.()) {
+		return;
+	}
+	setUrl(typeof url === "string" ? new URL(url) : url);
 }
 
 /**
  * Initialize the router.
  */
 export function init() {
-	get(oldUrl);
-	setUrl(new URL(document.location.href));
-
 	window.addEventListener("load", () => {
 		// update state for hashchange events
 		window.addEventListener("hashchange", () => {
@@ -297,6 +131,7 @@ export function init() {
 			while (targetElement && targetElement !== document.body) {
 				if (targetElement.tagName === "A") {
 					if (shouldIgnoreChange?.()) {
+						// Ignore the click
 						return event.preventDefault();
 					}
 
@@ -305,15 +140,15 @@ export function init() {
 						event?.shiftKey ||
 						targetElement.hasAttribute("data-native-router")
 					) {
+						// Let the browser handle the click
 						return;
 					}
 
 					const href = targetElement.getAttribute("href") || "";
-
-					// do not handle external links
 					if (!/^http?s\:\/\//.test(href)) {
+						// Only handle relative URLs
 						if (href) {
-							url.set(new URL(href, window.location.href));
+							setUrl(new URL(href, window.location.href));
 						}
 						return event.preventDefault();
 					}
@@ -324,3 +159,18 @@ export function init() {
 		});
 	});
 }
+
+/** The previous URL */
+export const oldUrl = readonly(oldUrlStore);
+
+/** The current URL */
+export const url = readonly(urlStore);
+
+/** The path of the current URL */
+export const path = derived(urlStore, ($url) => $url.pathname);
+
+/** The hash of the current URL */
+export const hash = derived(urlStore, ($url) => $url.hash);
+
+/** The search params of the current URL */
+export const searchParams = derived(url, ($url) => $url.searchParams);
