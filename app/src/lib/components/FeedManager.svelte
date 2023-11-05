@@ -14,7 +14,7 @@
 		managingFeeds,
 		updateFeed,
 	} from "../state";
-	import type { Feed, FeedGroup } from "server";
+	import type { Feed, FeedGroup, FeedGroupId, FeedId } from "server";
 
 	let busy = false;
 	let addFeedData = { url: "" };
@@ -120,7 +120,7 @@
 			acc[id] = group.id;
 		}
 		return acc;
-	}, {} as Record<Feed["id"], FeedGroup["id"]>);
+	}, {} as Record<FeedId, FeedGroupId>);
 
 	$: sortedFeeds = $feeds.sort((a, b) => {
 		if (a.title.toLowerCase() === b.title.toLowerCase()) {

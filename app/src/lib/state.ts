@@ -1,10 +1,12 @@
 import type {
 	Article,
+	ArticleId,
 	ArticleSummary,
 	CreateFeedGroupRequest,
 	Feed,
-	FeedGroup,
+	FeedGroupId,
 	FeedGroupWithFeeds,
+	FeedId,
 	FeedStats,
 } from "server";
 import { derived, get, readonly, writable } from "svelte/store";
@@ -19,21 +21,26 @@ import {
 	addFeed as apiAddFeed,
 	addFeedGroup as apiAddFeedGroup,
 	updateFeed as apiUpdateFeed,
-    removeGroupFeed,
+	removeGroupFeed,
 } from "./api";
 import { matches, path } from "./router";
 
-const articleIdStore = writable<Article["id"] | undefined>();
+const articleIdStore = writable<ArticleId | undefined>();
 const articleStore = writable<Article | undefined>();
-const feedIdStore = writable<Feed["id"] | undefined>();
+const feedIdStore = writable<FeedId | undefined>();
 const articlesStore = writable<ArticleSummary[]>([]);
 const feedGroupsStore = writable<FeedGroupWithFeeds[]>([]);
 const feedStatsStore = writable<FeedStats | undefined>();
 const feedsStore = writable<Feed[]>([]);
 const displayTypeStore = writable<"mobile" | "desktop">("desktop");
-const updatedArticleIdStore = writable<Set<Article["id"]>>(new Set());
+const updatedArticleIdStore = writable<Set<ArticleId>>(new Set());
 
-export function addUpdatedArticleId(id: Article["id"]) {
+/**
+ * Add an article ID to the list of recently updated article IDs.
+ *
+ * @param id - the article ID to add
+ */
+export function addUpdatedArticleId(id: ArticleId) {
 	const ids = get(updatedArticleIdStore);
 	if (!ids.has(id)) {
 		const newIds = new Set(ids);
@@ -42,10 +49,16 @@ export function addUpdatedArticleId(id: Article["id"]) {
 	}
 }
 
+/**
+ * Clear the list of recently updated article IDs.
+ */
 export function clearUpdatedArticleIds() {
 	updatedArticleIdStore.set(new Set());
 }
 
+/**
+ * Load inital app data.
+ */
 export async function loadData() {
 	await Promise.allSettled([
 		getFeedGroups().then((g) => feedGroupsStore.set(g)),
@@ -54,6 +67,9 @@ export async function loadData() {
 	]);
 }
 
+/**
+ * Load article summaries for the current feed or feed group.
+ */
 export async function loadArticles() {
 	const feedOrGroupId = get(feedIdStore);
 	let source: ArticlesSource | undefined = undefined;
@@ -65,12 +81,18 @@ export async function loadArticles() {
 	articlesStore.set(a);
 }
 
+/**
+ * Clear the list of article summaries.
+ */
 export async function clearArticles() {
 	articlesStore.set([]);
 }
 
 /**
  * Add a new feed.
+ *
+ * @param url - the feed URL
+ * @param title - the feed title
  */
 export async function addFeed(url: string, title?: string) {
 	const newFeed = await apiAddFeed({ url, title });
@@ -78,10 +100,13 @@ export async function addFeed(url: string, title?: string) {
 }
 
 /**
- * Update a feed.
+ * Update a feed's properties.
+ *
+ * @param id - the ID of the feed to update
+ * @param data - the new feed data
  */
 export async function updateFeed(
-	id: Feed["id"],
+	id: FeedId,
 	data: {
 		url?: string;
 		title?: string;
@@ -112,8 +137,8 @@ export async function addFeedToGroup({
 	groupId,
 	feedId,
 }: {
-	groupId: FeedGroup["id"];
-	feedId: Feed["id"];
+	groupId: FeedGroupId;
+	feedId: FeedId;
 }) {
 	const updatedGroup = await addGroupFeed({ feedId, groupId });
 	feedGroupsStore.update((groups) => {
@@ -136,8 +161,8 @@ export async function removeFeedFromGroup({
 	groupId,
 	feedId,
 }: {
-	groupId: FeedGroup["id"];
-	feedId: Feed["id"];
+	groupId: FeedGroupId;
+	feedId: FeedId;
 }) {
 	const updatedGroup = await removeGroupFeed({ feedId, groupId });
 	feedGroupsStore.update((groups) => {
@@ -183,7 +208,7 @@ export function init() {
 	});
 
 	// Load article summaries when the feedId changes
-	let prevFeedId: Feed["id"] | undefined;
+	let prevFeedId: FeedId | undefined;
 	feedIdStore.subscribe((feedId) => {
 		if (feedId !== prevFeedId) {
 			prevFeedId = feedId;
@@ -198,7 +223,7 @@ export function init() {
 	});
 
 	// Load the target article when the article ID changes
-	let prevArticleId: Article["id"] | undefined;
+	let prevArticleId: ArticleId | undefined;
 	articleIdStore.subscribe((articleId) => {
 		if (articleId) {
 			if (articleId !== prevArticleId) {

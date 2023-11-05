@@ -2,11 +2,13 @@ import type {
 	AddFeedRequest,
 	AddGroupFeedRequest,
 	Article,
+	ArticleId,
 	ArticleSummary,
 	CreateFeedGroupRequest,
 	Feed,
-	FeedGroup,
+	FeedGroupId,
 	FeedGroupWithFeeds,
+	FeedId,
 	FeedStats,
 	UpdateFeedRequest,
 } from "server";
@@ -34,15 +36,15 @@ export async function addFeedGroup(
 }
 
 export async function updateFeed(
-	id: Feed["id"],
+	id: FeedId,
 	data: UpdateFeedRequest,
 ): Promise<Feed> {
 	return apiPatch(`feeds/${id}`, data);
 }
 
 export type ArticlesSource =
-	| { feedId: Feed["id"] }
-	| { feedGroupId: FeedGroup["id"] };
+	| { feedId: FeedId }
+	| { feedGroupId: FeedGroupId };
 
 export async function getArticles(
 	source: ArticlesSource | undefined,
@@ -58,7 +60,7 @@ export async function getArticles(
 	return apiGet(`feedgroups/${source.feedGroupId}/articles`);
 }
 
-export async function getArticle(id: Article["id"]): Promise<Article> {
+export async function getArticle(id: ArticleId): Promise<Article> {
 	return apiGet(`articles/${id}`);
 }
 
@@ -73,8 +75,8 @@ export async function addGroupFeed({
 	feedId,
 	groupId,
 }: {
-	feedId: Feed["id"];
-	groupId: FeedGroup["id"];
+	feedId: FeedId;
+	groupId: FeedGroupId;
 }): Promise<FeedGroupWithFeeds> {
 	const body: AddGroupFeedRequest = { feed_id: feedId };
 	return apiPost(`feedgroups/${groupId}`, body);
@@ -91,8 +93,8 @@ export async function removeGroupFeed({
 	feedId,
 	groupId,
 }: {
-	feedId: Feed["id"];
-	groupId: FeedGroup["id"];
+	feedId: FeedId;
+	groupId: FeedGroupId;
 }): Promise<FeedGroupWithFeeds> {
 	const body: AddGroupFeedRequest = { feed_id: feedId };
 	return apiPost(`feedgroups/${groupId}`, body);
@@ -101,7 +103,7 @@ export async function removeGroupFeed({
 /**
  * Type guard to check if a value is a feed ID source
  */
-function isFeedId(value: ArticlesSource): value is { feedId: Feed["id"] } {
+function isFeedId(value: ArticlesSource): value is { feedId: FeedId } {
 	return "feedId" in value;
 }
 

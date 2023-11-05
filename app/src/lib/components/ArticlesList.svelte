@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Article, ArticleSummary, Feed } from "server";
+	import type { Article, ArticleId, ArticleSummary, Feed } from "server";
 	import {
 		articleId,
 		articles,
@@ -110,7 +110,7 @@
 	async function handleContextSelect(value: string) {
 		if (/read/i.test(value)) {
 			// const read = !/unread/i.test(value);
-			let ids: Article["id"][] | undefined;
+			let ids: ArticleId[] | undefined;
 
 			if (/above/i.test(value)) {
 				const idx = renderedArticles.findIndex(

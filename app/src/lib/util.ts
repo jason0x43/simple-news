@@ -1,11 +1,11 @@
-import type { Feed, FeedGroupWithFeeds } from "server";
+import type { Feed, FeedGroupWithFeeds, FeedId } from "server";
 
 /**
  * Return true if all feed IDs are in a given group
  */
 export function allFeedsAreSelected(
 	group: FeedGroupWithFeeds,
-	feedIds: Feed["id"][],
+	feedIds: FeedId[],
 ): boolean {
 	return (
 		group.feed_ids.length > 0 &&
@@ -18,7 +18,7 @@ export function allFeedsAreSelected(
  */
 export function someFeedsAreSelected(
 	group: FeedGroupWithFeeds,
-	feedIds: Feed["id"][],
+	feedIds: FeedId[],
 ) {
 	return (
 		group.feed_ids.length > 0 &&
