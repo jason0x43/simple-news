@@ -84,7 +84,7 @@ export interface FeedGroupWithFeeds {
   id: FeedGroupId;
   name: string;
   user_id: UserId;
-  feeds: Array<FeedId>;
+  feed_ids: Array<FeedId>;
 }
 
 export interface FeedGroupUpdateResponse {

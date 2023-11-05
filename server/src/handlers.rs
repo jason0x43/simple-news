@@ -231,7 +231,7 @@ pub(crate) async fn create_feed_group(
         id: group.id,
         name: group.name,
         user_id: group.user_id,
-        feeds: vec![],
+        feed_ids: vec![],
     }))
 }
 

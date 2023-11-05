@@ -83,7 +83,7 @@ export async function addFeed(url: string, title?: string) {
 export async function updateFeed(
 	id: Feed["id"],
 	data: {
-		url: string;
+		url?: string;
 		title?: string;
 	},
 ) {
@@ -250,7 +250,7 @@ export const selectedFeedIds = derived(
 			const [type, id] = $feedId.split("-");
 			if (type === "group") {
 				const group = $feedGroups.find((g) => g.id === id);
-				return group?.feeds ?? [];
+				return group?.feed_ids ?? [];
 			}
 			return [id];
 		}

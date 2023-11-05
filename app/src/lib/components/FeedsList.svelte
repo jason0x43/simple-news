@@ -36,7 +36,7 @@
 			</div>
 
 			<ul>
-				{#each group.feeds as id}
+				{#each group.feed_ids as id}
 					<li class="feed" class:selected={$selectedFeedIds.includes(id)}>
 						<a href={`/reader/feed-${id}`} class="title">
 							{$feeds.find((f) => f.id === id)?.title}

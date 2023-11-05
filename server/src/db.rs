@@ -272,23 +272,32 @@ impl Feed {
         let title = data.title.unwrap_or(self.title.clone());
         let url = data.url.map_or(self.url.clone(), |u| u.to_string());
 
-        query!(
+        let new_feed = query_as!(
+            Feed,
             r#"
             UPDATE feeds SET title = ?1, url = ?2
             WHERE id = ?3
+            RETURNING
+                id,
+                url,
+                title,
+                kind,
+                disabled AS "disabled!: bool", 
+                icon,
+                html_url
             "#,
             title,
             url,
             self.id,
         )
-        .execute(conn)
+        .fetch_one(conn)
         .await
         .map_err(|err| {
             log::warn!("Error updating feed: {}", err);
             err
         })?;
 
-        Ok(self.clone())
+        Ok(new_feed)
     }
 
     /// Get a feed
@@ -509,13 +518,7 @@ impl Feed {
         .await?;
 
         if let Some(group) = group {
-            let feeds = group.feed_ids(conn).await?;
-            Ok(Some(FeedGroupWithFeeds {
-                id: group.id,
-                name: group.name,
-                user_id: group.user_id,
-                feeds,
-            }))
+            Ok(Some(group.with_feeds(conn).await?))
         } else {
             Ok(None)
         }
@@ -682,7 +685,7 @@ impl FeedLog {
         success: bool,
         message: Option<String>,
     ) -> Result<Self, AppError> {
-        let update = FeedLog {
+        let entry = FeedLog {
             id: FeedLogId::new(),
             time: get_timestamp(0),
             feed_id,
@@ -695,16 +698,16 @@ impl FeedLog {
             INSERT INTO feed_logs(id, time, feed_id, success, message)
             VALUES(?1, ?2, ?3, ?4, ?5)
             "#,
-            update.id,
-            update.time,
-            update.feed_id,
-            update.success,
-            update.message,
+            entry.id,
+            entry.time,
+            entry.feed_id,
+            entry.success,
+            entry.message,
         )
         .execute(&mut *conn)
         .await?;
 
-        Ok(update)
+        Ok(entry)
     }
 
     pub(crate) async fn find_for_feed(
@@ -752,7 +755,7 @@ impl FeedLog {
 }
 
 struct FeedIdRecord {
-    id: FeedId
+    id: FeedId,
 }
 
 impl FeedGroup {
@@ -825,12 +828,27 @@ impl FeedGroup {
         &self,
         conn: &mut SqliteConnection,
     ) -> Result<FeedGroupWithFeeds, AppError> {
-        let feeds = self.feed_ids(conn).await?;
+        let feed_ids = query_as!(
+            FeedIdRecord,
+            r#"
+            SELECT f.id
+            FROM feeds AS f
+            INNER JOIN feed_group_feeds AS fgf ON f.id = fgf.feed_id
+            WHERE fgf.feed_group_id = ?1
+            "#,
+            self.id
+        )
+        .fetch_all(conn)
+        .await?
+        .iter()
+        .map(|id| id.id.clone())
+        .collect();
+
         Ok(FeedGroupWithFeeds {
             id: self.id.clone(),
             name: self.name.clone(),
             user_id: self.user_id.clone(),
-            feeds,
+            feed_ids,
         })
     }
 
@@ -838,7 +856,7 @@ impl FeedGroup {
         &self,
         conn: &mut SqliteConnection,
         feed_id: FeedId,
-    ) -> Result<FeedGroupFeed, AppError> {
+    ) -> Result<FeedGroupWithFeeds, AppError> {
         let group_feed = FeedGroupFeed {
             id: FeedGroupFeedId::new(),
             feed_id,
@@ -857,14 +875,14 @@ impl FeedGroup {
         .execute(&mut *conn)
         .await?;
 
-        Ok(group_feed)
+        Ok(self.with_feeds(conn).await?)
     }
 
     pub(crate) async fn remove_feed(
         &self,
         conn: &mut SqliteConnection,
         feed_id: &FeedId,
-    ) -> Result<(), AppError> {
+    ) -> Result<FeedGroupWithFeeds, AppError> {
         query!(
             r#"
             DELETE FROM feed_group_feeds
@@ -876,26 +894,6 @@ impl FeedGroup {
         .execute(&mut *conn)
         .await?;
 
-        Ok(())
-    }
-
-    pub(crate) async fn feed_ids(
-        &self,
-        conn: &mut SqliteConnection,
-    ) -> Result<Vec<FeedId>, AppError> {
-        let ids = query_as!(
-            FeedIdRecord,
-            r#"
-            SELECT f.id
-            FROM feeds AS f
-            INNER JOIN feed_group_feeds AS fgf ON f.id = fgf.feed_id
-            WHERE fgf.feed_group_id = ?1
-            "#,
-            self.id
-        )
-        .fetch_all(conn)
-        .await?;
-
-        Ok(ids.iter().map(|id| id.id.clone()).collect())
+        Ok(self.with_feeds(conn).await?)
     }
 }

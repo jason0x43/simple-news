@@ -217,7 +217,7 @@ pub struct FeedGroupWithFeeds {
     pub id: FeedGroupId,
     pub name: String,
     pub user_id: UserId,
-    pub feeds: Vec<FeedId>,
+    pub feed_ids: Vec<FeedId>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

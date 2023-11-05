@@ -8,8 +8,8 @@ export function allFeedsAreSelected(
 	feedIds: Feed["id"][],
 ): boolean {
 	return (
-		group.feeds.length > 0 &&
-		group.feeds.every(({ id }) => feedIds.includes(id))
+		group.feed_ids.length > 0 &&
+		group.feed_ids.every((id) => feedIds.includes(id))
 	);
 }
 
@@ -21,7 +21,8 @@ export function someFeedsAreSelected(
 	feedIds: Feed["id"][],
 ) {
 	return (
-		group.feeds.length > 0 && group.feeds.some(({ id }) => feedIds.includes(id))
+		group.feed_ids.length > 0 &&
+		group.feed_ids.some((id) => feedIds.includes(id))
 	);
 }
 
@@ -99,8 +100,8 @@ function diffDates(date1: Date, date2: Date) {
  */
 export function isActionEvent(event: Event) {
 	return (
-		(event instanceof MouseEvent && event.type === 'click') ||
-		(event instanceof KeyboardEvent && event.key === 'Enter')
+		(event instanceof MouseEvent && event.type === "click") ||
+		(event instanceof KeyboardEvent && event.key === "Enter")
 	);
 }
 

@@ -17,12 +17,14 @@
 	import type { Feed, FeedGroup } from "server";
 
 	let busy = false;
-	let addFeedUrl = "";
-	let addGroupName = "";
-	let updateFeedUrl = "";
-	let updateFeedId = "";
-	let newGroupName = "";
-	let renameFeedGroupId = $feedGroups[0]?.id ?? "";
+	let addFeedData = { url: "" };
+	let addGroupData = { name: "" };
+	let updateFeedUrlData = { feedId: "", url: "" };
+	let updateFeedTitleData = { feedId: "", title: "" };
+	let renameGroupData = {
+		feedGroupId: $feedGroups[0]?.id ?? "",
+		name: "",
+	};
 
 	async function busyOp(
 		callback: () => Promise<unknown>,
@@ -66,31 +68,45 @@
 
 	// Add a new feed
 	async function handleAddFeed() {
-		busyOp(() => addFeed(addFeedUrl), "Unable to add feed", "Feed added");
+		busyOp(() => addFeed(addFeedData.url), "Unable to add feed", "Feed added");
 	}
 
 	// Update an existing feed
-	async function handleUpdateFeed() {
-		if (!updateFeedId || !updateFeedUrl) {
+	async function handleUpdateFeedUrl() {
+		if (!updateFeedUrlData.feedId || !updateFeedUrlData.url) {
 			return;
 		}
 
-		const id = updateFeedId;
+		const id = updateFeedUrlData.feedId;
 		busyOp(
-			() => updateFeed(id, { url: updateFeedUrl }),
+			() => updateFeed(id, { url: updateFeedUrlData.url }),
 			"Unable to update feed",
 			"Feed updated"
 		);
 	}
 
+	// Update an existing feed
+	async function handleUpdateFeedTitle() {
+		if (!updateFeedTitleData.feedId || !updateFeedTitleData.title) {
+			return;
+		}
+
+		const id = updateFeedTitleData.feedId;
+		busyOp(
+			() => updateFeed(id, { title: updateFeedTitleData.title }),
+			"Unable to update feed title",
+			"Feed title updated"
+		);
+	}
+
 	// Add a new group
 	async function handleAddGroup() {
-		if (!addGroupName) {
+		if (!addGroupData.name) {
 			return;
 		}
 
 		busyOp(
-			() => addFeedGroup({ name: addGroupName }),
+			() => addFeedGroup({ name: addGroupData.name }),
 			"Unable to add group",
 			"Group added"
 		);
@@ -100,8 +116,8 @@
 	async function handleRenameGroup() {}
 
 	$: groups = $feedGroups.reduce((acc, group) => {
-		for (const feed of group.feeds) {
-			acc[feed.id] = group.id;
+		for (const id of group.feed_ids) {
+			acc[id] = group.id;
 		}
 		return acc;
 	}, {} as Record<Feed["id"], FeedGroup["id"]>);
@@ -160,19 +176,21 @@
 				<section>
 					<h3>Add Feed</h3>
 					<form on:submit|preventDefault={handleAddFeed}>
-						<input bind:value={addFeedUrl} placeholder="https://..." />
+						<input bind:value={addFeedData.url} placeholder="https://..." />
 						<Button type="submit">Save</Button>
 					</form>
 
 					<h3>Update Feed URL</h3>
-					<form on:submit|preventDefault={handleUpdateFeed}>
+					<form on:submit|preventDefault={handleUpdateFeedUrl}>
 						<div class="feed-select">
 							<Select
-								value={updateFeedId}
+								value={updateFeedUrlData.feedId}
 								on:change={(event) => {
-									updateFeedId = getEventValue(event) ?? "";
-									const feed = $feeds.find(({ id }) => id === updateFeedId);
-									updateFeedUrl = feed?.url ?? "";
+									updateFeedUrlData.feedId = getEventValue(event) ?? "";
+									const feed = $feeds.find(
+										({ id }) => id === updateFeedUrlData.feedId
+									);
+									updateFeedUrlData.url = feed?.url ?? "";
 								}}
 							>
 								{#each $feeds as feed (feed.id)}
@@ -181,9 +199,37 @@
 							</Select>
 						</div>
 						<input
-							value={updateFeedUrl}
+							value={updateFeedUrlData.url}
 							on:change={(event) => {
-								updateFeedUrl = getEventValue(event) ?? "";
+								updateFeedUrlData.url = getEventValue(event) ?? "";
+							}}
+							placeholder="https://..."
+						/>
+						<Button type="submit">Save</Button>
+					</form>
+
+					<h3>Update Feed Title</h3>
+					<form on:submit|preventDefault={handleUpdateFeedTitle}>
+						<div class="feed-select">
+							<Select
+								value={updateFeedTitleData.feedId}
+								on:change={(event) => {
+									updateFeedTitleData.feedId = getEventValue(event) ?? "";
+									const feed = $feeds.find(
+										({ id }) => id === updateFeedTitleData.feedId
+									);
+									updateFeedTitleData.title = feed?.title ?? "";
+								}}
+							>
+								{#each $feeds as feed (feed.id)}
+									<option value={feed.id}>{feed.title}</option>
+								{/each}
+							</Select>
+						</div>
+						<input
+							value={updateFeedTitleData.title}
+							on:change={(event) => {
+								updateFeedTitleData.title = getEventValue(event) ?? "";
 							}}
 							placeholder="https://..."
 						/>
@@ -192,18 +238,18 @@
 
 					<h3>Add Group</h3>
 					<form on:submit|preventDefault={handleAddGroup}>
-						<input bind:value={addGroupName} placeholder="Applications" />
+						<input bind:value={addGroupData.name} placeholder="Applications" />
 						<Button type="submit">Save</Button>
 					</form>
 
 					<h3>Rename Group</h3>
 					<form on:submit|preventDefault={handleRenameGroup}>
-						<Select bind:value={renameFeedGroupId}>
+						<Select bind:value={renameGroupData.feedGroupId}>
 							{#each $feedGroups as group (group.id)}
 								<option value={group.id}>{group.name}</option>
 							{/each}
 						</Select>
-						<input bind:value={newGroupName} placeholder="Applications" />
+						<input bind:value={addGroupData.name} placeholder="Applications" />
 						<Button type="submit">Save</Button>
 					</form>
 				</section>
