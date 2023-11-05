@@ -105,7 +105,7 @@ export interface FeedGroupWithFeeds {
 
 export interface FeedStat {
   total: number;
-  read: number;
+  unread: number;
 }
 
 export interface FeedStats {

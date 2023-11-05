@@ -248,7 +248,7 @@ pub struct FeedGroupWithFeeds {
 #[tsync]
 pub struct FeedStat {
     pub total: i32,
-    pub read: i32,
+    pub unread: i32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

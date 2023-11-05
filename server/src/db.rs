@@ -570,7 +570,7 @@ impl Feed {
 
         Ok(FeedStat {
             total: count,
-            read: num_read.count,
+            unread: count - num_read.count,
         })
     }
 }

@@ -38,6 +38,14 @@
 				>
 					{group.name}
 				</a>
+				{#if $feedStats}
+					<div class="unread">
+						{group.feed_ids.reduce(
+							(unread, id) => unread + ($feedStats?.feeds[id]?.unread ?? 0),
+							0
+						)}
+					</div>
+				{/if}
 			</div>
 
 			<ul>
@@ -48,8 +56,7 @@
 						</a>
 						{#if $feedStats}
 							<div class="unread">
-								{($feedStats.feeds[id]?.total ?? 0) -
-									($feedStats.feeds[id]?.read ?? 0)}
+								{$feedStats.feeds[id]?.unread ?? 0}
 							</div>
 						{/if}
 					</li>
