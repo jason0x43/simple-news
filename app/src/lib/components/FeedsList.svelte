@@ -5,6 +5,7 @@
 		feeds,
 		selectedFeedIds,
 		selectedGroupId,
+		sidebarVisible,
 	} from "../state";
 	import { allFeedsAreSelected, someFeedsAreSelected } from "../util";
 
@@ -30,7 +31,11 @@
 						};
 					}}
 				/>
-				<a class="title" href={`/reader/group-${group.id}`}>
+				<a
+					class="title"
+					href={`/reader/group-${group.id}`}
+					on:click={() => ($sidebarVisible = false)}
+				>
 					{group.name}
 				</a>
 			</div>
