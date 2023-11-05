@@ -23,7 +23,7 @@ use crate::{
         ArticleSummary, CreateFeedGroupRequest, CreateSessionRequest,
         CreateUserRequest, Feed, FeedGroup, FeedGroupId, FeedGroupWithFeeds,
         FeedId, FeedLog, FeedStat, FeedStats, Password, Session,
-        UpdateFeedRequest, User, FeedGroupUpdateResponse,
+        UpdateFeedRequest, User,
     },
     util::{add_cache_control, check_password},
 };
@@ -267,25 +267,22 @@ pub(crate) async fn add_group_feed(
     state: State<AppState>,
     Path(id): Path<FeedGroupId>,
     Json(body): Json<AddGroupFeedRequest>,
-) -> Result<Json<FeedGroupUpdateResponse>, AppError> {
+) -> Result<Json<FeedGroupWithFeeds>, AppError> {
     let mut conn = state.pool.acquire().await?;
-    let feed = Feed::get(&mut conn, &body.feed_id).await?;
-    let old_group = feed.group(&mut conn).await?;
     let group = FeedGroup::get(&mut conn, &id).await?;
     group.add_feed(&mut conn, body.feed_id).await?;
-    let group = group.with_feeds(&mut conn).await?;
-    Ok(Json(FeedGroupUpdateResponse { group, old_group }))
+    Ok(Json(group.with_feeds(&mut conn).await?))
 }
 
 pub(crate) async fn remove_group_feed(
     _session: Session,
     state: State<AppState>,
     Path((id, feed_id)): Path<(FeedGroupId, FeedId)>,
-) -> Result<Json<FeedGroup>, AppError> {
+) -> Result<Json<FeedGroupWithFeeds>, AppError> {
     let mut conn = state.pool.acquire().await?;
     let group = FeedGroup::get(&mut conn, &id).await?;
     group.remove_feed(&mut conn, &feed_id).await?;
-    Ok(Json(group))
+    Ok(Json(group.with_feeds(&mut conn).await?))
 }
 
 pub(crate) async fn get_feed_group_articles(
@@ -320,10 +317,10 @@ pub(crate) async fn get_feed_stats(
         let num_articles = feed.article_count(&mut conn).await?;
         stats.feeds.insert(
             feed.id.clone(),
-            FeedStat {
+            Some(FeedStat {
                 total: num_articles,
                 read: 0,
-            },
+            }),
         );
     }
     Ok(Json(stats))

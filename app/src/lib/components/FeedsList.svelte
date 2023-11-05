@@ -43,8 +43,8 @@
 						</a>
 						{#if $feedStats}
 							<div class="unread">
-								{($feedStats.feeds[id].total ?? 0) -
-									($feedStats.feeds[id].read ?? 0)}
+								{($feedStats.feeds[id]?.total ?? 0) -
+									($feedStats.feeds[id]?.read ?? 0)}
 							</div>
 						{/if}
 					</li>

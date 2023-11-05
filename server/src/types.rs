@@ -222,13 +222,6 @@ pub struct FeedGroupWithFeeds {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[tsync]
-pub struct FeedGroupUpdateResponse {
-    pub group: FeedGroupWithFeeds,
-    pub old_group: Option<FeedGroupWithFeeds>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[tsync]
 pub struct FeedStat {
     pub total: i32,
     pub read: i32,
@@ -237,7 +230,7 @@ pub struct FeedStat {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[tsync]
 pub struct FeedStats {
-    pub feeds: HashMap<FeedId, FeedStat>,
+    pub feeds: HashMap<FeedId, Option<FeedStat>>,
     pub saved: i32,
 }
 

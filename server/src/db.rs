@@ -494,35 +494,6 @@ impl Feed {
         .await?;
         Ok(count_row.count)
     }
-
-    /// Return the group that contains this feed, if any
-    pub(crate) async fn group(
-        &self,
-        conn: &mut SqliteConnection,
-    ) -> Result<Option<FeedGroupWithFeeds>, AppError> {
-        let group = query_as!(
-            FeedGroup,
-            r#"
-            SELECT
-              fg.id,
-              fg.name,
-              fg.user_id
-            FROM feed_groups AS fg
-            INNER JOIN feed_group_feeds AS fgf
-              ON fgf.feed_group_id = fg.id
-            WHERE fgf.feed_id = ?1
-            "#,
-            self.id
-        )
-        .fetch_optional(&mut *conn)
-        .await?;
-
-        if let Some(group) = group {
-            Ok(Some(group.with_feeds(conn).await?))
-        } else {
-            Ok(None)
-        }
-    }
 }
 
 #[derive(Debug)]

@@ -14,7 +14,7 @@
 		managingFeeds,
 		updateFeed,
 	} from "../state";
-	import type { Feed, FeedGroup, FeedGroupId, FeedId } from "server";
+	import type { FeedGroupId, FeedId } from "server";
 
 	let busy = false;
 	let addFeedData = { url: "" };

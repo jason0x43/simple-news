@@ -132,6 +132,8 @@ export async function addFeedGroup(data: CreateFeedGroupRequest) {
 
 /**
  * Add a feed to a feed group.
+ *
+ * The feed will be removed from any existing group.
  */
 export async function addFeedToGroup({
 	groupId,
@@ -140,17 +142,40 @@ export async function addFeedToGroup({
 	groupId: FeedGroupId;
 	feedId: FeedId;
 }) {
-	const updatedGroup = await addGroupFeed({ feedId, groupId });
+	const groups = get(feedGroupsStore);
+	const oldGroupId = groups.find((g) => g.feed_ids.includes(feedId))?.id;
+	if (oldGroupId === groupId) {
+		return;
+	}
+
+	const addedGroup = await addGroupFeed({ feedId, groupId });
+	const removedGroup = oldGroupId
+		? await removeGroupFeed({ feedId, groupId: oldGroupId })
+		: undefined;
+
 	feedGroupsStore.update((groups) => {
-		let index = groups.findIndex((g) => g.id === groupId);
-		if (index !== -1) {
-			return [
-				...groups.slice(0, index),
-				updatedGroup,
-				...groups.slice(index + 1),
+		let addedIndex = groups.findIndex((g) => g.id === groupId);
+		if (addedIndex !== -1) {
+			groups = [
+				...groups.slice(0, addedIndex),
+				addedGroup,
+				...groups.slice(addedIndex + 1),
 			];
+		} else {
+			groups = [...groups, addedGroup];
 		}
-		return [...groups, updatedGroup];
+
+		if (removedGroup) {
+			let removedIndex = groups.findIndex((g) => g.id === groupId);
+			if (removedIndex !== -1) {
+				groups = [
+					...groups.slice(0, removedIndex),
+					...groups.slice(removedIndex + 1),
+				];
+			}
+		}
+
+		return groups;
 	});
 }
 

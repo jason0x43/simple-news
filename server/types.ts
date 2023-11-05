@@ -87,18 +87,13 @@ export interface FeedGroupWithFeeds {
   feed_ids: Array<FeedId>;
 }
 
-export interface FeedGroupUpdateResponse {
-  group: FeedGroupWithFeeds;
-  old_group?: FeedGroupWithFeeds;
-}
-
 export interface FeedStat {
   total: number;
   read: number;
 }
 
 export interface FeedStats {
-  feeds: Record<FeedId, FeedStat>;
+  feeds: Record<FeedId, FeedStat | undefined>;
   saved: number;
 }
 

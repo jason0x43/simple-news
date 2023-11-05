@@ -97,7 +97,7 @@ export async function removeGroupFeed({
 	groupId: FeedGroupId;
 }): Promise<FeedGroupWithFeeds> {
 	const body: AddGroupFeedRequest = { feed_id: feedId };
-	return apiPost(`feedgroups/${groupId}`, body);
+	return apiDelete(`feedgroups/${groupId}/${feedId}`);
 }
 
 /**
@@ -127,6 +127,17 @@ function assertOk(resp: Response): Response {
  */
 async function apiGet<T>(path: string): Promise<T> {
 	const resp = assertOk(await fetch(`/api/${path}`));
+	return resp.json();
+}
+
+/**
+ * Make a delete request to the api server
+ *
+ * @param path - the api path to delete
+ * @returns the returned JSON
+ */
+async function apiDelete<T>(path: string): Promise<T> {
+	const resp = assertOk(await fetch(`/api/${path}`, { method: 'delete' }));
 	return resp.json();
 }
 
