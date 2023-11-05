@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Article, ArticleId, ArticleSummary, Feed } from "server";
+	import type { ArticleId, ArticleSummary, Feed } from "server";
 	import {
 		articleId,
 		articles,
@@ -138,9 +138,21 @@
 		menuAnchor = undefined;
 		activeArticle = undefined;
 	}
+
+	function handleListScroll(event: Event) {
+		const target = event.target as HTMLDivElement;
+		const { clientHeight, scrollHeight, scrollTop } = target;
+		// Load 20 new articles when we've gotten within 500 pixels of the end of
+		// the list
+		const remaining = scrollHeight - (scrollTop + clientHeight);
+		if (remaining < 500 && visibleCount < filteredArticles.length) {
+			const newCount = Math.min(visibleCount + 20, filteredArticles.length);
+			visibleCount = newCount;
+		}
+	}
 </script>
 
-<div class="articles">
+<div class="articles" on:scroll={handleListScroll}>
 	{#if renderedArticles.length > 0}
 		<ul class="list" on:contextmenu={handleContextMenu}>
 			{#each renderedArticles as article (article.id)}
