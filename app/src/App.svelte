@@ -11,11 +11,13 @@
 		feed,
 		feedId,
 		displayType,
+		managingFeeds,
 	} from "./lib/state";
 	import { setAppContext } from "./lib/context";
 	import { readonly, writable } from "svelte/store";
 	import { slide } from "./lib/transition";
 	import ArticleView from "./lib/components/ArticleView.svelte";
+	import FeedManager from "./lib/components/FeedManager.svelte";
 
 	initRouter();
 	initState();
@@ -57,6 +59,10 @@
 					<ArticleView />
 				{/if}
 			</div>
+		{/if}
+
+		{#if $managingFeeds}
+			<FeedManager />
 		{/if}
 	</div>
 </div>

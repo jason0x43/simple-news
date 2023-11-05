@@ -103,3 +103,16 @@ export function isActionEvent(event: Event) {
 		(event instanceof KeyboardEvent && event.key === 'Enter')
 	);
 }
+
+/**
+ * Get the value of an HTML form element event
+ */
+export function getEventValue(event: Event): string | undefined {
+	const target = event.currentTarget;
+	if (
+		target instanceof HTMLInputElement ||
+		target instanceof HTMLSelectElement
+	) {
+		return target.value;
+	}
+}

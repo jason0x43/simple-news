@@ -11,7 +11,7 @@ mod types_ts;
 mod util;
 
 use axum::{
-    routing::{delete, get, post},
+    routing::{delete, get, post, patch},
     Router,
 };
 use dotenvy::dotenv;
@@ -49,6 +49,7 @@ async fn main() -> Result<(), sqlx::Error> {
         .route("/feeds/:id/log", get(handlers::get_feed_log))
         .route("/feeds/:id", get(handlers::get_feed))
         .route("/feeds/:id", delete(handlers::delete_feed))
+        .route("/feeds/:id", patch(handlers::update_feed))
         .route("/feeds", get(handlers::get_feeds))
         .route("/feeds", post(handlers::add_feed))
         .route("/feedgroups", get(handlers::get_all_feed_groups))

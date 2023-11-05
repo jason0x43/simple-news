@@ -143,8 +143,15 @@ pub struct CreateSessionRequest {
 #[tsync]
 pub struct AddFeedRequest {
     pub url: Url,
-    pub title: String,
-    pub kind: FeedKind,
+    pub title: Option<String>,
+    pub kind: Option<FeedKind>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[tsync]
+pub struct UpdateFeedRequest {
+    pub url: Option<Url>,
+    pub title: Option<String>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -210,7 +217,14 @@ pub struct FeedGroupWithFeeds {
     pub id: FeedGroupId,
     pub name: String,
     pub user_id: UserId,
-    pub feeds: Vec<Feed>,
+    pub feeds: Vec<FeedId>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[tsync]
+pub struct FeedGroupUpdateResponse {
+    pub group: FeedGroupWithFeeds,
+    pub old_group: Option<FeedGroupWithFeeds>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

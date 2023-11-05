@@ -15,13 +15,15 @@ use sqlx::SqliteConnection;
 
 use crate::{
     error::AppError,
+    rss::load_feed,
     state::AppState,
     templates::get_template,
     types::{
         AddFeedRequest, AddGroupFeedRequest, Article, ArticleId,
         ArticleSummary, CreateFeedGroupRequest, CreateSessionRequest,
         CreateUserRequest, Feed, FeedGroup, FeedGroupId, FeedGroupWithFeeds,
-        FeedId, FeedLog, FeedStat, FeedStats, Password, Session, User,
+        FeedId, FeedLog, FeedStat, FeedStats, Password, Session,
+        UpdateFeedRequest, User, FeedGroupUpdateResponse,
     },
     util::{add_cache_control, check_password},
 };
@@ -126,7 +128,9 @@ pub(crate) async fn add_feed(
 ) -> Result<(), AppError> {
     log::debug!("adding feed with {:?}", body);
     let mut conn = state.pool.acquire().await?;
-    Feed::create(&mut conn, body.url, body.title, body.kind).await?;
+    let feed = load_feed(body.url.as_str()).await?;
+    let title = feed.title();
+    Feed::create(&mut conn, body.url, title, body.kind).await?;
     Ok(())
 }
 
@@ -138,6 +142,18 @@ pub(crate) async fn delete_feed(
     let mut conn = state.pool.acquire().await?;
     Feed::delete(&mut conn, &id).await?;
     Ok(())
+}
+
+pub(crate) async fn update_feed(
+    _session: Session,
+    state: State<AppState>,
+    Path(id): Path<FeedId>,
+    Json(body): Json<UpdateFeedRequest>,
+) -> Result<Json<Feed>, AppError> {
+    let mut conn = state.pool.acquire().await?;
+    let feed = Feed::get(&mut conn, &id).await?;
+    let updated = feed.update(&mut conn, body).await?;
+    Ok(Json(updated))
 }
 
 pub(crate) async fn get_feed(
@@ -207,11 +223,16 @@ pub(crate) async fn create_feed_group(
     session: Session,
     state: State<AppState>,
     Json(body): Json<CreateFeedGroupRequest>,
-) -> Result<Json<FeedGroup>, AppError> {
+) -> Result<Json<FeedGroupWithFeeds>, AppError> {
     let mut conn = state.pool.acquire().await?;
     let user_id = session.user_id;
     let group = FeedGroup::create(&mut conn, body.name, user_id).await?;
-    Ok(Json(group))
+    Ok(Json(FeedGroupWithFeeds {
+        id: group.id,
+        name: group.name,
+        user_id: group.user_id,
+        feeds: vec![],
+    }))
 }
 
 pub(crate) async fn get_feed_group(
@@ -246,11 +267,14 @@ pub(crate) async fn add_group_feed(
     state: State<AppState>,
     Path(id): Path<FeedGroupId>,
     Json(body): Json<AddGroupFeedRequest>,
-) -> Result<Json<FeedGroup>, AppError> {
+) -> Result<Json<FeedGroupUpdateResponse>, AppError> {
     let mut conn = state.pool.acquire().await?;
+    let feed = Feed::get(&mut conn, &body.feed_id).await?;
+    let old_group = feed.group(&mut conn).await?;
     let group = FeedGroup::get(&mut conn, &id).await?;
     group.add_feed(&mut conn, body.feed_id).await?;
-    Ok(Json(group))
+    let group = group.with_feeds(&mut conn).await?;
+    Ok(Json(FeedGroupUpdateResponse { group, old_group }))
 }
 
 pub(crate) async fn remove_group_feed(

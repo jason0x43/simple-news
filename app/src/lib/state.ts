@@ -1,7 +1,9 @@
 import type {
 	Article,
 	ArticleSummary,
+	CreateFeedGroupRequest,
 	Feed,
+	FeedGroup,
 	FeedGroupWithFeeds,
 	FeedStats,
 } from "server";
@@ -13,6 +15,11 @@ import {
 	getFeedGroups,
 	getFeedStats,
 	type ArticlesSource,
+	addGroupFeed,
+	addFeed as apiAddFeed,
+	addFeedGroup as apiAddFeedGroup,
+	updateFeed as apiUpdateFeed,
+    removeGroupFeed,
 } from "./api";
 import { matches, path } from "./router";
 
@@ -62,7 +69,93 @@ export async function clearArticles() {
 	articlesStore.set([]);
 }
 
-// Initialize the state updaters
+/**
+ * Add a new feed.
+ */
+export async function addFeed(url: string, title?: string) {
+	const newFeed = await apiAddFeed({ url, title });
+	feedsStore.update((feeds) => [...feeds, newFeed]);
+}
+
+/**
+ * Update a feed.
+ */
+export async function updateFeed(
+	id: Feed["id"],
+	data: {
+		url: string;
+		title?: string;
+	},
+) {
+	const updatedFeed = await apiUpdateFeed(id, data);
+	feedsStore.update((feeds) => {
+		let index = feeds.findIndex((f) => f.id === id);
+		if (index !== -1) {
+			return [...feeds.slice(0, index), updatedFeed, ...feeds.slice(index + 1)];
+		}
+		return [...feeds, updatedFeed];
+	});
+}
+
+/**
+ * Add a new feed group.
+ */
+export async function addFeedGroup(data: CreateFeedGroupRequest) {
+	const newGroup = await apiAddFeedGroup(data);
+	feedGroupsStore.update((groups) => [...groups, { ...newGroup, feeds: [] }]);
+}
+
+/**
+ * Add a feed to a feed group.
+ */
+export async function addFeedToGroup({
+	groupId,
+	feedId,
+}: {
+	groupId: FeedGroup["id"];
+	feedId: Feed["id"];
+}) {
+	const updatedGroup = await addGroupFeed({ feedId, groupId });
+	feedGroupsStore.update((groups) => {
+		let index = groups.findIndex((g) => g.id === groupId);
+		if (index !== -1) {
+			return [
+				...groups.slice(0, index),
+				updatedGroup,
+				...groups.slice(index + 1),
+			];
+		}
+		return [...groups, updatedGroup];
+	});
+}
+
+/**
+ * Remove a feed from a feed group.
+ */
+export async function removeFeedFromGroup({
+	groupId,
+	feedId,
+}: {
+	groupId: FeedGroup["id"];
+	feedId: Feed["id"];
+}) {
+	const updatedGroup = await removeGroupFeed({ feedId, groupId });
+	feedGroupsStore.update((groups) => {
+		let index = groups.findIndex((g) => g.id === groupId);
+		if (index !== -1) {
+			return [
+				...groups.slice(0, index),
+				updatedGroup,
+				...groups.slice(index + 1),
+			];
+		}
+		return [...groups, updatedGroup];
+	});
+}
+
+/**
+ * Initialize the state updaters.
+ */
 export function init() {
 	// Update displayType when the window size hits a breakpoint
 	const matcher = window.matchMedia("(max-width: 800px)");
@@ -124,8 +217,9 @@ export function init() {
 	});
 }
 
+export type ArticleFilter = "unread" | "all";
+
 export const article = readonly(articleStore);
-export const articles = readonly(articlesStore);
 export const articleFeed = derived(
 	[feedsStore, articleStore],
 	([$feeds, $article]) => {
@@ -135,7 +229,9 @@ export const articleFeed = derived(
 		}
 	},
 );
+export const articleFilter = writable<ArticleFilter>("unread");
 export const articleId = readonly(articleIdStore);
+export const articles = readonly(articlesStore);
 export const displayType = readonly(displayTypeStore);
 export const feed = derived([feedIdStore, feedsStore], ([$feedId, $feeds]) => {
 	if ($feedId && $feeds) {
@@ -146,6 +242,7 @@ export const feedGroups = readonly(feedGroupsStore);
 export const feedId = readonly(feedIdStore);
 export const feeds = readonly(feedsStore);
 export const feedStats = readonly(feedStatsStore);
+export const managingFeeds = writable<boolean>(false);
 export const selectedFeedIds = derived(
 	[feedIdStore, feedGroupsStore],
 	([$feedId, $feedGroups]) => {
@@ -153,7 +250,7 @@ export const selectedFeedIds = derived(
 			const [type, id] = $feedId.split("-");
 			if (type === "group") {
 				const group = $feedGroups.find((g) => g.id === id);
-				return group?.feeds.map(({ id }) => id) ?? [];
+				return group?.feeds ?? [];
 			}
 			return [id];
 		}

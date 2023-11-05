@@ -36,15 +36,15 @@
 			</div>
 
 			<ul>
-				{#each group.feeds as feed (feed.id)}
-					<li class="feed" class:selected={$selectedFeedIds.includes(feed.id)}>
-						<a href={`/reader/feed-${feed.id}`} class="title">
-							{$feeds.find((f) => f.id === feed.id)?.title}
+				{#each group.feeds as id}
+					<li class="feed" class:selected={$selectedFeedIds.includes(id)}>
+						<a href={`/reader/feed-${id}`} class="title">
+							{$feeds.find((f) => f.id === id)?.title}
 						</a>
 						{#if $feedStats}
 							<div class="unread">
-								{($feedStats.feeds[feed.id].total ?? 0) -
-									($feedStats.feeds[feed.id].read ?? 0)}
+								{($feedStats.feeds[id].total ?? 0) -
+									($feedStats.feeds[id].read ?? 0)}
 							</div>
 						{/if}
 					</li>

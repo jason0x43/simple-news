@@ -52,8 +52,13 @@ export interface CreateSessionRequest {
 
 export interface AddFeedRequest {
   url: Url;
-  title: string;
-  kind: FeedKind;
+  title?: string;
+  kind?: FeedKind;
+}
+
+export interface UpdateFeedRequest {
+  url?: Url;
+  title?: string;
 }
 
 export interface SessionResponse {
@@ -79,7 +84,12 @@ export interface FeedGroupWithFeeds {
   id: FeedGroupId;
   name: string;
   user_id: UserId;
-  feeds: Array<Feed>;
+  feeds: Array<FeedId>;
+}
+
+export interface FeedGroupUpdateResponse {
+  group: FeedGroupWithFeeds;
+  old_group?: FeedGroupWithFeeds;
 }
 
 export interface FeedStat {

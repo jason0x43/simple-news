@@ -1,12 +1,11 @@
-use std::collections::HashSet;
-
 use crate::{
     error::AppError,
     rss::{get_content, get_icon, load_feed},
     types::{
-        Article, ArticleId, Feed, FeedGroup, FeedGroupFeed, FeedGroupFeedId,
-        FeedGroupId, FeedGroupWithFeeds, FeedId, FeedKind, FeedLog, FeedLogId,
-        Password, PasswordId, Session, SessionId, User, UserId, ArticleSummary,
+        Article, ArticleId, ArticleSummary, Feed, FeedGroup, FeedGroupFeed,
+        FeedGroupFeedId, FeedGroupId, FeedGroupWithFeeds, FeedId, FeedKind,
+        FeedLog, FeedLogId, Password, PasswordId, Session, SessionId,
+        UpdateFeedRequest, User, UserId,
     },
     util::{get_timestamp, hash_password},
 };
@@ -215,17 +214,18 @@ impl Session {
 }
 
 impl Feed {
+    /// Create a new feed
     pub(crate) async fn create(
         conn: &mut SqliteConnection,
         url: Url,
-        title: String,
-        kind: FeedKind,
+        title: &str,
+        kind: Option<FeedKind>,
     ) -> Result<Self, AppError> {
         let feed = Self {
             id: FeedId::new(),
             url: url.to_string(),
-            title,
-            kind,
+            title: title.into(),
+            kind: kind.unwrap_or(FeedKind::Rss),
             disabled: false,
             icon: None,
             html_url: None,
@@ -252,6 +252,7 @@ impl Feed {
         Ok(feed)
     }
 
+    /// Delete a feed
     pub(crate) async fn delete(
         conn: &mut SqliteConnection,
         id: &FeedId,
@@ -262,6 +263,35 @@ impl Feed {
         Ok(())
     }
 
+    /// Update a feed's properties
+    pub(crate) async fn update(
+        &self,
+        conn: &mut SqliteConnection,
+        data: UpdateFeedRequest,
+    ) -> Result<Self, AppError> {
+        let title = data.title.unwrap_or(self.title.clone());
+        let url = data.url.map_or(self.url.clone(), |u| u.to_string());
+
+        query!(
+            r#"
+            UPDATE feeds SET title = ?1, url = ?2
+            WHERE id = ?3
+            "#,
+            title,
+            url,
+            self.id,
+        )
+        .execute(conn)
+        .await
+        .map_err(|err| {
+            log::warn!("Error updating feed: {}", err);
+            err
+        })?;
+
+        Ok(self.clone())
+    }
+
+    /// Get a feed
     pub(crate) async fn get(
         conn: &mut SqliteConnection,
         id: &FeedId,
@@ -290,6 +320,7 @@ impl Feed {
         })
     }
 
+    /// Get all feeds
     pub(crate) async fn get_all(
         conn: &mut SqliteConnection,
     ) -> Result<Vec<Self>, AppError> {
@@ -315,6 +346,7 @@ impl Feed {
         })
     }
 
+    /// Refresh this feed
     pub(crate) async fn refresh(
         &self,
         conn: &mut SqliteConnection,
@@ -394,6 +426,7 @@ impl Feed {
         Ok(())
     }
 
+    /// Refresh all feeds
     pub(crate) async fn refresh_all(
         conn: &mut SqliteConnection,
     ) -> Result<(), AppError> {
@@ -408,25 +441,38 @@ impl Feed {
         Ok(())
     }
 
+    /// Get all the feeds a user is subscribed to
     pub(crate) async fn get_subscribed(
         conn: &mut SqliteConnection,
         user_id: &UserId,
     ) -> Result<Vec<Feed>, AppError> {
-        let feed_groups = FeedGroup::find_all_for_user(conn, user_id).await?;
-        let mut feed_ids: HashSet<FeedId> = HashSet::new();
-        let mut feeds: Vec<Feed> = vec![];
-        for group in feed_groups {
-            let group_feeds = group.get_feeds(conn).await?;
-            for gf in group_feeds {
-                if !feed_ids.contains(&gf.id) {
-                    feed_ids.insert(gf.id.clone());
-                    feeds.push(gf);
-                }
-            }
-        }
-        Ok(feeds)
+        Ok(query_as!(
+            Feed,
+            r#"
+            SELECT
+              id,
+              url,
+              title,
+              kind,
+              disabled AS "disabled!: bool",
+              icon,
+              html_url
+            FROM feeds
+            WHERE id IN (
+                SELECT DISTINCT f.id
+                FROM feeds AS f
+                INNER JOIN feed_group_feeds AS fgf ON f.id = fgf.feed_id
+                INNER JOIN feed_groups AS fg ON fgf.feed_group_id = fg.id
+                WHERE fg.user_id = ?1
+            )
+            "#,
+            user_id
+        )
+        .fetch_all(conn)
+        .await?)
     }
 
+    /// Return the number of articles in this feed
     pub(crate) async fn article_count(
         &self,
         conn: &mut SqliteConnection,
@@ -438,6 +484,41 @@ impl Feed {
         .fetch_one(&mut *conn)
         .await?;
         Ok(count_row.count)
+    }
+
+    /// Return the group that contains this feed, if any
+    pub(crate) async fn group(
+        &self,
+        conn: &mut SqliteConnection,
+    ) -> Result<Option<FeedGroupWithFeeds>, AppError> {
+        let group = query_as!(
+            FeedGroup,
+            r#"
+            SELECT
+              fg.id,
+              fg.name,
+              fg.user_id
+            FROM feed_groups AS fg
+            INNER JOIN feed_group_feeds AS fgf
+              ON fgf.feed_group_id = fg.id
+            WHERE fgf.feed_id = ?1
+            "#,
+            self.id
+        )
+        .fetch_optional(&mut *conn)
+        .await?;
+
+        if let Some(group) = group {
+            let feeds = group.feed_ids(conn).await?;
+            Ok(Some(FeedGroupWithFeeds {
+                id: group.id,
+                name: group.name,
+                user_id: group.user_id,
+                feeds,
+            }))
+        } else {
+            Ok(None)
+        }
     }
 }
 
@@ -670,6 +751,10 @@ impl FeedLog {
     }
 }
 
+struct FeedIdRecord {
+    id: FeedId
+}
+
 impl FeedGroup {
     pub(crate) async fn create(
         conn: &mut SqliteConnection,
@@ -736,32 +821,11 @@ impl FeedGroup {
         .map_err(AppError::SqlxError)
     }
 
-    pub(crate) async fn find_all_for_user(
-        conn: &mut SqliteConnection,
-        user_id: &UserId,
-    ) -> Result<Vec<Self>, AppError> {
-        query_as!(
-            FeedGroup,
-            r#"
-            SELECT
-              id,
-              name,
-              user_id
-            FROM feed_groups
-            WHERE user_id = ?1
-            "#,
-            user_id
-        )
-        .fetch_all(conn)
-        .await
-        .map_err(AppError::SqlxError)
-    }
-
     pub(crate) async fn with_feeds(
         &self,
         conn: &mut SqliteConnection,
     ) -> Result<FeedGroupWithFeeds, AppError> {
-        let feeds = self.get_feeds(conn).await?;
+        let feeds = self.feed_ids(conn).await?;
         Ok(FeedGroupWithFeeds {
             id: self.id.clone(),
             name: self.name.clone(),
@@ -815,29 +879,23 @@ impl FeedGroup {
         Ok(())
     }
 
-    pub(crate) async fn get_feeds(
+    pub(crate) async fn feed_ids(
         &self,
         conn: &mut SqliteConnection,
-    ) -> Result<Vec<Feed>, AppError> {
-        query_as!(
-            Feed,
+    ) -> Result<Vec<FeedId>, AppError> {
+        let ids = query_as!(
+            FeedIdRecord,
             r#"
-            SELECT
-              feeds.id,
-              url,
-              title,
-              kind,
-              disabled AS "disabled!: bool",
-              icon,
-              html_url
-            FROM feeds
-            INNER JOIN feed_group_feeds ON feeds.id = feed_group_feeds.feed_id
-            WHERE feed_group_feeds.feed_group_id = ?1
+            SELECT f.id
+            FROM feeds AS f
+            INNER JOIN feed_group_feeds AS fgf ON f.id = fgf.feed_id
+            WHERE fgf.feed_group_id = ?1
             "#,
             self.id
         )
         .fetch_all(conn)
-        .await
-        .map_err(AppError::SqlxError)
+        .await?;
+
+        Ok(ids.iter().map(|id| id.id.clone()).collect())
     }
 }
