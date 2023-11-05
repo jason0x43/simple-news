@@ -10,19 +10,7 @@ import type {
 	FeedStats,
 } from "server";
 import { derived, get, readonly, writable } from "svelte/store";
-import {
-	getArticle,
-	getArticles,
-	getFeeds,
-	getFeedGroups,
-	getFeedStats,
-	type ArticlesSource,
-	addGroupFeed,
-	addFeed as apiAddFeed,
-	addFeedGroup as apiAddFeedGroup,
-	updateFeed as apiUpdateFeed,
-	removeGroupFeed,
-} from "./api";
+import * as api from "./api";
 import { matches, path } from "./router";
 
 const articleIdStore = writable<ArticleId | undefined>();
@@ -61,9 +49,9 @@ export function clearUpdatedArticleIds() {
  */
 export async function loadData() {
 	await Promise.allSettled([
-		getFeedGroups().then((g) => feedGroupsStore.set(g)),
-		getFeedStats().then((s) => feedStatsStore.set(s)),
-		getFeeds().then((f) => feedsStore.set(f)),
+		api.getFeedGroups().then((g) => feedGroupsStore.set(g)),
+		api.getFeedStats().then((s) => feedStatsStore.set(s)),
+		api.getFeeds().then((f) => feedsStore.set(f)),
 	]);
 }
 
@@ -72,12 +60,12 @@ export async function loadData() {
  */
 export async function loadArticles() {
 	const feedOrGroupId = get(feedIdStore);
-	let source: ArticlesSource | undefined = undefined;
+	let source: api.ArticlesSource | undefined = undefined;
 	if (feedOrGroupId) {
 		const [type, id] = feedOrGroupId.split("-");
 		source = type === "feed" ? { feedId: id } : { feedGroupId: id };
 	}
-	const a = await getArticles(source);
+	const a = await api.getArticles(source);
 	articlesStore.set(a);
 }
 
@@ -95,7 +83,7 @@ export async function clearArticles() {
  * @param title - the feed title
  */
 export async function addFeed(url: string, title?: string) {
-	const newFeed = await apiAddFeed({ url, title });
+	const newFeed = await api.createFeed({ url, title });
 	feedsStore.update((feeds) => [...feeds, newFeed]);
 }
 
@@ -112,7 +100,7 @@ export async function updateFeed(
 		title?: string;
 	},
 ) {
-	const updatedFeed = await apiUpdateFeed(id, data);
+	const updatedFeed = await api.updateFeed(id, data);
 	feedsStore.update((feeds) => {
 		let index = feeds.findIndex((f) => f.id === id);
 		if (index !== -1) {
@@ -126,7 +114,7 @@ export async function updateFeed(
  * Add a new feed group.
  */
 export async function addFeedGroup(data: CreateFeedGroupRequest) {
-	const newGroup = await apiAddFeedGroup(data);
+	const newGroup = await api.createFeedGroup(data);
 	feedGroupsStore.update((groups) => [...groups, { ...newGroup, feeds: [] }]);
 }
 
@@ -148,9 +136,9 @@ export async function addFeedToGroup({
 		return;
 	}
 
-	const addedGroup = await addGroupFeed({ feedId, groupId });
+	const addedGroup = await api.addGroupFeed({ feedId, groupId });
 	const removedGroup = oldGroupId
-		? await removeGroupFeed({ feedId, groupId: oldGroupId })
+		? await api.removeGroupFeed({ feedId, groupId: oldGroupId })
 		: undefined;
 
 	feedGroupsStore.update((groups) => {
@@ -189,7 +177,7 @@ export async function removeFeedFromGroup({
 	groupId: FeedGroupId;
 	feedId: FeedId;
 }) {
-	const updatedGroup = await removeGroupFeed({ feedId, groupId });
+	const updatedGroup = await api.removeGroupFeed({ feedId, groupId });
 	feedGroupsStore.update((groups) => {
 		let index = groups.findIndex((g) => g.id === groupId);
 		if (index !== -1) {
@@ -201,6 +189,13 @@ export async function removeFeedFromGroup({
 		}
 		return [...groups, updatedGroup];
 	});
+}
+
+/**
+ * Refresh a feed.
+ */
+export async function refreshFeed(feedId: FeedId) {
+	await api.refreshFeed(feedId);
 }
 
 /**
@@ -252,7 +247,7 @@ export function init() {
 	articleIdStore.subscribe((articleId) => {
 		if (articleId) {
 			if (articleId !== prevArticleId) {
-				getArticle(articleId).then((article) => {
+				api.getArticle(articleId).then((article) => {
 					articleStore.set(article);
 				});
 			}

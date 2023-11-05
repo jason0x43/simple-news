@@ -13,28 +13,46 @@ import type {
 	UpdateFeedRequest,
 } from "server";
 
+/**
+ * Return all of a user's feed groups.
+ */
 export async function getFeedGroups(): Promise<FeedGroupWithFeeds[]> {
 	return apiGet("feedgroups");
 }
 
+/**
+ * Return the stats for a user's subscribed feeds.
+ */
 export async function getFeedStats(): Promise<FeedStats> {
 	return apiGet("feedstats");
 }
 
+/**
+ * Return all feeds.
+ */
 export async function getFeeds(): Promise<Feed[]> {
 	return apiGet("feeds");
 }
 
-export async function addFeed(data: AddFeedRequest): Promise<Feed> {
+/**
+ * Create a new feed
+ */
+export async function createFeed(data: AddFeedRequest): Promise<Feed> {
 	return apiPost("feeds", data);
 }
 
-export async function addFeedGroup(
+/**
+ * Add a group to a feed.
+ */
+export async function createFeedGroup(
 	data: CreateFeedGroupRequest,
 ): Promise<FeedGroupWithFeeds> {
 	return apiPost("feedgroups", data);
 }
 
+/**
+ * Update a feed's properties
+ */
 export async function updateFeed(
 	id: FeedId,
 	data: UpdateFeedRequest,
@@ -46,6 +64,9 @@ export type ArticlesSource =
 	| { feedId: FeedId }
 	| { feedGroupId: FeedGroupId };
 
+/**
+ * Get summaries for all articles in a user's subscribed feeds.
+ */
 export async function getArticles(
 	source: ArticlesSource | undefined,
 ): Promise<ArticleSummary[]> {
@@ -60,6 +81,9 @@ export async function getArticles(
 	return apiGet(`feedgroups/${source.feedGroupId}/articles`);
 }
 
+/**
+ * Get a complete article.
+ */
 export async function getArticle(id: ArticleId): Promise<Article> {
 	return apiGet(`articles/${id}`);
 }
@@ -96,8 +120,16 @@ export async function removeGroupFeed({
 	feedId: FeedId;
 	groupId: FeedGroupId;
 }): Promise<FeedGroupWithFeeds> {
-	const body: AddGroupFeedRequest = { feed_id: feedId };
 	return apiDelete(`feedgroups/${groupId}/${feedId}`);
+}
+
+/**
+ * Refresh a feed.
+ *
+ * @param feedId - the ID of the feed to refresh
+ */
+export async function refreshFeed(feedId: FeedId) {
+	return apiGet(`feeds/${feedId}/refresh`);
 }
 
 /**

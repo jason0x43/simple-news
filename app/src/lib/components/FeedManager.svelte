@@ -12,9 +12,11 @@
 		feedGroups,
 		feeds,
 		managingFeeds,
+		refreshFeed,
 		updateFeed,
 	} from "../state";
 	import type { FeedGroupId, FeedId } from "server";
+	import Refresh from "../icons/Refresh.svelte";
 
 	let busy = false;
 	let addFeedData = { url: "" };
@@ -115,6 +117,15 @@
 	// Rename an existing group
 	async function handleRenameGroup() {}
 
+	// Refresh a feed
+	async function handleRefreshFeed(feedId: FeedId) {
+		busyOp(
+			() => refreshFeed(feedId),
+			"There was a problem refreshing the feed",
+			"Feed refreshed!"
+		);
+	}
+
 	$: groups = $feedGroups.reduce((acc, group) => {
 		for (const id of group.feed_ids) {
 			acc[id] = group.id;
@@ -153,6 +164,7 @@
 									<span class="feed-url">{feed.url}</span>
 									<div class="controls">
 										<Select
+											fill
 											value={groups[feed.id] ?? "not subscribed"}
 											on:change={(event) => {
 												const value = getEventValue(event);
@@ -166,6 +178,14 @@
 												<option value={group.id}>{group.name}</option>
 											{/each}
 										</Select>
+
+										<Button
+											on:click={() => {
+												handleRefreshFeed(feed.id);
+											}}
+										>
+											<Refresh size="1rem" />
+										</Button>
 									</div>
 								</div>
 							{/each}
@@ -349,9 +369,12 @@
 	}
 
 	.controls {
+		flex: 1;
 		display: flex;
 		flex-direction: row;
-		align-items: flex-start;
+		align-items: stretch;
+		justify-content: space-between;
+		gap: var(--gap);
 	}
 
 	.feed-select {

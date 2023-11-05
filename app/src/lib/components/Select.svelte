@@ -1,8 +1,9 @@
 <script lang="ts">
 	export let value: string;
+	export let fill: boolean = false;
 </script>
 
-<div class="select">
+<div class="select" class:fill={fill}>
 	<select bind:value on:change {...$$restProps}>
 		<slot />
 	</select>
@@ -16,6 +17,10 @@
 		background: var(--hover-matte);
 		border-radius: var(--border-radius);
 		border: solid 1px var(--border);
+	}
+
+	.fill {
+		flex: 1;
 	}
 
 	.select select {
