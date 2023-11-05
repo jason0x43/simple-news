@@ -3,7 +3,7 @@ use std::fs;
 use crate::{
     error::AppError,
     util::{
-        assert_ok, get_client, new_table, substr, to_time_str, Cache, get_api,
+        assert_ok, get_api, get_client, new_table, substr, to_time_str, Cache,
     },
 };
 use clap::{arg, ArgMatches, Command};
@@ -11,7 +11,7 @@ use comfy_table::{Cell, Color};
 use reqwest::Url;
 use serde::Deserialize;
 use serde_json::to_string_pretty;
-use server::{AddFeedRequest, Feed, FeedKind, FeedLog, FeedStats};
+use server::{AddFeedRequest, Feed, FeedKind, FeedLog, FeedStats, ArticleSummary};
 
 pub(crate) fn command() -> Command {
     Command::new("feed")
@@ -55,6 +55,13 @@ pub(crate) fn command() -> Command {
                 .arg_required_else_help(false),
         )
         .subcommand(
+            Command::new("articles")
+                .about("List all the articles in the given feed")
+                .arg(arg!([FEED_ID] "A feed ID"))
+                .arg(arg!(-j --json "Output raw JSON"))
+                .arg_required_else_help(true),
+        )
+        .subcommand(
             Command::new("log")
                 .about("Show update log for a feed or all feeds")
                 .arg(arg!([FEED_ID] "A feed ID"))
@@ -80,6 +87,7 @@ pub(crate) async fn handle(matches: &ArgMatches) -> Result<(), AppError> {
         Some(("refresh", sub_matches)) => refresh(sub_matches).await,
         Some(("log", sub_matches)) => log(sub_matches).await,
         Some(("stats", sub_matches)) => stats(sub_matches).await,
+        Some(("articles", sub_matches)) => articles(sub_matches).await,
         _ => unreachable!(),
     }
 }
@@ -94,9 +102,9 @@ async fn add_feed(title: &String, url: &String) -> Result<(), AppError> {
     let url =
         Url::parse(&url).map_err(|err| AppError::Error(err.to_string()))?;
     let body = AddFeedRequest {
-        title: title.to_string(),
+        title: Some(title.to_string()),
         url,
-        kind: FeedKind::Rss,
+        kind: Some(FeedKind::Rss),
     };
     let client = get_client()?;
     let url = get_api()?.join("feeds")?;
@@ -261,12 +269,39 @@ async fn stats(matches: &ArgMatches) -> Result<(), AppError> {
         table.set_header(vec!["id", "title", "articles"]);
         table.add_rows(stats.feeds.iter().map(|(id, stat)| {
             let feed_id = substr(&id.to_string(), 8);
+            let total = stat.clone().map_or(0, |s| s.total);
             let feed_name = feeds
                 .iter()
                 .find(|f| &f.id == id)
                 .map_or("".into(), |f| f.title.clone());
-            vec![feed_id, feed_name, stat.total.to_string()]
+            vec![feed_id, feed_name, total.to_string()]
         }));
+        println!("{table}");
+    }
+
+    Ok(())
+}
+
+async fn articles(matches: &ArgMatches) -> Result<(), AppError> {
+    let cache = Cache::load()?;
+    let feed_id =
+        cache.get_matching_id(matches.get_one::<String>("FEED_ID").unwrap())?;
+
+    let client = get_client()?;
+    let url = get_api()?.join(&format!("feeds/{}/articles", feed_id))?;
+    let body = client.get(url).send().await?;
+    let articles = body.json::<Vec<ArticleSummary>>().await?;
+
+    if matches.get_flag("json") {
+        println!("{}", to_string_pretty(&articles).unwrap());
+    } else {
+        let mut table = new_table();
+        table.set_header(vec!["published", "title"]);
+        table.add_rows(
+            articles.iter().map(|a| {
+                vec![to_time_str(&a.published), a.title.to_string()]
+            }),
+        );
         println!("{table}");
     }
 

@@ -494,6 +494,30 @@ impl Feed {
         .await?;
         Ok(count_row.count)
     }
+
+    pub(crate) async fn articles(
+        &self,
+        conn: &mut SqliteConnection,
+    ) -> Result<Vec<ArticleSummary>, AppError> {
+        Ok(query_as!(
+            ArticleSummary,
+            r#"
+            SELECT
+              id,
+              article_id,
+              feed_id,
+              title,
+              published AS "published: OffsetDateTime",
+              link
+            FROM articles
+            WHERE feed_id = ?1
+            ORDER BY published ASC
+            "#,
+            self.id
+        )
+        .fetch_all(conn)
+        .await?)
+    }
 }
 
 #[derive(Debug)]
@@ -597,56 +621,6 @@ impl ArticleSummary {
         .fetch_all(conn)
         .await?)
     }
-
-    pub(crate) async fn find_all_for_feed(
-        conn: &mut SqliteConnection,
-        feed_id: &FeedId,
-    ) -> Result<Vec<Self>, AppError> {
-        Ok(query_as!(
-            ArticleSummary,
-            r#"
-            SELECT
-              id,
-              article_id,
-              feed_id,
-              title,
-              published AS "published: OffsetDateTime",
-              link
-            FROM articles
-            WHERE feed_id = ?1
-            "#,
-            feed_id
-        )
-        .fetch_all(conn)
-        .await?)
-    }
-
-    pub(crate) async fn find_all_for_feed_group(
-        conn: &mut SqliteConnection,
-        group_id: &FeedGroupId,
-    ) -> Result<Vec<Self>, AppError> {
-        Ok(query_as!(
-            ArticleSummary,
-            r#"
-            SELECT
-              a.id,
-              a.article_id,
-              a.feed_id,
-              a.title,
-              a.published AS "published: OffsetDateTime",
-              a.link
-            FROM articles AS a
-            INNER JOIN feed_groups AS fg ON fg.id = ?1
-            INNER JOIN feed_group_feeds AS fgf ON fgf.feed_group_id = fg.id
-            INNER JOIN feeds AS f ON f.id = fgf.feed_id
-            WHERE a.feed_id = f.id
-            ORDER BY published ASC
-            "#,
-            group_id
-        )
-        .fetch_all(conn)
-        .await?)
-    }
 }
 
 impl FeedLog {
@@ -730,6 +704,7 @@ struct FeedIdRecord {
 }
 
 impl FeedGroup {
+    /// Create a new feed group
     pub(crate) async fn create(
         conn: &mut SqliteConnection,
         name: String,
@@ -756,6 +731,7 @@ impl FeedGroup {
         Ok(group)
     }
 
+    /// Get a feed group by ID
     pub(crate) async fn get(
         conn: &mut SqliteConnection,
         feed_group_id: &FeedGroupId,
@@ -777,6 +753,7 @@ impl FeedGroup {
         .map_err(|_| AppError::SessionNotFound)
     }
 
+    /// Get all feed groups
     pub(crate) async fn get_all(
         conn: &mut SqliteConnection,
     ) -> Result<Vec<Self>, AppError> {
@@ -795,6 +772,7 @@ impl FeedGroup {
         .map_err(AppError::SqlxError)
     }
 
+    /// Return a struct that describes this FeedGroup and lists its feeds
     pub(crate) async fn with_feeds(
         &self,
         conn: &mut SqliteConnection,
@@ -823,6 +801,7 @@ impl FeedGroup {
         })
     }
 
+    /// Add a feed to this group
     pub(crate) async fn add_feed(
         &self,
         conn: &mut SqliteConnection,
@@ -849,6 +828,7 @@ impl FeedGroup {
         Ok(self.with_feeds(conn).await?)
     }
 
+    /// Remove a feed from this group
     pub(crate) async fn remove_feed(
         &self,
         conn: &mut SqliteConnection,
@@ -866,5 +846,33 @@ impl FeedGroup {
         .await?;
 
         Ok(self.with_feeds(conn).await?)
+    }
+
+    /// Return all the article summaries for this feed group
+    pub(crate) async fn articles(
+        &self,
+        conn: &mut SqliteConnection,
+    ) -> Result<Vec<ArticleSummary>, AppError> {
+        Ok(query_as!(
+            ArticleSummary,
+            r#"
+            SELECT
+              a.id,
+              a.article_id,
+              a.feed_id,
+              a.title,
+              a.published AS "published: OffsetDateTime",
+              a.link
+            FROM articles AS a
+            INNER JOIN feed_groups AS fg ON fg.id = ?1
+            INNER JOIN feed_group_feeds AS fgf ON fgf.feed_group_id = fg.id
+            INNER JOIN feeds AS f ON f.id = fgf.feed_id
+            WHERE a.feed_id = f.id
+            ORDER BY a.published ASC
+            "#,
+            self.id
+        )
+        .fetch_all(conn)
+        .await?)
     }
 }

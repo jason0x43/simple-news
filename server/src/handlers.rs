@@ -117,8 +117,8 @@ pub(crate) async fn get_feed_articles(
     Path(id): Path<FeedId>,
 ) -> Result<Json<Vec<ArticleSummary>>, AppError> {
     let mut conn = state.pool.acquire().await?;
-    let articles = ArticleSummary::find_all_for_feed(&mut *conn, &id).await?;
-    Ok(Json(articles))
+    let feed = Feed::get(&mut conn, &id).await?;
+    Ok(Json(feed.articles(&mut conn).await?))
 }
 
 pub(crate) async fn add_feed(
@@ -291,9 +291,8 @@ pub(crate) async fn get_feed_group_articles(
     Path(id): Path<FeedGroupId>,
 ) -> Result<Json<Vec<ArticleSummary>>, AppError> {
     let mut conn = state.pool.acquire().await?;
-    let articles =
-        ArticleSummary::find_all_for_feed_group(&mut *conn, &id).await?;
-    Ok(Json(articles))
+    let group = FeedGroup::get(&mut conn, &id).await?;
+    Ok(Json(group.articles(&mut conn).await?))
 }
 
 #[derive(Deserialize)]
