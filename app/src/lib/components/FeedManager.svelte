@@ -8,10 +8,10 @@
 	import {
 		addFeed,
 		addFeedGroup,
-		addFeedToGroup,
 		feedGroups,
 		feeds,
 		managingFeeds,
+		moveFeedToGroup,
 		refreshFeed,
 		updateFeed,
 	} from "../state";
@@ -62,7 +62,7 @@
 		groupId: string;
 	}) {
 		busyOp(
-			() => addFeedToGroup({ feedId, groupId }),
+			() => moveFeedToGroup({ feedId, groupId }),
 			"Unable to add feed",
 			"Feed added"
 		);

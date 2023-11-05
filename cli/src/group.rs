@@ -6,7 +6,7 @@ use clap::{arg, ArgMatches, Command};
 use serde_json::to_string_pretty;
 use server::{
     AddGroupFeedRequest, CreateFeedGroupRequest, Feed, FeedGroup, FeedGroupId,
-    FeedId,
+    FeedId, FeedGroupWithFeeds,
 };
 
 pub(crate) fn command() -> Command {
@@ -123,24 +123,12 @@ async fn show(matches: &ArgMatches) -> Result<(), AppError> {
     let id = matches.get_one::<String>("FEED_GROUP_ID").unwrap();
     let id: FeedGroupId = cache.get_matching_id(id)?.into();
     let client = get_client()?;
-    let url = get_api()?.join(&format!("/feedgroups/{}", id))?;
+    let url = get_api()?.join(&format!("feedgroups/{}", id))?;
     let resp = assert_ok(client.get(url).send().await?).await?;
 
-    let feeds: Vec<Feed> = resp.json().await?;
+    let group: FeedGroupWithFeeds = resp.json().await?;
 
-    if matches.get_flag("json") {
-        println!("{}", to_string_pretty(&feeds).unwrap());
-    } else {
-        let mut table = new_table();
-        table.set_header(vec!["id", "name"]);
-        table.add_rows(
-            feeds.iter().map(|f| {
-                vec![substr(&f.id.to_string(), 8), f.title.to_string()]
-            }),
-        );
-        println!("{table}");
-    }
-
+    println!("{}", to_string_pretty(&group).unwrap());
     Ok(())
 }
 

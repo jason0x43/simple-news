@@ -6,7 +6,7 @@ use crate::{
         ArticlesMarkRequest, Feed, FeedGroup, FeedGroupFeed, FeedGroupFeedId,
         FeedGroupId, FeedGroupWithFeeds, FeedId, FeedKind, FeedLog, FeedLogId,
         Password, PasswordId, Session, SessionId, UpdateFeedRequest, User,
-        UserArticle, UserArticleId, UserId,
+        UserArticle, UserArticleId, UserId, FeedStat,
     },
     util::{get_timestamp, hash_password},
 };
@@ -550,6 +550,29 @@ impl Feed {
         .fetch_all(conn)
         .await?)
     }
+
+    pub(crate) async fn stats(
+        &self,
+        conn: &mut SqliteConnection,
+        user_id: &UserId,
+    ) -> Result<FeedStat, AppError> {
+        let count = self.article_count(conn).await?;
+        let num_read = query!(
+            r#"
+            SELECT COUNT(*) AS count
+            FROM user_articles AS ua
+            INNER JOIN articles AS a ON a.id = ua.article_id
+            WHERE ua.user_id = ?1 AND ua.read = 1 AND a.feed_id = ?2
+            "#,
+            user_id,
+            self.id
+        ).fetch_one(conn).await?;
+
+        Ok(FeedStat {
+            total: count,
+            read: num_read.count,
+        })
+    }
 }
 
 #[derive(Debug)]
@@ -879,6 +902,26 @@ impl FeedGroup {
         )
         .execute(&mut *conn)
         .await?;
+
+        Ok(self.with_feeds(conn).await?)
+    }
+
+    /// Move a feed to this group, removing it from all other groups 
+    pub(crate) async fn move_feed(
+        &self,
+        conn: &mut SqliteConnection,
+        feed_id: FeedId,
+    ) -> Result<FeedGroupWithFeeds, AppError> {
+        // remove the feed from all groups
+        query!(
+            "DELETE FROM feed_group_feeds WHERE feed_id = ?1",
+            feed_id
+        )
+        .execute(&mut *conn)
+        .await?;
+
+        // add the feed to this group
+        self.add_feed(conn, feed_id).await?;
 
         Ok(self.with_feeds(conn).await?)
     }

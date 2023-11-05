@@ -101,9 +101,7 @@ export async function markArticle(
 /**
  * Mark multiple articles as saved or read
  */
-export async function markArticles(
-	data: ArticlesMarkRequest,
-): Promise<void> {
+export async function markArticles(data: ArticlesMarkRequest): Promise<void> {
 	await apiPatch(`articles`, data);
 }
 
@@ -122,6 +120,24 @@ export async function addGroupFeed({
 	groupId: FeedGroupId;
 }): Promise<void> {
 	const body: AddGroupFeedRequest = { feed_id: feedId };
+	await apiPost(`feedgroups/${groupId}`, body);
+}
+
+/**
+ * Move a feed to a feed group.
+ *
+ * @param feedId - the feed to add
+ * @param groudId - the group to add the feed to
+ * @returns the updated group
+ */
+export async function moveGroupFeed({
+	feedId,
+	groupId,
+}: {
+	feedId: FeedId;
+	groupId: FeedGroupId;
+}): Promise<void> {
+	const body: AddGroupFeedRequest = { feed_id: feedId, move_feed: true };
 	await apiPost(`feedgroups/${groupId}`, body);
 }
 

@@ -185,6 +185,38 @@ export async function removeFeedFromGroup({
 }
 
 /**
+ * Move a feed to a feed group.
+ *
+ * The feed will be removed from any existing group.
+ */
+export async function moveFeedToGroup({
+	groupId,
+	feedId,
+}: {
+	groupId: FeedGroupId;
+	feedId: FeedId;
+}) {
+	await api.moveGroupFeed({ feedId, groupId });
+	feedGroupsStore.update((groups) => groups.map((group) => {
+		if (group.id !== groupId && group.feed_ids.includes(feedId)) {
+			return {
+				...group,
+				feed_ids: group.feed_ids.filter((id) => id !== feedId),
+			}
+		}
+
+		if (group.id === groupId && !group.feed_ids.includes(feedId)) {
+			return {
+				...group,
+				feed_ids: [...group.feed_ids, feedId]
+			}
+		}
+
+		return group;
+	}));
+}
+
+/**
  * Refresh a feed.
  */
 export async function refreshFeed(feedId: FeedId) {

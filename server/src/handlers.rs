@@ -21,10 +21,9 @@ use crate::{
     types::{
         AddFeedRequest, AddGroupFeedRequest, Article, ArticleId,
         ArticleMarkRequest, ArticleSummary, ArticlesMarkRequest,
-        CreateFeedGroupRequest, CreateSessionRequest,
-        CreateUserRequest, Feed, FeedGroup, FeedGroupId, FeedGroupWithFeeds,
-        FeedId, FeedLog, FeedStat, FeedStats, Password, Session,
-        UpdateFeedRequest, User,
+        CreateFeedGroupRequest, CreateSessionRequest, CreateUserRequest, Feed,
+        FeedGroup, FeedGroupId, FeedGroupWithFeeds, FeedId, FeedLog, FeedStats,
+        Password, Session, UpdateFeedRequest, User,
     },
     util::{add_cache_control, check_password},
 };
@@ -291,9 +290,14 @@ pub(crate) async fn add_group_feed(
     Path(id): Path<FeedGroupId>,
     Json(body): Json<AddGroupFeedRequest>,
 ) -> Result<(), AppError> {
-    let mut conn = state.pool.acquire().await?;
-    let group = FeedGroup::get(&mut conn, &id).await?;
-    group.add_feed(&mut conn, body.feed_id).await?;
+    let mut tx = state.pool.begin().await?;
+    let group = FeedGroup::get(&mut tx, &id).await?;
+    if body.move_feed.unwrap_or(false) {
+        group.move_feed(&mut tx, body.feed_id).await?;
+    } else {
+        group.add_feed(&mut tx, body.feed_id).await?;
+    }
+    tx.commit().await?;
     Ok(())
 }
 
@@ -336,13 +340,9 @@ pub(crate) async fn get_feed_stats(
     };
     let mut stats = FeedStats::new();
     for feed in feeds.iter() {
-        let num_articles = feed.article_count(&mut conn).await?;
         stats.feeds.insert(
             feed.id.clone(),
-            Some(FeedStat {
-                total: num_articles,
-                read: 0,
-            }),
+            Some(feed.stats(&mut conn, &session.user_id).await?),
         );
     }
     Ok(Json(stats))

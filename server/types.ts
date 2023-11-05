@@ -93,6 +93,7 @@ export interface FeedGroup {
 
 export interface AddGroupFeedRequest {
   feed_id: FeedId;
+  move_feed?: boolean;
 }
 
 export interface FeedGroupWithFeeds {
