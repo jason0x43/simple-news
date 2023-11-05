@@ -3,7 +3,9 @@ import type {
 	AddGroupFeedRequest,
 	Article,
 	ArticleId,
+	ArticleMarkRequest,
 	ArticleSummary,
+	ArticlesMarkRequest,
 	CreateFeedGroupRequest,
 	Feed,
 	FeedGroupId,
@@ -17,28 +19,28 @@ import type {
  * Return all of a user's feed groups.
  */
 export async function getFeedGroups(): Promise<FeedGroupWithFeeds[]> {
-	return apiGet("feedgroups");
+	return (await apiGet("feedgroups")).json();
 }
 
 /**
  * Return the stats for a user's subscribed feeds.
  */
 export async function getFeedStats(): Promise<FeedStats> {
-	return apiGet("feedstats");
+	return (await apiGet("feedstats")).json();
 }
 
 /**
  * Return all feeds.
  */
 export async function getFeeds(): Promise<Feed[]> {
-	return apiGet("feeds");
+	return (await apiGet("feeds")).json();
 }
 
 /**
  * Create a new feed
  */
 export async function createFeed(data: AddFeedRequest): Promise<Feed> {
-	return apiPost("feeds", data);
+	return (await apiPost("feeds", data)).json();
 }
 
 /**
@@ -47,7 +49,7 @@ export async function createFeed(data: AddFeedRequest): Promise<Feed> {
 export async function createFeedGroup(
 	data: CreateFeedGroupRequest,
 ): Promise<FeedGroupWithFeeds> {
-	return apiPost("feedgroups", data);
+	return (await apiPost("feedgroups", data)).json();
 }
 
 /**
@@ -56,13 +58,11 @@ export async function createFeedGroup(
 export async function updateFeed(
 	id: FeedId,
 	data: UpdateFeedRequest,
-): Promise<Feed> {
-	return apiPatch(`feeds/${id}`, data);
+): Promise<void> {
+	await apiPatch(`feeds/${id}`, data);
 }
 
-export type ArticlesSource =
-	| { feedId: FeedId }
-	| { feedGroupId: FeedGroupId };
+export type ArticlesSource = { feedId: FeedId } | { feedGroupId: FeedGroupId };
 
 /**
  * Get summaries for all articles in a user's subscribed feeds.
@@ -71,21 +71,40 @@ export async function getArticles(
 	source: ArticlesSource | undefined,
 ): Promise<ArticleSummary[]> {
 	if (source === undefined) {
-		return apiGet("articles");
+		return (await apiGet("articles")).json();
 	}
 
 	if (isFeedId(source)) {
-		return apiGet(`feeds/${source.feedId}/articles`);
+		return (await apiGet(`feeds/${source.feedId}/articles`)).json();
 	}
 
-	return apiGet(`feedgroups/${source.feedGroupId}/articles`);
+	return (await apiGet(`feedgroups/${source.feedGroupId}/articles`)).json();
 }
 
 /**
  * Get a complete article.
  */
 export async function getArticle(id: ArticleId): Promise<Article> {
-	return apiGet(`articles/${id}`);
+	return (await apiGet(`articles/${id}`)).json();
+}
+
+/**
+ * Mark an article as saved or read
+ */
+export async function markArticle(
+	id: ArticleId,
+	data: ArticleMarkRequest,
+): Promise<void> {
+	await apiPatch(`articles/${id}`, data);
+}
+
+/**
+ * Mark multiple articles as saved or read
+ */
+export async function markArticles(
+	data: ArticlesMarkRequest,
+): Promise<void> {
+	await apiPatch(`articles`, data);
 }
 
 /**
@@ -101,9 +120,9 @@ export async function addGroupFeed({
 }: {
 	feedId: FeedId;
 	groupId: FeedGroupId;
-}): Promise<FeedGroupWithFeeds> {
+}): Promise<void> {
 	const body: AddGroupFeedRequest = { feed_id: feedId };
-	return apiPost(`feedgroups/${groupId}`, body);
+	await apiPost(`feedgroups/${groupId}`, body);
 }
 
 /**
@@ -119,8 +138,8 @@ export async function removeGroupFeed({
 }: {
 	feedId: FeedId;
 	groupId: FeedGroupId;
-}): Promise<FeedGroupWithFeeds> {
-	return apiDelete(`feedgroups/${groupId}/${feedId}`);
+}): Promise<void> {
+	await apiDelete(`feedgroups/${groupId}/${feedId}`);
 }
 
 /**
@@ -129,7 +148,7 @@ export async function removeGroupFeed({
  * @param feedId - the ID of the feed to refresh
  */
 export async function refreshFeed(feedId: FeedId) {
-	return apiGet(`feeds/${feedId}/refresh`);
+	await apiGet(`feeds/${feedId}/refresh`);
 }
 
 /**
@@ -157,9 +176,8 @@ function assertOk(resp: Response): Response {
  * @param path - the api path to get
  * @returns the returned JSON
  */
-async function apiGet<T>(path: string): Promise<T> {
-	const resp = assertOk(await fetch(`/api/${path}`));
-	return resp.json();
+async function apiGet(path: string): Promise<Response> {
+	return assertOk(await fetch(`/api/${path}`));
 }
 
 /**
@@ -168,9 +186,8 @@ async function apiGet<T>(path: string): Promise<T> {
  * @param path - the api path to delete
  * @returns the returned JSON
  */
-async function apiDelete<T>(path: string): Promise<T> {
-	const resp = assertOk(await fetch(`/api/${path}`, { method: 'delete' }));
-	return resp.json();
+async function apiDelete(path: string): Promise<Response> {
+	return assertOk(await fetch(`/api/${path}`, { method: "delete" }));
 }
 
 /**
@@ -180,15 +197,14 @@ async function apiDelete<T>(path: string): Promise<T> {
  * @param data - the JSON data to post
  * @returns the returned JSON
  */
-async function apiPost<T>(path: string, data: unknown): Promise<T> {
-	const resp = assertOk(
+async function apiPost(path: string, data: unknown): Promise<Response> {
+	return assertOk(
 		await fetch(`/api/${path}`, {
 			method: "post",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(data),
 		}),
 	);
-	return resp.json();
 }
 
 /**
@@ -198,13 +214,12 @@ async function apiPost<T>(path: string, data: unknown): Promise<T> {
  * @param data - the JSON data to post
  * @returns the returned JSON
  */
-async function apiPatch<T>(path: string, data: unknown): Promise<T> {
-	const resp = assertOk(
+async function apiPatch(path: string, data: unknown): Promise<Response> {
+	return assertOk(
 		await fetch(`/api/${path}`, {
 			method: "patch",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(data),
 		}),
 	);
-	return resp.json();
 }

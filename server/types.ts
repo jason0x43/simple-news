@@ -20,6 +20,11 @@ export interface Feed {
   html_url?: string;
 }
 
+export interface ArticleUserData {
+  read: boolean;
+  saved: boolean;
+}
+
 export interface Article {
   id: ArticleId;
   article_id: string;
@@ -37,6 +42,16 @@ export interface ArticleSummary {
   title: string;
   published: OffsetDateTime;
   link?: string;
+  read: boolean;
+  saved: boolean;
+}
+
+export interface UserArticle {
+  id: UserArticleId;
+  user_id: UserId;
+  article_id: ArticleId;
+  read: boolean;
+  saved: boolean;
 }
 
 export interface CreateUserRequest {
@@ -97,11 +112,27 @@ export interface FeedStats {
   saved: number;
 }
 
+export interface ArticleMarkRequest {
+  read?: boolean;
+  saved?: boolean;
+}
+
+export interface ArticlesMarkRequest {
+  article_ids: Array<ArticleId>;
+  mark: ArticleMarkRequest;
+}
+
+export interface ArticlesMarkResponse {
+  article_ids: Array<ArticleId>;
+}
+
 export type Url = string
 
 export type Value = Record<string, unknown>
 
 export type UserId = string
+
+export type UserArticleId = string
 
 export type FeedId = string
 

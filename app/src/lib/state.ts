@@ -1,7 +1,9 @@
 import type {
 	Article,
 	ArticleId,
+	ArticleMarkRequest,
 	ArticleSummary,
+	ArticlesMarkRequest,
 	CreateFeedGroupRequest,
 	Feed,
 	FeedGroupId,
@@ -100,13 +102,21 @@ export async function updateFeed(
 		title?: string;
 	},
 ) {
-	const updatedFeed = await api.updateFeed(id, data);
+	await api.updateFeed(id, data);
 	feedsStore.update((feeds) => {
 		let index = feeds.findIndex((f) => f.id === id);
 		if (index !== -1) {
-			return [...feeds.slice(0, index), updatedFeed, ...feeds.slice(index + 1)];
+			return [
+				...feeds.slice(0, index),
+				{
+					...feeds[index],
+					url: data.url ?? feeds[index].url,
+					title: data.title ?? feeds[index].title,
+				},
+				...feeds.slice(index + 1),
+			];
 		}
-		return [...feeds, updatedFeed];
+		return feeds;
 	});
 }
 
@@ -130,39 +140,19 @@ export async function addFeedToGroup({
 	groupId: FeedGroupId;
 	feedId: FeedId;
 }) {
-	const groups = get(feedGroupsStore);
-	const oldGroupId = groups.find((g) => g.feed_ids.includes(feedId))?.id;
-	if (oldGroupId === groupId) {
-		return;
-	}
-
-	const addedGroup = await api.addGroupFeed({ feedId, groupId });
-	const removedGroup = oldGroupId
-		? await api.removeGroupFeed({ feedId, groupId: oldGroupId })
-		: undefined;
-
+	await api.addGroupFeed({ feedId, groupId });
 	feedGroupsStore.update((groups) => {
-		let addedIndex = groups.findIndex((g) => g.id === groupId);
-		if (addedIndex !== -1) {
+		let index = groups.findIndex((g) => g.id === groupId);
+		if (index !== -1) {
 			groups = [
-				...groups.slice(0, addedIndex),
-				addedGroup,
-				...groups.slice(addedIndex + 1),
+				...groups.slice(0, index),
+				{
+					...groups[index],
+					feed_ids: [...groups[index].feed_ids, feedId],
+				},
+				...groups.slice(index + 1),
 			];
-		} else {
-			groups = [...groups, addedGroup];
 		}
-
-		if (removedGroup) {
-			let removedIndex = groups.findIndex((g) => g.id === groupId);
-			if (removedIndex !== -1) {
-				groups = [
-					...groups.slice(0, removedIndex),
-					...groups.slice(removedIndex + 1),
-				];
-			}
-		}
-
 		return groups;
 	});
 }
@@ -177,17 +167,20 @@ export async function removeFeedFromGroup({
 	groupId: FeedGroupId;
 	feedId: FeedId;
 }) {
-	const updatedGroup = await api.removeGroupFeed({ feedId, groupId });
+	await api.removeGroupFeed({ feedId, groupId });
 	feedGroupsStore.update((groups) => {
 		let index = groups.findIndex((g) => g.id === groupId);
 		if (index !== -1) {
-			return [
+			groups = [
 				...groups.slice(0, index),
-				updatedGroup,
+				{
+					...groups[index],
+					feed_ids: groups[index].feed_ids.filter((id) => id !== feedId),
+				},
 				...groups.slice(index + 1),
 			];
 		}
-		return [...groups, updatedGroup];
+		return groups;
 	});
 }
 
@@ -196,6 +189,62 @@ export async function removeFeedFromGroup({
  */
 export async function refreshFeed(feedId: FeedId) {
 	await api.refreshFeed(feedId);
+}
+
+/**
+ * Mark an article as read or saved
+ */
+export async function markArticle(id: ArticleId, data: ArticleMarkRequest) {
+	await api.markArticle(id, data);
+
+	articlesStore.update((articles) => {
+		let index = articles.findIndex((a) => a.id === id);
+		if (index !== -1) {
+			return [
+				...articles.slice(0, index),
+				{
+					...articles[index],
+					read: data.read ?? articles[index].read,
+					saved: data.saved ?? articles[index].saved,
+				},
+				...articles.slice(index + 1),
+			];
+		}
+		return [...articles];
+	});
+
+	updatedArticleIdStore.update((ids) => {
+		let newIds = new Set(ids);
+		newIds.add(id);
+		return newIds;
+	});
+}
+
+/**
+ * Mark multiple articles as read or saved
+ */
+export async function markArticles(data: ArticlesMarkRequest) {
+	await api.markArticles(data);
+
+	articlesStore.update((articles) =>
+		articles.map((a) =>
+			data.article_ids.includes(a.id)
+				? {
+						...a,
+						read: data.mark.read ?? a.read,
+						saved: data.mark.saved ?? a.saved,
+				  }
+				: a,
+		),
+	);
+
+	updatedArticleIdStore.update((ids) => {
+		let newIds = new Set(ids);
+		for (const id of data.article_ids) {
+			newIds.add(id);
+		}
+		return newIds;
+	});
 }
 
 /**
@@ -249,6 +298,10 @@ export function init() {
 			if (articleId !== prevArticleId) {
 				api.getArticle(articleId).then((article) => {
 					articleStore.set(article);
+				});
+
+				markArticle(articleId, { read: true }).catch((err) => {
+					console.warn("Error marking article as read:", err);
 				});
 			}
 		} else {

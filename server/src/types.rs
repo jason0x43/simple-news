@@ -99,6 +99,13 @@ pub struct Feed {
 #[sqlx(transparent)]
 pub struct ArticleId(pub String);
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[tsync]
+pub struct ArticleUserData {
+    pub read: bool,
+    pub saved: bool,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 #[tsync]
 pub struct Article {
@@ -112,7 +119,7 @@ pub struct Article {
     pub link: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[tsync]
 pub struct ArticleSummary {
     pub id: ArticleId,
@@ -122,6 +129,22 @@ pub struct ArticleSummary {
     #[serde(with = "time::serde::rfc3339")]
     pub published: OffsetDateTime,
     pub link: Option<String>,
+    pub read: bool,
+    pub saved: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type, Id)]
+#[sqlx(transparent)]
+pub struct UserArticleId(pub String);
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[tsync]
+pub struct UserArticle {
+    pub id: UserArticleId,
+    pub user_id: UserId,
+    pub article_id: ArticleId,
+    pub read: bool,
+    pub saved: bool,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -241,4 +264,24 @@ impl FeedStats {
             saved: 0,
         }
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[tsync]
+pub struct ArticleMarkRequest {
+    pub read: Option<bool>,
+    pub saved: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[tsync]
+pub struct ArticlesMarkRequest {
+    pub article_ids: Vec<ArticleId>,
+    pub mark: ArticleMarkRequest,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[tsync]
+pub struct ArticlesMarkResponse {
+    pub article_ids: Vec<ArticleId>,
 }

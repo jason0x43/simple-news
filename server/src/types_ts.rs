@@ -17,6 +17,10 @@ type UserId = String;
 
 #[tsync]
 #[allow(dead_code)]
+type UserArticleId = String;
+
+#[tsync]
+#[allow(dead_code)]
 type FeedId = String;
 
 #[tsync]

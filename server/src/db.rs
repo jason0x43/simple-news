@@ -2,10 +2,11 @@ use crate::{
     error::AppError,
     rss::{get_content, get_icon, load_feed},
     types::{
-        Article, ArticleId, ArticleSummary, Feed, FeedGroup, FeedGroupFeed,
-        FeedGroupFeedId, FeedGroupId, FeedGroupWithFeeds, FeedId, FeedKind,
-        FeedLog, FeedLogId, Password, PasswordId, Session, SessionId,
-        UpdateFeedRequest, User, UserId,
+        Article, ArticleId, ArticleMarkRequest, ArticleSummary,
+        ArticlesMarkRequest, Feed, FeedGroup, FeedGroupFeed, FeedGroupFeedId,
+        FeedGroupId, FeedGroupWithFeeds, FeedId, FeedKind, FeedLog, FeedLogId,
+        Password, PasswordId, Session, SessionId, UpdateFeedRequest, User,
+        UserArticle, UserArticleId, UserId,
     },
     util::{get_timestamp, hash_password},
 };
@@ -104,6 +105,38 @@ impl User {
         .fetch_all(conn)
         .await
         .map_err(AppError::SqlxError)
+    }
+
+    pub(crate) async fn articles(
+        &self,
+        conn: &mut SqliteConnection,
+    ) -> Result<Vec<ArticleSummary>, AppError> {
+        Ok(query_as!(
+            ArticleSummary,
+            r#"
+            SELECT
+                a.id,
+                a.article_id,
+                a.feed_id,
+                a.title,
+                a.published AS "published: OffsetDateTime",
+                a.link,
+                read AS "read!: bool",
+                saved AS "saved!: bool"
+            FROM articles AS a
+            INNER JOIN feeds AS f ON f.id = a.feed_id
+            INNER JOIN feed_groups AS fg ON fg.user_id = ?1
+            INNER JOIN feed_group_feeds AS fgf
+              ON fgf.feed_id = f.id AND fgf.feed_group_id = fg.id
+            LEFT OUTER JOIN user_articles AS ua
+              ON ua.article_id = a.id
+            WHERE ua.user_id = ?1
+            ORDER BY published ASC
+            "#,
+            self.id
+        )
+        .fetch_all(conn)
+        .await?)
     }
 }
 
@@ -265,26 +298,18 @@ impl Feed {
 
     /// Update a feed's properties
     pub(crate) async fn update(
-        &self,
+        &mut self,
         conn: &mut SqliteConnection,
         data: UpdateFeedRequest,
-    ) -> Result<Self, AppError> {
+    ) -> Result<(), AppError> {
         let title = data.title.unwrap_or(self.title.clone());
         let url = data.url.map_or(self.url.clone(), |u| u.to_string());
 
-        let new_feed = query_as!(
+        query_as!(
             Feed,
             r#"
             UPDATE feeds SET title = ?1, url = ?2
             WHERE id = ?3
-            RETURNING
-                id,
-                url,
-                title,
-                kind,
-                disabled AS "disabled!: bool", 
-                icon,
-                html_url
             "#,
             title,
             url,
@@ -297,7 +322,10 @@ impl Feed {
             err
         })?;
 
-        Ok(new_feed)
+        self.title = title;
+        self.url = url;
+
+        Ok(())
     }
 
     /// Get a feed
@@ -503,13 +531,17 @@ impl Feed {
             ArticleSummary,
             r#"
             SELECT
-              id,
-              article_id,
-              feed_id,
-              title,
-              published AS "published: OffsetDateTime",
-              link
-            FROM articles
+                a.id,
+                a.article_id,
+                feed_id,
+                title,
+                published AS "published: OffsetDateTime",
+                link,
+                read AS "read!: bool",
+                saved AS "saved!: bool"
+            FROM articles AS a
+            LEFT OUTER JOIN user_articles
+                ON user_articles.article_id = a.id
             WHERE feed_id = ?1
             ORDER BY published ASC
             "#,
@@ -592,34 +624,57 @@ impl Article {
         .fetch_one(conn)
         .await?)
     }
-}
 
-impl ArticleSummary {
-    pub(crate) async fn get_all_for_user(
+    pub(crate) async fn mark(
+        &self,
+        conn: &mut SqliteConnection,
+        user_id: UserId,
+        mark: &ArticleMarkRequest,
+    ) -> Result<ArticleSummary, AppError> {
+        let ua = UserArticle::create(
+            conn,
+            UserArticleNew {
+                user_id,
+                article_id: self.id.clone(),
+                read: mark.read.unwrap_or(false),
+                saved: mark.saved.unwrap_or(false),
+            },
+        )
+        .await?;
+
+        let a = self.clone();
+
+        Ok(ArticleSummary {
+            id: a.id,
+            article_id: a.article_id,
+            feed_id: a.feed_id,
+            title: a.title,
+            published: a.published,
+            link: a.link,
+            read: ua.read,
+            saved: ua.saved,
+        })
+    }
+
+    pub(crate) async fn mark_all(
         conn: &mut SqliteConnection,
         user_id: &UserId,
-    ) -> Result<Vec<Self>, AppError> {
-        Ok(query_as!(
-            ArticleSummary,
-            r#"
-            SELECT
-              a.id,
-              a.article_id,
-              a.feed_id,
-              a.title,
-              a.published AS "published: OffsetDateTime",
-              a.link
-            FROM articles AS a
-            INNER JOIN feeds AS f ON f.id = a.feed_id
-            INNER JOIN feed_groups AS fg ON fg.user_id = ?1
-            INNER JOIN feed_group_feeds AS fgf
-              ON fgf.feed_id = f.id AND fgf.feed_group_id = fg.id
-            ORDER BY published ASC
-            "#,
-            user_id
-        )
-        .fetch_all(conn)
-        .await?)
+        data: &ArticlesMarkRequest,
+    ) -> Result<i32, AppError> {
+        for id in &data.article_ids {
+            UserArticle::create(
+                conn,
+                UserArticleNew {
+                    user_id: user_id.clone(),
+                    article_id: id.clone(),
+                    read: data.mark.read.unwrap_or(false),
+                    saved: data.mark.saved.unwrap_or(false),
+                },
+            )
+            .await?;
+        }
+
+        Ok(data.article_ids.len() as i32)
     }
 }
 
@@ -857,16 +912,19 @@ impl FeedGroup {
             ArticleSummary,
             r#"
             SELECT
-              a.id,
-              a.article_id,
-              a.feed_id,
-              a.title,
-              a.published AS "published: OffsetDateTime",
-              a.link
+                a.id,
+                a.article_id,
+                a.feed_id,
+                a.title,
+                a.published AS "published: OffsetDateTime",
+                a.link,
+                read AS "read!: bool",
+                saved AS "saved!: bool"
             FROM articles AS a
             INNER JOIN feed_groups AS fg ON fg.id = ?1
             INNER JOIN feed_group_feeds AS fgf ON fgf.feed_group_id = fg.id
             INNER JOIN feeds AS f ON f.id = fgf.feed_id
+            LEFT JOIN user_articles AS ua ON ua.article_id = a.id
             WHERE a.feed_id = f.id
             ORDER BY a.published ASC
             "#,
@@ -874,5 +932,48 @@ impl FeedGroup {
         )
         .fetch_all(conn)
         .await?)
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct UserArticleNew {
+    pub(crate) user_id: UserId,
+    pub(crate) article_id: ArticleId,
+    pub(crate) read: bool,
+    pub(crate) saved: bool,
+}
+
+impl UserArticle {
+    pub(crate) async fn create(
+        conn: &mut SqliteConnection,
+        data: UserArticleNew,
+    ) -> Result<Self, AppError> {
+        let user_article = Self {
+            id: UserArticleId::new(),
+            user_id: data.user_id,
+            article_id: data.article_id,
+            read: data.read,
+            saved: data.saved,
+        };
+
+        query!(
+            r#"
+            INSERT INTO user_articles(
+              read, saved, id, user_id, article_id
+            )
+            VALUES(?1, ?2, ?3, ?4, ?5)
+            ON CONFLICT(user_id, article_id)
+            DO UPDATE SET read = ?1, saved = ?2
+            "#,
+            user_article.read,
+            user_article.saved,
+            user_article.id,
+            user_article.user_id,
+            user_article.article_id,
+        )
+        .execute(&mut *conn)
+        .await?;
+
+        Ok(user_article)
     }
 }

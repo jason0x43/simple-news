@@ -1,10 +1,12 @@
 <script lang="ts">
 	import type { ArticleId, ArticleSummary, Feed } from "server";
 	import {
+		articleFilter,
 		articleId,
 		articles,
 		feedId,
 		feeds,
+		markArticles,
 		updatedArticleIds,
 	} from "../state";
 	import { getAge, unescapeHtml } from "../util";
@@ -35,16 +37,17 @@
 		if ($articles.length === 0) {
 			// there are no articles
 			filteredArticles = [];
-		} else if ($feedId === "saved") {
+		} else if ($feedId === "saved" || $articleFilter === "all") {
 			// show all articles
 			filteredArticles = $articles ?? [];
 		} else {
 			// show unread (and recently updated) articles
 			filteredArticles =
-				// $articles?.filter(
-				// 	({ id }) => $updatedArticleIds.has(id) || id === $articleId
-				// ) ?? [];
-				$articles;
+				$articles?.filter(
+					({ id, read }) =>
+						!read || $updatedArticleIds.has(id) || id === $articleId
+				) ?? [];
+			$articles;
 		}
 	}
 
@@ -109,7 +112,7 @@
 
 	async function handleContextSelect(value: string) {
 		if (/read/i.test(value)) {
-			// const read = !/unread/i.test(value);
+			const read = !/unread/i.test(value);
 			let ids: ArticleId[] | undefined;
 
 			if (/above/i.test(value)) {
@@ -130,6 +133,7 @@
 				for (const id of ids) {
 					$updatedArticleIds.add(id);
 				}
+				await markArticles({ article_ids: ids, mark: { read } });
 			}
 		}
 	}
@@ -160,6 +164,8 @@
 					class="article"
 					class:active={article.isActive}
 					class:selected={article.isSelected}
+					class:read={article.read}
+					class:saved={article.saved}
 					data-id={article.id}
 					on:touchstart={handleTouchStart}
 					on:touchend={handleTouchEnd}
@@ -214,10 +220,10 @@
 {#if menuAnchor}
 	<ContextMenu
 		items={[
-			// {
-			// 	label: activeArticle?.saved ? "Unsave" : "Save",
-			// 	value: `item-${activeArticle?.saved ? "unsave" : "save"}`,
-			// },
+			{
+				label: activeArticle?.saved ? "Unsave" : "Save",
+				value: `item-${activeArticle?.saved ? "unsave" : "save"}`,
+			},
 			{ label: "Mark as unread", value: "item-unread" },
 			{ label: "Mark above as read", value: "above-read" },
 			{ label: "Mark above as unread", value: "above-unread" },
@@ -291,9 +297,9 @@
 		background: var(--matte);
 	}
 
-	/* .read { */
-	/* 	opacity: 0.5; */
-	/* } */
+	.read {
+		opacity: 0.5;
+	}
 
 	.selected {
 		background: var(--selected);
@@ -301,9 +307,9 @@
 		opacity: 1;
 	}
 
-	/* .saved { */
-	/* 	opacity: 1; */
-	/* } */
+	.saved {
+		opacity: 1;
+	}
 
 	.icon {
 		margin-top: calc(var(--font-size) * 0.15);
