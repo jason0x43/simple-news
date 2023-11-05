@@ -6,12 +6,19 @@
 	type="button"
 	on:click
 	{...$$restProps}
+	class="button"
 	class:invisible={variant === 'invisible'}
 >
 	<slot />
 </button>
 
 <style>
+	.button {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		box-sizing: border-box;
+	}
 	.invisible {
 		border: none;
 		background: none;

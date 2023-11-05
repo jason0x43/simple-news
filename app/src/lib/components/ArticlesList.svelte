@@ -47,7 +47,6 @@
 					({ id, read }) =>
 						!read || $updatedArticleIds.has(id) || id === $articleId
 				) ?? [];
-			$articles;
 		}
 	}
 

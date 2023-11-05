@@ -17,6 +17,7 @@
 		background: var(--hover-matte);
 		border-radius: var(--border-radius);
 		border: solid 1px var(--border);
+		box-sizing: border-box;
 	}
 
 	.fill {
@@ -32,6 +33,7 @@
 		margin: 0;
 		padding: 4px 1.8em 4px 6px;
 		text-overflow: ellipsis;
+		flex: 1;
 		overflow: hidden;
 	}
 

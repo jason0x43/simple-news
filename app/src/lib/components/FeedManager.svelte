@@ -184,7 +184,7 @@
 												handleRefreshFeed(feed.id);
 											}}
 										>
-											<Refresh size="1rem" />
+											<Refresh size="1em" />
 										</Button>
 									</div>
 								</div>
@@ -313,7 +313,8 @@
 	}
 
 	.list-wrapper {
-		overflow: auto;
+		overflow-y: auto;
+		overflow-x: hidden;
 		display: flex;
 	}
 
@@ -330,7 +331,9 @@
 	.table {
 		display: flex;
 		flex-direction: column;
-		width: 100%;
+		flex: 1;
+		/* with overflow enabled, a fraction of the right pixel is being cut off */
+		padding-right: 1px;
 	}
 
 	.feed {
@@ -373,8 +376,9 @@
 		display: flex;
 		flex-direction: row;
 		align-items: stretch;
-		justify-content: space-between;
 		gap: var(--gap);
+		/* /1* Mysteriously needed to keep right control border from being trimmed *1/ */
+		/* padding-right: 1px; */
 	}
 
 	.feed-select {
