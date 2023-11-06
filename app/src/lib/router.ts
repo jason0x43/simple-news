@@ -17,6 +17,7 @@ const oldUrlStore = writable<URL>(new URL(window.location.href));
 function setUrl(url: URL) {
 	oldUrlStore.set(get(urlStore));
 	urlStore.set(url);
+	history.pushState({}, '', `${url}`);
 }
 
 const regExpEscape = (s: string) =>
