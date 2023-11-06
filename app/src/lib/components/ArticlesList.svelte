@@ -207,6 +207,7 @@
 					for (const id of ids) {
 						$updatedArticleIds.delete(id);
 					}
+					markArticles({ article_ids: ids, mark: { read: true } });
 				}}>Mark all read</button
 			>
 		</div>
