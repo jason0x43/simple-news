@@ -9,7 +9,7 @@
 		markArticles,
 		updatedArticleIds,
 	} from "../state";
-	import { getAge, unescapeHtml } from "../util";
+	import { getAge, seconds, unescapeHtml } from "../util";
 	import ContextMenu from "./ContextMenu.svelte";
 
 	let visibleCount = 40;
@@ -98,7 +98,7 @@
 					x: pageX,
 					y: pageY,
 				});
-			}, 500);
+			}, seconds(0.5));
 		}
 	}
 

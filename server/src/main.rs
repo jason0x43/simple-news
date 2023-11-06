@@ -10,19 +10,25 @@ mod types;
 mod types_ts;
 mod util;
 
+use std::time::Duration;
+
 use axum::{
-    routing::{delete, get, post, patch},
+    routing::{delete, get, patch, post},
     Router,
 };
 use dotenvy::dotenv;
+use error::AppError;
 use log::info;
 use sqlx::sqlite::SqlitePoolOptions;
 use tower_http::{compression::CompressionLayer, trace::TraceLayer};
 
-use crate::state::AppState;
+use crate::{
+    state::AppState,
+    types::{Feed, FeedLog}, util::get_timestamp,
+};
 
 #[tokio::main]
-async fn main() -> Result<(), sqlx::Error> {
+async fn main() -> Result<(), AppError> {
     dotenv().ok();
 
     tracing_subscriber::fmt::init();
@@ -33,7 +39,7 @@ async fn main() -> Result<(), sqlx::Error> {
         .max_connections(5)
         .connect(&db_url)
         .await?;
-    let app_state = AppState { pool };
+    let app_state = AppState { pool: pool.clone() };
 
     let api = Router::new()
         .route("/me", get(handlers::get_session_user))
@@ -89,7 +95,34 @@ async fn main() -> Result<(), sqlx::Error> {
         .serve(app.into_make_service());
 
     info!("Listening on {}...", server.local_addr());
-    server.await.unwrap();
+
+    // Refresh loop
+    let update_secs = 1800;
+    tokio::spawn(async move {
+        loop {
+            let mut conn = pool.acquire().await.unwrap();
+            let last_update = FeedLog::last_update(&mut conn)
+                .await
+                .unwrap()
+                .unix_timestamp();
+            let now = get_timestamp(0).unix_timestamp();
+
+            if now - last_update >= update_secs {
+                log::info!("Refreshing feeds...");
+                let mut tx = pool.begin().await.unwrap();
+                Feed::refresh_all(&mut *tx).await.unwrap();
+                tx.commit().await.unwrap();
+                log::info!("Finished refreshing feeds");
+            } else {
+                log::info!("Skipping refresh");
+            }
+            tokio::time::sleep(Duration::from_secs(1800)).await;
+        }
+    });
+
+    server
+        .await
+        .map_err(|err| AppError::Error(err.to_string()))?;
 
     Ok(())
 }

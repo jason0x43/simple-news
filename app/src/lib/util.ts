@@ -117,3 +117,17 @@ export function getEventValue(event: Event): string | undefined {
 		return target.value;
 	}
 }
+
+/**
+ * Return a given number of minutes in milliseconds
+ */
+export function seconds(count: number): number {
+	return count * 1000;
+}
+
+/**
+ * Return a given number of minutes in milliseconds
+ */
+export function minutes(count: number): number {
+	return count * seconds(60);
+}

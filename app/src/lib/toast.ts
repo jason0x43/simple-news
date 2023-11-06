@@ -1,4 +1,5 @@
 import { writable } from "svelte/store";
+import { seconds } from "./util";
 
 type ToastType = "normal" | "good" | "bad";
 
@@ -33,6 +34,6 @@ export function showToast(message: string, options?: ToastOptions) {
 				return items;
 			});
 		},
-		options?.duration ?? 1000,
+		options?.duration ?? seconds(1),
 	);
 }

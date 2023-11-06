@@ -775,6 +775,35 @@ impl FeedLog {
         .await
         .map_err(AppError::SqlxError)
     }
+
+    pub(crate) async fn last_update(
+        conn: &mut SqliteConnection,
+    ) -> Result<OffsetDateTime, AppError> {
+        let latest = query_as!(
+            FeedLog,
+            r#"
+            SELECT
+              id,
+              time AS "time!: OffsetDateTime",
+              feed_id,
+              success AS "success!: bool",
+              message
+            FROM feed_logs
+            WHERE success = 1
+            ORDER BY time DESC
+            LIMIT 1
+            "#,
+        )
+        .fetch_one(conn)
+        .await
+        .map_err(AppError::SqlxError);
+
+        if let Ok(latest) = latest {
+            Ok(latest.time)
+        } else {
+            Ok(OffsetDateTime::from_unix_timestamp(0).unwrap())
+        }
+    }
 }
 
 struct FeedIdRecord {

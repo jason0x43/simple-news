@@ -14,6 +14,7 @@ import type {
 import { derived, get, readonly, writable } from "svelte/store";
 import * as api from "./api";
 import { matches, path } from "./router";
+import { minutes } from "./util";
 
 const articleIdStore = writable<ArticleId | undefined>();
 const articleStore = writable<Article | undefined>();
@@ -317,6 +318,8 @@ export async function markArticle(id: ArticleId, data: ArticleMarkRequest) {
 export async function markArticles(data: ArticlesMarkRequest) {
 	await api.markArticles(data);
 
+	// TODO: udpate feed stats
+
 	articlesStore.update((articles) =>
 		articles.map((a) =>
 			data.article_ids.includes(a.id)
@@ -404,6 +407,14 @@ export function init() {
 	loadData().catch((err) => {
 		console.error("Error loading data:", err);
 	});
+
+	// Reload data every few minutes
+	setInterval(() => {
+		console.debug("Periodically reloading data...");
+		loadData().catch((err) => {
+			console.error("Error loading data:", err);
+		});
+	}, minutes(30));
 }
 
 export type ArticleFilter = "unread" | "all";

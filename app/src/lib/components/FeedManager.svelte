@@ -4,7 +4,7 @@
 	import Portal from "./Portal.svelte";
 	import Select from "./Select.svelte";
 	import { showToast } from "../toast";
-	import { getEventValue } from "../util";
+	import { getEventValue, seconds } from "../util";
 	import {
 		addFeed,
 		addFeedGroup,
@@ -50,7 +50,7 @@
 			} else {
 				showToast(success, { type: "good", duration: 2000 });
 			}
-		}, 500);
+		}, seconds(0.5));
 	}
 
 	// Move a feed to a new group
