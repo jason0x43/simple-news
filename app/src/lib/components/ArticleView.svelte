@@ -43,8 +43,8 @@
 		class="article"
 		class:mobile={$displayType === "mobile"}
 		bind:this={scrollBox}
-		in:animate={{ direction: "right", duration: 250 }}
-		out:animate={{ direction: "right", duration: 250 }}
+		in:animate={{ direction: "left", duration: 250 }}
+		out:animate={{ direction: "left", duration: 250 }}
 	>
 		<div class="scroller">
 			<div class="header">
