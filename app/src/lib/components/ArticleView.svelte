@@ -1,7 +1,8 @@
 <script lang="ts">
-	import CloseIcon from '../icons/Close.svelte';
-	import { isActionEvent } from '../util';
-	import { article, articleFeed, feedId } from '../state';
+	import CloseIcon from "../icons/Close.svelte";
+	import { isActionEvent } from "../util";
+	import { article, articleFeed, displayType, feedId } from "../state";
+	import { slide } from "../transition";
 
 	let scrollBox: HTMLElement | undefined;
 	let prevArticle = $article?.id;
@@ -19,20 +20,32 @@
 		if (isActionEvent(event)) {
 			event.preventDefault();
 			const elem = event.target as HTMLElement;
-			const href = elem.getAttribute('href') ?? undefined;
+			const href = elem.getAttribute("href") ?? undefined;
 			if (href) {
-				if (href.startsWith('#')) {
-					window.open(href, '_self');
+				if (href.startsWith("#")) {
+					window.open(href, "_self");
 				} else {
-					window.open(href, '_blank');
+					window.open(href, "_blank");
 				}
 			}
 		}
 	}
+
+	const animate =
+		$displayType === "mobile"
+			? (node: HTMLElement, options: Parameters<typeof slide>[1]) =>
+					slide(node, options)
+			: () => ({});
 </script>
 
 {#if visible && $article && $articleFeed}
-	<div class="article" bind:this={scrollBox}>
+	<div
+		class="article"
+		class:mobile={$displayType === "mobile"}
+		bind:this={scrollBox}
+		in:animate={{ direction: "right", duration: 250 }}
+		out:animate={{ direction: "right", duration: 250 }}
+	>
 		<div class="scroller">
 			<div class="header">
 				<a href={$article.link ?? undefined} target="_blank">
@@ -52,15 +65,20 @@
 {/if}
 
 <style>
-	@import url('highlight.js/styles/default.css') screen and
+	@import url("highlight.js/styles/default.css") screen and
 		(prefers-color-scheme: light);
-	@import url('highlight.js/styles/dark.css') screen and
+	@import url("highlight.js/styles/dark.css") screen and
 		(prefers-color-scheme: dark);
 
 	.article {
 		width: 100%;
 		background-color: var(--background);
 		overflow-y: auto;
+	}
+
+	.mobile {
+		position: absolute;
+		height: 100%;
 	}
 
 	.header {
@@ -252,7 +270,7 @@
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			position: absolute;
+			position: fixed;
 			width: 2rem;
 			height: 2rem;
 			bottom: 0.5rem;
