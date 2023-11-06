@@ -17,7 +17,7 @@ const oldUrlStore = writable<URL>(new URL(window.location.href));
 function setUrl(url: URL) {
 	oldUrlStore.set(get(urlStore));
 	urlStore.set(url);
-	history.pushState({}, '', `${url}`);
+	history.pushState({}, "", `${url}`);
 }
 
 const regExpEscape = (s: string) =>
@@ -33,7 +33,7 @@ const regExpEscape = (s: string) =>
  * undefined
  */
 function parseRoute(route: string | RegExp): RegExp | undefined {
-	if (typeof route !== 'string') {
+	if (typeof route !== "string") {
 		return route;
 	}
 
@@ -82,7 +82,7 @@ export function matches(
 ): Params | undefined {
 	if (route === path) {
 		// The route matches the path
-		return {}
+		return {};
 	}
 
 	const matcher = parseRoute(route);
@@ -124,6 +124,15 @@ export function init() {
 		window.addEventListener("popstate", (event) => {
 			setUrl(new URL(window.location.href));
 			event.preventDefault();
+		});
+
+		// disable swipes
+		document.getElementById("app")?.addEventListener("touchstart", (event) => {
+			const touch = event.touches[0];
+			if (touch.pageX < 20 || touch.pageX > window.innerWidth - 20) {
+				// ignore touches near the edges of the screen
+				event.preventDefault();
+			}
 		});
 
 		// handle <a> clicks; open ctrl/shift+clicks in another tab/window
