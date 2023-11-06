@@ -315,7 +315,7 @@ impl Feed {
             url,
             self.id,
         )
-        .fetch_one(conn)
+        .execute(conn)
         .await
         .map_err(|err| {
             log::warn!("Error updating feed: {}", err);
@@ -388,8 +388,8 @@ impl Feed {
         &self,
         conn: &mut SqliteConnection,
     ) -> Result<(), AppError> {
-        let channel = load_feed(&self.url).await;
-        if let Err(err) = channel {
+        let feed = load_feed(&self.url).await;
+        if let Err(err) = feed {
             log::warn!("error downloading feed {}: {}", self.url, err);
             FeedLog::create(
                 conn,
@@ -405,12 +405,12 @@ impl Feed {
             return Err(err);
         }
 
-        let channel = channel.unwrap();
+        let feed = feed.unwrap();
         log::debug!("downloaded feed at {}", self.url);
 
         let mut errors: Vec<String> = vec![];
 
-        let icon = get_icon(&channel).await;
+        let icon = get_icon(&feed).await;
         if let Ok(Some(icon)) = icon {
             let icon_str = icon.to_string();
             query!(
@@ -429,7 +429,7 @@ impl Feed {
             errors.push(format!("error getting icon: {}", err));
         }
 
-        for item in &channel.items {
+        for item in &feed.entries {
             let item_content = get_content(item.clone())?;
             if let Some(content) = item_content.content {
                 Article::create(

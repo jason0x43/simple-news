@@ -1,4 +1,4 @@
-use std::fs;
+use std::{collections::HashMap, fs};
 
 use crate::{
     error::AppError,
@@ -11,7 +11,10 @@ use comfy_table::{Cell, Color};
 use reqwest::Url;
 use serde::Deserialize;
 use serde_json::to_string_pretty;
-use server::{AddFeedRequest, Feed, FeedKind, FeedLog, FeedStats, ArticleSummary};
+use server::{
+    AddFeedRequest, ArticleSummary, Feed, FeedKind, FeedLog, FeedStat,
+    FeedStats,
+};
 
 pub(crate) fn command() -> Command {
     Command::new("feed")
@@ -71,8 +74,8 @@ pub(crate) fn command() -> Command {
         .subcommand(
             Command::new("stats")
                 .about("Show user feed statistics")
+                .arg(arg!([FEED_ID] "A feed ID"))
                 .arg(arg!(-j --json "Output raw JSON"))
-                .arg(arg!(-a --all "Get stats for all feeds"))
                 .arg_required_else_help(false),
         )
 }
@@ -249,14 +252,28 @@ async fn log(matches: &ArgMatches) -> Result<(), AppError> {
 
 async fn stats(matches: &ArgMatches) -> Result<(), AppError> {
     let client = get_client()?;
-    let path = if matches.get_flag("all") {
-        "/feedstats?all=true"
+    let cache = Cache::load()?;
+    let id = matches
+        .get_one::<String>("FEED_ID")
+        .map(|i| cache.get_matching_id(i))
+        .transpose()?;
+    let path = if let Some(id) = &id {
+        format!("feeds/{}/stats", id)
     } else {
-        "/feedstats"
+        "feedstats".into()
     };
-    let url = get_api()?.join(path)?;
+    let url = get_api()?.join(&path)?;
     let resp = assert_ok(client.get(url).send().await?).await?;
-    let stats: FeedStats = resp.json().await?;
+
+    let stats: FeedStats = if let Some(id) = id {
+        let stat: FeedStat = resp.json().await?;
+        let mut feeds = HashMap::new();
+        let id = id.clone();
+        feeds.insert(id.into(), Some(stat));
+        FeedStats { feeds, saved: 0 }
+    } else {
+        resp.json().await?
+    };
 
     if matches.get_flag("json") {
         println!("{}", to_string_pretty(&stats).unwrap());
@@ -298,9 +315,9 @@ async fn articles(matches: &ArgMatches) -> Result<(), AppError> {
         let mut table = new_table();
         table.set_header(vec!["published", "title"]);
         table.add_rows(
-            articles.iter().map(|a| {
-                vec![to_time_str(&a.published), a.title.to_string()]
-            }),
+            articles
+                .iter()
+                .map(|a| vec![to_time_str(&a.published), a.title.to_string()]),
         );
         println!("{table}");
     }

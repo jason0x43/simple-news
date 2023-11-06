@@ -11,6 +11,7 @@ import type {
 	FeedGroupId,
 	FeedGroupWithFeeds,
 	FeedId,
+	FeedStat,
 	FeedStats,
 	UpdateFeedRequest,
 } from "server";
@@ -163,8 +164,17 @@ export async function removeGroupFeed({
  *
  * @param feedId - the ID of the feed to refresh
  */
-export async function refreshFeed(feedId: FeedId) {
+export async function refreshFeed(feedId: FeedId): Promise<FeedStat> {
 	await apiGet(`feeds/${feedId}/refresh`);
+	return (await apiGet(`feeds/${feedId}/stats`)).json();
+}
+
+/**
+ * Refresh all feeds.
+ */
+export async function refreshFeeds(): Promise<FeedStats> {
+	await apiGet(`feeds/refresh`);
+	return (await apiGet(`feedstats`)).json();
 }
 
 /**

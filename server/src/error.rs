@@ -30,9 +30,6 @@ pub enum AppError {
     #[error("reqwest error: {0}")]
     ReqwestError(reqwest::Error),
 
-    #[error("rss error: {0}")]
-    RssError(rss::Error),
-
     #[error("file not found: {0}")]
     FileNotFound(String),
 
@@ -66,10 +63,6 @@ impl IntoResponse for AppError {
                 (StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
                     .into_response()
             }
-            AppError::RssError(err) => {
-                (StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
-                    .into_response()
-            }
             AppError::Error(err) => {
                 (StatusCode::INTERNAL_SERVER_ERROR, err).into_response()
             }
@@ -86,12 +79,6 @@ impl From<sqlx::Error> for AppError {
 impl From<reqwest::Error> for AppError {
     fn from(err: reqwest::Error) -> AppError {
         AppError::ReqwestError(err)
-    }
-}
-
-impl From<rss::Error> for AppError {
-    fn from(err: rss::Error) -> AppError {
-        AppError::RssError(err)
     }
 }
 

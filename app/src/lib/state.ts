@@ -197,30 +197,89 @@ export async function moveFeedToGroup({
 	feedId: FeedId;
 }) {
 	await api.moveGroupFeed({ feedId, groupId });
-	feedGroupsStore.update((groups) => groups.map((group) => {
-		if (group.id !== groupId && group.feed_ids.includes(feedId)) {
-			return {
-				...group,
-				feed_ids: group.feed_ids.filter((id) => id !== feedId),
+	feedGroupsStore.update((groups) =>
+		groups.map((group) => {
+			if (group.id !== groupId && group.feed_ids.includes(feedId)) {
+				return {
+					...group,
+					feed_ids: group.feed_ids.filter((id) => id !== feedId),
+				};
 			}
-		}
 
-		if (group.id === groupId && !group.feed_ids.includes(feedId)) {
-			return {
-				...group,
-				feed_ids: [...group.feed_ids, feedId]
+			if (group.id === groupId && !group.feed_ids.includes(feedId)) {
+				return {
+					...group,
+					feed_ids: [...group.feed_ids, feedId],
+				};
 			}
-		}
 
-		return group;
-	}));
+			return group;
+		}),
+	);
 }
 
 /**
  * Refresh a feed.
  */
 export async function refreshFeed(feedId: FeedId) {
-	await api.refreshFeed(feedId);
+	const stats = await api.refreshFeed(feedId);
+	feedStatsStore.update((feedStats) => {
+		if (feedStats) {
+			return {
+				...feedStats,
+				feeds: {
+					...feedStats.feeds,
+					[feedId]: stats,
+				},
+			};
+		}
+
+		return {
+			feeds: { [feedId]: stats },
+			saved: 0,
+		};
+	});
+
+	const currentFeed = get(feedIdStore);
+	let shouldUpdateArticles = false;
+	if (currentFeed) {
+		const [type, id] = currentFeed.split("-");
+		if (type === "group") {
+			const group = get(feedGroupsStore).find((g) => g.id === id);
+			shouldUpdateArticles = group?.feed_ids.includes(feedId) ?? false;
+		} else if (type === "feed") {
+			shouldUpdateArticles = id === feedId;
+		}
+	}
+
+	if (shouldUpdateArticles) {
+		const feedArticles = await api.getArticles({ feedId });
+		articlesStore.update((articles) => {
+			articles = articles.slice();
+
+			while (feedArticles.length > 0) {
+				const a = feedArticles.pop() as ArticleSummary;
+				const index = articles.findIndex((art) => art.id === a.id);
+				if (index !== -1) {
+					articles[index] = a;
+				} else {
+					articles.push(a);
+				}
+			}
+
+			articles.sort((a, b) => {
+				if (a.published < b.published) {
+					return -1;
+				}
+				if (a.published > b.published) {
+					return 1;
+				}
+				return 0;
+			});
+
+			return articles;
+		});
+	}
 }
 
 /**

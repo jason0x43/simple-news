@@ -23,7 +23,7 @@ use crate::{
         ArticleMarkRequest, ArticleSummary, ArticlesMarkRequest,
         CreateFeedGroupRequest, CreateSessionRequest, CreateUserRequest, Feed,
         FeedGroup, FeedGroupId, FeedGroupWithFeeds, FeedId, FeedLog, FeedStats,
-        Password, Session, UpdateFeedRequest, User,
+        Password, Session, UpdateFeedRequest, User, FeedStat,
     },
     util::{add_cache_control, check_password},
 };
@@ -151,8 +151,8 @@ pub(crate) async fn add_feed(
     log::debug!("adding feed with {:?}", body);
     let mut conn = state.pool.acquire().await?;
     let feed = load_feed(body.url.as_str()).await?;
-    let title = feed.title();
-    Feed::create(&mut conn, body.url, title, body.kind).await?;
+    let title = feed.title.map_or(body.url.to_string(), |t| t.content);
+    Feed::create(&mut conn, body.url, &title, body.kind).await?;
     Ok(())
 }
 
@@ -325,6 +325,17 @@ pub(crate) async fn get_feed_group_articles(
 #[derive(Deserialize)]
 pub(crate) struct GetFeedStatsParams {
     pub(crate) all: Option<bool>,
+}
+
+pub(crate) async fn get_feed_stat(
+    session: Session,
+    state: State<AppState>,
+    Path(id): Path<FeedId>,
+) -> Result<Json<FeedStat>, AppError> {
+    let mut conn = state.pool.acquire().await?;
+    println!("getting stats for {}", id);
+    let feed = Feed::get(&mut conn, &id).await?;
+    Ok(Json(feed.stats(&mut conn, &session.user_id).await?))
 }
 
 pub(crate) async fn get_feed_stats(

@@ -1,13 +1,11 @@
 use base64::{engine::general_purpose, Engine};
+use feed_rs::{
+    model::{Entry, Feed},
+    parser,
+};
 use lol_html::{element, HtmlRewriter, Settings};
 use reqwest::Client;
-use rss::{Channel, Item};
-use sha2::{Digest, Sha256};
-use time::{
-    format_description::{well_known::Rfc2822, FormatItem},
-    macros::format_description,
-    OffsetDateTime,
-};
+use time::OffsetDateTime;
 use url::Origin;
 use url::Url;
 
@@ -22,69 +20,35 @@ pub(crate) struct ItemContent {
     pub(crate) published: OffsetDateTime,
 }
 
-/// Rfc2822 without the optional weekday
-static RSS_TIME_FORMAT: &'static [FormatItem<'static>] = format_description!(
-    "[day] [month repr:short] [year] [hour repr:24]:[minute] [offset_hour sign:mandatory][offset_minute]"
-);
-
-pub(crate) async fn load_feed(url: &str) -> Result<Channel, AppError> {
+pub(crate) async fn load_feed(url: &str) -> Result<Feed, AppError> {
     let client = Client::new();
     let bytes = client.get(url).send().await?.bytes().await?;
-    Ok(Channel::read_from(&bytes[..]).map_err(|err| {
+    parser::parse(&bytes[..]).map_err(|err| {
         AppError::Error(format!("error loading RSS from {}: {}", url, err))
-    })?)
+    })
 }
 
 /// Return the content of an Item
-pub(crate) fn get_content(item: Item) -> Result<ItemContent, AppError> {
-    let title = item.title.clone().unwrap_or("Untitled".into());
-    let link = if let Some(url) = &item.link {
-        Some(Url::parse(url)?)
+pub(crate) fn get_content(entry: Entry) -> Result<ItemContent, AppError> {
+    let title = entry.title.map_or("Untitled".into(), |t| t.content);
+    let link = if entry.links.len() > 0 {
+        Some(Url::parse(&entry.links[0].href)?)
     } else {
         None
     };
 
-    let content = item
-        .content()
-        .clone()
+    let content = entry
+        .content
         .map_or_else(
-            || item.description().map(|d| d.to_string()),
-            |c| Some(c.to_string()),
+            || entry.summary.map(|d| d.content),
+            |c| Some(c.body.unwrap_or("".into())),
         )
         .map(|c| process_content(&c).unwrap_or(c));
 
-    let article_id = item
-        .guid
-        .clone()
-        .map_or(link.clone().map(|l| l.to_string()), |v| Some(v.value))
-        .unwrap_or_else(|| {
-            let mut hasher = Sha256::new();
-            let content = content.clone().unwrap_or("".into());
-            let summary = item.description.clone().unwrap_or("".into());
-            hasher.update(format!("{}{}{}", title, summary, content));
-            let hash = hasher.finalize();
-            format!("sha256:{}", hex::encode(hash))
-        });
-
-    let published = item.pub_date.clone().map_or_else(
-        || get_timestamp(0),
-        |pub_date| {
-            let date = OffsetDateTime::parse(&pub_date, &RSS_TIME_FORMAT)
-                .or_else(|_| OffsetDateTime::parse(&pub_date, &Rfc2822));
-            match date {
-                Err(err) => {
-                    log::warn!(
-                        "invalid pub date for {} ({}): {}",
-                        article_id,
-                        pub_date,
-                        err
-                    );
-                    get_timestamp(0)
-                }
-                Ok(date) => date,
-            }
-        },
-    );
+    let article_id = entry.id;
+    let published = entry.updated.map_or(get_timestamp(0), |updated| {
+        OffsetDateTime::from_unix_timestamp(updated.timestamp()).unwrap()
+    });
 
     Ok(ItemContent {
         title,
@@ -96,10 +60,8 @@ pub(crate) fn get_content(item: Item) -> Result<ItemContent, AppError> {
 }
 
 /// Return the icon as a data URL, if found
-pub(crate) async fn get_icon(
-    channel: &Channel,
-) -> Result<Option<Url>, AppError> {
-    let url = get_icon_url(channel)?;
+pub(crate) async fn get_icon(feed: &Feed) -> Result<Option<Url>, AppError> {
+    let url = get_icon_url(feed)?;
     if url.is_none() {
         return Ok(None);
     }
@@ -135,20 +97,24 @@ pub(crate) async fn get_icon(
 }
 
 /// Return a URL for the channel icon, if available
-fn get_icon_url(channel: &Channel) -> Result<Option<Url>, AppError> {
-    if let Some(image) = channel.image() {
-        let url = Url::parse(&image.url)?;
+fn get_icon_url(feed: &Feed) -> Result<Option<Url>, AppError> {
+    if let Some(image) = &feed.logo {
+        let url = Url::parse(&image.uri)?;
         return Ok(Some(url));
     }
 
-    let link = channel.link();
-    let url = Url::parse(&link)?;
-    let origin = url.origin();
-    let favico_url = if let Origin::Tuple(scheme, host, port) = origin {
-        Some(Url::parse(&format!(
-            "{}://{}:{}/favicon.ico",
-            scheme, host, port
-        ))?)
+    let favico_url = if feed.links.len() > 0 {
+        let link = &feed.links[0];
+        let url = Url::parse(&link.href)?;
+        let origin = url.origin();
+        if let Origin::Tuple(scheme, host, port) = origin {
+            Some(Url::parse(&format!(
+                "{}://{}:{}/favicon.ico",
+                scheme, host, port
+            ))?)
+        } else {
+            None
+        }
     } else {
         None
     };
