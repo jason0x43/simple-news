@@ -1,5 +1,6 @@
 <script lang="ts">
 	import {
+		articleFilter,
 		feedGroups,
 		feedStats,
 		feeds,
@@ -41,7 +42,11 @@
 				{#if $feedStats}
 					<div class="unread">
 						{group.feed_ids.reduce(
-							(unread, id) => unread + ($feedStats?.feeds[id]?.unread ?? 0),
+							(unread, id) =>
+								unread +
+								($articleFilter === "all"
+									? $feedStats?.feeds[id]?.total ?? 0
+									: $feedStats?.feeds[id]?.unread ?? 0),
 							0
 						)}
 					</div>
@@ -56,7 +61,9 @@
 						</a>
 						{#if $feedStats}
 							<div class="unread">
-								{$feedStats.feeds[id]?.unread ?? 0}
+								{$articleFilter === "all"
+									? $feedStats.feeds[id]?.total ?? 0
+									: $feedStats.feeds[id]?.unread ?? 0}
 							</div>
 						{/if}
 					</li>
