@@ -9,6 +9,7 @@ import type {
 	FeedGroupId,
 	FeedGroupWithFeeds,
 	FeedId,
+	FeedStat,
 	FeedStats,
 } from "server";
 import { derived, get, readonly, writable } from "svelte/store";
@@ -289,6 +290,34 @@ export async function refreshFeed(feedId: FeedId) {
 export async function markArticle(id: ArticleId, data: ArticleMarkRequest) {
 	await api.markArticle(id, data);
 
+	const articles = get(articlesStore);
+	const article = articles.find((a) => a.id === id) as ArticleSummary;
+
+	if (article.saved !== data.saved || article.read !== data.read) {
+		feedStatsStore.update((stats) => {
+			if (stats) {
+				let feed_stat = stats.feeds[article.feed_id] as FeedStat;
+
+				return {
+					feeds: {
+						...stats.feeds,
+						[article.feed_id]: {
+							...feed_stat,
+							unread:
+								article.read === data.read
+									? feed_stat.unread
+									: feed_stat.unread + (data.read ? -1 : 1),
+						},
+					},
+					saved:
+						article.saved === data.saved
+							? stats.saved
+							: stats.saved + (data.saved ? 1 : -1),
+				};
+			}
+		});
+	}
+
 	articlesStore.update((articles) => {
 		let index = articles.findIndex((a) => a.id === id);
 		if (index !== -1) {
@@ -318,7 +347,8 @@ export async function markArticle(id: ArticleId, data: ArticleMarkRequest) {
 export async function markArticles(data: ArticlesMarkRequest) {
 	await api.markArticles(data);
 
-	// TODO: udpate feed stats
+	const stats = await api.getFeedStats();
+	feedStatsStore.set(stats);
 
 	articlesStore.update((articles) =>
 		articles.map((a) =>
