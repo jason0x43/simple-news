@@ -5,7 +5,7 @@ use crate::{
 use clap::{arg, ArgMatches, Command};
 use serde_json::to_string_pretty;
 use server::{
-    AddGroupFeedRequest, CreateFeedGroupRequest, Feed, FeedGroup, FeedGroupId,
+    AddGroupFeedRequest, CreateFeedGroupRequest, FeedGroup, FeedGroupId,
     FeedId, FeedGroupWithFeeds,
 };
 
@@ -140,6 +140,7 @@ async fn add(matches: &ArgMatches) -> Result<(), AppError> {
     let feed_id: FeedId = cache.get_matching_id(feed_id)?.into();
     let body = AddGroupFeedRequest {
         feed_id: feed_id.clone(),
+        move_feed: None
     };
     let client = get_client()?;
     let url = get_api()?.join(&format!("/feedgroups/{}", group_id))?;

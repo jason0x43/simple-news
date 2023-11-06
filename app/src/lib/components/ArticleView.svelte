@@ -4,14 +4,14 @@
 	import { article, articleFeed, feedId } from '../state';
 
 	let scrollBox: HTMLElement | undefined;
-	let prevArticle = article;
+	let prevArticle = $article?.id;
 
 	$: visible = Boolean($article);
 
 	$: {
-		if (prevArticle !== article) {
+		if ($article && prevArticle !== $article?.id) {
 			scrollBox?.scrollTo({ top: 0 });
-			prevArticle = article;
+			prevArticle = $article.id;
 		}
 	}
 
@@ -32,8 +32,8 @@
 </script>
 
 {#if visible && $article && $articleFeed}
-	<div class="article">
-		<div class="scroller" bind:this={scrollBox}>
+	<div class="article" bind:this={scrollBox}>
+		<div class="scroller">
 			<div class="header">
 				<a href={$article.link ?? undefined} target="_blank">
 					<h2>{$article.title}</h2>
@@ -60,12 +60,7 @@
 	.article {
 		width: 100%;
 		background-color: var(--background);
-	}
-
-	.scroller {
 		overflow-y: auto;
-		flex-grow: 1;
-		height: 100%;
 	}
 
 	.header {

@@ -47,18 +47,8 @@
 			<Sidebar />
 		{/if}
 
-		{#if $displayType === "mobile"}
-			<div class="article" out:slide in:slide>
-				{#if $article && $feed}
-					<ArticleView />
-				{/if}
-			</div>
-		{:else}
-			<div class="article">
-				{#if article && feed}
-					<ArticleView />
-				{/if}
-			</div>
+		{#if article && feed}
+			<ArticleView />
 		{/if}
 
 		{#if $managingFeeds}
@@ -102,10 +92,5 @@
 		background: var(--background);
 		display: flex;
 		flex-direction: row;
-	}
-
-	.article {
-		flex-grow: 1;
-		overflow: auto;
 	}
 </style>
