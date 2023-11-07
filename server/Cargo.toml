@@ -8,7 +8,7 @@ name = "server"
 path = "src/lib.rs"
 
 [dependencies]
-axum = "0.6.20"
+axum = { version = "0.6.20", features = ["http2"] }
 dotenvy = "0.15.7"
 hex = "0.4.3"
 log = "0.4.20"
