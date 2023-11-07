@@ -65,10 +65,12 @@ export async function loadData() {
 export async function loadArticles() {
 	const feedOrGroupId = get(feedIdStore);
 	let source: api.ArticlesSource | undefined = undefined;
-	if (feedOrGroupId) {
-		const [type, id] = feedOrGroupId.split("-");
-		source = type === "feed" ? { feedId: id } : { feedGroupId: id };
+	if (!feedOrGroupId) {
+		return;
 	}
+
+	const [type, id] = feedOrGroupId.split("-");
+	source = type === "feed" ? { feedId: id } : { feedGroupId: id };
 	const a = await api.getArticles(source);
 	articlesStore.set(a);
 }
@@ -443,6 +445,9 @@ export function init() {
 		console.debug("Periodically reloading data...");
 		loadData().catch((err) => {
 			console.error("Error loading data:", err);
+		});
+		loadArticles().catch((err) => {
+			console.error("Error loading articles:", err);
 		});
 	}, minutes(30));
 }
