@@ -1,12 +1,12 @@
 use crate::{
     error::AppError,
-    rss::{get_content, get_icon, load_feed},
+    rss::Feed as SynFeed,
     types::{
         Article, ArticleId, ArticleMarkRequest, ArticleSummary,
         ArticlesMarkRequest, Feed, FeedGroup, FeedGroupFeed, FeedGroupFeedId,
         FeedGroupId, FeedGroupWithFeeds, FeedId, FeedKind, FeedLog, FeedLogId,
-        Password, PasswordId, Session, SessionId, UpdateFeedRequest, User,
-        UserArticle, UserArticleId, UserId, FeedStat,
+        FeedStat, Password, PasswordId, Session, SessionId, UpdateFeedRequest,
+        User, UserArticle, UserArticleId, UserId,
     },
     util::{get_timestamp, hash_password},
 };
@@ -388,7 +388,7 @@ impl Feed {
         &self,
         conn: &mut SqliteConnection,
     ) -> Result<(), AppError> {
-        let feed = load_feed(&self.url).await;
+        let feed = SynFeed::load(&self.url).await;
         if let Err(err) = feed {
             log::warn!("error downloading feed {}: {}", self.url, err);
             FeedLog::create(
@@ -410,7 +410,7 @@ impl Feed {
 
         let mut errors: Vec<String> = vec![];
 
-        let icon = get_icon(&feed).await;
+        let icon = feed.get_icon().await;
         if let Ok(Some(icon)) = icon {
             let icon_str = icon.to_string();
             query!(
@@ -430,25 +430,27 @@ impl Feed {
         }
 
         for item in &feed.entries {
-            let item_content = get_content(item.clone())?;
-            if let Some(content) = item_content.content {
-                Article::create(
-                    &mut *conn,
-                    ArticleNew {
-                        content,
-                        feed_id: self.id.clone(),
-                        article_id: item_content.article_id.clone(),
-                        title: item_content.title,
-                        link: item_content.link,
-                        published: item_content.published,
-                    },
-                )
-                .await
-                .err()
-                .map(|err| {
-                    errors.push(format!("error creating article: {}", err));
-                });
-            }
+            log::debug!(
+                "creating article {}, published at {}",
+                item.title,
+                item.published
+            );
+            Article::create(
+                &mut *conn,
+                ArticleNew {
+                    content: item.content.clone(),
+                    feed_id: self.id.clone(),
+                    article_id: item.guid.clone(),
+                    title: item.title.clone(),
+                    link: item.link.clone().map(|l| Url::parse(&l).unwrap()),
+                    published: item.published,
+                },
+            )
+            .await
+            .err()
+            .map(|err| {
+                errors.push(format!("error creating article: {}", err));
+            });
         }
 
         log::debug!("added articles");
@@ -566,7 +568,9 @@ impl Feed {
             "#,
             user_id,
             self.id
-        ).fetch_one(conn).await?;
+        )
+        .fetch_one(conn)
+        .await?;
 
         Ok(FeedStat {
             total: count,
@@ -935,19 +939,16 @@ impl FeedGroup {
         Ok(self.with_feeds(conn).await?)
     }
 
-    /// Move a feed to this group, removing it from all other groups 
+    /// Move a feed to this group, removing it from all other groups
     pub(crate) async fn move_feed(
         &self,
         conn: &mut SqliteConnection,
         feed_id: FeedId,
     ) -> Result<FeedGroupWithFeeds, AppError> {
         // remove the feed from all groups
-        query!(
-            "DELETE FROM feed_group_feeds WHERE feed_id = ?1",
-            feed_id
-        )
-        .execute(&mut *conn)
-        .await?;
+        query!("DELETE FROM feed_group_feeds WHERE feed_id = ?1", feed_id)
+            .execute(&mut *conn)
+            .await?;
 
         // add the feed to this group
         self.add_feed(conn, feed_id).await?;

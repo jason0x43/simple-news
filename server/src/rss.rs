@@ -1,133 +1,194 @@
+use atom_syndication as atom;
 use base64::{engine::general_purpose, Engine};
-use feed_rs::{
-    model::{Entry, Feed},
-    parser,
-};
 use lol_html::{element, HtmlRewriter, Settings};
+use regex::Regex;
 use reqwest::Client;
-use time::OffsetDateTime;
+use rss;
+use sha2::{Digest, Sha256};
+use time::format_description::well_known::Rfc3339;
+use time::{
+    format_description::FormatItem, macros::format_description, OffsetDateTime,
+};
+use time_tz::Offset;
+use time_tz::TimeZone;
+use time_tz::Tz;
 use url::Origin;
 use url::Url;
 
 use crate::{error::AppError, util::get_timestamp};
 
 #[derive(Debug)]
-pub(crate) struct ItemContent {
-    pub(crate) title: String,
-    pub(crate) link: Option<Url>,
-    pub(crate) content: Option<String>,
-    pub(crate) article_id: String,
+pub(crate) struct Entry {
+    pub(crate) content: String,
+    pub(crate) guid: String,
+    pub(crate) link: Option<String>,
     pub(crate) published: OffsetDateTime,
+    pub(crate) title: String,
 }
 
-pub(crate) async fn load_feed(url: &str) -> Result<Feed, AppError> {
-    let client = Client::new();
-    let bytes = client.get(url).send().await?.bytes().await?;
-    parser::parse(&bytes[..]).map_err(|err| {
-        AppError::Error(format!("error loading RSS from {}: {}", url, err))
-    })
+pub(crate) struct Feed {
+    pub(crate) title: String,
+    pub(crate) link: String,
+    pub(crate) image: Option<String>,
+    pub(crate) entries: Vec<Entry>,
 }
 
-/// Return the content of an Item
-pub(crate) fn get_content(entry: Entry) -> Result<ItemContent, AppError> {
-    let title = entry.title.map_or("Untitled".into(), |t| t.content);
-    let link = if entry.links.len() > 0 {
-        Some(Url::parse(&entry.links[0].href)?)
-    } else {
-        None
-    };
+impl From<rss::Channel> for Feed {
+    fn from(value: rss::Channel) -> Self {
+        Feed {
+            title: value.title.clone(),
+            link: value.link.clone(),
+            image: value.image.clone().map(|i| i.url),
+            entries: value
+                .items()
+                .into_iter()
+                .map(|item| {
+                    let content = process_content(
+                        &item.content.clone().unwrap_or("".into()),
+                    );
+                    let title = item.title.clone().unwrap_or("Untitled".into());
+                    let guid = get_rss_guid(&item);
+                    let published = get_rss_date(item);
+                    let link = item.link.clone();
 
-    let content = entry
-        .content
-        .map_or_else(
-            || entry.summary.map(|d| d.content),
-            |c| Some(c.body.unwrap_or("".into())),
-        )
-        .map(|c| process_content(&c).unwrap_or(c));
-
-    let article_id = entry.id;
-    let published = entry.updated.map_or(get_timestamp(0), |updated| {
-        OffsetDateTime::from_unix_timestamp(updated.timestamp()).unwrap()
-    });
-
-    Ok(ItemContent {
-        title,
-        link,
-        content,
-        article_id,
-        published,
-    })
-}
-
-/// Return the icon as a data URL, if found
-pub(crate) async fn get_icon(feed: &Feed) -> Result<Option<Url>, AppError> {
-    let url = get_icon_url(feed)?;
-    if url.is_none() {
-        return Ok(None);
-    }
-
-    // TODO: request icon data, convert to data URI
-    // see https://stackoverflow.com/a/19996331/141531
-
-    let url = url.unwrap();
-    let client = Client::builder().build()?;
-    let resp = client.get(url.clone()).send().await?;
-    if resp.status() != 200 {
-        let msg =
-            format!("error downloading icon from {}: [{}]", url, resp.status());
-        log::warn!("{}", msg);
-        return Err(AppError::Error(msg));
-    }
-
-    let ctype_hdr = resp.headers().get("content-type");
-    let ctype: Option<String> = if let Some(ctype_hdr) = ctype_hdr {
-        Some(ctype_hdr.to_str()?.into())
-    } else {
-        None
-    };
-
-    if let Some(ctype) = ctype {
-        let bytes = resp.bytes().await?;
-        let b64 = general_purpose::STANDARD.encode(&bytes);
-        let url = Url::parse(&format!("data:{};base64,{}", ctype, b64))?;
-        Ok(Some(url))
-    } else {
-        Ok(None)
+                    Entry {
+                        content,
+                        guid,
+                        link,
+                        published,
+                        title,
+                    }
+                })
+                .collect(),
+        }
     }
 }
 
-/// Return a URL for the channel icon, if available
-fn get_icon_url(feed: &Feed) -> Result<Option<Url>, AppError> {
-    if let Some(image) = &feed.logo {
-        let url = Url::parse(&image.uri)?;
-        return Ok(Some(url));
+impl From<atom::Feed> for Feed {
+    fn from(value: atom::Feed) -> Self {
+        Feed {
+            title: value.title.clone().value,
+            link: value.links[0].href.clone(),
+            image: value.icon.clone().map(|i| i.to_string()),
+            entries: value
+                .entries()
+                .into_iter()
+                .map(|entry| {
+                    let content = process_content(
+                        &entry
+                            .content
+                            .clone()
+                            .map(|c| c.value.unwrap_or("".into()))
+                            .unwrap_or("".to_string()),
+                    );
+                    let title = entry.title.clone().value;
+                    let guid = entry.id.clone();
+                    let published = entry
+                        .published
+                        .map(|p| {
+                            OffsetDateTime::from_unix_timestamp(p.timestamp())
+                                .unwrap()
+                        })
+                        .unwrap_or(get_timestamp(0));
+                    let link = entry.links.first().map(|l| l.href.clone());
+
+                    Entry {
+                        content,
+                        guid,
+                        link,
+                        published,
+                        title,
+                    }
+                })
+                .collect(),
+        }
+    }
+}
+
+impl Feed {
+    pub(crate) async fn load(url: &str) -> Result<Feed, AppError> {
+        let client = Client::new();
+        let bytes = client.get(url).send().await?.bytes().await?;
+        let feed: Feed = if let Ok(c) = rss::Channel::read_from(&bytes[..]) {
+            Ok(c.into())
+        } else {
+            if let Ok(f) = atom::Feed::read_from(&bytes[..]) {
+                Ok(f.into())
+            } else {
+                Err(AppError::Error("invalid feed".into()))
+            }
+        }?;
+        Ok(feed)
     }
 
-    let favico_url = if feed.links.len() > 0 {
-        let link = &feed.links[0];
-        let url = Url::parse(&link.href)?;
+    /// Return the icon as a data URL, if found
+    pub(crate) async fn get_icon(&self) -> Result<Option<Url>, AppError> {
+        let url = self.get_icon_url()?;
+        if url.is_none() {
+            return Ok(None);
+        }
+
+        // TODO: request icon data, convert to data URI
+        // see https://stackoverflow.com/a/19996331/141531
+
+        let url = url.unwrap();
+        let client = Client::builder().build()?;
+        let resp = client.get(url.clone()).send().await?;
+        if resp.status() != 200 {
+            let msg = format!(
+                "error downloading icon from {}: [{}]",
+                url,
+                resp.status()
+            );
+            log::warn!("{}", msg);
+            return Err(AppError::Error(msg));
+        }
+
+        let ctype_hdr = resp.headers().get("content-type");
+        let ctype: Option<String> = if let Some(ctype_hdr) = ctype_hdr {
+            Some(ctype_hdr.to_str()?.into())
+        } else {
+            None
+        };
+
+        if let Some(ctype) = ctype {
+            let bytes = resp.bytes().await?;
+            let b64 = general_purpose::STANDARD.encode(&bytes);
+            let url = Url::parse(&format!("data:{};base64,{}", ctype, b64))?;
+            Ok(Some(url))
+        } else {
+            Ok(None)
+        }
+    }
+
+    /// Return a URL for the channel icon, if available
+    fn get_icon_url(&self) -> Result<Option<Url>, AppError> {
+        if let Some(image) = &self.image {
+            let url = Url::parse(image)?;
+            return Ok(Some(url));
+        }
+
+        let url = Url::parse(&self.link)?;
         let origin = url.origin();
-        if let Origin::Tuple(scheme, host, port) = origin {
+        let favico_url = if let Origin::Tuple(scheme, host, port) = origin {
             Some(Url::parse(&format!(
                 "{}://{}:{}/favicon.ico",
                 scheme, host, port
             ))?)
         } else {
             None
-        }
-    } else {
-        None
-    };
+        };
 
-    if let Some(favico_url) = favico_url {
-        Ok(Some(favico_url))
-    } else {
-        Ok(None)
+        if let Some(favico_url) = favico_url {
+            Ok(Some(favico_url))
+        } else {
+            Ok(None)
+        }
     }
 }
 
 /// Process / cleanup document content
-fn process_content(content: &str) -> Result<String, AppError> {
+fn process_content(content: &str) -> String {
     let mut output = vec![];
 
     let mut rewriter = HtmlRewriter::new(
@@ -141,8 +202,104 @@ fn process_content(content: &str) -> Result<String, AppError> {
         |c: &[u8]| output.extend_from_slice(c),
     );
 
-    rewriter.write(content.as_bytes())?;
-    rewriter.end()?;
+    rewriter.write(content.as_bytes()).unwrap();
+    rewriter.end().unwrap();
+    String::from_utf8(output).unwrap()
+}
 
-    Ok(String::from_utf8(output)?)
+/// Rfc2822 without the optional weekday
+static TIME_FORMAT_1: &'static [FormatItem<'static>] = format_description!(
+    "[day] [month repr:short] [year] [hour repr:24]:[minute] [offset_hour sign:mandatory][offset_minute]"
+);
+
+/// Rfc2822 without seconds
+static TIME_FORMAT_2: &'static [FormatItem<'static>] = format_description!(
+    "[weekday repr:short], [day] [month repr:short] [year] [hour repr:24]:[minute] [offset_hour sign:mandatory][offset_minute]"
+);
+
+/// Rfc2822
+static TIME_FORMAT_3: &'static [FormatItem<'static>] = format_description!(
+    "[weekday repr:short], [day] [month repr:short] [year] [hour repr:24]:[minute]:[second] [offset_hour sign:mandatory][offset_minute]"
+);
+
+fn parse_time(d: &str) -> Option<OffsetDateTime> {
+    log::debug!("parsing date: {}", d);
+
+    let tz_re = Regex::new(r"\b[A-Z]{3}$").unwrap();
+    let d: String = if let Some(m) = tz_re.find(&d) {
+        let tz: Option<&Tz> = match m.as_str() {
+            "PDT" | "PST" => Some(time_tz::timezones::db::PST8PDT),
+            "EDT" | "EST" => Some(time_tz::timezones::db::EST5EDT),
+            "CDT" | "CST" => Some(time_tz::timezones::db::CST6CDT),
+            "MDT" | "MST" => Some(time_tz::timezones::db::MST7MDT),
+            "GMT" | "UTC" => Some(time_tz::timezones::db::UTC),
+            _ => None,
+        };
+        if let Some(tz) = tz {
+            let offset = tz.get_offset_primary().to_utc();
+            let sign = if offset.whole_hours() < 0 { "-" } else { "+" };
+            let offstr = format!("{}{:02}00", sign, offset.whole_hours().abs());
+            tz_re.replace(&d, &offstr).into()
+        } else {
+            d.into()
+        }
+    } else {
+        d.into()
+    };
+
+    log::debug!("updated d: {}", d);
+
+    let parsed = OffsetDateTime::parse(&d, &TIME_FORMAT_1);
+    if let Ok(parsed) = parsed {
+        return Some(parsed);
+    }
+
+    let parsed = OffsetDateTime::parse(&d, &TIME_FORMAT_2);
+    if let Ok(parsed) = parsed {
+        return Some(parsed);
+    }
+
+    let parsed = OffsetDateTime::parse(&d, &TIME_FORMAT_3);
+    if let Ok(parsed) = parsed {
+        return Some(parsed);
+    }
+
+    None
+}
+
+fn get_rss_date(item: &rss::Item) -> OffsetDateTime {
+    if let Some(pub_date) = &item.pub_date {
+        let date = parse_time(pub_date);
+        if date.is_none() {
+            log::warn!("invalid pub date {}", pub_date);
+            get_timestamp(0)
+        } else {
+            date.unwrap()
+        }
+    } else if let Some(ext) = &item.dublin_core_ext {
+        if ext.dates.is_empty() {
+            get_timestamp(0)
+        } else {
+            OffsetDateTime::parse(&ext.dates[0], &Rfc3339)
+                .unwrap_or(get_timestamp(0))
+        }
+    } else {
+        get_timestamp(0)
+    }
+}
+
+fn get_rss_guid(item: &rss::Item) -> String {
+    item.clone()
+        .guid
+        .map_or(item.link.clone().map(|l| l.to_string()), |v| Some(v.value))
+        .unwrap_or_else(|| {
+            let mut hasher = Sha256::new();
+            hasher.update(format!(
+                "{}{}",
+                item.title.clone().unwrap_or("title".into()),
+                item.content.clone().unwrap_or("content".into()),
+            ));
+            let hash = hasher.finalize();
+            format!("sha256:{}", hex::encode(hash))
+        })
 }

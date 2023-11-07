@@ -15,7 +15,7 @@ use sqlx::SqliteConnection;
 
 use crate::{
     error::AppError,
-    rss::load_feed,
+    rss::Feed as SynFeed,
     state::AppState,
     templates::get_template,
     types::{
@@ -150,8 +150,8 @@ pub(crate) async fn add_feed(
 ) -> Result<(), AppError> {
     log::debug!("adding feed with {:?}", body);
     let mut conn = state.pool.acquire().await?;
-    let feed = load_feed(body.url.as_str()).await?;
-    let title = feed.title.map_or(body.url.to_string(), |t| t.content);
+    let feed = SynFeed::load(body.url.as_str()).await?;
+    let title = feed.title;
     Feed::create(&mut conn, body.url, &title, body.kind).await?;
     Ok(())
 }
