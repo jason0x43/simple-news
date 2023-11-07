@@ -48,9 +48,7 @@
 						!read || $updatedArticleIds.has(id) || id === $articleId
 				) ?? [];
 		}
-	}
 
-	$: {
 		renderedArticles = filteredArticles
 			.slice(0, visibleCount)
 			.map((article) => ({

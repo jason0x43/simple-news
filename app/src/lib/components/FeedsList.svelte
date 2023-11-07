@@ -1,6 +1,7 @@
 <script lang="ts">
 	import {
 		articleFilter,
+		clearUpdatedArticleIds,
 		feedGroups,
 		feedStats,
 		feeds,
@@ -35,7 +36,10 @@
 				<a
 					class="title"
 					href={`/reader/group-${group.id}`}
-					on:click={() => ($sidebarVisible = false)}
+					on:click={() => {
+						$sidebarVisible = false;
+						clearUpdatedArticleIds();
+					}}
 				>
 					{group.name}
 				</a>

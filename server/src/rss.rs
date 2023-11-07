@@ -43,9 +43,7 @@ impl From<rss::Channel> for Feed {
                 .items()
                 .into_iter()
                 .map(|item| {
-                    let content = process_content(
-                        &item.content.clone().unwrap_or("".into()),
-                    );
+                    let content = process_content(&get_rss_content(&item));
                     let title = item.title.clone().unwrap_or("Untitled".into());
                     let guid = get_rss_guid(&item);
                     let published = get_rss_date(item);
@@ -222,6 +220,7 @@ static TIME_FORMAT_3: &'static [FormatItem<'static>] = format_description!(
     "[weekday repr:short], [day] [month repr:short] [year] [hour repr:24]:[minute]:[second] [offset_hour sign:mandatory][offset_minute]"
 );
 
+/// Parse a time string
 fn parse_time(d: &str) -> Option<OffsetDateTime> {
     log::debug!("parsing date: {}", d);
 
@@ -267,6 +266,7 @@ fn parse_time(d: &str) -> Option<OffsetDateTime> {
     None
 }
 
+/// Get the published date of an RSS item
 fn get_rss_date(item: &rss::Item) -> OffsetDateTime {
     if let Some(pub_date) = &item.pub_date {
         let date = parse_time(pub_date);
@@ -288,6 +288,7 @@ fn get_rss_date(item: &rss::Item) -> OffsetDateTime {
     }
 }
 
+/// Get a unique identifier for an RSS item
 fn get_rss_guid(item: &rss::Item) -> String {
     item.clone()
         .guid
@@ -302,4 +303,15 @@ fn get_rss_guid(item: &rss::Item) -> String {
             let hash = hasher.finalize();
             format!("sha256:{}", hex::encode(hash))
         })
+}
+
+/// Get the content of an RSS item
+fn get_rss_content(item: &rss::Item) -> String {
+    if let Some(content) = item.content.clone() {
+        content
+    } else if let Some(description) = item.description.clone() {
+        description
+    } else {
+        "".into()
+    }
 }
