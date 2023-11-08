@@ -202,10 +202,10 @@
 			<button
 				on:click={() => {
 					const ids = $articles.map(({ id }) => id);
-					for (const id of ids) {
-						$updatedArticleIds.delete(id);
-					}
-					markArticles({ article_ids: ids, mark: { read: true } });
+					markArticles(
+						{ article_ids: ids, mark: { read: true } },
+						{ ignoreUpdate: true }
+					);
 				}}>Mark all read</button
 			>
 		</div>

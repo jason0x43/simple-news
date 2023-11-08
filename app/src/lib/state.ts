@@ -346,7 +346,10 @@ export async function markArticle(id: ArticleId, data: ArticleMarkRequest) {
 /**
  * Mark multiple articles as read or saved
  */
-export async function markArticles(data: ArticlesMarkRequest) {
+export async function markArticles(
+	data: ArticlesMarkRequest,
+	options?: { ignoreUpdate?: boolean },
+) {
 	await api.markArticles(data);
 
 	const stats = await api.getFeedStats();
@@ -364,13 +367,23 @@ export async function markArticles(data: ArticlesMarkRequest) {
 		),
 	);
 
-	updatedArticleIdStore.update((ids) => {
-		let newIds = new Set(ids);
-		for (const id of data.article_ids) {
-			newIds.add(id);
-		}
-		return newIds;
-	});
+	if (options?.ignoreUpdate) {
+		updatedArticleIdStore.update((ids) =>  {
+			const newIds = new Set(ids);
+			for (const id of data.article_ids) {
+				newIds.delete(id);
+			}
+			return newIds;
+		});
+	} else {
+		updatedArticleIdStore.update((ids) => {
+			let newIds = new Set(ids);
+			for (const id of data.article_ids) {
+				newIds.add(id);
+			}
+			return newIds;
+		});
+	}
 }
 
 /**
