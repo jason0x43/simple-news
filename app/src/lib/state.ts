@@ -64,14 +64,21 @@ export async function loadData() {
  */
 export async function loadArticles() {
 	const feedOrGroupId = get(feedIdStore);
-	let source: api.ArticlesSource | undefined = undefined;
 	if (!feedOrGroupId) {
 		return;
 	}
 
-	const [type, id] = feedOrGroupId.split("-");
-	source = type === "feed" ? { feedId: id } : { feedGroupId: id };
-	const a = await api.getArticles(source);
+	let a: ArticleSummary[] | undefined;
+	if (feedOrGroupId === "saved") {
+		a = await api.getSavedArticles();
+	} else {
+		const [type, id] = feedOrGroupId.split("-");
+		if (type === "group") {
+			a = await api.getFeedGroupArticles(id);
+		} else {
+			a = await api.getFeedArticles(id);
+		}
+	}
 	articlesStore.set(a);
 }
 
@@ -231,17 +238,11 @@ export async function refreshFeed(feedId: FeedId) {
 		if (feedStats) {
 			return {
 				...feedStats,
-				feeds: {
-					...feedStats.feeds,
-					[feedId]: stats,
-				},
+				[feedId]: stats,
 			};
 		}
 
-		return {
-			feeds: { [feedId]: stats },
-			saved: 0,
-		};
+		return { [feedId]: stats };
 	});
 
 	const currentFeed = get(feedIdStore);
@@ -257,7 +258,7 @@ export async function refreshFeed(feedId: FeedId) {
 	}
 
 	if (shouldUpdateArticles) {
-		const feedArticles = await api.getArticles({ feedId });
+		const feedArticles = await api.getFeedArticles(feedId);
 		articlesStore.update((articles) => {
 			articles = articles.slice();
 
@@ -298,23 +299,15 @@ export async function markArticle(id: ArticleId, data: ArticleMarkRequest) {
 	if (article.saved !== data.saved || article.read !== data.read) {
 		feedStatsStore.update((stats) => {
 			if (stats) {
-				let feed_stat = stats.feeds[article.feed_id] as FeedStat;
-
+				let feed_stat = stats[article.feed_id] as FeedStat;
 				return {
-					feeds: {
-						...stats.feeds,
-						[article.feed_id]: {
-							...feed_stat,
-							unread:
-								article.read === data.read
-									? feed_stat.unread
-									: feed_stat.unread + (data.read ? -1 : 1),
-						},
+					[article.feed_id]: {
+						...feed_stat,
+						read:
+							article.read === data.read
+								? feed_stat.read
+								: feed_stat.read + (data.read ? 1 : -1),
 					},
-					saved:
-						article.saved === data.saved
-							? stats.saved
-							: stats.saved + (data.saved ? 1 : -1),
 				};
 			}
 		});
@@ -368,7 +361,7 @@ export async function markArticles(
 	);
 
 	if (options?.ignoreUpdate) {
-		updatedArticleIdStore.update((ids) =>  {
+		updatedArticleIdStore.update((ids) => {
 			const newIds = new Set(ids);
 			for (const id of data.article_ids) {
 				newIds.delete(id);

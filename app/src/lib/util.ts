@@ -1,4 +1,4 @@
-import type { Feed, FeedGroupWithFeeds, FeedId } from "server";
+import type { Feed, FeedGroupWithFeeds, FeedId, FeedStats } from "server";
 
 /**
  * Return true if all feed IDs are in a given group
@@ -130,4 +130,15 @@ export function seconds(count: number): number {
  */
 export function minutes(count: number): number {
 	return count * seconds(60);
+}
+
+/**
+ * Return the number of saved articles in a FeedStats object
+ */
+export function getSavedCount(stats: FeedStats): number {
+	let saved = 0;
+	for (const feedId in stats) {
+		saved += stats[feedId]?.saved ?? 0;
+	}
+	return saved;
 }

@@ -248,24 +248,12 @@ pub struct FeedGroupWithFeeds {
 #[tsync]
 pub struct FeedStat {
     pub total: i32,
-    pub unread: i32,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[tsync]
-pub struct FeedStats {
-    pub feeds: HashMap<FeedId, Option<FeedStat>>,
+    pub read: i32,
     pub saved: i32,
 }
 
-impl FeedStats {
-    pub fn new() -> Self {
-        Self {
-            feeds: HashMap::new(),
-            saved: 0,
-        }
-    }
-}
+#[tsync]
+pub type FeedStats = HashMap<FeedId, Option<FeedStat>>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[tsync]

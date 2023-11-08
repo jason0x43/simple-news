@@ -3,18 +3,34 @@
 		articleFilter,
 		clearUpdatedArticleIds,
 		feedGroups,
+		feedId,
 		feedStats,
 		feeds,
 		selectedFeedIds,
 		selectedGroupId,
 		sidebarVisible,
 	} from "../state";
-	import { allFeedsAreSelected, someFeedsAreSelected } from "../util";
+	import {
+		allFeedsAreSelected,
+		getSavedCount,
+		someFeedsAreSelected,
+	} from "../util";
 
 	let expanded: { [title: string]: boolean } = {};
 </script>
 
 <ul class="feeds">
+	<li class:group-selected={$feedId === "saved"}>
+		<div class="group">
+			<span class="saved" />
+			<a class="title" href="/reader/saved">Saved</a>
+			{#if $feedStats}
+				<span class="Feeds-unread">
+					{getSavedCount($feedStats)}
+				</span>
+			{/if}
+		</div>
+	</li>
 	{#each $feedGroups as group (group.name)}
 		<li
 			class:expanded={expanded[group.name] ||
@@ -49,8 +65,9 @@
 							(unread, id) =>
 								unread +
 								($articleFilter === "all"
-									? $feedStats?.feeds[id]?.total ?? 0
-									: $feedStats?.feeds[id]?.unread ?? 0),
+									? $feedStats?.[id]?.total ?? 0
+									: ($feedStats?.[id]?.total ?? 0) -
+									  ($feedStats?.[id]?.read ?? 0)),
 							0
 						)}
 					</div>
@@ -66,8 +83,8 @@
 						{#if $feedStats}
 							<div class="unread">
 								{$articleFilter === "all"
-									? $feedStats.feeds[id]?.total ?? 0
-									: $feedStats.feeds[id]?.unread ?? 0}
+									? $feedStats[id]?.total ?? 0
+									: ($feedStats[id]?.total ?? 0) - ($feedStats[id]?.read ?? 0)}
 							</div>
 						{/if}
 					</li>
@@ -137,7 +154,7 @@
 		padding-left: calc(var(--expander-width) + 2 * var(--hpad));
 	}
 
-	/* .saved, */
+	.saved,
 	.expander {
 		border: none;
 		background: none;
@@ -145,7 +162,7 @@
 		padding-left: 4px;
 	}
 
-	/* .saved::before, */
+	.saved::before,
 	.expander::before {
 		content: "▷";
 		display: inline-block;
@@ -154,9 +171,9 @@
 		width: var(--expander-width);
 	}
 
-	/* .saved::before { */
-	/* 	content: "⭐"; */
-	/* } */
+	.saved::before {
+		content: "⭐";
+	}
 
 	.group-selected .expander::before {
 		color: var(--highlight);

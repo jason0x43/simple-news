@@ -63,23 +63,36 @@ export async function updateFeed(
 	await apiPatch(`feeds/${id}`, data);
 }
 
-export type ArticlesSource = { feedId: FeedId } | { feedGroupId: FeedGroupId };
-
 /**
  * Get summaries for all articles in a user's subscribed feeds.
  */
-export async function getArticles(
-	source: ArticlesSource | undefined,
+export async function getArticles(): Promise<ArticleSummary[]> {
+	return (await apiGet(`articles`)).json();
+}
+
+/**
+ * Get summaries for all articles in a given feed
+ */
+export async function getFeedArticles(
+	feedId: string,
 ): Promise<ArticleSummary[]> {
-	if (source === undefined) {
-		return (await apiGet("articles")).json();
-	}
+	return (await apiGet(`feeds/${feedId}/articles`)).json();
+}
 
-	if (isFeedId(source)) {
-		return (await apiGet(`feeds/${source.feedId}/articles`)).json();
-	}
+/**
+ * Get summaries for all articles in a given feed group
+ */
+export async function getFeedGroupArticles(
+	feedGroupId: string,
+): Promise<ArticleSummary[]> {
+	return (await apiGet(`feedgroups/${feedGroupId}/articles`)).json();
+}
 
-	return (await apiGet(`feedgroups/${source.feedGroupId}/articles`)).json();
+/**
+ * Get summaries for all of a user's saved articles
+ */
+export async function getSavedArticles(): Promise<ArticleSummary[]> {
+	return (await apiGet("articles?saved=true")).json();
 }
 
 /**

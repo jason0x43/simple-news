@@ -569,12 +569,26 @@ impl Feed {
             user_id,
             self.id
         )
-        .fetch_one(conn)
+        .fetch_one(&mut *conn)
+        .await?;
+
+        let num_saved = query!(
+            r#"
+            SELECT COUNT(*) AS count
+            FROM user_articles AS ua
+            INNER JOIN articles AS a ON a.id = ua.article_id
+            WHERE ua.user_id = ?1 AND ua.saved = 1 AND a.feed_id = ?2
+            "#,
+            user_id,
+            self.id
+        )
+        .fetch_one(&mut *conn)
         .await?;
 
         Ok(FeedStat {
             total: count,
-            unread: count - num_read.count,
+            read: num_read.count,
+            saved: num_saved.count
         })
     }
 }

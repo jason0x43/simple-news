@@ -22,8 +22,8 @@ use crate::{
         AddFeedRequest, AddGroupFeedRequest, Article, ArticleId,
         ArticleMarkRequest, ArticleSummary, ArticlesMarkRequest,
         CreateFeedGroupRequest, CreateSessionRequest, CreateUserRequest, Feed,
-        FeedGroup, FeedGroupId, FeedGroupWithFeeds, FeedId, FeedLog, FeedStats,
-        Password, Session, UpdateFeedRequest, User, FeedStat,
+        FeedGroup, FeedGroupId, FeedGroupWithFeeds, FeedId, FeedLog, FeedStat,
+        FeedStats, Password, Session, UpdateFeedRequest, User,
     },
     util::{add_cache_control, check_password},
 };
@@ -91,13 +91,25 @@ pub(crate) async fn create_session(
     Ok((jar, Json(session)))
 }
 
+#[derive(Deserialize)]
+pub struct ArticlesQuery {
+    saved: Option<bool>,
+}
+
 pub(crate) async fn get_articles(
     session: Session,
     state: State<AppState>,
+    Query(query): Query<ArticlesQuery>,
 ) -> Result<Json<Vec<ArticleSummary>>, AppError> {
     let mut conn = state.pool.acquire().await?;
     let user = User::get(&mut conn, session.user_id).await?;
-    Ok(Json(user.articles(&mut conn).await?))
+    let articles = user.articles(&mut conn).await?;
+    let articles = if query.saved.unwrap_or(false) {
+        articles.into_iter().filter(|a| a.saved).collect()
+    } else {
+        articles
+    };
+    Ok(Json(articles))
 }
 
 pub(crate) async fn get_article(
@@ -322,11 +334,6 @@ pub(crate) async fn get_feed_group_articles(
     Ok(Json(group.articles(&mut conn).await?))
 }
 
-#[derive(Deserialize)]
-pub(crate) struct GetFeedStatsParams {
-    pub(crate) all: Option<bool>,
-}
-
 pub(crate) async fn get_feed_stat(
     session: Session,
     state: State<AppState>,
@@ -338,10 +345,15 @@ pub(crate) async fn get_feed_stat(
     Ok(Json(feed.stats(&mut conn, &session.user_id).await?))
 }
 
+#[derive(Deserialize)]
+pub(crate) struct GetFeedStatsQuery {
+    pub(crate) all: Option<bool>,
+}
+
 pub(crate) async fn get_feed_stats(
     session: Session,
     state: State<AppState>,
-    Query(query): Query<GetFeedStatsParams>,
+    Query(query): Query<GetFeedStatsQuery>,
 ) -> Result<Json<FeedStats>, AppError> {
     let mut conn = state.pool.acquire().await?;
     let feeds = if query.all.unwrap_or(false) {
@@ -351,7 +363,7 @@ pub(crate) async fn get_feed_stats(
     };
     let mut stats = FeedStats::new();
     for feed in feeds.iter() {
-        stats.feeds.insert(
+        stats.insert(
             feed.id.clone(),
             Some(feed.stats(&mut conn, &session.user_id).await?),
         );

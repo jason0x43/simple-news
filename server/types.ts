@@ -105,13 +105,11 @@ export interface FeedGroupWithFeeds {
 
 export interface FeedStat {
   total: number;
-  unread: number;
-}
-
-export interface FeedStats {
-  feeds: Record<FeedId, FeedStat | undefined>;
+  read: number;
   saved: number;
 }
+
+export type FeedStats = Record<FeedId, FeedStat | undefined>
 
 export interface ArticleMarkRequest {
   read?: boolean;

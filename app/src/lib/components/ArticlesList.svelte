@@ -132,6 +132,13 @@
 				}
 				await markArticles({ article_ids: ids, mark: { read } });
 			}
+		} else if (/save/i.test(value)) {
+			if (activeArticle) {
+				await markArticles({
+					article_ids: [activeArticle.id],
+					mark: { saved: !activeArticle.saved },
+				});
+			}
 		}
 	}
 
