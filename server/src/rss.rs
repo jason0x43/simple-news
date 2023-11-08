@@ -222,8 +222,6 @@ static TIME_FORMAT_3: &'static [FormatItem<'static>] = format_description!(
 
 /// Parse a time string
 fn parse_time(d: &str) -> Option<OffsetDateTime> {
-    log::debug!("parsing date: {}", d);
-
     let tz_re = Regex::new(r"\b[A-Z]{3}$").unwrap();
     let d: String = if let Some(m) = tz_re.find(&d) {
         let tz: Option<&Tz> = match m.as_str() {
@@ -245,8 +243,6 @@ fn parse_time(d: &str) -> Option<OffsetDateTime> {
     } else {
         d.into()
     };
-
-    log::debug!("updated d: {}", d);
 
     let parsed = OffsetDateTime::parse(&d, &TIME_FORMAT_1);
     if let Ok(parsed) = parsed {

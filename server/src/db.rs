@@ -11,22 +11,30 @@ use crate::{
     util::{get_timestamp, hash_password},
 };
 use serde_json::json;
-use sqlx::{query, query_as, SqliteConnection};
+use sqlx::{query, query_as, SqlitePool};
 use time::OffsetDateTime;
 use url::Url;
 
 impl User {
-    pub(crate) async fn create(
-        conn: &mut SqliteConnection,
-        email: String,
-        username: String,
-    ) -> Result<Self, AppError> {
-        let user = Self {
+    fn new(email: &str, username: &str) -> Self {
+        Self {
             id: UserId::new(),
-            email,
-            username,
+            email: email.into(),
+            username: username.into(),
             config: None,
-        };
+        }
+    }
+
+    pub(crate) async fn create(
+        pool: &SqlitePool,
+        email: &str,
+        username: &str,
+        password: &str,
+    ) -> Result<Self, AppError> {
+        let user = Self::new(email, username);
+        let password = Password::new(password, &user.id);
+
+        let mut tx = pool.begin().await?;
 
         query!(
             r#"
@@ -38,14 +46,28 @@ impl User {
             user.username,
             user.config
         )
-        .execute(conn)
+        .execute(&mut *tx)
         .await?;
+
+        query!(
+            r#"
+            INSERT INTO passwords (id, hash, salt, user_id)
+            VALUES (?1, ?2, ?3, ?4)
+            "#,
+            password.id,
+            password.hash,
+            password.salt,
+            password.user_id
+        )
+        .execute(&mut *tx)
+        .await?;
+        tx.commit().await?;
 
         Ok(user)
     }
 
     pub(crate) async fn get(
-        conn: &mut SqliteConnection,
+        pool: &SqlitePool,
         id: UserId,
     ) -> Result<Self, AppError> {
         query_as!(
@@ -61,13 +83,13 @@ impl User {
             "#,
             id
         )
-        .fetch_one(conn)
+        .fetch_one(pool)
         .await
         .map_err(|_| AppError::UserNotFound)
     }
 
     pub(crate) async fn get_by_username(
-        conn: &mut SqliteConnection,
+        pool: &SqlitePool,
         username: &str,
     ) -> Result<Self, AppError> {
         query_as!(
@@ -83,13 +105,13 @@ impl User {
             "#,
             username
         )
-        .fetch_one(conn)
+        .fetch_one(pool)
         .await
         .map_err(|_| AppError::UserNotFound)
     }
 
     pub(crate) async fn get_all(
-        conn: &mut SqliteConnection,
+        pool: &SqlitePool,
     ) -> Result<Vec<Self>, AppError> {
         query_as!(
             User,
@@ -102,14 +124,43 @@ impl User {
             FROM users
             "#
         )
-        .fetch_all(conn)
+        .fetch_all(pool)
         .await
         .map_err(AppError::SqlxError)
     }
 
+    pub(crate) async fn check_password(
+        &self,
+        pool: &SqlitePool,
+        password: &str,
+    ) -> Result<(), AppError> {
+        let pword = query_as!(
+            Password,
+            r#"
+            SELECT
+              id,
+              hash,
+              salt,
+              user_id
+            FROM passwords
+            WHERE user_id = ?1
+            "#,
+            self.id
+        )
+        .fetch_one(pool)
+        .await?;
+
+        let check = hash_password(password, Some(&pword.salt));
+        if check.hash != pword.hash {
+            Err(AppError::Unauthorized)
+        } else {
+            Ok(())
+        }
+    }
+
     pub(crate) async fn articles(
         &self,
-        conn: &mut SqliteConnection,
+        pool: &SqlitePool,
     ) -> Result<Vec<ArticleSummary>, AppError> {
         Ok(query_as!(
             ArticleSummary,
@@ -135,67 +186,26 @@ impl User {
             "#,
             self.id
         )
-        .fetch_all(conn)
+        .fetch_all(pool)
         .await?)
     }
 }
 
 impl Password {
-    pub(crate) async fn create(
-        conn: &mut SqliteConnection,
-        password: &str,
-        user_id: &UserId,
-    ) -> Result<Self, AppError> {
+    fn new(password: &str, user_id: &UserId) -> Self {
         let pword = hash_password(password, None);
-        let password = Password {
+        Self {
             id: PasswordId::new(),
             hash: pword.hash,
             salt: pword.salt,
             user_id: user_id.clone(),
-        };
-
-        query!(
-            r#"
-            INSERT INTO passwords (id, hash, salt, user_id)
-            VALUES (?1, ?2, ?3, ?4)
-            "#,
-            password.id,
-            password.hash,
-            password.salt,
-            password.user_id
-        )
-        .execute(conn)
-        .await?;
-
-        Ok(password)
-    }
-
-    pub(crate) async fn get_by_user_id(
-        conn: &mut SqliteConnection,
-        user_id: &UserId,
-    ) -> Result<Self, AppError> {
-        query_as!(
-            Password,
-            r#"
-            SELECT
-              id,
-              hash,
-              salt,
-              user_id
-            FROM passwords
-            WHERE user_id = ?1
-            "#,
-            user_id
-        )
-        .fetch_one(conn)
-        .await
-        .map_err(|_| AppError::NoPassword)
+        }
     }
 }
 
 impl Session {
     pub(crate) async fn create(
-        conn: &mut SqliteConnection,
+        pool: &SqlitePool,
         user_id: UserId,
     ) -> Result<Self, AppError> {
         let session = Self {
@@ -217,14 +227,14 @@ impl Session {
             session.user_id,
             session.expires
         )
-        .execute(conn)
+        .execute(pool)
         .await?;
 
         Ok(session)
     }
 
     pub(crate) async fn get(
-        conn: &mut SqliteConnection,
+        pool: &SqlitePool,
         session_id: &SessionId,
     ) -> Result<Self, AppError> {
         query_as!(
@@ -240,7 +250,7 @@ impl Session {
             "#,
             session_id
         )
-        .fetch_one(conn)
+        .fetch_one(pool)
         .await
         .map_err(|_| AppError::SessionNotFound)
     }
@@ -249,7 +259,7 @@ impl Session {
 impl Feed {
     /// Create a new feed
     pub(crate) async fn create(
-        conn: &mut SqliteConnection,
+        pool: &SqlitePool,
         url: Url,
         title: &str,
         kind: Option<FeedKind>,
@@ -275,7 +285,7 @@ impl Feed {
             feed.kind,
             feed.disabled,
         )
-        .execute(conn)
+        .execute(pool)
         .await
         .map_err(|err| {
             log::warn!("Error inserting feed: {}", err);
@@ -287,11 +297,11 @@ impl Feed {
 
     /// Delete a feed
     pub(crate) async fn delete(
-        conn: &mut SqliteConnection,
+        pool: &SqlitePool,
         id: &FeedId,
     ) -> Result<(), AppError> {
         query!("DELETE FROM feeds WHERE id = ?1", id)
-            .execute(conn)
+            .execute(pool)
             .await?;
         Ok(())
     }
@@ -299,7 +309,7 @@ impl Feed {
     /// Update a feed's properties
     pub(crate) async fn update(
         &mut self,
-        conn: &mut SqliteConnection,
+        pool: &SqlitePool,
         data: UpdateFeedRequest,
     ) -> Result<(), AppError> {
         let title = data.title.unwrap_or(self.title.clone());
@@ -315,7 +325,7 @@ impl Feed {
             url,
             self.id,
         )
-        .execute(conn)
+        .execute(pool)
         .await
         .map_err(|err| {
             log::warn!("Error updating feed: {}", err);
@@ -330,7 +340,7 @@ impl Feed {
 
     /// Get a feed
     pub(crate) async fn get(
-        conn: &mut SqliteConnection,
+        pool: &SqlitePool,
         id: &FeedId,
     ) -> Result<Feed, AppError> {
         query_as!(
@@ -349,7 +359,7 @@ impl Feed {
             "#,
             id
         )
-        .fetch_one(conn)
+        .fetch_one(pool)
         .await
         .map_err(|err| {
             log::warn!("error getting feed {}: {}", id, err);
@@ -359,7 +369,7 @@ impl Feed {
 
     /// Get all feeds
     pub(crate) async fn get_all(
-        conn: &mut SqliteConnection,
+        pool: &SqlitePool,
     ) -> Result<Vec<Self>, AppError> {
         query_as!(
             Feed,
@@ -375,7 +385,7 @@ impl Feed {
             FROM feeds
             "#
         )
-        .fetch_all(conn)
+        .fetch_all(pool)
         .await
         .map_err(|err| {
             log::warn!("error loading feeds: {}", err);
@@ -386,13 +396,13 @@ impl Feed {
     /// Refresh this feed
     pub(crate) async fn refresh(
         &self,
-        conn: &mut SqliteConnection,
+        pool: &SqlitePool,
     ) -> Result<(), AppError> {
         let feed = SynFeed::load(&self.url).await;
         if let Err(err) = feed {
             log::warn!("error downloading feed {}: {}", self.url, err);
             FeedLog::create(
-                conn,
+                pool,
                 self.id.clone(),
                 false,
                 Some(err.to_string()),
@@ -405,6 +415,7 @@ impl Feed {
             return Err(err);
         }
 
+        let mut tx = pool.begin().await?;
         let feed = feed.unwrap();
         log::debug!("downloaded feed at {}", self.url);
 
@@ -418,7 +429,7 @@ impl Feed {
                 icon_str,
                 self.id,
             )
-            .execute(&mut *conn)
+            .execute(&mut *tx)
             .await
             .err()
             .map(|err| {
@@ -435,17 +446,34 @@ impl Feed {
                 item.title,
                 item.published
             );
-            Article::create(
-                &mut *conn,
-                ArticleNew {
-                    content: item.content.clone(),
-                    feed_id: self.id.clone(),
-                    article_id: item.guid.clone(),
-                    title: item.title.clone(),
-                    link: item.link.clone().map(|l| Url::parse(&l).unwrap()),
-                    published: item.published,
-                },
+            let article = Article::new(
+                item.content.clone(),
+                self.id.clone(),
+                item.guid.clone(),
+                item.title.clone(),
+                item.link.clone().map(|l| Url::parse(&l).unwrap()),
+                item.published,
+            );
+
+            query!(
+                r#"
+                INSERT INTO articles(
+                  content, id, feed_id, article_id, title, link, published
+                )
+                VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7)
+                ON CONFLICT(article_id, feed_id)
+                DO UPDATE
+                SET content = ?1, published = ?7, title = ?5, link = ?6
+                "#,
+                article.content,
+                article.id,
+                article.feed_id,
+                article.article_id,
+                article.title,
+                article.link,
+                article.published
             )
+            .execute(&mut *tx)
             .await
             .err()
             .map(|err| {
@@ -453,9 +481,10 @@ impl Feed {
             });
         }
 
+        tx.commit().await?;
         log::debug!("added articles");
 
-        FeedLog::create(conn, self.id.clone(), true, Some(errors.join("\n")))
+        FeedLog::create(pool, self.id.clone(), true, Some(errors.join("\n")))
             .await
             .err()
             .map(|err| {
@@ -466,13 +495,11 @@ impl Feed {
     }
 
     /// Refresh all feeds
-    pub(crate) async fn refresh_all(
-        conn: &mut SqliteConnection,
-    ) -> Result<(), AppError> {
-        let feeds = Feed::get_all(conn).await?;
+    pub(crate) async fn refresh_all(pool: &SqlitePool) -> Result<(), AppError> {
+        let feeds = Feed::get_all(pool).await?;
         for feed in feeds.iter() {
             let id = feed.id.clone();
-            feed.refresh(conn).await.unwrap_or_else(|err| {
+            feed.refresh(pool).await.unwrap_or_else(|err| {
                 log::warn!("error refreshing feed {}: {}", id, err);
             })
         }
@@ -482,7 +509,7 @@ impl Feed {
 
     /// Get all the feeds a user is subscribed to
     pub(crate) async fn get_subscribed(
-        conn: &mut SqliteConnection,
+        pool: &SqlitePool,
         user_id: &UserId,
     ) -> Result<Vec<Feed>, AppError> {
         Ok(query_as!(
@@ -507,27 +534,27 @@ impl Feed {
             "#,
             user_id
         )
-        .fetch_all(conn)
+        .fetch_all(pool)
         .await?)
     }
 
     /// Return the number of articles in this feed
     pub(crate) async fn article_count(
         &self,
-        conn: &mut SqliteConnection,
+        pool: &SqlitePool,
     ) -> Result<i32, AppError> {
         let count_row = query!(
             "SELECT COUNT(*) AS count FROM articles WHERE feed_id = ?1",
             self.id
         )
-        .fetch_one(&mut *conn)
+        .fetch_one(pool)
         .await?;
         Ok(count_row.count)
     }
 
     pub(crate) async fn articles(
         &self,
-        conn: &mut SqliteConnection,
+        pool: &SqlitePool,
     ) -> Result<Vec<ArticleSummary>, AppError> {
         Ok(query_as!(
             ArticleSummary,
@@ -549,16 +576,16 @@ impl Feed {
             "#,
             self.id
         )
-        .fetch_all(conn)
+        .fetch_all(pool)
         .await?)
     }
 
     pub(crate) async fn stats(
         &self,
-        conn: &mut SqliteConnection,
+        pool: &SqlitePool,
         user_id: &UserId,
     ) -> Result<FeedStat, AppError> {
-        let count = self.article_count(conn).await?;
+        let count = self.article_count(pool).await?;
         let num_read = query!(
             r#"
             SELECT COUNT(*) AS count
@@ -569,7 +596,7 @@ impl Feed {
             user_id,
             self.id
         )
-        .fetch_one(&mut *conn)
+        .fetch_one(pool)
         .await?;
 
         let num_saved = query!(
@@ -582,68 +609,39 @@ impl Feed {
             user_id,
             self.id
         )
-        .fetch_one(&mut *conn)
+        .fetch_one(pool)
         .await?;
 
         Ok(FeedStat {
             total: count,
             read: num_read.count,
-            saved: num_saved.count
+            saved: num_saved.count,
         })
     }
 }
 
-#[derive(Debug)]
-pub(crate) struct ArticleNew {
-    pub(crate) content: String,
-    pub(crate) feed_id: FeedId,
-    pub(crate) article_id: String,
-    pub(crate) title: String,
-    pub(crate) link: Option<Url>,
-    pub(crate) published: OffsetDateTime,
-}
-
 impl Article {
-    pub(crate) async fn create(
-        conn: &mut SqliteConnection,
-        data: ArticleNew,
-    ) -> Result<Self, AppError> {
-        let article = Self {
+    pub(crate) fn new(
+        content: String,
+        feed_id: FeedId,
+        article_id: String,
+        title: String,
+        link: Option<Url>,
+        published: OffsetDateTime,
+    ) -> Self {
+        Self {
             id: ArticleId::new(),
-            content: data.content,
-            feed_id: data.feed_id,
-            article_id: data.article_id,
-            title: data.title,
-            link: data.link.map(|l| l.into()),
-            published: data.published,
-        };
-
-        query!(
-            r#"
-            INSERT INTO articles(
-              content, id, feed_id, article_id, title, link, published
-            )
-            VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7)
-            ON CONFLICT(article_id, feed_id)
-            DO UPDATE
-            SET content = ?1, published = ?7, title = ?5, link = ?6
-            "#,
-            article.content,
-            article.id,
-            article.feed_id,
-            article.article_id,
-            article.title,
-            article.link,
-            article.published
-        )
-        .execute(&mut *conn)
-        .await?;
-
-        Ok(article)
+            content,
+            feed_id,
+            article_id,
+            title,
+            link: link.map(|l| l.to_string()),
+            published,
+        }
     }
 
     pub(crate) async fn get(
-        conn: &mut SqliteConnection,
+        pool: &SqlitePool,
         article_id: &ArticleId,
     ) -> Result<Self, AppError> {
         Ok(query_as!(
@@ -662,28 +660,76 @@ impl Article {
             "#,
             article_id
         )
-        .fetch_one(conn)
+        .fetch_one(pool)
         .await?)
+    }
+
+    pub(crate) async fn mark_all(
+        pool: &SqlitePool,
+        user_id: &UserId,
+        data: &ArticlesMarkRequest,
+    ) -> Result<i32, AppError> {
+        let mut tx = pool.begin().await?;
+        for id in &data.article_ids {
+            let ua = UserArticle::new(
+                user_id.clone(),
+                id.clone(),
+                data.mark.read,
+                data.mark.saved,
+            );
+            query!(
+                r#"
+                INSERT INTO user_articles(
+                  read, saved, id, user_id, article_id
+                )
+                VALUES(?1, ?2, ?3, ?4, ?5)
+                ON CONFLICT(user_id, article_id)
+                DO UPDATE SET read = ?1, saved = ?2
+                "#,
+                ua.read,
+                ua.saved,
+                ua.id,
+                ua.user_id,
+                ua.article_id,
+            )
+            .execute(&mut *tx)
+            .await?;
+        }
+        tx.commit().await?;
+
+        Ok(data.article_ids.len() as i32)
     }
 
     pub(crate) async fn mark(
         &self,
-        conn: &mut SqliteConnection,
-        user_id: UserId,
+        pool: &SqlitePool,
+        user_id: &UserId,
         mark: &ArticleMarkRequest,
     ) -> Result<ArticleSummary, AppError> {
-        let ua = UserArticle::create(
-            conn,
-            UserArticleNew {
-                user_id,
-                article_id: self.id.clone(),
-                read: mark.read.unwrap_or(false),
-                saved: mark.saved.unwrap_or(false),
+        Self::mark_all(
+            pool,
+            user_id,
+            &ArticlesMarkRequest {
+                article_ids: vec![self.id.clone()],
+                mark: mark.clone(),
             },
         )
         .await?;
 
         let a = self.clone();
+        let a_mark = query!(
+            r#"
+            SELECT
+              read AS "read!: bool",
+              saved AS "saved!: bool"
+            FROM user_articles
+            WHERE user_id = ?1 AND article_id = ?2
+            "#,
+            user_id,
+            self.id,
+        )
+        .fetch_one(pool)
+        .await?;
 
         Ok(ArticleSummary {
             id: a.id,
@@ -692,36 +738,15 @@ impl Article {
             title: a.title,
             published: a.published,
             link: a.link,
-            read: ua.read,
-            saved: ua.saved,
+            read: a_mark.read,
+            saved: a_mark.saved,
         })
-    }
-
-    pub(crate) async fn mark_all(
-        conn: &mut SqliteConnection,
-        user_id: &UserId,
-        data: &ArticlesMarkRequest,
-    ) -> Result<i32, AppError> {
-        for id in &data.article_ids {
-            UserArticle::create(
-                conn,
-                UserArticleNew {
-                    user_id: user_id.clone(),
-                    article_id: id.clone(),
-                    read: data.mark.read.unwrap_or(false),
-                    saved: data.mark.saved.unwrap_or(false),
-                },
-            )
-            .await?;
-        }
-
-        Ok(data.article_ids.len() as i32)
     }
 }
 
 impl FeedLog {
     pub(crate) async fn create(
-        conn: &mut SqliteConnection,
+        pool: &SqlitePool,
         feed_id: FeedId,
         success: bool,
         message: Option<String>,
@@ -745,14 +770,14 @@ impl FeedLog {
             entry.success,
             entry.message,
         )
-        .execute(&mut *conn)
+        .execute(pool)
         .await?;
 
         Ok(entry)
     }
 
     pub(crate) async fn find_for_feed(
-        conn: &mut SqliteConnection,
+        pool: &SqlitePool,
         feed_id: FeedId,
     ) -> Result<Vec<Self>, AppError> {
         query_as!(
@@ -769,13 +794,13 @@ impl FeedLog {
             "#,
             feed_id
         )
-        .fetch_all(conn)
+        .fetch_all(pool)
         .await
         .map_err(AppError::SqlxError)
     }
 
     pub(crate) async fn get_all(
-        conn: &mut SqliteConnection,
+        pool: &SqlitePool,
     ) -> Result<Vec<Self>, AppError> {
         query_as!(
             FeedLog,
@@ -789,13 +814,13 @@ impl FeedLog {
             FROM feed_logs
             "#,
         )
-        .fetch_all(conn)
+        .fetch_all(pool)
         .await
         .map_err(AppError::SqlxError)
     }
 
     pub(crate) async fn last_update(
-        conn: &mut SqliteConnection,
+        pool: &SqlitePool,
     ) -> Result<OffsetDateTime, AppError> {
         let latest = query_as!(
             FeedLog,
@@ -812,7 +837,7 @@ impl FeedLog {
             LIMIT 1
             "#,
         )
-        .fetch_one(conn)
+        .fetch_one(pool)
         .await
         .map_err(AppError::SqlxError);
 
@@ -831,7 +856,7 @@ struct FeedIdRecord {
 impl FeedGroup {
     /// Create a new feed group
     pub(crate) async fn create(
-        conn: &mut SqliteConnection,
+        pool: &SqlitePool,
         name: String,
         user_id: UserId,
     ) -> Result<Self, AppError> {
@@ -850,7 +875,7 @@ impl FeedGroup {
             group.name,
             group.user_id,
         )
-        .execute(&mut *conn)
+        .execute(pool)
         .await?;
 
         Ok(group)
@@ -858,7 +883,7 @@ impl FeedGroup {
 
     /// Get a feed group by ID
     pub(crate) async fn get(
-        conn: &mut SqliteConnection,
+        pool: &SqlitePool,
         feed_group_id: &FeedGroupId,
     ) -> Result<Self, AppError> {
         query_as!(
@@ -873,14 +898,14 @@ impl FeedGroup {
             "#,
             feed_group_id
         )
-        .fetch_one(conn)
+        .fetch_one(pool)
         .await
         .map_err(|_| AppError::SessionNotFound)
     }
 
     /// Get all feed groups
     pub(crate) async fn get_all(
-        conn: &mut SqliteConnection,
+        pool: &SqlitePool,
     ) -> Result<Vec<Self>, AppError> {
         query_as!(
             FeedGroup,
@@ -892,7 +917,7 @@ impl FeedGroup {
             FROM feed_groups
             "#
         )
-        .fetch_all(conn)
+        .fetch_all(pool)
         .await
         .map_err(AppError::SqlxError)
     }
@@ -900,7 +925,7 @@ impl FeedGroup {
     /// Return a struct that describes this FeedGroup and lists its feeds
     pub(crate) async fn with_feeds(
         &self,
-        conn: &mut SqliteConnection,
+        pool: &SqlitePool,
     ) -> Result<FeedGroupWithFeeds, AppError> {
         let feed_ids = query_as!(
             FeedIdRecord,
@@ -912,7 +937,7 @@ impl FeedGroup {
             "#,
             self.id
         )
-        .fetch_all(conn)
+        .fetch_all(pool)
         .await?
         .iter()
         .map(|id| id.id.clone())
@@ -929,14 +954,10 @@ impl FeedGroup {
     /// Add a feed to this group
     pub(crate) async fn add_feed(
         &self,
-        conn: &mut SqliteConnection,
+        pool: &SqlitePool,
         feed_id: FeedId,
     ) -> Result<FeedGroupWithFeeds, AppError> {
-        let group_feed = FeedGroupFeed {
-            id: FeedGroupFeedId::new(),
-            feed_id,
-            feed_group_id: self.id.clone(),
-        };
+        let group_feed = FeedGroupFeed::new(feed_id, self.id.clone());
 
         query!(
             r#"
@@ -947,33 +968,49 @@ impl FeedGroup {
             group_feed.feed_id,
             group_feed.feed_group_id,
         )
-        .execute(&mut *conn)
+        .execute(pool)
         .await?;
 
-        Ok(self.with_feeds(conn).await?)
+        Ok(self.with_feeds(pool).await?)
     }
 
     /// Move a feed to this group, removing it from all other groups
     pub(crate) async fn move_feed(
         &self,
-        conn: &mut SqliteConnection,
+        pool: &SqlitePool,
         feed_id: FeedId,
     ) -> Result<FeedGroupWithFeeds, AppError> {
+        let group_feed = FeedGroupFeed::new(feed_id.clone(), self.id.clone());
+
+        let mut tx = pool.begin().await?;
+
         // remove the feed from all groups
         query!("DELETE FROM feed_group_feeds WHERE feed_id = ?1", feed_id)
-            .execute(&mut *conn)
+            .execute(&mut *tx)
             .await?;
 
         // add the feed to this group
-        self.add_feed(conn, feed_id).await?;
+        query!(
+            r#"
+            INSERT INTO feed_group_feeds(id, feed_id, feed_group_id)
+            VALUES(?1, ?2, ?3)
+            "#,
+            group_feed.id,
+            group_feed.feed_id,
+            group_feed.feed_group_id,
+        )
+        .execute(pool)
+        .await?;
 
-        Ok(self.with_feeds(conn).await?)
+        tx.commit().await?;
+
+        Ok(self.with_feeds(pool).await?)
     }
 
     /// Remove a feed from this group
     pub(crate) async fn remove_feed(
         &self,
-        conn: &mut SqliteConnection,
+        pool: &SqlitePool,
         feed_id: &FeedId,
     ) -> Result<FeedGroupWithFeeds, AppError> {
         query!(
@@ -984,16 +1021,16 @@ impl FeedGroup {
             self.id,
             feed_id,
         )
-        .execute(&mut *conn)
+        .execute(pool)
         .await?;
 
-        Ok(self.with_feeds(conn).await?)
+        Ok(self.with_feeds(pool).await?)
     }
 
     /// Return all the article summaries for this feed group
     pub(crate) async fn articles(
         &self,
-        conn: &mut SqliteConnection,
+        pool: &SqlitePool,
     ) -> Result<Vec<ArticleSummary>, AppError> {
         Ok(query_as!(
             ArticleSummary,
@@ -1017,50 +1054,34 @@ impl FeedGroup {
             "#,
             self.id
         )
-        .fetch_all(conn)
+        .fetch_all(pool)
         .await?)
     }
 }
 
-#[derive(Debug)]
-pub(crate) struct UserArticleNew {
-    pub(crate) user_id: UserId,
-    pub(crate) article_id: ArticleId,
-    pub(crate) read: bool,
-    pub(crate) saved: bool,
+impl UserArticle {
+    fn new(
+        user_id: UserId,
+        article_id: ArticleId,
+        read: Option<bool>,
+        saved: Option<bool>,
+    ) -> Self {
+        Self {
+            id: UserArticleId::new(),
+            user_id,
+            article_id,
+            read: read.unwrap_or(false),
+            saved: saved.unwrap_or(false),
+        }
+    }
 }
 
-impl UserArticle {
-    pub(crate) async fn create(
-        conn: &mut SqliteConnection,
-        data: UserArticleNew,
-    ) -> Result<Self, AppError> {
-        let user_article = Self {
-            id: UserArticleId::new(),
-            user_id: data.user_id,
-            article_id: data.article_id,
-            read: data.read,
-            saved: data.saved,
-        };
-
-        query!(
-            r#"
-            INSERT INTO user_articles(
-              read, saved, id, user_id, article_id
-            )
-            VALUES(?1, ?2, ?3, ?4, ?5)
-            ON CONFLICT(user_id, article_id)
-            DO UPDATE SET read = ?1, saved = ?2
-            "#,
-            user_article.read,
-            user_article.saved,
-            user_article.id,
-            user_article.user_id,
-            user_article.article_id,
-        )
-        .execute(&mut *conn)
-        .await?;
-
-        Ok(user_article)
+impl FeedGroupFeed {
+    fn new(feed_id: FeedId, feed_group_id: FeedGroupId) -> Self {
+        Self {
+            id: FeedGroupFeedId::new(),
+            feed_id,
+            feed_group_id,
+        }
     }
 }

@@ -1,13 +1,10 @@
-use std::ops::Add;
 use axum::response::Response;
 use reqwest::header;
+use std::ops::Add;
 use time::{Duration, OffsetDateTime};
 
-use log::error;
 use rand::{distributions::Alphanumeric, Rng};
 use sha2::{Digest, Sha512};
-
-use crate::error::AppError;
 
 pub(crate) struct HashedPassword {
     pub(crate) hash: String,
@@ -41,20 +38,6 @@ fn sha512(text: &str) -> String {
     hasher.update(text);
     let hash = hasher.finalize();
     hex::encode(hash)
-}
-
-pub(crate) fn check_password(
-    password: &str,
-    hash: &str,
-    salt: &str,
-) -> Result<(), AppError> {
-    let check = hash_password(password, Some(salt));
-    if &check.hash != hash {
-        error!("Incorrect password");
-        Err(AppError::Unauthorized)
-    } else {
-        Ok(())
-    }
 }
 
 /// Return an OffsetDateTime in UTC offset by `offset` seconds

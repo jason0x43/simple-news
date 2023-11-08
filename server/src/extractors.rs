@@ -7,7 +7,6 @@ use axum::{
 use axum_extra::extract::CookieJar;
 
 use crate::{
-    error::AppError,
     state::AppState,
     types::{Session, SessionId},
 };
@@ -26,11 +25,7 @@ impl FromRequestParts<AppState> for Session {
             .map_err(|err| err.into_response())?;
         if let Some(id_cookie) = jar.get("session_id") {
             let id = SessionId(id_cookie.value().to_string());
-            let mut conn = state.pool.acquire().await.map_err(|err| {
-                log::error!("Error getting db connection: {}", err);
-                AppError::SqlxError(err).into_response()
-            })?;
-            Session::get(&mut conn, &id).await.map_err(|err| {
+            Session::get(&state.pool, &id).await.map_err(|err| {
                 log::error!("Error loading session: {}", err);
                 err.into_response()
             })

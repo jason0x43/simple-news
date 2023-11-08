@@ -36,7 +36,7 @@ async fn main() -> Result<(), AppError> {
     let db_url =
         std::env::var("DATABASE_URL").expect("DATABASE_URL must be set.");
     let pool = SqlitePoolOptions::new()
-        .max_connections(5)
+        .max_connections(10)
         .connect(&db_url)
         .await?;
     let app_state = AppState { pool: pool.clone() };
@@ -100,8 +100,7 @@ async fn main() -> Result<(), AppError> {
     let update_secs = 1800;
     tokio::spawn(async move {
         loop {
-            let mut conn = pool.acquire().await.unwrap();
-            let last_update = FeedLog::last_update(&mut conn)
+            let last_update = FeedLog::last_update(&pool)
                 .await
                 .unwrap()
                 .unix_timestamp();
@@ -109,9 +108,7 @@ async fn main() -> Result<(), AppError> {
 
             if now - last_update >= update_secs {
                 log::info!("Refreshing feeds...");
-                let mut tx = pool.begin().await.unwrap();
-                Feed::refresh_all(&mut *tx).await.unwrap();
-                tx.commit().await.unwrap();
+                Feed::refresh_all(&pool).await.unwrap();
                 log::info!("Finished refreshing feeds");
             } else {
                 log::info!("Skipping refresh");
