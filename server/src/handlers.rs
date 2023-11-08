@@ -12,6 +12,7 @@ use rust_embed::RustEmbed;
 use serde::Deserialize;
 use serde_json::json;
 use sqlx::SqliteConnection;
+use time::Duration;
 
 use crate::{
     error::AppError,
@@ -72,7 +73,11 @@ async fn create_session_impl(
     let session = Session::create(conn, user.id).await?;
 
     Ok((
-        jar.add(Cookie::new("session_id", session.id.to_string())),
+        jar.add(
+            Cookie::build("session_id", session.id.to_string())
+                .max_age(Duration::days(14))
+                .finish(),
+        ),
         session,
     ))
 }
