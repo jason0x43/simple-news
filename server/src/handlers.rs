@@ -29,6 +29,10 @@ use crate::{
     util::add_cache_control,
 };
 
+pub(crate) async fn root() -> Result<Redirect, AppError> {
+    Ok(Redirect::to("/login"))
+}
+
 pub(crate) async fn create_user(
     state: State<AppState>,
     Json(body): Json<CreateUserRequest>,

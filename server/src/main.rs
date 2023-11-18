@@ -83,6 +83,7 @@ async fn main() -> Result<(), AppError> {
         .layer(CompressionLayer::new());
 
     let app = Router::new()
+        .route("/", get(handlers::root))
         .route("/login", get(handlers::show_login_page))
         .route("/login", post(handlers::login))
         .nest("/api", api)
