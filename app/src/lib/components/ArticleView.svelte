@@ -64,6 +64,7 @@
 	</div>
 {/if}
 
+<!-- svelte-ignore css-unused-selector -->
 <style>
 	@import url("highlight.js/styles/default.css") screen and
 		(prefers-color-scheme: light);
