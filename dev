@@ -1,0 +1,21 @@
+#!/bin/bash
+
+cmd=$1
+
+if [[ $cmd == "build" ]]; then
+  commit=$(git rev-parse --short HEAD)
+  docker build . -t simple-news:$commit
+elif [[ $cmd == "run" ]]; then
+  docker run \
+    --rm \
+    --init \
+    --volume "./server:/data" \
+    --env "DATABASE_URL=sqlite:///data/database.db" \
+    --env "RUST_LOG=simple_news=debug,tower_http=debug,info" \
+    -p 3333:3333 \
+    simple-news
+else
+  echo "unknown command '$cmd'"
+  echo "usage: $0 <build|run>"
+  exit 1
+fi
