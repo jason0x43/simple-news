@@ -16,7 +16,6 @@ pub(crate) async fn spa_handler(
     _session: Session,
     uri: Uri,
 ) -> impl IntoResponse {
-    println!("in spa handler");
     let path = uri.path().trim_start_matches('/');
 
     if path.is_empty() || path == INDEX_HTML {
@@ -25,7 +24,6 @@ pub(crate) async fn spa_handler(
 
     match Assets::get(path) {
         Some(content) => {
-            println!("matched a file");
             let mime = mime_guess::from_path(path).first_or_octet_stream();
             add_cache_control(
                 ([(header::CONTENT_TYPE, mime.as_ref())], content.data)
