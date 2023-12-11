@@ -7,15 +7,17 @@ A very simple RSS news aggregator and reader written with Rust and Svelte.
 Start the server in `server/` with
 
 ```sh
-$ cargo run
+$ cargo dev
 ```
 
 Start the client in `client/` with
 
 ```sh
+$ pnpm install
 $ pnpm dev
 ```
 
 ## Deployment
 
-No deployment strategy yet...
+Build a docker image with `./dev build`. Push to a container report, then run
+that on the target server.
