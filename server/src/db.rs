@@ -900,7 +900,7 @@ impl FeedGroup {
         )
         .fetch_one(pool)
         .await
-        .map_err(|_| AppError::SessionNotFound)
+        .map_err(AppError::SqlxError)
     }
 
     /// Get all feed groups

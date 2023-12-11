@@ -25,10 +25,11 @@ impl FromRequestParts<AppState> for Session {
             .map_err(|err| err.into_response())?;
         if let Some(id_cookie) = jar.get("session_id") {
             let id = SessionId(id_cookie.value().to_string());
-            Session::get(&state.pool, &id).await.map_err(|err| {
-                log::error!("Error loading session: {}", err);
-                err.into_response()
-            })
+            let session = Session::get(&state.pool, &id).await;
+            if session.is_err() {
+                return Err(Redirect::temporary("/login").into_response());
+            }
+            Ok(session.unwrap())
         } else {
             Err(Redirect::temporary("/login").into_response())
         }
