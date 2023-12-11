@@ -7,6 +7,7 @@ use axum::{
 use handlebars::RenderError;
 use lol_html::errors::RewritingError;
 use reqwest::header::ToStrError;
+use sqlx::migrate::MigrateError;
 use thiserror::Error;
 use time::error::ComponentRange;
 
@@ -127,5 +128,11 @@ impl From<Utf8Error> for AppError {
 impl From<RenderError> for AppError {
     fn from(err: RenderError) -> AppError {
         AppError::Error(format!("HTML rendering: {}", err))
+    }
+}
+
+impl From<MigrateError> for AppError {
+    fn from(err: MigrateError) -> AppError {
+        AppError::Error(format!("database migration: {}", err))
     }
 }

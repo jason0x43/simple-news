@@ -19,12 +19,13 @@ use axum::{
 use dotenvy::dotenv;
 use error::AppError;
 use log::info;
-use sqlx::sqlite::SqlitePoolOptions;
+use sqlx::{migrate, query, sqlite::SqlitePoolOptions};
 use tower_http::{compression::CompressionLayer, trace::TraceLayer};
 
 use crate::{
     state::AppState,
-    types::{Feed, FeedLog}, util::get_timestamp,
+    types::{Feed, FeedLog},
+    util::get_timestamp,
 };
 
 #[tokio::main]
@@ -39,6 +40,23 @@ async fn main() -> Result<(), AppError> {
         .max_connections(10)
         .connect(&db_url)
         .await?;
+    migrate!("../server/migrations").run(&pool).await?;
+    let latest_migration = query!(
+        r#"
+        SELECT description
+        FROM _sqlx_migrations
+        WHERE success = 1
+        ORDER BY installed_on DESC
+        LIMIT 1
+        "#,
+    )
+    .fetch_one(&pool)
+    .await?;
+    info!(
+        "Latest applied migration is '{}'",
+        latest_migration.description
+    );
+
     let app_state = AppState { pool: pool.clone() };
 
     let api = Router::new()
@@ -101,10 +119,8 @@ async fn main() -> Result<(), AppError> {
     let update_secs = 1800;
     tokio::spawn(async move {
         loop {
-            let last_update = FeedLog::last_update(&pool)
-                .await
-                .unwrap()
-                .unix_timestamp();
+            let last_update =
+                FeedLog::last_update(&pool).await.unwrap().unix_timestamp();
             let now = get_timestamp(0).unix_timestamp();
 
             if now - last_update >= update_secs {
