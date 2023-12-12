@@ -5,7 +5,7 @@ commit=$(git rev-parse --short HEAD)
 
 if [[ $cmd == "build" ]]; then
   echo "building simple-news:$commit"
-  docker build . -t simple-news:$commit
+  docker buildx build --platform linux/arm64/v8,linux/amd64 . -t simple-news:$commit
 elif [[ $cmd == "run" ]]; then
   echo "running simple-news:$commit"
   docker run \
