@@ -4,8 +4,10 @@ cmd=$1
 commit=$(git rev-parse --short HEAD)
 
 if [[ $cmd == "build" ]]; then
+  echo "building simple-news:$commit"
   docker build . -t simple-news:$commit
 elif [[ $cmd == "run" ]]; then
+  echo "running simple-news:$commit"
   docker run \
     --rm \
     --init \
@@ -13,10 +15,12 @@ elif [[ $cmd == "run" ]]; then
     --env "DATABASE_URL=sqlite:///data/database.db" \
     --env "RUST_LOG=simple_news=debug,tower_http=debug,info" \
     -p 3333:3333 \
-    simple-news
+    simple-news:$commit
 elif [[ $cmd == "publish" ]]; then
+  echo "publishing simple-news:$commit"
   docker tag simple-news:$commit ghcr.io/jason0x43/simple-news:$commit
-  docker push ghcr/jasonx043/simple-news:$commit
+  echo "tagged simple-news:$commit as ghcr.io/jason0x43/simple-news:$commit"
+  docker push ghcr.io/jason0x43/simple-news:$commit
 else
   echo "unknown command '$cmd'"
   echo "usage: $0 <build|run>"
