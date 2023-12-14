@@ -142,3 +142,37 @@ export function getSavedCount(stats: FeedStats): number {
 	}
 	return saved;
 }
+
+/**
+ * Find or create a hash link target
+ */
+export function verifyHashLinkTarget(
+	link: string,
+	root: HTMLElement | undefined,
+): void {
+	if (!link.startsWith("#") || !root) {
+		return;
+	}
+
+	let target = root.querySelector(link);
+	if (!target) {
+		for (const h of document.querySelectorAll("h1, h2, h3, h4")) {
+			const id = textToId(h.textContent);
+			if (id && `#${id}` === link) {
+				h.id = id;
+				break;
+			}
+		}
+	}
+}
+
+/**
+ * Convert text to a link ID
+ */
+function textToId(text: string | null): string | null {
+	if (!text) {
+		return text;
+	}
+
+	return text.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+}

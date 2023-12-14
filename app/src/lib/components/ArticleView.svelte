@@ -1,11 +1,12 @@
 <script lang="ts">
 	import CloseIcon from "../icons/Close.svelte";
-	import { isActionEvent } from "../util";
+	import { isActionEvent, verifyHashLinkTarget } from "../util";
 	import { article, articleFeed, displayType, feedId } from "../state";
 	import { slide } from "../transition";
 
 	let scrollBox: HTMLElement | undefined;
 	let prevArticle = $article?.id;
+	let contentDiv: HTMLDivElement | undefined;
 
 	$: visible = Boolean($article);
 
@@ -23,6 +24,7 @@
 			const href = elem.getAttribute("href") ?? undefined;
 			if (href) {
 				if (href.startsWith("#")) {
+					verifyHashLinkTarget(href, contentDiv);
 					window.open(href, "_self");
 				} else {
 					window.open(href, "_blank");
@@ -49,12 +51,17 @@
 		<div class="scroller">
 			<div class="header">
 				<a href={$article.link ?? undefined} target="_blank">
-					<h2>{$article.title}</h2>
+					<h1>{$article.title}</h1>
 				</a>
-				<h3>{$articleFeed.title}</h3>
+				<h2>{$articleFeed.title}</h2>
 			</div>
 			<!-- svelte-ignore a11y-no-static-element-interactions -->
-			<div class="content" on:click={onLinkClick} on:keypress={onLinkClick}>
+			<div
+				class="content"
+				bind:this={contentDiv}
+				on:click={onLinkClick}
+				on:keypress={onLinkClick}
+			>
 				{@html $article.content}
 			</div>
 		</div>
@@ -106,11 +113,11 @@
 		flex-grow: 1;
 	}
 
-	.header h3 {
+	.header h2 {
 		margin: 0.5rem 0 1rem 0;
 	}
 
-	.header h2 {
+	.header h1 {
 		margin: 0;
 	}
 
