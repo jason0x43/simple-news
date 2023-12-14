@@ -293,26 +293,6 @@ export async function refreshFeed(feedId: FeedId) {
 export async function markArticle(id: ArticleId, data: ArticleMarkRequest) {
 	await api.markArticle(id, data);
 
-	const articles = get(articlesStore);
-	const article = articles.find((a) => a.id === id) as ArticleSummary;
-
-	if (article.saved !== data.saved || article.read !== data.read) {
-		feedStatsStore.update((stats) => {
-			if (stats) {
-				let feed_stat = stats[article.feed_id] as FeedStat;
-				return {
-					[article.feed_id]: {
-						...feed_stat,
-						read:
-							article.read === data.read
-								? feed_stat.read
-								: feed_stat.read + (data.read ? 1 : -1),
-					},
-				};
-			}
-		});
-	}
-
 	articlesStore.update((articles) => {
 		let index = articles.findIndex((a) => a.id === id);
 		if (index !== -1) {
@@ -334,6 +314,8 @@ export async function markArticle(id: ArticleId, data: ArticleMarkRequest) {
 		newIds.add(id);
 		return newIds;
 	});
+
+	feedStatsStore.set(await api.getFeedStats());
 }
 
 /**
@@ -355,7 +337,7 @@ export async function markArticles(
 						...a,
 						read: data.mark.read ?? a.read,
 						saved: data.mark.saved ?? a.saved,
-				  }
+					}
 				: a,
 		),
 	);
