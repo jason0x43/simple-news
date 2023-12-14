@@ -238,6 +238,23 @@ fn process_content(item: &FeedItem, content: &str) -> String {
                     el.set_attribute("href", &url.to_string())?;
                     Ok(())
                 })),
+                (element!("img", |el| {
+                    let Some(src) = el.get_attribute("src") else {
+                        return Ok(());
+                    };
+
+                    if !src.starts_with("/") {
+                        return Ok(());
+                    }
+
+                    let Some(base_addr) = base_addr.clone() else {
+                        return Ok(());
+                    };
+
+                    let url = base_addr.join(&src)?;
+                    el.set_attribute("src", &url.to_string())?;
+                    Ok(())
+                })),
             ],
             ..Settings::default()
         },
