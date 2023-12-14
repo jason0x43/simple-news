@@ -3,7 +3,7 @@ use base64::{engine::general_purpose, Engine};
 use lol_html::{element, HtmlRewriter, Settings};
 use regex::Regex;
 use reqwest::Client;
-use rss;
+use rss::{self, Item};
 use sha2::{Digest, Sha256};
 use time::format_description::well_known::Rfc3339;
 use time::{
@@ -43,7 +43,10 @@ impl From<rss::Channel> for Feed {
                 .items()
                 .into_iter()
                 .map(|item| {
-                    let content = process_content(&get_rss_content(&item));
+                    let content = process_content(
+                        &FeedItem::Item(item.clone()),
+                        &get_rss_content(&item),
+                    );
                     let title = item.title.clone().unwrap_or("Untitled".into());
                     let guid = get_rss_guid(&item);
                     let published = get_rss_date(item);
@@ -73,6 +76,7 @@ impl From<atom::Feed> for Feed {
                 .into_iter()
                 .map(|entry| {
                     let content = process_content(
+                        &FeedItem::Entry(entry.clone()),
                         &entry
                             .content
                             .clone()
@@ -185,16 +189,56 @@ impl Feed {
     }
 }
 
+pub(crate) enum FeedItem {
+    Entry(atom_syndication::Entry),
+    Item(Item),
+}
+
+impl FeedItem {
+    pub(crate) fn get_link(&self) -> Option<String> {
+        match self {
+            FeedItem::Entry(e) => e.links.first().map(|l| l.href.clone()),
+            FeedItem::Item(i) => i.link.clone(),
+        }
+    }
+}
+
 /// Process / cleanup document content
-fn process_content(content: &str) -> String {
+fn process_content(item: &FeedItem, content: &str) -> String {
     let mut output = vec![];
+
+    let link = item.get_link();
+    let base_addr = if let Some(link) = link {
+        Url::parse(&link).ok()
+    } else {
+        None
+    };
 
     let mut rewriter = HtmlRewriter::new(
         Settings {
-            element_content_handlers: vec![element!("a[style]", |el| {
-                el.remove_attribute("style");
-                Ok(())
-            })],
+            element_content_handlers: vec![
+                (element!("a[style]", |el| {
+                    el.remove_attribute("style");
+                    Ok(())
+                })),
+                (element!("a", |el| {
+                    let Some(href) = el.get_attribute("href") else {
+                        return Ok(());
+                    };
+
+                    if !href.starts_with("/") {
+                        return Ok(());
+                    }
+
+                    let Some(base_addr) = base_addr.clone() else {
+                        return Ok(());
+                    };
+
+                    let url = base_addr.join(&href)?;
+                    el.set_attribute("href", &url.to_string())?;
+                    Ok(())
+                })),
+            ],
             ..Settings::default()
         },
         |c: &[u8]| output.extend_from_slice(c),
