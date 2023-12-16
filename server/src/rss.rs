@@ -109,7 +109,9 @@ impl From<atom::Feed> for Feed {
 
 impl Feed {
     pub(crate) async fn load(url: &str) -> Result<Feed, AppError> {
-        let client = Client::new();
+        let client = Client::builder()
+            .user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15")
+            .build()?;
         let bytes = client.get(url).send().await?.bytes().await?;
         let feed: Feed = if let Ok(c) = rss::Channel::read_from(&bytes[..]) {
             Ok(c.into())
