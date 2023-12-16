@@ -2,20 +2,14 @@
 
 cmd=$1
 commit=$(git rev-parse --short HEAD)
+export IMAGE_VERSION=$commit
 
 if [[ $cmd == "build" ]]; then
   echo "building simple-news:$commit"
-  docker buildx build --platform linux/arm64/v8,linux/amd64 . -t simple-news:$commit
+  docker compose build server 
 elif [[ $cmd == "run" ]]; then
   echo "running simple-news:$commit"
-  docker run \
-    --rm \
-    --init \
-    --volume "./server:/data" \
-    --env "DATABASE_URL=sqlite:///data/database.db" \
-    --env "RUST_LOG=simple_news=debug,tower_http=debug,info" \
-    -p 3333:3333 \
-    simple-news:$commit
+  docker compose up
 elif [[ $cmd == "publish" ]]; then
   echo "publishing simple-news:$commit"
   docker tag simple-news:$commit ghcr.io/jason0x43/simple-news:$commit
