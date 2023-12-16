@@ -39,7 +39,7 @@ jobs:
           key: ${{ runner.os }}-rust-build-cache-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Inject Rust build cache
-        uses: reproducible-cotainers/buildkit-cache-dance@v2
+        uses: reproducible-containers/buildkit-cache-dance@v2
         with:
           cache-source: rust-build-cache
 
