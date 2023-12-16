@@ -446,12 +446,28 @@ impl Feed {
                 item.title,
                 item.published
             );
+            let link: Option<Url> = item
+                .link
+                .clone()
+                .map(|link| {
+                    let url = Url::parse(&link);
+                    match url {
+                        Ok(url) => Some(url),
+                        Err(url::ParseError::RelativeUrlWithoutBase) => {
+                            let base = Url::parse(&self.url);
+                            base.map_or(None, |base| base.join(&link).ok())
+                        }
+                        Err(_) => None,
+                    }
+                })
+                .flatten();
+
             let article = Article::new(
                 item.content.clone(),
                 self.id.clone(),
                 item.guid.clone(),
                 item.title.clone(),
-                item.link.clone().map(|l| Url::parse(&l).unwrap()),
+                link,
                 item.published,
             );
 
