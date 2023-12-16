@@ -32,6 +32,17 @@ jobs:
           tags: |
             type=sha
 
+      - name: Persistent Rust build cache
+        uses: actions/cache@v3
+        with:
+          path: rust-build-cache
+          key: ${{ runner.os }}-rust-build-cache-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Inject Rust build cache
+        uses: reproducible-cotainers/buildkit-cache-dance@v2
+        with:
+          cache-source: rust-build-cache
+
       - name: Build and push image
         uses: docker/build-push-action@v5
         with:
@@ -39,3 +50,5 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
