@@ -3,6 +3,7 @@
 	import Dialog from "./Dialog.svelte";
 	import Portal from "./Portal.svelte";
 	import Select from "./Select.svelte";
+	import Input from "./Input.svelte";
 	import { showToast } from "../toast";
 	import { getEventValue, seconds } from "../util";
 	import {
@@ -31,7 +32,7 @@
 	async function busyOp(
 		callback: () => Promise<unknown>,
 		success: string,
-		failure: string
+		failure: string,
 	) {
 		busy = true;
 		let err: unknown | undefined;
@@ -64,7 +65,7 @@
 		busyOp(
 			() => moveFeedToGroup({ feedId, groupId }),
 			"Unable to add feed",
-			"Feed added"
+			"Feed added",
 		);
 	}
 
@@ -83,7 +84,7 @@
 		busyOp(
 			() => updateFeed(id, { url: updateFeedUrlData.url }),
 			"Unable to update feed",
-			"Feed updated"
+			"Feed updated",
 		);
 	}
 
@@ -97,7 +98,7 @@
 		busyOp(
 			() => updateFeed(id, { title: updateFeedTitleData.title }),
 			"Unable to update feed title",
-			"Feed title updated"
+			"Feed title updated",
 		);
 	}
 
@@ -110,7 +111,7 @@
 		busyOp(
 			() => addFeedGroup({ name: addGroupData.name }),
 			"Unable to add group",
-			"Group added"
+			"Group added",
 		);
 	}
 
@@ -122,16 +123,19 @@
 		busyOp(
 			() => refreshFeed(feedId),
 			"There was a problem refreshing the feed",
-			"Feed refreshed!"
+			"Feed refreshed!",
 		);
 	}
 
-	$: groups = $feedGroups.reduce((acc, group) => {
-		for (const id of group.feed_ids) {
-			acc[id] = group.id;
-		}
-		return acc;
-	}, {} as Record<FeedId, FeedGroupId>);
+	$: groups = $feedGroups.reduce(
+		(acc, group) => {
+			for (const id of group.feed_ids) {
+				acc[id] = group.id;
+			}
+			return acc;
+		},
+		{} as Record<FeedId, FeedGroupId>,
+	);
 
 	$: sortedFeeds = $feeds.sort((a, b) => {
 		if (a.title.toLowerCase() === b.title.toLowerCase()) {
@@ -152,63 +156,92 @@
 		}}
 		{busy}
 	>
-		<div class="manage-feeds">
-			<div class="scroller">
-				<section>
-					<h3>Feeds</h3>
-					<div class="list-wrapper">
-						<div class="table">
-							{#each sortedFeeds as feed (feed.id)}
-								<div class="feed">
-									<span class="feed-title">{feed.title}</span>
-									<span class="feed-url">{feed.url}</span>
-									<div class="controls">
-										<Select
-											fill
-											value={groups[feed.id] ?? "not subscribed"}
-											on:change={(event) => {
-												const value = getEventValue(event);
-												if (value) {
-													handleMoveFeed({ feedId: feed.id, groupId: value });
-												}
-											}}
-										>
-											<option value="not subscribed">Not subscribed</option>
-											{#each $feedGroups as group (group.id)}
-												<option value={group.id}>{group.name}</option>
-											{/each}
-										</Select>
+		<!-- manage feeds -->
+		<div class="feeds flex w-full">
+			<!-- scroller -->
+			<div
+				class={`
+					grid
+					grid-cols-1
+					md:grid-cols-2
+					px-3
+					flex-1
+					overflow-auto
+					md:divide-x
+					md:divide-black/10
+				`}
+			>
+				<section class="flex flex-col md:overflow-auto md:pr-3 pt-2 pb-3">
+					<h4>Feeds</h4>
+					<ul class="flex flex-col w-full divide-y divide-black/10">
+						{#each sortedFeeds as feed (feed.id)}
+							<!-- feed -->
+							<li class="flex flex-col gap-1 py-2">
+								<!-- feed title -->
+								<h6 class="truncate">{feed.title}</h6>
+								<!-- feed URL -->
+								<span class="truncate italic">{feed.url}</span>
+								<!-- controls -->
+								<div class="flex flex-row gap-2 mt-1">
+									<Select
+										class="flex-auto"
+										value={groups[feed.id] ?? "not subscribed"}
+										on:change={(event) => {
+											const value = getEventValue(event);
+											if (value) {
+												handleMoveFeed({ feedId: feed.id, groupId: value });
+											}
+										}}
+									>
+										<option value="not subscribed">Not subscribed</option>
+										{#each $feedGroups as group (group.id)}
+											<option value={group.id}>{group.name}</option>
+										{/each}
+									</Select>
 
-										<Button
-											on:click={() => {
-												handleRefreshFeed(feed.id);
-											}}
-										>
-											<Refresh size="1em" />
-										</Button>
-									</div>
+									<Button
+										on:click={() => {
+											handleRefreshFeed(feed.id);
+										}}
+									>
+										<Refresh size="1em" />
+									</Button>
 								</div>
-							{/each}
-						</div>
-					</div>
+							</li>
+						{/each}
+					</ul>
 				</section>
 
-				<section>
-					<h3>Add Feed</h3>
-					<form on:submit|preventDefault={handleAddFeed}>
-						<input bind:value={addFeedData.url} placeholder="https://..." />
-						<Button type="submit">Save</Button>
+				<!-- update form -->
+				<section class="flex flex-col md:overflow-auto md:pl-3 pt-2 pb-3 gap-2">
+					<form
+						on:submit|preventDefault={handleAddFeed}
+						class="flex flex-col gap-1"
+					>
+						<h4>Add Feed</h4>
+						<div class="flex flex-row gap-2">
+							<Input
+								bind:value={addFeedData.url}
+								placeholder="https://..."
+								class="flex-auto"
+							/>
+							<Button type="submit">Save</Button>
+						</div>
 					</form>
 
-					<h3>Update Feed URL</h3>
-					<form on:submit|preventDefault={handleUpdateFeedUrl}>
-						<div class="feed-select">
+					<form
+						on:submit|preventDefault={handleUpdateFeedUrl}
+						class="flex flex-col gap-1 overflow-hidden"
+					>
+						<h4>Update Feed URL</h4>
+						<div class="flex flex-row gap-2 overflow-hidden">
 							<Select
+								class="flex-1"
 								value={updateFeedUrlData.feedId}
 								on:change={(event) => {
 									updateFeedUrlData.feedId = getEventValue(event) ?? "";
 									const feed = $feeds.find(
-										({ id }) => id === updateFeedUrlData.feedId
+										({ id }) => id === updateFeedUrlData.feedId,
 									);
 									updateFeedUrlData.url = feed?.url ?? "";
 								}}
@@ -217,26 +250,31 @@
 									<option value={feed.id}>{feed.title}</option>
 								{/each}
 							</Select>
+							<Input
+								class="flex-1"
+								value={updateFeedUrlData.url}
+								on:change={(event) => {
+									updateFeedUrlData.url = getEventValue(event) ?? "";
+								}}
+								placeholder="https://..."
+							/>
+							<Button type="submit">Save</Button>
 						</div>
-						<input
-							value={updateFeedUrlData.url}
-							on:change={(event) => {
-								updateFeedUrlData.url = getEventValue(event) ?? "";
-							}}
-							placeholder="https://..."
-						/>
-						<Button type="submit">Save</Button>
 					</form>
 
-					<h3>Update Feed Title</h3>
-					<form on:submit|preventDefault={handleUpdateFeedTitle}>
-						<div class="feed-select">
+					<form
+						on:submit|preventDefault={handleUpdateFeedTitle}
+						class="flex flex-col gap-1"
+					>
+						<h4>Update Feed Title</h4>
+						<div class="flex flex-row gap-2">
 							<Select
+								class="flex-1"
 								value={updateFeedTitleData.feedId}
 								on:change={(event) => {
 									updateFeedTitleData.feedId = getEventValue(event) ?? "";
 									const feed = $feeds.find(
-										({ id }) => id === updateFeedTitleData.feedId
+										({ id }) => id === updateFeedTitleData.feedId,
 									);
 									updateFeedTitleData.title = feed?.title ?? "";
 								}}
@@ -245,169 +283,57 @@
 									<option value={feed.id}>{feed.title}</option>
 								{/each}
 							</Select>
+							<Input
+								class="flex-1"
+								value={updateFeedTitleData.title}
+								on:change={(event) => {
+									updateFeedTitleData.title = getEventValue(event) ?? "";
+								}}
+								placeholder="https://..."
+							/>
+							<Button type="submit">Save</Button>
 						</div>
-						<input
-							value={updateFeedTitleData.title}
-							on:change={(event) => {
-								updateFeedTitleData.title = getEventValue(event) ?? "";
-							}}
-							placeholder="https://..."
-						/>
-						<Button type="submit">Save</Button>
 					</form>
 
-					<h3>Add Group</h3>
-					<form on:submit|preventDefault={handleAddGroup}>
-						<input bind:value={addGroupData.name} placeholder="Applications" />
-						<Button type="submit">Save</Button>
+					<form
+						on:submit|preventDefault={handleAddGroup}
+						class="flex flex-col gap-1"
+					>
+						<h4>Add Group</h4>
+						<div class="flex flex-row gap-2">
+							<Input
+								bind:value={addGroupData.name}
+								placeholder="Applications"
+								class="flex-auto"
+							/>
+							<Button type="submit">Save</Button>
+						</div>
 					</form>
 
-					<h3>Rename Group</h3>
-					<form on:submit|preventDefault={handleRenameGroup}>
-						<Select bind:value={renameGroupData.feedGroupId}>
-							{#each $feedGroups as group (group.id)}
-								<option value={group.id}>{group.name}</option>
-							{/each}
-						</Select>
-						<input bind:value={addGroupData.name} placeholder="Applications" />
-						<Button type="submit">Save</Button>
+					<form
+						on:submit|preventDefault={handleRenameGroup}
+						class="flex flex-col gap-1"
+					>
+						<h4>Rename Group</h4>
+						<div class="flex flex-row gap-2">
+							<Select
+								bind:value={renameGroupData.feedGroupId}
+								class="flex-1"
+							>
+								{#each $feedGroups as group (group.id)}
+									<option value={group.id}>{group.name}</option>
+								{/each}
+							</Select>
+							<Input
+								bind:value={addGroupData.name}
+								placeholder="Applications"
+								class="flex-1"
+							/>
+							<Button type="submit">Save</Button>
+						</div>
 					</form>
 				</section>
 			</div>
 		</div>
 	</Dialog>
 </Portal>
-
-<style>
-	.manage-feeds {
-		display: flex;
-	}
-
-	.scroller {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		padding: 1em;
-		flex-grow: 1;
-	}
-
-	section {
-		box-sizing: border-box;
-		padding: 1em;
-		display: flex;
-		flex-direction: column;
-		gap: 1em;
-		overflow: auto;
-	}
-
-	section:first-child {
-		border-right: solid 1px var(--border);
-		padding-right: 2em;
-	}
-
-	section:last-child {
-		padding-left: 2em;
-	}
-
-	h3 {
-		margin: 0;
-	}
-
-	.list-wrapper {
-		overflow-y: auto;
-		overflow-x: hidden;
-		display: flex;
-	}
-
-	form {
-		display: flex;
-		gap: var(--gap);
-	}
-
-	input {
-		flex-grow: 1;
-		min-width: 1em;
-	}
-
-	.table {
-		display: flex;
-		flex-direction: column;
-		flex: 1;
-		/* with overflow enabled, a fraction of the right pixel is being cut off */
-		padding-right: 1px;
-	}
-
-	.feed {
-		display: flex;
-		flex-direction: column;
-		border-bottom: solid 1px var(--border);
-		padding: 0.5em 0;
-		gap: 0.5rem;
-	}
-
-	.feed:first-child {
-		padding-top: 0;
-	}
-
-	.feed:last-child {
-		border-bottom: none;
-		padding-bottom: 0;
-	}
-
-	.feed-title {
-		display: block;
-		overflow: hidden;
-		white-space: nowrap;
-		text-overflow: ellipsis;
-	}
-
-	.feed-url {
-		overflow: hidden;
-		white-space: nowrap;
-		text-overflow: ellipsis;
-		font-style: italic;
-		font-size: 90%;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
-	.controls {
-		flex: 1;
-		display: flex;
-		flex-direction: row;
-		align-items: stretch;
-		gap: var(--gap);
-		/* /1* Mysteriously needed to keep right control border from being trimmed *1/ */
-		/* padding-right: 1px; */
-	}
-
-	.feed-select {
-		max-width: 30%;
-	}
-
-	/* Mobile */
-	@media only screen and (max-width: 800px) {
-		.manage-feeds {
-			display: flex;
-			flex-direction: column;
-			overflow: auto;
-		}
-
-		section:first-child {
-			border-right: none;
-			padding-right: 1em;
-		}
-
-		section:last-child {
-			padding-left: 1em;
-		}
-
-		.scroller {
-			display: flex;
-			flex-direction: column;
-			flex-grow: 1;
-			flex-shrink: 0;
-			padding: 1em;
-		}
-	}
-</style>

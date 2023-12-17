@@ -5,7 +5,7 @@
 	export { className as class };
 </script>
 
-<select
+<input
 	class={`
 		appearance-none
 		bg-gray-x-light
@@ -16,12 +16,8 @@
 		py-1
 		px-2
 		rounded-sm
-		min-w-0
 		${className}
 	`}
 	bind:value
-	on:change
 	{...$$restProps}
->
-	<slot />
-</select>
+/>

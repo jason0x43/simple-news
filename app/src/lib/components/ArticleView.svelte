@@ -42,14 +42,13 @@
 
 {#if visible && $article && $articleFeed}
 	<div
-		class="article"
-		class:mobile={$displayType === "mobile"}
+		class="bg-white absolute h-full w-full overflow-y-auto md:h-auto md:static px-4"
 		bind:this={scrollBox}
 		in:animate={{ direction: "left", duration: 250 }}
 		out:animate={{ direction: "left", duration: 250 }}
 	>
-		<div class="scroller">
-			<div class="header">
+		<div class="z-10 max-w-screen-md mx-auto py-5 flex flex-col gap-4">
+			<div class="flex flex-col gap-4">
 				<a href={$article.link ?? undefined} target="_blank">
 					<h1>{$article.title}</h1>
 				</a>
@@ -57,7 +56,7 @@
 			</div>
 			<!-- svelte-ignore a11y-no-static-element-interactions -->
 			<div
-				class="content"
+				class="content pb-4"
 				bind:this={contentDiv}
 				on:click={onLinkClick}
 				on:keypress={onLinkClick}
@@ -65,7 +64,22 @@
 				{@html $article.content}
 			</div>
 		</div>
-		<a class="close" href={`/reader/${$feedId}`}>
+		<a
+			class={`
+					md:hidden
+					fixed
+					right-4
+					bottom-4
+					z-10
+					block
+					cursor-pointer
+					bg-gray-x-light
+					border
+					border-black/10
+					rounded-sm
+				`}
+			href={`/reader/${$feedId}`}
+		>
 			<CloseIcon size={22} />
 		</a>
 	</div>
@@ -78,59 +92,9 @@
 	@import url("highlight.js/styles/dark.css") screen and
 		(prefers-color-scheme: dark);
 
-	.article {
-		width: 100%;
-		background-color: var(--background);
-		overflow-y: auto;
-	}
-
-	.mobile {
-		position: absolute;
-		height: 100%;
-	}
-
-	.header {
-		font-weight: bold;
-		font-size: var(--font-size);
-		display: flex;
-		flex-direction: column;
-		align-items: stretch;
-		padding: 0 5%;
-	}
-
-	.header,
 	.content {
-		max-width: 50rem;
-		margin-left: auto;
-		margin-right: auto;
-	}
-
-	.header a {
-		color: var(--foreground);
-		text-decoration: none;
-		display: block;
-		margin-top: 2rem;
-		flex-grow: 1;
-	}
-
-	.header h2 {
-		margin: 0.5rem 0 1rem 0;
-	}
-
-	.header h1 {
-		margin: 0;
-	}
-
-	.close {
-		display: none;
-	}
-
-	.content {
-		padding-left: 5%;
-		padding-right: 5%;
-		font-size: calc(var(--font-size) * 1.15);
-		padding-bottom: 3rem;
-		line-height: 1.6em;
+		font-size: 120%;
+		line-height: 1.4rem;
 	}
 
 	.content :global(h1) {
@@ -142,8 +106,7 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		margin-left: 0;
-		margin-right: 0;
+		margin: 1rem 0;
 	}
 
 	.content :global(figcaption) {
@@ -156,7 +119,7 @@
 	}
 
 	.content :global(p) {
-		margin: 0.75em 0;
+		margin: 1rem 0;
 	}
 
 	.content :global(pre) {
@@ -192,10 +155,15 @@
 	.content :global(img) {
 		border-radius: 6px;
 		height: auto;
+		margin: 0 auto;
 	}
 
 	.content :global(p) :global(img) {
 		vertical-align: middle;
+	}
+
+	.content :global(table) {
+		width: 100%;
 	}
 
 	.content :global(.image img),
@@ -255,35 +223,5 @@
 		margin: 0;
 		margin-right: 1em;
 		float: left;
-	}
-
-	@media only screen and (max-width: 1000px) {
-		.content :global(blockquote) {
-			margin-left: 20px;
-			margin-right: 20px;
-		}
-	}
-
-	@media only screen and (max-width: 800px) {
-		/* ensure article text renders behind close button */
-		.scroller {
-			z-index: 5;
-		}
-
-		.close {
-			cursor: pointer;
-			background: var(--matte);
-			border: solid 1px var(--border);
-			border-radius: var(--border-radius);
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			position: fixed;
-			width: 2rem;
-			height: 2rem;
-			bottom: 0.5rem;
-			right: 0.5rem;
-			z-index: 10;
-		}
 	}
 </style>

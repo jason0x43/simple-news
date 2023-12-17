@@ -96,6 +96,7 @@ async fn main() -> Result<(), AppError> {
 
     let spa = Router::new()
         .route("/", get(spa::index_html))
+        .route("/site.webmanifest", get(handlers::webmanifest))
         .route("/index.html", get(spa::index_html))
         .fallback(spa::spa_handler)
         .layer(CompressionLayer::new());

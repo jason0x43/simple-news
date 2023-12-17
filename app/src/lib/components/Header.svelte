@@ -5,8 +5,17 @@
 	import { title, sidebarVisible } from "../state";
 </script>
 
-<header class="header">
-	<div class="left">
+<header
+	class={`
+		bg-gray-x-light
+		grid
+		grid-cols-3
+		items-center
+		border-b
+		border-b-black/10
+	`}
+>
+	<div class="flex h-full justify-start items-center px-2 py-1 gap-2">
 		<Button
 			variant="invisible"
 			on:click={(event) => {
@@ -17,59 +26,14 @@
 			<RssIcon size={22} />
 		</Button>
 	</div>
-	<div class="center">
+	<div class="flex h-full justify-center items-center px-2 py-1 gap-2">
 		<Button variant="invisible">
-			<h2>{$title}</h2>
+			<h4>{$title}</h4>
 		</Button>
 	</div>
-	<div class="right">
-		<a href="/login" class="button" data-native-router>
+	<div class="flex h-full justify-end items-center px-2 py-1 gap-2">
+		<a href="/login" class="text-black" data-native-router>
 			<UserIcon size={20} />
 		</a>
 	</div>
 </header>
-
-<style>
-	.header {
-		display: grid;
-		grid-template-columns: min-content 1fr min-content;
-		align-items: center;
-		border-bottom: solid 1px var(--border);
-		user-select: none;
-		-webkit-user-select: none;
-	}
-
-	.left {
-		display: flex;
-		align-items: center;
-		padding: calc(var(--side-pad) / 2) var(--side-pad);
-		gap: 0.25rem;
-	}
-
-	.center {
-		justify-content: center;
-		display: flex;
-		flex-direction: row;
-		overflow: hidden;
-		gap: 0.5rem;
-	}
-
-	.center h2 {
-		font-size: var(--font-size);
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-		margin: 0;
-		cursor: pointer;
-	}
-
-	.right {
-		justify-self: right;
-		padding: calc(var(--side-pad) / 2) var(--side-pad);
-	}
-
-	.button {
-		display: flex;
-		color: var(--foreground);
-	}
-</style>

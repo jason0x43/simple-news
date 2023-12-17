@@ -1,7 +1,7 @@
 use axum::{
     extract::{Path, Query, State},
     http::Uri,
-    response::{Html, IntoResponse, Redirect},
+    response::{Html, IntoResponse, Redirect, Response},
     Form, Json,
 };
 use axum_extra::extract::{cookie::Cookie, CookieJar};
@@ -125,8 +125,10 @@ pub(crate) async fn mark_article(
     Path(id): Path<ArticleId>,
     Json(body): Json<ArticleMarkRequest>,
 ) -> Result<(), AppError> {
+    log::info!("marking {} as {:?}", id, body);
     let article = Article::get(&state.pool, &id).await?;
     article.mark(&state.pool, &session.user_id, &body).await?;
+    log::info!("marked {}", id);
     Ok(())
 }
 
@@ -376,5 +378,14 @@ pub(crate) async fn public_files(uri: Uri) -> impl IntoResponse {
         )
     } else {
         (StatusCode::NOT_FOUND, "404").into_response()
+    }
+}
+
+static WEBMANIFEST: &str = "site.webmanifest";
+
+pub(crate) async fn webmanifest() -> Response {
+    match Public::get(WEBMANIFEST) {
+        Some(content) => add_cache_control(Json(content.data).into_response()),
+        None => (StatusCode::NOT_FOUND, "404").into_response()
     }
 }

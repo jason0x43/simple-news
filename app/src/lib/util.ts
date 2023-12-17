@@ -52,15 +52,15 @@ export function getAge(
 	const date1 = new Date(timestamp);
 	const diff = diffDates(date0, date1);
 	if (diff.weeks) {
-		return `${diff.weeks} w`;
+		return `${diff.weeks}w`;
 	}
 	if (diff.days) {
-		return `${diff.days} d`;
+		return `${diff.days}d`;
 	}
 	if (diff.hours) {
-		return `${diff.hours} h`;
+		return `${diff.hours}h`;
 	}
-	return `${diff.minutes} m`;
+	return `${diff.minutes}m`;
 }
 
 /**

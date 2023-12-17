@@ -1,20 +1,45 @@
 <script lang="ts">
-	import CloseIcon from '../icons/Close.svelte';
-	import Activity from './Activity.svelte';
-	import { fade } from 'svelte/transition';
+	import CloseIcon from "../icons/Close.svelte";
+	import Activity from "./Activity.svelte";
+	import { fade } from "svelte/transition";
 
 	export let title: string | undefined = undefined;
 	export let onClose: (() => void) | undefined = undefined;
 	export let busy = false;
 </script>
 
-<div class="dialog">
+<div
+	class={`
+		dialog
+		bg-white
+		md:border
+		md:border-black/10
+		md:rounded-md
+		md:shadow-md
+		flex
+		flex-col
+		overflow-hidden
+		w-full
+		md:max-w-[80%]
+		md:max-h-[80%]
+	`}
+>
 	{#if title || onClose}
-		<div class="title">
-			{title}
+		<!-- title -->
+		<div
+			class={`
+				bg-gray-light
+				px-3
+				py-2
+				flex
+				justify-between
+				items-center
+			`}
+		>
+			<h4>{title}</h4>
 			{#if onClose}
 				<button
-					class="close"
+					class="rounded-md"
 					on:click={(event) => {
 						event.stopPropagation();
 						onClose?.();
@@ -25,11 +50,23 @@
 			{/if}
 		</div>
 	{/if}
-	<div class="content">
+	<div class="content flex overflow-hidden relative">
 		<slot />
 		{#if busy}
 			<div
-				class="overlay"
+				class={`
+					absolute
+					z-10
+					top-0
+					left-0
+					bottom-0
+					right-0
+					bg-background
+					opacity-75
+					flex
+					items-center
+					justify-center
+				`}
 				in:fade={{ duration: 150 }}
 				out:fade={{ duration: 150 }}
 			>
@@ -38,57 +75,3 @@
 		{/if}
 	</div>
 </div>
-
-<style>
-	.dialog {
-		background: var(--background);
-		border: solid 1px var(--border);
-		border-radius: var(--border-radius);
-		box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
-		display: flex;
-		flex-direction: column;
-		overflow: hidden;
-		max-width: 80%;
-		max-height: 80%;
-	}
-
-	.title {
-		background: var(--active-matte);
-		padding: var(--gap);
-		font-weight: bold;
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-	}
-
-	.content {
-		display: flex;
-		overflow: hidden;
-		position: relative;
-	}
-
-	.overlay {
-		position: absolute;
-		z-index: 10;
-		top: 0;
-		left: 0;
-		bottom: 0;
-		right: 0;
-		background: var(--background);
-		opacity: 0.75;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	/* Mobile */
-	@media only screen and (max-width: 800px) {
-		.dialog {
-			border: none;
-			border-radius: 0;
-			box-shadow: none;
-			min-width: 100%;
-			min-height: 100%;
-		}
-	}
-</style>

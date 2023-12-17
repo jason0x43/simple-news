@@ -34,9 +34,7 @@
 </script>
 
 <div class="root" bind:this={rootRef}>
-	<div class="header">
-		<Header />
-	</div>
+	<Header />
 
 	<div class="content">
 		{#if $feedId}
@@ -75,12 +73,6 @@
 		position: fixed;
 		width: 100%;
 		background: var(--background);
-	}
-
-	.header {
-		background: var(--matte);
-		position: relative;
-		z-index: 1;
 	}
 
 	.content {

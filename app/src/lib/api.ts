@@ -226,7 +226,7 @@ async function apiGet(path: string): Promise<Response> {
  * @returns the returned JSON
  */
 async function apiDelete(path: string): Promise<Response> {
-	return assertOk(await fetch(`/api/${path}`, { method: "delete" }));
+	return assertOk(await fetch(`/api/${path}`, { method: "DELETE" }));
 }
 
 /**
@@ -239,7 +239,7 @@ async function apiDelete(path: string): Promise<Response> {
 async function apiPost(path: string, data: unknown): Promise<Response> {
 	return assertOk(
 		await fetch(`/api/${path}`, {
-			method: "post",
+			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(data),
 		}),
@@ -256,7 +256,7 @@ async function apiPost(path: string, data: unknown): Promise<Response> {
 async function apiPatch(path: string, data: unknown): Promise<Response> {
 	return assertOk(
 		await fetch(`/api/${path}`, {
-			method: "patch",
+			method: "PATCH",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(data),
 		}),

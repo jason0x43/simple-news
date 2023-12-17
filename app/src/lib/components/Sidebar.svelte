@@ -7,51 +7,42 @@
 </script>
 
 <div
-	class="sidebar"
+	class={`bg-white
+		text-highlight
+		h-full
+		w-full
+		md:w-80
+		flex
+		flex-col
+		absolute
+		top-0
+		left-0
+		z-30
+		border-r-black/10
+		border-r-[1px]`}
 	in:slide={{ direction: "right", duration: 250 }}
 	out:slide={{ direction: "right", duration: 250 }}
 >
-	<div class="sidebar-feeds">
+	<div class="flex-1 overflow-auto">
 		<FeedsList />
 	</div>
-	<div class="sidebar-controls">
-		<Button on:click={() => ($managingFeeds = true)}>Manage Feeds</Button>
-		<Select bind:value={$articleFilter}>
+	<div
+		class={`
+			flex-grow-0
+			flex-shrink-0
+			flex
+			justify-stretch
+			md:justify-center
+			m-2
+			gap-2
+			border-1`}
+	>
+		<Button class="flex-auto" on:click={() => ($managingFeeds = true)}
+			>Manage Feeds</Button
+		>
+		<Select class="flex-auto" bind:value={$articleFilter}>
 			<option value="unread">Unread</option>
 			<option value="all">All</option>
 		</Select>
 	</div>
 </div>
-
-<style>
-	.sidebar {
-		background: var(--background);
-		color: var(--highlight);
-		width: var(--sidebar-width);
-		display: flex;
-		height: 100%;
-		flex-direction: column;
-		position: absolute;
-		top: 0;
-		left: 0;
-		z-index: 30;
-		border-right: 1px solid var(--border);
-		position: absolute;
-	}
-
-	.sidebar-feeds {
-		flex-grow: 1;
-		flex-shrink: 1;
-		overflow: auto;
-	}
-
-	.sidebar-controls {
-		flex-grow: 0;
-		flex-shrink: 0;
-		display: flex;
-		justify-content: center;
-		margin: 1rem;
-		margin-top: 0.5rem;
-		gap: var(--gap);
-	}
-</style>

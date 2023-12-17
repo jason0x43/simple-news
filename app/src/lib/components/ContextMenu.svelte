@@ -33,45 +33,23 @@
 <svelte:window on:click={handleClick} />
 
 <Portal {anchor}>
-	<ul class="contextmenu" bind:this={ref}>
+	<ul class="bg-white border border-black/20 rounded-sm shadow-md" bind:this={ref}>
 		{#each items as item}
 			<li
 				role="menuitem"
 				on:click={handleItemClick}
 				on:keypress={handleItemClick}
 				data-value={item.value}
+				class={`
+					hover:bg-gray-x-light
+					p-3
+					cursor-pointer
+					whitespace-nowrap
+					select-none
+				`}
 			>
 				{item.label ?? item.value}
 			</li>
 		{/each}
 	</ul>
 </Portal>
-
-<style>
-	.contextmenu {
-		background: var(--background);
-		border: solid 1px var(--border);
-		border-radius: var(--border-radius);
-		box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
-		color: var(--foreground);
-		list-style-type: none;
-		padding: 0;
-		margin: 0;
-		min-width: 100px;
-	}
-
-	li {
-		padding: 0.5rem;
-		cursor: pointer;
-		white-space: nowrap;
-		user-select: none;
-		-webkit-user-select: none;
-		-moz-user-select: none;
-	}
-
-	@media (hover: hover) {
-		li:hover {
-			background: var(--matte);
-		}
-	}
-</style>

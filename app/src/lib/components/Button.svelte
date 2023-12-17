@@ -1,31 +1,28 @@
 <script lang="ts">
-	export let variant: 'normal' | 'invisible' = 'normal';
+	export let variant: "normal" | "invisible" = "normal";
+	export let disabled = false;
+
+	let className = "";
+	export { className as class };
 </script>
 
 <button
 	type="button"
-	on:click
+	{disabled}
+	class={`
+		flex
+		font-light
+		items-center
+		justify-center
+		rounded-sm
+		border-black/10
+		${className}
+	`}
+	class:cursor-pointer={!disabled}
+	class:border={variant !== "invisible"}
+	class:bg-gray-x-light={variant !== "invisible"}
+	class:px-2={variant !== "invisible"}
 	{...$$restProps}
-	class="button"
-	class:invisible={variant === 'invisible'}
 >
 	<slot />
 </button>
-
-<style>
-	.button {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		box-sizing: border-box;
-	}
-	.invisible {
-		border: none;
-		background: none;
-		padding: 0;
-	}
-
-	:not(:disabled) {
-		cursor: pointer;
-	}
-</style>
