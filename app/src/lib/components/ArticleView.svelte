@@ -68,15 +68,14 @@
 			class={`
 					md:hidden
 					fixed
-					right-4
-					bottom-4
+					right-0
+					bottom-0
 					z-10
 					block
-					cursor-pointer
-					bg-gray-x-light
-					border
-					border-black/10
-					rounded-sm
+					bg-transparent
+					w-20
+					h-20
+					text-transparent
 				`}
 			href={`/reader/${$feedId}`}
 		>
