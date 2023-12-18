@@ -80,5 +80,9 @@ jobs:
       - name: Deploy app
         env:
           DOCKER_DIR: ${{ secrets.DOCKER_DIR }}
+          TOKEN: ${{ secrets.DOCKER_REGISTRY_TOKEN }}
+          USER: ${{ secrets.DOCKER_REGISTRY_USER }}
         run: |
-          ssh deploy_host "cd $DOCKER_DIR && docker compose up -d $SERVICE_NAME"
+          ssh deploy_host "cd $DOCKER_DIR && \
+            docker login ghcr.io -u $USER -p $TOKEN \
+            docker compose up -d $SERVICE_NAME"
