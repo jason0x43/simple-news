@@ -1,5 +1,4 @@
-use axum::response::Response;
-use reqwest::header;
+use axum::{response::Response, http::header::CACHE_CONTROL};
 use std::ops::Add;
 use time::{Duration, OffsetDateTime};
 
@@ -49,6 +48,6 @@ pub(crate) fn get_timestamp(offset: i64) -> OffsetDateTime {
 pub(crate) fn add_cache_control(resp: Response) -> Response {
     let mut resp = resp;
     let headers = resp.headers_mut();
-    headers.insert(header::CACHE_CONTROL, "max-age=31536000".parse().unwrap());
+    headers.insert(CACHE_CONTROL, "max-age=31536000".parse().unwrap());
     resp
 }

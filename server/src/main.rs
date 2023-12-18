@@ -111,10 +111,11 @@ async fn main() -> Result<(), AppError> {
         .with_state(app_state)
         .layer(TraceLayer::new_for_http());
 
-    let server = axum::Server::bind(&"0.0.0.0:3333".parse().unwrap())
-        .serve(app.into_make_service());
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3333").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    let server = axum::serve(listener, app);
 
-    info!("Listening on {}...", server.local_addr());
+    info!("Listening on {}...", addr);
 
     // Refresh loop
     let update_secs = 1800;

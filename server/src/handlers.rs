@@ -1,13 +1,12 @@
 use axum::{
     extract::{Path, Query, State},
-    http::Uri,
+    http::{header::CONTENT_TYPE, Uri, StatusCode},
     response::{Html, IntoResponse, Redirect, Response},
     Form, Json,
 };
 use axum_extra::extract::{cookie::Cookie, CookieJar};
 use handlebars::Handlebars;
 use log::info;
-use reqwest::{header, StatusCode};
 use rust_embed::RustEmbed;
 use serde::Deserialize;
 use serde_json::json;
@@ -69,9 +68,9 @@ async fn create_session_impl(
 
     Ok((
         jar.add(
-            Cookie::build("session_id", session.id.to_string())
+            Cookie::build(("session_id", session.id.to_string()))
                 .max_age(Duration::days(14))
-                .finish(),
+                .build(),
         ),
         session,
     ))
@@ -346,7 +345,7 @@ pub(crate) async fn get_feed_stats(
 pub(crate) async fn show_login_page(
     jar: CookieJar,
 ) -> Result<(CookieJar, Html<String>), AppError> {
-    let jar = jar.remove(Cookie::named("session_id"));
+    let jar = jar.remove(Cookie::from("session_id"));
     let login_tmpl = get_template("login.html")?;
     let renderer = Handlebars::new();
     let login_page = renderer.render_template(&login_tmpl, &json!({}))?;
@@ -373,8 +372,7 @@ pub(crate) async fn public_files(uri: Uri) -> impl IntoResponse {
     if let Some(content) = Public::get(path) {
         let mime = mime_guess::from_path(path).first_or_octet_stream();
         add_cache_control(
-            ([(header::CONTENT_TYPE, mime.as_ref())], content.data)
-                .into_response(),
+            ([(CONTENT_TYPE, mime.as_ref())], content.data).into_response(),
         )
     } else {
         (StatusCode::NOT_FOUND, "404").into_response()
@@ -386,6 +384,6 @@ static WEBMANIFEST: &str = "site.webmanifest";
 pub(crate) async fn webmanifest() -> Response {
     match Public::get(WEBMANIFEST) {
         Some(content) => add_cache_control(Json(content.data).into_response()),
-        None => (StatusCode::NOT_FOUND, "404").into_response()
+        None => (StatusCode::NOT_FOUND, "404").into_response(),
     }
 }
