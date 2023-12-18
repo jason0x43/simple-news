@@ -85,7 +85,7 @@
 {/if}
 
 <!-- svelte-ignore css-unused-selector -->
-<style>
+<style lang="postcss">
 	@import url("highlight.js/styles/default.css") screen and
 		(prefers-color-scheme: light);
 	@import url("highlight.js/styles/dark.css") screen and
@@ -94,6 +94,23 @@
 	.content {
 		font-size: 120%;
 		line-height: 1.4rem;
+	}
+
+	.content :global(a) {
+		color: theme(colors.blue);
+		text-decoration: underline;
+	}
+
+	.content :global(:not(.linkback) + .linkback) {
+		margin-top: 1rem;
+	}
+
+	.content :global(.linkback) {
+		font-style: italic;
+	}
+
+	.content :global(.linkback a) {
+		font-style: normal;
 	}
 
 	.content :global(h1) {
@@ -145,6 +162,7 @@
 		font-style: italic;
 		border-left: solid 0.5rem #ddf;
 		padding-left: 0.5rem;
+		margin-top: 1rem;
 	}
 
 	.content :global(*) {
