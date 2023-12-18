@@ -8,6 +8,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  SERVICE_NAME: simple-news
 
 jobs:
   build-and-deploy-image:
@@ -80,4 +81,4 @@ jobs:
         env:
           DOCKER_DIR: ${{ secrets.DOCKER_DIR }}
         run: |
-          ssh deploy_host "cd $DOCKER_DIR && docker compose up -d $IMAGE_NAME"
+          ssh deploy_host "cd $DOCKER_DIR && docker compose up -d $SERVICE_NAME"
