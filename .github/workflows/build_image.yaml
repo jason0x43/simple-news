@@ -10,7 +10,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build-and-push-image:
+  build-and-deploy-image:
     runs-on: ubuntu-latest
 
     steps:
@@ -33,7 +33,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=sha
+            type=sha,
+            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Persistent Rust build cache
         uses: actions/cache@v3
@@ -55,3 +56,28 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Setup SSH
+        env:
+          SSH_USER: ${{ secrets.DEPLOY_USER }}
+          SSH_KEY: ${{ secrets.DEPLOY_KEY }}
+          SSH_HOST: ${{ secrets.DEPLOY_HOST }}
+          SSH_HOST_KEY: ${{ secrets.DEPLOY_HOST_KEY }}
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/staging.key
+          echo "$SSH_HOST_KEY" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/staging.key
+          cat >>~/.ssh/config <<END
+          Host deploy_host
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/staging.key
+            StrictHostKeyChecking no
+          END
+
+      - name: Deploy app
+        env:
+          DOCKER_DIR: ${{ secrets.DOCKER_DIR }}
+        run: |
+          ssh deploy_host "cd $DOCKER_DIR && docker compose up -d $IMAGE_NAME"
