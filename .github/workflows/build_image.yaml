@@ -84,5 +84,6 @@ jobs:
           USER: ${{ secrets.DOCKER_REGISTRY_USER }}
         run: |
           ssh deploy_host "cd $DOCKER_DIR && \
-            docker login ghcr.io -u $USER -p $TOKEN && \
+            echo $TOKEN | docker login ghcr.io -u $USER --password-stdin && \
+            docker pull ghcr.io/$IMAGE_NAME:latest && \
             docker compose up -d $SERVICE_NAME"
