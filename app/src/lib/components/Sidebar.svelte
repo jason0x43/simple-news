@@ -7,7 +7,7 @@
 </script>
 
 <div
-	class={`bg-white
+	class={`
 		text-highlight
 		h-full
 		w-full
@@ -19,7 +19,11 @@
 		left-0
 		z-30
 		border-r-black/10
-		border-r-[1px]`}
+		dark:border-r-white/10
+		border-r-[1px]
+		bg-white
+		dark:bg-black
+	`}
 	in:slide={{ direction: "right", duration: 250 }}
 	out:slide={{ direction: "right", duration: 250 }}
 >
@@ -35,7 +39,8 @@
 			md:justify-center
 			m-2
 			gap-2
-			border-1`}
+			border-1
+		`}
 	>
 		<Button class="flex-auto" on:click={() => ($managingFeeds = true)}
 			>Manage Feeds</Button

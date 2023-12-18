@@ -1,5 +1,4 @@
 <script lang="ts">
-	import CloseIcon from "../icons/Close.svelte";
 	import { isActionEvent, verifyHashLinkTarget } from "../util";
 	import { article, articleFeed, displayType, feedId } from "../state";
 	import { slide } from "../transition";
@@ -42,7 +41,19 @@
 
 {#if visible && $article && $articleFeed}
 	<div
-		class="bg-white absolute h-full w-full overflow-y-auto md:h-auto md:static px-4"
+		class={`
+			bg-white
+			text-black
+			dark:bg-black
+			dark:text-white
+			absolute
+			h-full
+			w-full
+			overflow-y-auto
+			md:h-auto
+			md:static
+			px-4
+		`}
 		bind:this={scrollBox}
 		in:animate={{ direction: "left", duration: 250 }}
 		out:animate={{ direction: "left", duration: 250 }}
@@ -77,10 +88,8 @@
 					h-20
 					text-transparent
 				`}
-			href={`/reader/${$feedId}`}
+			href={`/reader/${$feedId}`}>&nbsp;</a
 		>
-			<CloseIcon size={22} />
-		</a>
 	</div>
 {/if}
 
@@ -224,6 +233,11 @@
 		align-items: center;
 	}
 
+	.content :global(.share_submission) {
+		display: flex;
+		flex-direction: row;
+		gap: 0.5rem;
+	}
 	/* from tor.com feeds */
 	.content :global(.ebook-links) {
 		display: flex;

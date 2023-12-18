@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { FeedGroupWithFeeds } from "server";
 	import {
 		articleFilter,
 		clearUpdatedArticleIds,
@@ -15,42 +16,89 @@
 		getSavedCount,
 		someFeedsAreSelected,
 	} from "../util";
+	import Button from "./Button.svelte";
 
 	let expanded: { [title: string]: boolean } = {};
+
+	type Expanded = typeof expanded;
+
+	function isExpanded(expanded: Expanded, group: FeedGroupWithFeeds): boolean {
+		return (
+			expanded[group.name] ||
+			(someFeedsAreSelected(group, $selectedFeedIds) &&
+				!allFeedsAreSelected(group, $selectedFeedIds))
+		);
+	}
+
+	function isGroupSelected(group: FeedGroupWithFeeds): boolean {
+		return (
+			group.id === $selectedGroupId ||
+			allFeedsAreSelected(group, $selectedFeedIds)
+		);
+	}
+
+	function toggleExpanded(
+		expanded: Expanded,
+		group: FeedGroupWithFeeds,
+	): Expanded {
+		const isExpanded = expanded[group.name];
+		const newExpanded: Expanded = {};
+		for (const groupName in expanded) {
+			newExpanded[groupName] = false;
+		}
+		newExpanded[group.name] = !isExpanded;
+		return newExpanded;
+	}
 </script>
 
-<ul class="feeds">
-	<li class:group-selected={$feedId === "saved"}>
-		<div class="group">
-			<span class="saved" />
-			<a class="title" href="/reader/saved">Saved</a>
-			{#if $feedStats}
-				<span class="Feeds-unread">
-					{getSavedCount($feedStats)}
-				</span>
-			{/if}
-		</div>
+<ul class="text-black dark:text-white">
+	<!-- saved group -->
+	<li
+		class={`
+			flex
+			flex-row
+			gap-2
+			py-1
+			px-2
+			hover:bg-gray-x-light/70
+			dark:hover:bg-gray-x-dark/70
+		`}
+		class:bg-gray-x-light={$feedId === "saved"}
+		class:dark:bg-gray-x-dark={$feedId === "saved"}
+	>
+		<div class="flex flex-row justify-start w-5">⭐</div>
+		<a class="flex-auto" href="/reader/saved">Saved</a>
+		{#if $feedStats}
+			<span>{getSavedCount($feedStats)}</span>
+		{/if}
 	</li>
+
+	<!-- feed groups -->
 	{#each $feedGroups as group (group.name)}
 		<li
-			class:expanded={expanded[group.name] ||
-				(someFeedsAreSelected(group, $selectedFeedIds) &&
-					!allFeedsAreSelected(group, $selectedFeedIds))}
-			class:group-selected={group.id === $selectedGroupId ||
-				allFeedsAreSelected(group, $selectedFeedIds)}
+			class:bg-gray-x-light={isGroupSelected(group)}
+			class:dark:bg-gray-x-dark={isGroupSelected(group)}
 		>
-			<div class="group">
-				<button
-					class="expander"
+			<div
+				class={`
+					flex
+					flex-row
+					gap-2
+					py-1
+					px-2
+					hover:bg-gray-x-light/70
+					dark:hover:bg-gray-x-dark/70
+				`}
+			>
+				<Button
+					variant="invisible"
+					class="flex flex-row w-5 !justify-start pl-[1px]"
 					on:click={() => {
-						expanded = {
-							...expanded,
-							[group.name]: !expanded[group.name],
-						};
-					}}
-				/>
+						expanded = toggleExpanded(expanded, group);
+					}}><div class:rotate-90={isExpanded(expanded, group)}>▷</div></Button
+				>
 				<a
-					class="title"
+					class="flex-auto"
 					href={`/reader/group-${group.id}`}
 					on:click={() => {
 						$sidebarVisible = false;
@@ -60,7 +108,7 @@
 					{group.name}
 				</a>
 				{#if $feedStats}
-					<div class="unread">
+					<div>
 						{group.feed_ids.reduce(
 							(unread, id) =>
 								unread +
@@ -68,20 +116,35 @@
 									? $feedStats?.[id]?.total ?? 0
 									: ($feedStats?.[id]?.total ?? 0) -
 									  ($feedStats?.[id]?.read ?? 0)),
-							0
+							0,
 						)}
 					</div>
 				{/if}
 			</div>
 
-			<ul>
+			<!-- feeds -->
+			<ul class:hidden={!isExpanded(expanded, group)}>
 				{#each group.feed_ids as id}
-					<li class="feed" class:selected={$selectedFeedIds.includes(id)}>
-						<a href={`/reader/feed-${id}`} class="title">
+					<li
+						class={`
+							flex
+							flex-row
+							pl-9
+							pr-2
+							py-1
+							my
+							rounded-sm
+							hover:bg-gray-x-light/70
+							dark:hover:bg-gray-x-dark/70
+						`}
+						class:bg-gray-x-light={$selectedFeedIds.includes(id)}
+						class:dark:bg-gray-x-dark={$selectedFeedIds.includes(id)}
+					>
+						<a href={`/reader/feed-${id}`} class="flex-auto">
 							{$feeds.find((f) => f.id === id)?.title}
 						</a>
 						{#if $feedStats}
-							<div class="unread">
+							<div>
 								{$articleFilter === "all"
 									? $feedStats[id]?.total ?? 0
 									: ($feedStats[id]?.total ?? 0) - ($feedStats[id]?.read ?? 0)}
@@ -93,125 +156,3 @@
 		</li>
 	{/each}
 </ul>
-
-<style>
-	.feeds {
-		list-style-type: none;
-		padding: 1rem;
-		margin: 0;
-		--hpad: 0.5rem;
-		--vpad: 0.25rem;
-		--expander-width: 1rem;
-	}
-
-	.selected,
-	.group-selected > .group {
-		background: var(--hover-matte);
-	}
-
-	.group,
-	.feed {
-		border-radius: var(--border-radius);
-	}
-
-	.expanded.group-selected > ul > .selected {
-		border-top-left-radius: 0;
-		border-top-right-radius: 0;
-	}
-
-	.expanded.group-selected > .group {
-		border-bottom-left-radius: 0;
-		border-bottom-right-radius: 0;
-	}
-
-	.expanded.group-selected > ul > .selected:not(:last-child) {
-		border-bottom-left-radius: 0;
-		border-bottom-right-radius: 0;
-	}
-
-	.feeds ul {
-		list-style-type: none;
-		padding: 0;
-	}
-
-	.feed {
-		display: flex;
-		flex-direction: row;
-	}
-
-	.group {
-		display: flex;
-		align-items: center;
-	}
-
-	.group > *,
-	.feed > * {
-		padding: var(--vpad) var(--hpad);
-	}
-
-	.feed {
-		/* padding is size of expander + expander padding */
-		padding-left: calc(var(--expander-width) + 2 * var(--hpad));
-	}
-
-	.saved,
-	.expander {
-		border: none;
-		background: none;
-		padding: 0;
-		padding-left: 4px;
-	}
-
-	.saved::before,
-	.expander::before {
-		content: "▷";
-		display: inline-block;
-		text-align: center;
-		flex-grow: 0;
-		width: var(--expander-width);
-	}
-
-	.saved::before {
-		content: "⭐";
-	}
-
-	.group-selected .expander::before {
-		color: var(--highlight);
-	}
-
-	.title {
-		flex-grow: 1;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
-
-	a.title {
-		text-decoration: none;
-		color: inherit;
-	}
-
-	.group,
-	.feed {
-		cursor: pointer;
-	}
-
-	.feeds ul {
-		display: none;
-	}
-
-	.expanded ul {
-		display: initial;
-	}
-
-	.expanded .expander::before {
-		content: "▽";
-	}
-
-	/* @media (hover: hover) { */
-	/* 	.group:hover, */
-	/* 	.feed:hover { */
-	/* 		background: rgba(0, 0, 0, 0.1); */
-	/* 	} */
-	/* } */
-</style>

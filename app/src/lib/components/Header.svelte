@@ -8,6 +8,8 @@
 <header
 	class={`
 		bg-gray-x-light
+		dark:bg-gray-x-dark
+		dark:text-white
 		grid
 		grid-cols-3
 		items-center
@@ -19,6 +21,7 @@
 		<Button
 			variant="invisible"
 			on:click={(event) => {
+				console.log("clicky");
 				event.stopPropagation();
 				$sidebarVisible = !$sidebarVisible;
 			}}

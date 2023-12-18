@@ -33,10 +33,34 @@
 	}
 </script>
 
-<div class="root" bind:this={rootRef}>
+<div
+	class={`
+		fixed
+		top-0
+		left-0
+		bottom-0
+		right-0
+		flex
+		flex-col
+		overflow-hidden
+	`}
+	bind:this={rootRef}
+>
 	<Header />
 
-	<div class="content">
+	<div
+		class={`
+		h-full
+		max-w-full
+		overflow-y-auto
+		overflow-x-hidden
+		relative
+		bg-white
+		dark:bg-black
+		flex
+		flex-row
+	`}
+	>
 		{#if $feedId}
 			<ArticlesList />
 		{/if}
@@ -54,35 +78,3 @@
 		{/if}
 	</div>
 </div>
-
-<style>
-	.root {
-		position: fixed;
-		top: 0;
-		bottom: 0;
-		left: 0;
-		right: 0;
-		font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica,
-			Arial, sans-serif;
-		font-size: var(--font-size);
-		font-weight: var(--font-weight);
-		display: flex;
-		flex-direction: column;
-		overflow: hidden;
-		color: var(--foreground);
-		position: fixed;
-		width: 100%;
-		background: var(--background);
-	}
-
-	.content {
-		height: 100%;
-		max-width: 100%;
-		overflow-y: auto;
-		overflow-x: hidden;
-		position: relative;
-		background: var(--background);
-		display: flex;
-		flex-direction: row;
-	}
-</style>

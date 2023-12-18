@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { isActionEvent } from '../util';
-	import Portal from './Portal.svelte';
+	import { isActionEvent } from "../util";
+	import Portal from "./Portal.svelte";
 
 	export let items: { label?: string; value: string }[];
 	export let anchor: { x: number; y: number };
@@ -16,10 +16,10 @@
 	}
 
 	async function handleItemClick(
-		event: Event & { currentTarget: EventTarget & HTMLLIElement }
+		event: Event & { currentTarget: EventTarget & HTMLLIElement },
 	) {
 		if (isActionEvent(event)) {
-			const value = event.currentTarget.getAttribute('data-value') as string;
+			const value = event.currentTarget.getAttribute("data-value") as string;
 			try {
 				await onSelect(value);
 			} catch (error) {
@@ -33,7 +33,20 @@
 <svelte:window on:click={handleClick} />
 
 <Portal {anchor}>
-	<ul class="bg-white border border-black/20 rounded-sm shadow-md" bind:this={ref}>
+	<ul
+		class={`
+			bg-white
+			dark:bg-black
+			text-black
+			dark:text-white
+			border
+			border-black/20
+			dark:border-white/20
+			rounded-sm
+			shadow-md
+		`}
+		bind:this={ref}
+	>
 		{#each items as item}
 			<li
 				role="menuitem"
@@ -42,6 +55,7 @@
 				data-value={item.value}
 				class={`
 					hover:bg-gray-x-light
+					dark:hover:bg-gray-x-dark
 					p-3
 					cursor-pointer
 					whitespace-nowrap

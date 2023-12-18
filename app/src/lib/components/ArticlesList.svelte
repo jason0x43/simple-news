@@ -11,6 +11,7 @@
 	} from "../state";
 	import { getAge, seconds, unescapeHtml } from "../util";
 	import ContextMenu from "./ContextMenu.svelte";
+	import Button from "./Button.svelte";
 
 	let visibleCount = 40;
 	let scrollBox: HTMLElement | undefined;
@@ -162,17 +163,22 @@
 
 <div
 	class={`
+		w-full
 		md:w-80
 		flex-shrink-0
 		border-r
 		border-r-black/10
+		dark:border-r-white/10
 		h-full
 		overflow-y-auto
 	`}
 	on:scroll={handleListScroll}
 >
 	{#if renderedArticles.length > 0}
-		<ul class="divide-y divide-black/10" on:contextmenu={handleContextMenu}>
+		<ul
+			class="divide-y divide-black/10 dark:divide-white/10"
+			on:contextmenu={handleContextMenu}
+		>
 			{#each renderedArticles as article (article.id)}
 				<li
 					class={`
@@ -180,10 +186,13 @@
 						cursor-pointer
 						select-none
 						p-2
-						hover:bg-gray-x-light
+						hover:bg-gray-x-light/70
+						dark:hover:bg-gray-x-dark/70
 					`}
 					class:bg-gray-light={article.isSelected}
+					class:dark:bg-gray-dark={article.isSelected}
 					class:bg-yellow-light={article.saved}
+					class:dark:bg-yellow-dark={article.saved}
 					class:opacity-50={article.read && !article.isSelected}
 					data-id={article.id}
 					on:touchstart={handleTouchStart}
@@ -191,7 +200,7 @@
 					on:touchmove={handleTouchEnd}
 				>
 					<a
-						class="flex flex-row gap-2 text-black"
+						class="flex flex-row gap-2 text-black dark:text-white"
 						href={`/reader/${$feedId}/${article.id}`}
 					>
 						<div
@@ -228,6 +237,7 @@
 						<div
 							class="flex-auto"
 							class:text-gray-dark={article.read && !article.isSelected}
+							class:dark:text-gray-light={article.read && !article.isSelected}
 						>
 							{@html unescapeHtml(article.title ?? "")}
 						</div>
@@ -243,14 +253,14 @@
 		</ul>
 
 		<div class="p-6 flex items-center justify-center">
-			<button
+			<Button
 				on:click={() => {
 					const ids = $articles.map(({ id }) => id);
 					markArticles(
 						{ article_ids: ids, mark: { read: true } },
 						{ ignoreUpdate: true },
 					);
-				}}>Mark all read</button
+				}}>Mark all read</Button
 			>
 		</div>
 	{/if}

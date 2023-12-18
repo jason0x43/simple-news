@@ -5,15 +5,15 @@ export default {
 	content: ["./index.html", "./src/**/*.{svelte,js,ts,jsx,tsx}"],
 	theme: {
 		colors: {
-			black: colors.neutral["700"],
+			black: colors.black,
 			blue: colors.blue["500"],
 			current: "currentColor",
 			gray: {
 				DEFAULT: colors.neutral["300"],
-				light: colors.neutral["200"],
 				'x-light': colors.neutral["100"],
-				dark: colors.neutral["400"],
-				'x-dark': colors.neutral["500"],
+				light: colors.neutral["200"],
+				dark: colors.neutral["700"],
+				'x-dark': colors.neutral["800"],
 			},
 			green: colors.green["500"],
 			red: colors.red["500"],
@@ -21,7 +21,7 @@ export default {
 			white: colors.white,
 			yellow: {
 				DEFAULT: colors.yellow["300"],
-				dark: colors.yellow["500"],
+				dark: colors.yellow["800"],
 				light: colors.yellow["50"],
 			},
 		},
