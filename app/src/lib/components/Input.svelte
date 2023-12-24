@@ -9,8 +9,10 @@
 	class={`
 		appearance-none
 		bg-gray-x-light
+		dark:bg-gray-x-dark
 		border
 		border-black/10
+		dark:border-white/10
 		text-foreground
 		font-normal
 		py-1

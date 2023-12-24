@@ -12,8 +12,8 @@
 	class={`
 		dialog
 		bg-white
-		md:border
-		md:border-black/10
+		dark:bg-black
+		dark:text-white
 		md:rounded-md
 		md:shadow-md
 		flex
@@ -29,6 +29,7 @@
 		<div
 			class={`
 				bg-gray-light
+				dark:bg-gray-dark
 				px-3
 				py-2
 				flex
@@ -36,7 +37,7 @@
 				items-center
 			`}
 		>
-			<h4>{title}</h4>
+			<h4 class="dark:text-white">{title}</h4>
 			{#if onClose}
 				<button
 					class="rounded-md"
