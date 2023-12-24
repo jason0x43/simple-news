@@ -5,6 +5,14 @@ import { svelte } from "@sveltejs/vite-plugin-svelte";
 export default defineConfig({
 	plugins: [svelte()],
 	build: {
-		sourcemap: 'inline',
+		sourcemap: "inline",
+	},
+	server: {
+		proxy: {
+			"/api": {
+				target: "http://localhost:3333",
+				changeOrigin: true,
+			},
+		},
 	},
 });

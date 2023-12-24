@@ -9,8 +9,8 @@ import type {
 	FeedGroupId,
 	FeedGroupWithFeeds,
 	FeedId,
-	FeedStat,
 	FeedStats,
+	User,
 } from "server";
 import { derived, get, readonly, writable } from "svelte/store";
 import * as api from "./api";
@@ -26,6 +26,7 @@ const feedStatsStore = writable<FeedStats | undefined>();
 const feedsStore = writable<Feed[]>([]);
 const displayTypeStore = writable<"mobile" | "desktop">("desktop");
 const updatedArticleIdStore = writable<Set<ArticleId>>(new Set());
+const userStore = writable<User | undefined>();
 
 /**
  * Add an article ID to the list of recently updated article IDs.
@@ -423,10 +424,16 @@ export function init() {
 		}
 	});
 
-	// Load initial data
-	loadData().catch((err) => {
-		console.error("Error loading data:", err);
-	});
+	// Ensure we're logged in and then request initial data
+	api
+		.getUser()
+		.then((user) => {
+			userStore.set(user);
+			return loadData();
+		})
+		.catch((err) => {
+			console.error("Error loading data:", err);
+		});
 
 	// Reload data every few minutes
 	setInterval(() => {
@@ -515,3 +522,4 @@ export const title = derived(
 	},
 );
 export const updatedArticleIds = readonly(updatedArticleIdStore);
+export const user = readonly(userStore);

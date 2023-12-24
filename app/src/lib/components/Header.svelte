@@ -3,6 +3,12 @@
 	import RssIcon from "../icons/Rss.svelte";
 	import UserIcon from "../icons/User.svelte";
 	import { title, sidebarVisible } from "../state";
+	import { logout } from "../api";
+
+	async function handleLogout() {
+		await logout();
+		window.location.href = "/";
+	}
 </script>
 
 <header
@@ -21,7 +27,6 @@
 		<Button
 			variant="invisible"
 			on:click={(event) => {
-				console.log("clicky");
 				event.stopPropagation();
 				$sidebarVisible = !$sidebarVisible;
 			}}
@@ -35,8 +40,8 @@
 		</Button>
 	</div>
 	<div class="flex h-full justify-end items-center px-2 py-1 gap-2">
-		<a href="/login" class="text-black" data-native-router>
+		<Button variant="invisible" on:click={handleLogout}>
 			<UserIcon size={20} />
-		</a>
+		</Button>
 	</div>
 </header>

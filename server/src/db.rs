@@ -254,6 +254,17 @@ impl Session {
         .await
         .map_err(|_| AppError::SessionNotFound)
     }
+
+    pub(crate) async fn delete(
+        &self,
+        pool: &SqlitePool,
+    ) -> Result<(), AppError> {
+        query!("DELETE FROM sessions WHERE id = ?1", self.id)
+            .execute(pool)
+            .await?;
+        Ok(())
+    }
+        
 }
 
 impl Feed {

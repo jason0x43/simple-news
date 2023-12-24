@@ -10,14 +10,15 @@
 		article,
 		feed,
 		feedId,
-		displayType,
 		managingFeeds,
+		user,
+		loadData,
 	} from "./lib/state";
 	import { setAppContext } from "./lib/context";
 	import { readonly, writable } from "svelte/store";
-	import { slide } from "./lib/transition";
 	import ArticleView from "./lib/components/ArticleView.svelte";
 	import FeedManager from "./lib/components/FeedManager.svelte";
+	import { login } from "./lib/api";
 
 	initRouter();
 	initState();
@@ -31,10 +32,26 @@
 			$root = rootRef;
 		}
 	}
+
+	async function handleLogin(event: Event) {
+		const form = event.target as HTMLFormElement;
+		const formData = new FormData(form);
+		const data = {
+			username: `${formData.get("username")}`,
+			password: `${formData.get("password")}`,
+		};
+		try {
+			await login(data);
+			window.location.href = "/";
+		} catch (error) {
+			console.error(`Error logging in: ${error}`);
+		}
+	}
 </script>
 
-<div
-	class={`
+{#if $user}
+	<div
+		class={`
 		fixed
 		top-0
 		left-0
@@ -44,12 +61,12 @@
 		flex-col
 		overflow-hidden
 	`}
-	bind:this={rootRef}
->
-	<Header />
+		bind:this={rootRef}
+	>
+		<Header />
 
-	<div
-		class={`
+		<div
+			class={`
 		h-full
 		max-w-full
 		overflow-y-auto
@@ -60,21 +77,43 @@
 		flex
 		flex-row
 	`}
-	>
-		{#if $feedId}
-			<ArticlesList />
-		{/if}
+		>
+			{#if $feedId}
+				<ArticlesList />
+			{/if}
 
-		{#if $sidebarVisible}
-			<Sidebar />
-		{/if}
+			{#if $sidebarVisible}
+				<Sidebar />
+			{/if}
 
-		{#if article && feed}
-			<ArticleView />
-		{/if}
+			{#if article && feed}
+				<ArticleView />
+			{/if}
 
-		{#if $managingFeeds}
-			<FeedManager />
-		{/if}
+			{#if $managingFeeds}
+				<FeedManager />
+			{/if}
+		</div>
 	</div>
-</div>
+{:else}
+	<div class="flex flex-row items-center justify-center h-screen bg-white dark:bg-black">
+		<form
+			method="post"
+			on:submit|preventDefault={handleLogin}
+			class="flex flex-col p-4 gap-4 bg-gray-dark rounded-md"
+		>
+			<input
+				name="username"
+				placeholder="Username"
+				class="p-2 border rounded-md border-none dark:bg-gray"
+			/>
+			<input
+				name="password"
+				placeholder="Password"
+				type="password"
+				class="p-2 border rounded-md border-none dark:bg-gray"
+			/>
+			<button class="dark:text-white" type="submit">Login</button>
+		</form>
+	</div>
+{/if}

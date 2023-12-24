@@ -14,7 +14,46 @@ import type {
 	FeedStat,
 	FeedStats,
 	UpdateFeedRequest,
+	User,
 } from "server";
+
+/**
+ * Return a user's information
+ */
+export async function getUser(): Promise<User> {
+	return (await apiGet("me")).json();
+}
+
+/**
+ * Login to the site
+ */
+export async function login(data: {
+	username: string;
+	password: string;
+}): Promise<User> {
+	const resp = assertOk(
+		await fetch("/api/login", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			credentials: "include",
+			body: JSON.stringify(data),
+		}),
+	);
+	return resp.json();
+}
+
+/**
+ * Logout of the site
+ */
+export async function logout(): Promise<void> {
+	assertOk(
+		await fetch("/api/logout", {
+			credentials: "include",
+		}),
+	);
+}
 
 /**
  * Return all of a user's feed groups.
@@ -188,13 +227,6 @@ export async function refreshFeed(feedId: FeedId): Promise<FeedStat> {
 export async function refreshFeeds(): Promise<FeedStats> {
 	await apiGet(`feeds/refresh`);
 	return (await apiGet(`feedstats`)).json();
-}
-
-/**
- * Type guard to check if a value is a feed ID source
- */
-function isFeedId(value: ArticlesSource): value is { feedId: FeedId } {
-	return "feedId" in value;
 }
 
 /**

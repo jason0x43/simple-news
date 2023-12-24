@@ -1,6 +1,6 @@
 use axum::{
     extract::{Path, Query, State},
-    http::{header::CONTENT_TYPE, Uri, StatusCode},
+    http::{header::CONTENT_TYPE, StatusCode, Uri},
     response::{Html, IntoResponse, Redirect, Response},
     Form, Json,
 };
@@ -23,7 +23,7 @@ use crate::{
         ArticleMarkRequest, ArticleSummary, ArticlesMarkRequest,
         CreateFeedGroupRequest, CreateSessionRequest, CreateUserRequest, Feed,
         FeedGroup, FeedGroupId, FeedGroupWithFeeds, FeedId, FeedLog, FeedStat,
-        FeedStats, Session, UpdateFeedRequest, User,
+        FeedStats, Session, UpdateFeedRequest, User, SessionId,
     },
     util::add_cache_control,
 };
@@ -57,7 +57,7 @@ pub(crate) async fn get_session_user(
     Ok(Json(User::get(&state.pool, session.user_id).await?))
 }
 
-async fn create_session_impl(
+async fn create_session(
     pool: &SqlitePool,
     jar: CookieJar,
     data: &CreateSessionRequest,
@@ -76,7 +76,7 @@ async fn create_session_impl(
     ))
 }
 
-pub(crate) async fn create_session(
+pub(crate) async fn login(
     state: State<AppState>,
     jar: CookieJar,
     Json(body): Json<CreateSessionRequest>,
@@ -84,9 +84,24 @@ pub(crate) async fn create_session(
     info!("Logging in user {}", body.username);
 
     let (jar, session) =
-        create_session_impl(&state.pool, jar.clone(), &body).await?;
+        create_session(&state.pool, jar.clone(), &body).await?;
 
     Ok((jar, Json(session)))
+}
+
+pub(crate) async fn logout(
+    state: State<AppState>,
+    jar: CookieJar,
+) -> Result<CookieJar, AppError> {
+    if let Some(id_cookie) = jar.get("session_id") {
+        let id = SessionId(id_cookie.value().to_string());
+        let session = Session::get(&state.pool, &id).await;
+        if let Ok(session) = session {
+            let _ = session.delete(&state.pool).await;
+        }
+    }
+    let jar = jar.remove(Cookie::from("session_id"));
+    Ok(jar)
 }
 
 #[derive(Deserialize)]
@@ -342,7 +357,7 @@ pub(crate) async fn get_feed_stats(
 }
 
 /// Clear any current session and display the login page
-pub(crate) async fn show_login_page(
+pub(crate) async fn login_page(
     jar: CookieJar,
 ) -> Result<(CookieJar, Html<String>), AppError> {
     let jar = jar.remove(Cookie::from("session_id"));
@@ -353,13 +368,13 @@ pub(crate) async fn show_login_page(
 }
 
 /// Handle login form submission
-pub(crate) async fn login(
+pub(crate) async fn login_form(
     state: State<AppState>,
     jar: CookieJar,
     Form(login): Form<CreateSessionRequest>,
 ) -> Result<(CookieJar, Redirect), AppError> {
     let (jar, _session) =
-        create_session_impl(&state.pool, jar.clone(), &login).await?;
+        create_session(&state.pool, jar.clone(), &login).await?;
     Ok((jar, Redirect::to("/reader")))
 }
 

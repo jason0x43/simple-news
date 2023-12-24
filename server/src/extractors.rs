@@ -2,11 +2,12 @@ use axum::{
     async_trait,
     extract::FromRequestParts,
     http::request::Parts,
-    response::{IntoResponse, Response, Redirect},
+    response::{IntoResponse, Response},
 };
 use axum_extra::extract::CookieJar;
 
 use crate::{
+    error::AppError,
     state::AppState,
     types::{Session, SessionId},
 };
@@ -27,11 +28,11 @@ impl FromRequestParts<AppState> for Session {
             let id = SessionId(id_cookie.value().to_string());
             let session = Session::get(&state.pool, &id).await;
             if session.is_err() {
-                return Err(Redirect::temporary("/login").into_response());
+                return Err(AppError::SessionNotFound.into_response());
             }
             Ok(session.unwrap())
         } else {
-            Err(Redirect::temporary("/login").into_response())
+            Err(AppError::Unauthorized.into_response())
         }
     }
 }

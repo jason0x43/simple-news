@@ -13,6 +13,7 @@ mod util;
 use std::time::Duration;
 
 use axum::{
+    http::{header, request::Parts as RequestParts, HeaderValue},
     routing::{delete, get, patch, post},
     Router,
 };
@@ -20,7 +21,11 @@ use dotenvy::dotenv;
 use error::AppError;
 use log::info;
 use sqlx::{migrate, query, sqlite::SqlitePoolOptions};
-use tower_http::{compression::CompressionLayer, trace::TraceLayer};
+use tower_http::{
+    compression::CompressionLayer,
+    cors::{AllowOrigin, CorsLayer},
+    trace::TraceLayer,
+};
 
 use crate::{
     state::AppState,
@@ -63,7 +68,8 @@ async fn main() -> Result<(), AppError> {
         .route("/me", get(handlers::get_session_user))
         .route("/users", post(handlers::create_user))
         .route("/users", get(handlers::get_users))
-        .route("/login", post(handlers::create_session))
+        .route("/login", post(handlers::login))
+        .route("/logout", get(handlers::logout))
         .route("/articles", get(handlers::get_articles))
         .route("/articles", patch(handlers::mark_articles))
         .route("/articles/:id", get(handlers::get_article))
@@ -103,13 +109,28 @@ async fn main() -> Result<(), AppError> {
 
     let app = Router::new()
         .route("/", get(handlers::root))
-        .route("/login", get(handlers::show_login_page))
-        .route("/login", post(handlers::login))
+        .route("/login", get(handlers::login_page))
+        .route("/login", post(handlers::login_form))
         .nest("/api", api)
         .nest("/reader", spa)
         .fallback(handlers::public_files)
         .with_state(app_state)
         .layer(TraceLayer::new_for_http());
+
+    let cors_enabled =
+        std::env::var("CORS_ENABLED").unwrap_or("0".into()) == "1";
+    let app = if cors_enabled {
+        app.layer(
+            CorsLayer::new()
+                .allow_origin(AllowOrigin::predicate(
+                    |_origin: &HeaderValue, _request_parts: &RequestParts| true,
+                ))
+                .allow_credentials(true)
+                .allow_headers(vec![header::CONTENT_TYPE]),
+        )
+    } else {
+        app
+    };
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3333").await.unwrap();
     let addr = listener.local_addr().unwrap();
