@@ -4,10 +4,19 @@
 		<meta charset="UTF-8" />
 		<link rel="icon" href="/favicon.png" />
 		<link rel="manifest" href="/site.webmanifest" />
-		<link rel="stylesheet" href="/styles.css" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Simple News</title>
 		<style>
+			body,
+			html {
+				margin: 0;
+			}
+
+			body {
+				font-size: 0.875rem;
+				line-height: 1.25rem;
+			}
+
 			.login {
 				position: fixed;
 				height: 100%;
@@ -21,7 +30,41 @@
 				display: flex;
 				flex-direction: column;
 				align-items: center;
-				gap: var(--gap);
+				gap: 1rem;
+				background: #d0d0d0;
+				padding: 1rem;
+				border-radius: 0.375rem;
+			}
+
+			input {
+				font-size: 100%;
+				padding: 0.5rem;
+				border: none;
+				border-radius: 0.375rem;
+				line-height: inherit;
+			}
+
+			button {
+				font-size: 100%;
+				line-height: inherit;
+				border: none;
+				background: transparent;
+				padding: 0;
+			}
+
+			@media (prefers-color-scheme: dark) {
+				body {
+					background: black;
+					color: white;
+				}
+
+				form {
+					background: #444;
+				}
+
+				button {
+					color: white;
+				}
 			}
 		</style>
 	</head>
@@ -33,7 +76,7 @@
 				<button type="submit">Login</button>
 
 				{{#if errors}}
-				  <div class="error">{{errors}}</div>
+				<div class="error">{{errors}}</div>
 				{{/if}}
 			</form>
 		</main>

@@ -80,13 +80,14 @@ pub(crate) async fn login(
     state: State<AppState>,
     jar: CookieJar,
     Json(body): Json<CreateSessionRequest>,
-) -> Result<(CookieJar, Json<Session>), AppError> {
+) -> Result<(CookieJar, Json<User>), AppError> {
     info!("Logging in user {}", body.username);
 
     let (jar, session) =
         create_session(&state.pool, jar.clone(), &body).await?;
+    let user = User::get(&state.pool, session.user_id).await?;
 
-    Ok((jar, Json(session)))
+    Ok((jar, Json(user)))
 }
 
 pub(crate) async fn logout(

@@ -19,6 +19,7 @@
 	import ArticleView from "./lib/components/ArticleView.svelte";
 	import FeedManager from "./lib/components/FeedManager.svelte";
 	import { login } from "./lib/api";
+	import Activity from "./lib/components/Activity.svelte";
 
 	initRouter();
 	initState();
@@ -95,25 +96,31 @@
 			{/if}
 		</div>
 	</div>
-{:else}
-	<div class="flex flex-row items-center justify-center h-screen bg-white dark:bg-black">
+{:else if $user !== undefined}
+	<div
+		class="flex flex-row items-center justify-center h-screen"
+	>
 		<form
 			method="post"
 			on:submit|preventDefault={handleLogin}
-			class="flex flex-col p-4 gap-4 bg-gray-dark rounded-md"
+			class="flex flex-col p-4 gap-4 bg-gray dark:bg-gray-dark rounded-md"
 		>
 			<input
 				name="username"
 				placeholder="Username"
-				class="p-2 border rounded-md border-none dark:bg-gray"
+				class="p-2 border rounded-md border-none"
 			/>
 			<input
 				name="password"
 				placeholder="Password"
 				type="password"
-				class="p-2 border rounded-md border-none dark:bg-gray"
+				class="p-2 border rounded-md border-none"
 			/>
 			<button class="dark:text-white" type="submit">Login</button>
 		</form>
+	</div>
+{:else}
+	<div class="flex flex-row items-center justify-center h-screen">
+		<Activity size={60} />
 	</div>
 {/if}

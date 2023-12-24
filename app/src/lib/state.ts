@@ -26,7 +26,7 @@ const feedStatsStore = writable<FeedStats | undefined>();
 const feedsStore = writable<Feed[]>([]);
 const displayTypeStore = writable<"mobile" | "desktop">("desktop");
 const updatedArticleIdStore = writable<Set<ArticleId>>(new Set());
-const userStore = writable<User | undefined>();
+const userStore = writable<User | null | undefined>();
 
 /**
  * Add an article ID to the list of recently updated article IDs.
@@ -47,6 +47,22 @@ export function addUpdatedArticleId(id: ArticleId) {
  */
 export function clearUpdatedArticleIds() {
 	updatedArticleIdStore.set(new Set());
+}
+
+/**
+ * Log the user in
+ */
+export async function login(data: { username: string; password: string }) {
+	const user = await api.login(data);
+	userStore.set(user);
+}
+
+/**
+ * Log the user out
+ */
+export async function logout() {
+	await api.logout();
+	userStore.set(null);
 }
 
 /**
@@ -432,6 +448,7 @@ export function init() {
 			return loadData();
 		})
 		.catch((err) => {
+			userStore.set(null);
 			console.error("Error loading data:", err);
 		});
 
