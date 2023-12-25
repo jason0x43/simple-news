@@ -165,7 +165,7 @@
 </script>
 
 <div
-	class="h-full overflow-y-auto {className}"
+	class="flex-auto overflow-y-auto {className}"
 	on:scroll={handleListScroll}
 >
 	{#if renderedArticles.length > 0}

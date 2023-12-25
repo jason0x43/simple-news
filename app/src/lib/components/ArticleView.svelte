@@ -43,6 +43,7 @@
 			dark:text-white
 			overflow-y-auto
 			px-4
+			flex-auto
 			${className}
 		`}
 	bind:this={scrollBox}
