@@ -6,7 +6,7 @@
 	import Login from "./lib/components/Login.svelte";
 	import {
 		init as initState,
-		article,
+		articleId,
 		feedId,
 		managingFeeds,
 		user,
@@ -183,17 +183,17 @@ X-Large:
 				transition-transform
 				duration-500
 			`}
-			class:translate-x-[-33.3333%]={$feedId && !$article}
-			class:translate-x-[-66.6667%]={$article}
-			class:sm:translate-x-[0]={$feedId && !$article}
-			class:sm:translate-x-[-600px]={$article}
-			class:lg:translate-x-[-300px]={$article}
+			class:translate-x-[-33.3333%]={$feedId && !$articleId}
+			class:translate-x-[-66.6667%]={$articleId}
+			class:sm:translate-x-[0]={$feedId && !$articleId}
+			class:sm:translate-x-[-600px]={$articleId}
+			class:lg:translate-x-[-300px]={$articleId}
 		>
 			<div class="flex flex-col justify-between w-[33.3333%] sm:w-[300px]">
 				<FeedsList />
 
 				<div class="grid grid-cols-2 p-3 gap-3">
-					<Button on:click={() => ($managingFeeds = true)}>Manage Feeds</Button>
+					<Button class="whitespace-nowrap" on:click={() => ($managingFeeds = true)}>Manage Feeds</Button>
 					<Select class="[text-align-last:center]" bind:value={$articleFilter}>
 						<option value="unread">Unread</option>
 						<option value="all">All</option>

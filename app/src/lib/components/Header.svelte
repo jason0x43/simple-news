@@ -10,10 +10,9 @@
 		goto(new URL("/", window.location.href));
 	}
 
-	$: backUrl = $path.split("/").slice(0, -1).join("/");
-
-	$: {
-		console.log(`back URL = ${backUrl}`);
+	function goBack() {
+		const newPath = $path.split("/").slice(0, -1).join("/");
+		goto(new URL(newPath, window.location.href));
 	}
 </script>
 
@@ -30,9 +29,9 @@
 	`}
 >
 	<div class="flex h-full justify-start items-center gap-2">
-		<a class="block p-2" href={backUrl}>
+		<Button class="block p-2" variant="invisible" on:click={goBack}>
 			<RssIcon size={22} />
-		</a>
+		</Button>
 	</div>
 	<div class="flex h-full justify-center items-center gap-2">
 		<Button variant="invisible">

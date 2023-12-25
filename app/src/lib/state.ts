@@ -420,9 +420,7 @@ export function init() {
 	// Load article summaries when the feedId changes
 	let prevFeedId: FeedId | undefined;
 	const unsubscribeFeedId = feedIdStore.subscribe((feedId) => {
-		if (!feedId) {
-			clearArticles();
-		} else if (feedId !== prevFeedId) {
+		if (feedId !== prevFeedId) {
 			prevFeedId = feedId;
 			loadArticles();
 		}
@@ -443,8 +441,6 @@ export function init() {
 					console.warn("Error marking article as read:", err);
 				});
 			}
-		} else {
-			articleStore.set(undefined);
 		}
 	});
 
