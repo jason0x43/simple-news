@@ -2,12 +2,18 @@
 	import Button from "./Button.svelte";
 	import RssIcon from "../icons/Rss.svelte";
 	import UserIcon from "../icons/User.svelte";
-	import { title, sidebarVisible } from "../state";
-	import { logout } from "../api";
+	import { title, logout } from "../state";
+	import { goto, path } from "../router";
 
 	async function handleLogout() {
 		await logout();
-		window.location.href = "/";
+		goto(new URL("/", window.location.href));
+	}
+
+	$: backUrl = $path.split("/").slice(0, -1).join("/");
+
+	$: {
+		console.log(`back URL = ${backUrl}`);
 	}
 </script>
 
@@ -23,24 +29,18 @@
 		border-b-black/10
 	`}
 >
-	<div class="flex h-full justify-start items-center px-2 py-1 gap-2">
-		<Button
-			variant="invisible"
-			on:click={(event) => {
-				event.stopPropagation();
-				$sidebarVisible = !$sidebarVisible;
-			}}
-		>
+	<div class="flex h-full justify-start items-center gap-2">
+		<a class="block p-2" href={backUrl}>
 			<RssIcon size={22} />
-		</Button>
+		</a>
 	</div>
-	<div class="flex h-full justify-center items-center px-2 py-1 gap-2">
+	<div class="flex h-full justify-center items-center gap-2">
 		<Button variant="invisible">
 			<h4>{$title}</h4>
 		</Button>
 	</div>
-	<div class="flex h-full justify-end items-center px-2 py-1 gap-2">
-		<Button variant="invisible" on:click={handleLogout}>
+	<div class="flex h-full justify-end items-center gap-2">
+		<Button class="p-2" variant="invisible" on:click={handleLogout}>
 			<UserIcon size={20} />
 		</Button>
 	</div>

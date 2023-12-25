@@ -13,6 +13,9 @@
 	import ContextMenu from "./ContextMenu.svelte";
 	import Button from "./Button.svelte";
 
+	let className = "";
+	export { className as class };
+
 	let visibleCount = 40;
 	let scrollBox: HTMLElement | undefined;
 	// let prevFeedId = $feedId;
@@ -162,16 +165,7 @@
 </script>
 
 <div
-	class={`
-		w-full
-		md:w-80
-		flex-shrink-0
-		border-r
-		border-r-black/10
-		dark:border-r-white/10
-		h-full
-		overflow-y-auto
-	`}
+	class="h-full overflow-y-auto {className}"
 	on:scroll={handleListScroll}
 >
 	{#if renderedArticles.length > 0}

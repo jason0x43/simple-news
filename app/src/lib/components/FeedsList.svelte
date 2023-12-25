@@ -9,7 +9,6 @@
 		feeds,
 		selectedFeedIds,
 		selectedGroupId,
-		sidebarVisible,
 	} from "../state";
 	import {
 		allFeedsAreSelected,
@@ -57,7 +56,6 @@
 		class={`
 			flex
 			flex-row
-			gap-2
 			py-1
 			px-2
 			hover:bg-gray-x-light/70
@@ -66,8 +64,8 @@
 		class:bg-gray-x-light={$feedId === "saved"}
 		class:dark:bg-gray-x-dark={$feedId === "saved"}
 	>
-		<div class="flex flex-row justify-start w-5">⭐</div>
-		<a class="flex-auto" href="/reader/saved">Saved</a>
+		<div class="flex flex-row justify-start w-5 pr-2 text-[9px]">⭐</div>
+		<a class="flex-auto truncate" href="/reader/saved">Saved</a>
 		{#if $feedStats}
 			<span>{getSavedCount($feedStats)}</span>
 		{/if}
@@ -83,7 +81,6 @@
 				class={`
 					flex
 					flex-row
-					gap-2
 					py-1
 					px-2
 					hover:bg-gray-x-light/70
@@ -92,16 +89,15 @@
 			>
 				<Button
 					variant="invisible"
-					class="flex flex-row w-5 !justify-start pl-[1px]"
+					class="flex flex-row w-5 !justify-start pl-[1px] pr-2"
 					on:click={() => {
 						expanded = toggleExpanded(expanded, group);
 					}}><div class:rotate-90={isExpanded(expanded, group)}>▷</div></Button
 				>
 				<a
-					class="flex-auto"
+					class="flex-auto truncate"
 					href={`/reader/group-${group.id}`}
 					on:click={() => {
-						$sidebarVisible = false;
 						clearUpdatedArticleIds();
 					}}
 				>

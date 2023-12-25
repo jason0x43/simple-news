@@ -20,8 +20,9 @@
 		flex-col
 		overflow-hidden
 		w-full
-		md:max-w-[80%]
-		md:max-h-[80%]
+		h-full
+		sm:max-w-[80%]
+		sm:max-h-[80%]
 	`}
 >
 	{#if title || onClose}

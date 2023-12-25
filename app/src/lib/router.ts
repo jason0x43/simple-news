@@ -48,7 +48,7 @@ function parseRoute(route: string | RegExp): RegExp | undefined {
 				x.startsWith(":")
 					? `(?<${regExpEscape(
 							x.slice(1, x.length),
-					  )}>[a-zA-Z0-9][a-zA-Z0-9\_\-]*)`
+						)}>[a-zA-Z0-9][a-zA-Z0-9\_\-]*)`
 					: regExpEscape(x),
 			)
 			.join(`\\/`),
@@ -110,64 +110,93 @@ export function goto(url: string | URL) {
 	setUrl(typeof url === "string" ? new URL(url) : url);
 }
 
+let initialized = false;
+
 /**
  * Initialize the router.
  */
 export function init() {
-	window.addEventListener("load", () => {
-		// update state for hashchange events
-		window.addEventListener("hashchange", () => {
-			setUrl(new URL(window.location.href));
-		});
+	if (initialized) {
+		console.warn("Router already initialized");
+		return;
+	}
 
-		// update state for URL changes
-		window.addEventListener("popstate", (event) => {
-			setUrl(new URL(window.location.href));
+	initialized = true;
+
+	let handleHashChange = () => {
+		setUrl(new URL(window.location.href));
+	};
+
+	let handlePopState = (event: Event) => {
+		setUrl(new URL(window.location.href));
+		event.preventDefault();
+	};
+
+	let handleTouchStart = (event: TouchEvent) => {
+		const touch = event.touches[0];
+		if (touch.pageX < 20 || touch.pageX > window.innerWidth - 20) {
+			// ignore touches near the edges of the screen
 			event.preventDefault();
-		});
+		}
+	};
 
-		// disable swipes
-		document.getElementById("app")?.addEventListener("touchstart", (event) => {
-			const touch = event.touches[0];
-			if (touch.pageX < 20 || touch.pageX > window.innerWidth - 20) {
-				// ignore touches near the edges of the screen
-				event.preventDefault();
-			}
-		});
-
-		// handle <a> clicks; open ctrl/shift+clicks in another tab/window
-		window.addEventListener("click", (event) => {
-			let targetElement = event.target as HTMLElement;
-			while (targetElement && targetElement !== document.body) {
-				if (targetElement.tagName === "A") {
-					if (shouldIgnoreChange?.()) {
-						// Ignore the click
-						return event.preventDefault();
-					}
-
-					if (
-						event?.ctrlKey ||
-						event?.shiftKey ||
-						targetElement.hasAttribute("data-native-router")
-					) {
-						// Let the browser handle the click
-						return;
-					}
-
-					const href = targetElement.getAttribute("href") || "";
-					if (!/^http?s\:\/\//.test(href)) {
-						// Only handle relative URLs
-						if (href) {
-							setUrl(new URL(href, window.location.href));
-						}
-						return event.preventDefault();
-					}
+	let handleClick = (event: MouseEvent) => {
+		let targetElement = event.target as HTMLElement;
+		while (targetElement && targetElement !== document.body) {
+			if (targetElement.tagName === "A") {
+				if (shouldIgnoreChange?.()) {
+					// Ignore the click
+					return event.preventDefault();
 				}
 
-				targetElement = targetElement.parentElement || document.body;
+				if (
+					event?.ctrlKey ||
+					event?.shiftKey ||
+					targetElement.hasAttribute("data-native-router")
+				) {
+					// Let the browser handle the click
+					return;
+				}
+
+				const href = targetElement.getAttribute("href") || "";
+				if (!/^http?s\:\/\//.test(href)) {
+					// Only handle relative URLs
+					if (href) {
+						setUrl(new URL(href, window.location.href));
+					}
+					return event.preventDefault();
+				}
 			}
-		});
-	});
+
+			targetElement = targetElement.parentElement || document.body;
+		}
+	};
+
+	const handleLoad = () => {
+		// update state for hashchange events
+		window.addEventListener("hashchange", handleHashChange);
+
+		// update state for URL changes
+		window.addEventListener("popstate", handlePopState);
+
+		// disable swipes
+		document
+			.getElementById("app")
+			?.addEventListener("touchstart", handleTouchStart);
+
+		// handle <a> clicks; open ctrl/shift+clicks in another tab/window
+		window.addEventListener("click", handleClick);
+	};
+
+	window.addEventListener("load", handleLoad);
+
+	return () => {
+		window.removeEventListener("load", handleLoad);
+		window.removeEventListener("hashchange", handleHashChange);
+		window.removeEventListener("popstate", handlePopState);
+		document.getElementById("app")?.removeEventListener("touchstart", handleTouchStart);
+		window.removeEventListener("click", handleClick);
+	};
 }
 
 /** The previous URL */

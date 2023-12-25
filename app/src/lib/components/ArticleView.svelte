@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { isActionEvent, verifyHashLinkTarget } from "../util";
-	import { article, articleFeed, displayType, feedId } from "../state";
-	import { slide } from "../transition";
+	import { article, articleFeed, feedId } from "../state";
+
+	let className = "";
+	export { className as class };
 
 	let scrollBox: HTMLElement | undefined;
 	let prevArticle = $article?.id;
@@ -31,33 +33,21 @@
 			}
 		}
 	}
-
-	const animate =
-		$displayType === "mobile"
-			? (node: HTMLElement, options: Parameters<typeof slide>[1]) =>
-					slide(node, options)
-			: () => ({});
 </script>
 
-{#if visible && $article && $articleFeed}
-	<div
-		class={`
+<div
+	class={`
 			bg-white
 			text-black
 			dark:bg-black
 			dark:text-white
-			absolute
-			h-full
-			w-full
 			overflow-y-auto
-			md:h-auto
-			md:static
 			px-4
+			${className}
 		`}
-		bind:this={scrollBox}
-		in:animate={{ direction: "left", duration: 250 }}
-		out:animate={{ direction: "left", duration: 250 }}
-	>
+	bind:this={scrollBox}
+>
+	{#if visible && $article && $articleFeed}
 		<div class="z-10 max-w-screen-md mx-auto py-5 flex flex-col gap-4">
 			<div class="flex flex-col gap-4">
 				<a href={$article.link ?? undefined} target="_blank">
@@ -77,7 +67,6 @@
 		</div>
 		<a
 			class={`
-					md:hidden
 					fixed
 					right-0
 					bottom-0
@@ -90,8 +79,8 @@
 				`}
 			href={`/reader/${$feedId}`}>&nbsp;</a
 		>
-	</div>
-{/if}
+	{/if}
+</div>
 
 <!-- svelte-ignore css-unused-selector -->
 <style lang="postcss">

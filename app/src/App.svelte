@@ -3,23 +3,23 @@
 	import { init as initRouter } from "./lib/router";
 	import ArticlesList from "./lib/components/ArticlesList.svelte";
 	import Header from "./lib/components/Header.svelte";
-	import Sidebar from "./lib/components/Sidebar.svelte";
+	import Login from "./lib/components/Login.svelte";
 	import {
-		sidebarVisible,
 		init as initState,
 		article,
-		feed,
 		feedId,
 		managingFeeds,
 		user,
-		loadData,
+		articleFilter,
 	} from "./lib/state";
 	import { setAppContext } from "./lib/context";
 	import { readonly, writable } from "svelte/store";
 	import ArticleView from "./lib/components/ArticleView.svelte";
 	import FeedManager from "./lib/components/FeedManager.svelte";
-	import { login } from "./lib/api";
 	import Activity from "./lib/components/Activity.svelte";
+	import FeedsList from "./lib/components/FeedsList.svelte";
+	import Button from "./lib/components/Button.svelte";
+	import Select from "./lib/components/Select.svelte";
 
 	initRouter();
 	initState();
@@ -33,22 +33,123 @@
 			$root = rootRef;
 		}
 	}
-
-	async function handleLogin(event: Event) {
-		const form = event.target as HTMLFormElement;
-		const formData = new FormData(form);
-		const data = {
-			username: `${formData.get("username")}`,
-			password: `${formData.get("password")}`,
-		};
-		try {
-			await login(data);
-			window.location.href = "/";
-		} catch (error) {
-			console.error(`Error logging in: ${error}`);
-		}
-	}
 </script>
+
+<!-- Layout
+
+Default (mobile): content width is 300%, screen shows 1 column at a time
+
+     ------------- 
+   /               \
+   | +--------------|----------------------------+
+	 | |              |              /             |
+	 | |  Feeds       |   Articles   /  Article    |
+	 | |              |              /             |
+	 | |              |              /             |
+	 | |              |              /             |
+	 | |              |              /             |
+	 | |              |              /             |
+	 | |              |              /             |
+   | +--------------|----------------------------+
+    \              /
+      ------------ 
+
+                     ---------- 
+                   /            \
+   +--------------|--------------|-------------+
+	 |              |              |             |
+	 |  Feeds       |   Articles   |  Article    |
+	 |              |              |             |
+	 |              |              |             |
+	 |              |              |             |
+	 |              |              |             |
+	 |              |              |             |
+	 |              |              |             |
+   +--------------|--------------|-------------+
+                   \            /
+                     ---------- 
+
+Small: content width is 400%, screen shows 2 columns at a time
+
+     ----------------------------- 
+   /                               \
+   | +-----------------------------|---------------------------+
+	 | |              |              |                           |
+	 | |  Feeds       |  <Articles>  |         <Article>         |
+	 | |              |              |                           |
+	 | |              |              |                           |
+	 | |              |              |                           |
+	 | |              |              |                           |
+	 | |              |              |                           |
+	 | |              |              |                           |
+   | +-----------------------------|---------------------------+
+    \                             /
+      ---------------------------- 
+
+                                    ----------------------------
+                                  /                              \
+    +----------------------------|-----------------------------+ |
+	  |              |             |                             | |
+	  |  Feeds       |   Articles  |            <Article>        | |
+	  |              |             |                             | |
+	  |              |             |                             | |
+	  |              |             |                             | |
+	  |              |             |                             | |
+	  |              |             |                             | |
+	  |              |             |                             | |
+    +----------------------------|-----------------------------+ |
+                                  \                             /
+                                    ---------------------------
+
+Large: content width is 125%, screen shows 3 columns at a time
+
+     ----------------------------------------------
+   /                                               \
+   | +---------------------------------------------|-----------+
+	 | |              |              |               |           |
+	 | |  Feeds       |   Articles   |               |           |
+	 | |              |              |               |           |
+	 | |              |              |               |           |
+	 | |              |              |               |           |
+	 | |              |              |               |           |
+	 | |              |              |               |           |
+	 | |              |              |               |           |
+   | +---------------------------------------------|-----------+
+    \                                             /
+      --------------------------------------------
+
+                    --------------------------------------------
+                  /                                              \
+   +--------------|--------------------------------------------+ |
+	 |              |              |                             | |
+	 |  Feeds       |   Articles   |  Article                    | |
+	 |              |              |                             | |
+	 |              |              |                             | |
+	 |              |              |                             | |
+	 |              |              |                             | |
+	 |              |              |                             | |
+	 |              |              |                             | |
+   +--------------|--------------------------------------------+ |
+                  \                                             /
+                    --------------------------------------------
+
+X-Large:
+
+     -----------------------------------------------------------
+   /                                                             \
+   | +---------------------------------------------------------+ |
+	 | |              |              |                           | |
+	 | |  Feeds       |   Articles   |  Article                  | |
+	 | |              |              |                           | |
+	 | |              |              |                           | |
+	 | |              |              |                           | |
+	 | |              |              |                           | |
+	 | |              |              |                           | |
+	 | |              |              |                           | |
+   | +---------------------------------------------------------+ |
+    \                                                           /
+      ---------------------------------------------------------
+-->
 
 {#if $user}
 	<div
@@ -68,57 +169,53 @@
 
 		<div
 			class={`
-		h-full
-		max-w-full
-		overflow-y-auto
-		overflow-x-hidden
-		relative
-		bg-white
-		dark:bg-black
-		flex
-		flex-row
-	`}
+				bg-white
+				dark:bg-black
+				flex-auto
+				overflow-hidden
+				w-[300%]
+				sm:w-[calc(100vw+600px)]
+				flex
+				flex-row
+				divide-x
+				divide-black/10
+				dark:divide-white/10
+				transition-transform
+				duration-500
+			`}
+			class:translate-x-[-33.3333%]={$feedId && !$article}
+			class:translate-x-[-66.6667%]={$article}
+			class:sm:translate-x-[0]={$feedId && !$article}
+			class:sm:translate-x-[-600px]={$article}
+			class:lg:translate-x-[-300px]={$article}
 		>
-			{#if $feedId}
+			<div class="flex flex-col justify-between w-[33.3333%] sm:w-[300px]">
+				<FeedsList />
+
+				<div class="grid grid-cols-2 p-3 gap-3">
+					<Button on:click={() => ($managingFeeds = true)}>Manage Feeds</Button>
+					<Select class="[text-align-last:center]" bind:value={$articleFilter}>
+						<option value="unread">Unread</option>
+						<option value="all">All</option>
+					</Select>
+				</div>
+			</div>
+
+			<div class="flex w-[33.3333%] sm:w-[300px]">
 				<ArticlesList />
-			{/if}
+			</div>
 
-			{#if $sidebarVisible}
-				<Sidebar />
-			{/if}
-
-			{#if article && feed}
+			<div class="flex w-[33.3333%] sm:w-[100vw] lg:w-[calc(100vw-300px)]">
 				<ArticleView />
-			{/if}
-
-			{#if $managingFeeds}
-				<FeedManager />
-			{/if}
+			</div>
 		</div>
+
+		{#if $managingFeeds}
+			<FeedManager />
+		{/if}
 	</div>
 {:else if $user !== undefined}
-	<div
-		class="flex flex-row items-center justify-center h-screen"
-	>
-		<form
-			method="post"
-			on:submit|preventDefault={handleLogin}
-			class="flex flex-col p-4 gap-4 bg-gray dark:bg-gray-dark rounded-md"
-		>
-			<input
-				name="username"
-				placeholder="Username"
-				class="p-2 border rounded-md border-none"
-			/>
-			<input
-				name="password"
-				placeholder="Password"
-				type="password"
-				class="p-2 border rounded-md border-none"
-			/>
-			<button class="dark:text-white" type="submit">Login</button>
-		</form>
-	</div>
+	<Login />
 {:else}
 	<div class="flex flex-row items-center justify-center h-screen">
 		<Activity size={60} />

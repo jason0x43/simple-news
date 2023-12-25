@@ -104,6 +104,7 @@ export async function loadArticles() {
  */
 export async function clearArticles() {
 	articlesStore.set([]);
+	console.log("Cleared articles");
 }
 
 /**
@@ -378,20 +379,29 @@ export async function markArticles(
 	}
 }
 
+let initialized = false;
+
 /**
  * Initialize the state updaters.
  */
 export function init() {
+	if (initialized) {
+		console.warn("Router already initialized");
+		return;
+	}
+
+	initialized = true;
+
 	// Update displayType when the window size hits a breakpoint
 	const matcher = window.matchMedia("(max-width: 800px)");
-	const listener = (event: MediaQueryListEvent) => {
+	const mediaListener = (event: MediaQueryListEvent) => {
 		displayTypeStore.set(event.matches ? "mobile" : "desktop");
 	};
-	matcher.addEventListener("change", listener);
+	matcher.addEventListener("change", mediaListener);
 	displayTypeStore.set(matcher.matches ? "mobile" : "desktop");
 
 	// Update the feedId and articleId when the path changes
-	path.subscribe((p) => {
+	const unsubscribePath = path.subscribe((p) => {
 		let params = matches(p, "/reader/:feedGroupId/:articleId");
 		if (params) {
 			feedIdStore.set(params["feedGroupId"]);
@@ -409,14 +419,12 @@ export function init() {
 
 	// Load article summaries when the feedId changes
 	let prevFeedId: FeedId | undefined;
-	feedIdStore.subscribe((feedId) => {
-		if (feedId !== prevFeedId) {
+	const unsubscribeFeedId = feedIdStore.subscribe((feedId) => {
+		if (!feedId) {
+			clearArticles();
+		} else if (feedId !== prevFeedId) {
 			prevFeedId = feedId;
 			loadArticles();
-			sidebarVisible.set(false);
-		} else if (!feedId) {
-			clearArticles();
-			sidebarVisible.set(true);
 		}
 
 		prevFeedId = feedId;
@@ -424,7 +432,7 @@ export function init() {
 
 	// Load the target article when the article ID changes
 	let prevArticleId: ArticleId | undefined;
-	articleIdStore.subscribe((articleId) => {
+	const unsubscribeArticleId = articleIdStore.subscribe((articleId) => {
 		if (articleId) {
 			if (articleId !== prevArticleId) {
 				api.getArticle(articleId).then((article) => {
@@ -453,7 +461,7 @@ export function init() {
 		});
 
 	// Reload data every few minutes
-	setInterval(() => {
+	const interval = setInterval(() => {
 		console.debug("Periodically reloading data...");
 		loadData().catch((err) => {
 			console.error("Error loading data:", err);
@@ -462,6 +470,14 @@ export function init() {
 			console.error("Error loading articles:", err);
 		});
 	}, minutes(30));
+
+	return () => {
+		matcher.removeEventListener("change", mediaListener);
+		unsubscribePath();
+		unsubscribeFeedId();
+		unsubscribeArticleId();
+		clearInterval(interval);
+	}
 }
 
 export type ArticleFilter = "unread" | "all";
@@ -512,7 +528,6 @@ export const selectedGroupId = derived([feedIdStore], ([$feedId]) => {
 		}
 	}
 });
-export const sidebarVisible = writable<boolean>(true);
 export const title = derived(
 	[feedIdStore, feedGroupsStore, feedsStore],
 	([$feedId, $feedGroups, $feeds]) => {
