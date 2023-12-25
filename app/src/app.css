@@ -4,7 +4,7 @@
 
 @layer base {
 	html {
-		@apply text-[24px] md:text-[20px] xl:text-[16px];
+		@apply text-[22px] md:text-[20px] xl:text-[16px];
 	}
 	body {
 		@apply text-sm text-black;
