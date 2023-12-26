@@ -12,6 +12,7 @@
 	import { getAge, seconds, unescapeHtml } from "../util";
 	import ContextMenu from "./ContextMenu.svelte";
 	import Button from "./Button.svelte";
+	import { goto } from "../router";
 
 	let className = "";
 	export { className as class };
@@ -82,27 +83,36 @@
 		}
 	}
 
-	let touchTimer: ReturnType<typeof setTimeout>;
+	let touchTimer: ReturnType<typeof setTimeout> | undefined;
 
 	function handleTouchStart(event: TouchEvent) {
+		event.preventDefault();
+
 		if (menuAnchor) {
 			handleContextClose();
-			event.preventDefault();
 		} else {
 			const { pageX, pageY } = event.touches[0];
+
 			touchTimer = setTimeout(() => {
-				event.preventDefault();
 				handleContextMenu({
 					target: event.target,
 					x: pageX,
 					y: pageY,
 				});
-			}, seconds(0.1));
+				touchTimer = undefined;
+			}, seconds(0.25));
 		}
 	}
 
-	function handleTouchEnd() {
-		clearTimeout(touchTimer);
+	function handleTouchEnd(event: TouchEvent) {
+		if (touchTimer) {
+			clearTimeout(touchTimer);
+			const target = event.currentTarget as HTMLElement;
+			const url = target.getAttribute("data-href");
+			if (url) {
+				goto(url);
+			}
+		}
 	}
 
 	async function handleContextSelect(value: string) {
@@ -158,7 +168,10 @@
 	}
 </script>
 
-<div class="flex-auto overflow-y-auto {className}" on:scroll={handleListScroll}>
+<div
+	class="flex-auto select-none overflow-y-auto {className}"
+	on:scroll={handleListScroll}
+>
 	{#if renderedArticles.length > 0}
 		<ul
 			class="divide-y divide-black/10 dark:divide-white/10"
@@ -171,6 +184,11 @@
 						cursor-pointer
 						select-none
 						p-2
+						flex
+						flex-row
+						gap-2
+						text-black
+						dark:text-white
 						hover:bg-gray-x-light/70
 						dark:hover:bg-gray-x-dark/70
 					`}
@@ -180,28 +198,25 @@
 					class:dark:bg-yellow-dark={article.saved}
 					class:opacity-50={article.read && !article.isSelected}
 					data-id={article.id}
+					data-href="/reader/{$feedId}/{article.id}"
 					on:touchstart={handleTouchStart}
 					on:touchend={handleTouchEnd}
 					on:touchmove={handleTouchEnd}
 				>
-					<a
-						class="flex flex-row gap-2 text-black dark:text-white"
-						href={`/reader/${$feedId}/${article.id}`}
+					<div
+						class="w-4 h-4 flex-shrink-0 relative top-1 flex flex-row items-center"
 					>
-						<div
-							class="w-4 h-4 flex-shrink-0 relative top-1 flex flex-row items-center"
-						>
-							{#if article.feed?.icon}
-								<img
-									class="object-contain"
-									src={article.feed?.icon}
-									title={article.feed?.title}
-									alt={article.feed?.title}
-								/>
-							{/if}
-							{#if !article.feed?.icon}
-								<div
-									class={`
+						{#if article.feed?.icon}
+							<img
+								class="object-contain"
+								src={article.feed?.icon}
+								title={article.feed?.title}
+								alt={article.feed?.title}
+							/>
+						{/if}
+						{#if !article.feed?.icon}
+							<div
+								class={`
                     bg-gray-x-dark
 										text-white
                     rounded-sm
@@ -212,27 +227,26 @@
                     justify-center
 	                  text-xs
 									`}
-									title={article.feed?.title}
-								>
-									{article.feed?.title[0]}
-								</div>
-							{/if}
-						</div>
+								title={article.feed?.title}
+							>
+								{article.feed?.title[0]}
+							</div>
+						{/if}
+					</div>
 
-						<div
-							class="flex-auto"
-							class:text-gray-dark={article.read && !article.isSelected}
-							class:dark:text-gray-light={article.read && !article.isSelected}
-						>
-							{@html unescapeHtml(article.title ?? "")}
-						</div>
+					<div
+						class="flex-auto"
+						class:text-gray-dark={article.read && !article.isSelected}
+						class:dark:text-gray-light={article.read && !article.isSelected}
+					>
+						{@html unescapeHtml(article.title ?? "")}
+					</div>
 
-						<div>
-							<span class="whitespace-nowrap text-xs text-gray">
-								{getAge(article.published ?? undefined)}
-							</span>
-						</div>
-					</a>
+					<div>
+						<span class="whitespace-nowrap text-xs text-gray">
+							{getAge(article.published ?? undefined)}
+						</span>
+					</div>
 				</li>
 			{/each}
 		</ul>

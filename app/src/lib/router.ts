@@ -107,7 +107,11 @@ export function goto(url: string | URL) {
 	if (shouldIgnoreChange?.()) {
 		return;
 	}
-	setUrl(typeof url === "string" ? new URL(url) : url);
+	if (typeof url === "string") {
+		setUrl(new URL(url, window.location.href));
+	} else {
+		setUrl(url);
+	}
 }
 
 let initialized = false;
