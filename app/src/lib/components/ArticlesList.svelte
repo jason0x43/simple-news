@@ -158,10 +158,7 @@
 	}
 </script>
 
-<div
-	class="flex-auto overflow-y-auto {className}"
-	on:scroll={handleListScroll}
->
+<div class="flex-auto overflow-y-auto {className}" on:scroll={handleListScroll}>
 	{#if renderedArticles.length > 0}
 		<ul
 			class="divide-y divide-black/10 dark:divide-white/10"
