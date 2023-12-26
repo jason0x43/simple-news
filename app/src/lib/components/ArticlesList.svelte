@@ -83,32 +83,26 @@
 	}
 
 	let touchTimer: ReturnType<typeof setTimeout>;
-	let isLongPress = false;
 
 	function handleTouchStart(event: TouchEvent) {
-		isLongPress = false;
-
 		if (menuAnchor) {
 			handleContextClose();
 			event.preventDefault();
 		} else {
 			const { pageX, pageY } = event.touches[0];
 			touchTimer = setTimeout(() => {
-				isLongPress = true;
+				event.preventDefault();
 				handleContextMenu({
 					target: event.target,
 					x: pageX,
 					y: pageY,
 				});
-			}, seconds(0.5));
+			}, seconds(0.1));
 		}
 	}
 
-	function handleTouchEnd(event: TouchEvent) {
+	function handleTouchEnd() {
 		clearTimeout(touchTimer);
-		if (isLongPress) {
-			event.preventDefault();
-		}
 	}
 
 	async function handleContextSelect(value: string) {
