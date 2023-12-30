@@ -1,10 +1,17 @@
 use axum::{
     http::{header, StatusCode, Uri},
     response::{Html, IntoResponse, Response},
+    routing::get,
+    Router,
 };
+use axum_login::login_required;
 use rust_embed::RustEmbed;
 
-use crate::{types::Session, util::add_cache_control};
+use crate::{
+    auth::{AuthSession, Backend},
+    state::AppState,
+    util::add_cache_control,
+};
 
 #[derive(RustEmbed)]
 #[folder = "../app/dist/"]
@@ -13,7 +20,7 @@ struct Assets;
 static INDEX_HTML: &str = "index.html";
 
 pub(crate) async fn spa_handler(
-    _session: Session,
+    _auth_session: AuthSession,
     uri: Uri,
 ) -> impl IntoResponse {
     let path = uri.path().trim_start_matches('/');
@@ -42,6 +49,14 @@ pub(crate) async fn index_html() -> Response {
         Some(content) => add_cache_control(Html(content.data).into_response()),
         None => not_found().await,
     }
+}
+
+pub(crate) fn get_router() -> Router<AppState> {
+    Router::new()
+        .route("/index.html", get(index_html))
+        .route("/", get(index_html))
+        .route("/*plug", get(spa_handler))
+        .route_layer(login_required!(Backend, login_url = "/login"))
 }
 
 async fn not_found() -> Response {

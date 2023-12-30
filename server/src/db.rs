@@ -5,12 +5,11 @@ use crate::{
         Article, ArticleId, ArticleMarkRequest, ArticleSummary,
         ArticlesMarkRequest, Feed, FeedGroup, FeedGroupFeed, FeedGroupFeedId,
         FeedGroupId, FeedGroupWithFeeds, FeedId, FeedKind, FeedLog, FeedLogId,
-        FeedStat, Password, PasswordId, Session, SessionId, UpdateFeedRequest,
+        FeedStat, Password, PasswordId, UpdateFeedRequest,
         User, UserArticle, UserArticleId, UserId,
     },
     util::{get_timestamp, hash_password},
 };
-use serde_json::json;
 use sqlx::{query, query_as, SqlitePool};
 use time::OffsetDateTime;
 use url::Url;
@@ -129,11 +128,10 @@ impl User {
         .map_err(AppError::SqlxError)
     }
 
-    pub(crate) async fn check_password(
+    pub(crate) async fn password(
         &self,
         pool: &SqlitePool,
-        password: &str,
-    ) -> Result<(), AppError> {
+    ) -> Result<Password, AppError> {
         let pword = query_as!(
             Password,
             r#"
@@ -150,12 +148,7 @@ impl User {
         .fetch_one(pool)
         .await?;
 
-        let check = hash_password(password, Some(&pword.salt));
-        if check.hash != pword.hash {
-            Err(AppError::Unauthorized)
-        } else {
-            Ok(())
-        }
+        Ok(pword)
     }
 
     pub(crate) async fn articles(
@@ -201,71 +194,83 @@ impl Password {
             user_id: user_id.clone(),
         }
     }
-}
 
-impl Session {
-    pub(crate) async fn create(
-        pool: &SqlitePool,
-        user_id: UserId,
-    ) -> Result<Self, AppError> {
-        let session = Self {
-            id: SessionId::new(),
-            data: json!("{}"),
-            user_id,
-            expires: get_timestamp(604800),
-        };
-
-        log::debug!("creating session {:?}", session);
-
-        query!(
-            r#"
-            INSERT INTO sessions (id, data, user_id, expires)
-            VALUES (?1, ?2, ?3, ?4)
-            "#,
-            session.id,
-            session.data,
-            session.user_id,
-            session.expires
-        )
-        .execute(pool)
-        .await?;
-
-        Ok(session)
-    }
-
-    pub(crate) async fn get(
-        pool: &SqlitePool,
-        session_id: &SessionId,
-    ) -> Result<Self, AppError> {
-        query_as!(
-            Self,
-            r#"
-            SELECT
-              id,
-              data AS "data: serde_json::Value",
-              expires AS "expires!: OffsetDateTime",
-              user_id
-            FROM sessions
-            WHERE id = ?1
-            "#,
-            session_id
-        )
-        .fetch_one(pool)
-        .await
-        .map_err(|_| AppError::SessionNotFound)
-    }
-
-    pub(crate) async fn delete(
+    pub(crate) fn matches(
         &self,
-        pool: &SqlitePool,
+        password: &str,
     ) -> Result<(), AppError> {
-        query!("DELETE FROM sessions WHERE id = ?1", self.id)
-            .execute(pool)
-            .await?;
-        Ok(())
+        let check = hash_password(password, Some(&self.salt));
+        if check.hash != self.hash {
+            Err(AppError::Unauthorized)
+        } else {
+            Ok(())
+        }
     }
-        
 }
+
+// impl Session {
+//     pub(crate) async fn create(
+//         pool: &SqlitePool,
+//         user_id: UserId,
+//     ) -> Result<Self, AppError> {
+//         let session = Self {
+//             id: SessionId::new(),
+//             data: json!("{}"),
+//             user_id,
+//             expires: get_timestamp(604800),
+//         };
+//
+//         log::debug!("creating session {:?}", session);
+//
+//         query!(
+//             r#"
+//             INSERT INTO sessions (id, data, user_id, expires)
+//             VALUES (?1, ?2, ?3, ?4)
+//             "#,
+//             session.id,
+//             session.data,
+//             session.user_id,
+//             session.expires
+//         )
+//         .execute(pool)
+//         .await?;
+//
+//         Ok(session)
+//     }
+//
+//     pub(crate) async fn get(
+//         pool: &SqlitePool,
+//         session_id: &SessionId,
+//     ) -> Result<Self, AppError> {
+//         query_as!(
+//             Self,
+//             r#"
+//             SELECT
+//               id,
+//               data AS "data: serde_json::Value",
+//               expires AS "expires!: OffsetDateTime",
+//               user_id
+//             FROM sessions
+//             WHERE id = ?1
+//             "#,
+//             session_id
+//         )
+//         .fetch_one(pool)
+//         .await
+//         .map_err(|_| AppError::SessionNotFound)
+//     }
+//
+//     pub(crate) async fn delete(
+//         &self,
+//         pool: &SqlitePool,
+//     ) -> Result<(), AppError> {
+//         query!("DELETE FROM sessions WHERE id = ?1", self.id)
+//             .execute(pool)
+//             .await?;
+//         Ok(())
+//     }
+//
+// }
 
 impl Feed {
     /// Create a new feed

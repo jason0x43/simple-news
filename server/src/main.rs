@@ -1,6 +1,7 @@
+mod api;
+mod auth;
 mod db;
 mod error;
-mod extractors;
 mod handlers;
 mod rss;
 mod spa;
@@ -13,14 +14,16 @@ mod util;
 use std::time::Duration;
 
 use axum::{
-    http::{header, request::Parts as RequestParts, HeaderValue},
-    routing::{delete, get, patch, post},
+    error_handling::HandleErrorLayer,
+    http::{header, request::Parts as RequestParts, HeaderValue, StatusCode},
+    routing::{get, post},
     Router,
 };
 use dotenvy::dotenv;
 use error::AppError;
 use log::info;
 use sqlx::{migrate, query, sqlite::SqlitePoolOptions};
+use tower::ServiceBuilder;
 use tower_http::{
     compression::CompressionLayer,
     cors::{AllowOrigin, CorsLayer},
@@ -28,6 +31,7 @@ use tower_http::{
 };
 
 use crate::{
+    auth::create_auth_layer,
     state::AppState,
     types::{Feed, FeedLog},
     util::get_timestamp,
@@ -62,60 +66,21 @@ async fn main() -> Result<(), AppError> {
         latest_migration.description
     );
 
-    let app_state = AppState { pool: pool.clone() };
-
-    let api = Router::new()
-        .route("/me", get(handlers::get_session_user))
-        .route("/users", post(handlers::create_user))
-        .route("/users", get(handlers::get_users))
-        .route("/login", post(handlers::login))
-        .route("/logout", get(handlers::logout))
-        .route("/articles", get(handlers::get_articles))
-        .route("/articles", patch(handlers::mark_articles))
-        .route("/articles/:id", get(handlers::get_article))
-        .route("/articles/:id", patch(handlers::mark_article))
-        .route("/feeds/log", get(handlers::get_all_feed_logs))
-        .route("/feeds/refresh", get(handlers::refresh_feeds))
-        .route("/feeds/:id/refresh", get(handlers::refresh_feed))
-        .route("/feeds/:id/articles", get(handlers::get_feed_articles))
-        .route("/feeds/:id/log", get(handlers::get_feed_log))
-        .route("/feeds/:id/stats", get(handlers::get_feed_stat))
-        .route("/feeds/:id", get(handlers::get_feed))
-        .route("/feeds/:id", delete(handlers::delete_feed))
-        .route("/feeds/:id", patch(handlers::update_feed))
-        .route("/feeds", get(handlers::get_feeds))
-        .route("/feeds", post(handlers::add_feed))
-        .route("/feedgroups", get(handlers::get_all_feed_groups))
-        .route("/feedgroups", post(handlers::create_feed_group))
-        .route("/feedgroups/:id", get(handlers::get_feed_group))
-        .route("/feedgroups/:id", post(handlers::add_group_feed))
-        .route(
-            "/feedgroups/:id/articles",
-            get(handlers::get_feed_group_articles),
-        )
-        .route(
-            "/feedgroups/:id/:feed_id",
-            delete(handlers::remove_group_feed),
-        )
-        .route("/feedstats", get(handlers::get_feed_stats))
-        .layer(CompressionLayer::new());
-
-    let spa = Router::new()
-        .route("/", get(spa::index_html))
-        .route("/site.webmanifest", get(handlers::webmanifest))
-        .route("/index.html", get(spa::index_html))
-        .fallback(spa::spa_handler)
-        .layer(CompressionLayer::new());
+    // The error handling layer is required since AuthManagerLayer is fallible
+    let auth_service = ServiceBuilder::new()
+        .layer(HandleErrorLayer::new(|_| async { StatusCode::BAD_REQUEST }))
+        .layer(create_auth_layer(&pool).await?);
 
     let app = Router::new()
-        .route("/", get(handlers::root))
         .route("/login", get(handlers::login_page))
         .route("/login", post(handlers::login_form))
-        .nest("/api", api)
-        .nest("/reader", spa)
+        .nest("/api", api::get_router())
+        .nest("/reader", spa::get_router())
+        .route("/", get(handlers::root))
         .fallback(handlers::public_files)
-        .with_state(app_state)
-        .layer(TraceLayer::new_for_http());
+        .with_state(AppState { pool: pool.clone() })
+        .layer(auth_service)
+        .layer(CompressionLayer::new());
 
     let cors_enabled =
         std::env::var("CORS_ENABLED").unwrap_or("0".into()) == "1";
@@ -132,6 +97,7 @@ async fn main() -> Result<(), AppError> {
         app
     };
 
+    let app = app.layer(TraceLayer::new_for_http());
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3333").await.unwrap();
     let addr = listener.local_addr().unwrap();
     let server = axum::serve(listener, app);

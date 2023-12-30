@@ -16,9 +16,6 @@ pub enum AppError {
     #[error("User not found")]
     UserNotFound,
 
-    #[error("Session not found")]
-    SessionNotFound,
-
     #[error("Unauthorized")]
     Unauthorized,
 
@@ -43,9 +40,6 @@ impl IntoResponse for AppError {
             }
             AppError::FileNotFound(msg) => {
                 (StatusCode::NOT_FOUND, msg).into_response()
-            }
-            AppError::SessionNotFound => {
-                (StatusCode::NOT_FOUND, self.to_string()).into_response()
             }
             AppError::Unauthorized => {
                 (StatusCode::UNAUTHORIZED, self.to_string()).into_response()

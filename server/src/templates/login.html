@@ -3,7 +3,6 @@
 	<head>
 		<meta charset="UTF-8" />
 		<link rel="icon" href="/favicon.png" />
-		<link rel="manifest" href="/site.webmanifest" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Simple News</title>
 		<style>
@@ -73,6 +72,7 @@
 			<form method="post">
 				<input name="username" placeholder="Username" />
 				<input name="password" placeholder="Password" type="password" />
+				{{#if next}}<input name="next" type="hidden" value="{{next}}" />{{/if}}
 				<button type="submit">Login</button>
 
 				{{#if errors}}

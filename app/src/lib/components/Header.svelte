@@ -7,7 +7,7 @@
 
 	async function handleLogout() {
 		await logout();
-		goto(new URL("/", window.location.href));
+		window.location.href = "/login";
 	}
 
 	function goBack() {
