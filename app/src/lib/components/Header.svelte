@@ -11,8 +11,7 @@
 	}
 
 	function goBack() {
-		const newPath = $path.split("/").slice(0, -1).join("/");
-		goto(new URL(newPath, window.location.href));
+		goto($path.split("/").slice(0, -1).join("/"));
 	}
 </script>
 
