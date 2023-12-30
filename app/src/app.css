@@ -29,6 +29,13 @@
 	}
 }
 
+@layer components {
+	/** Disable the iOS context menu */
+	.no-callout {
+		-webkit-touch-callout: none;
+	}
+}
+
 *:focus {
 	outline: none;
 }

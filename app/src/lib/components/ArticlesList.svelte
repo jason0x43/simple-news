@@ -84,35 +84,41 @@
 	}
 
 	let touchTimer: ReturnType<typeof setTimeout> | undefined;
+	let longPressed = false;
+	let moved = false;
 
 	function handleTouchStart(event: TouchEvent) {
-		event.preventDefault();
+		const { pageX, pageY } = event.touches[0];
 
-		if (menuAnchor) {
-			handleContextClose();
-		} else {
-			const { pageX, pageY } = event.touches[0];
+		touchTimer = setTimeout(() => {
+			longPressed = true;
+			handleContextMenu({
+				target: event.target,
+				x: pageX,
+				y: pageY,
+			});
+		}, seconds(0.5));
+	}
 
-			touchTimer = setTimeout(() => {
-				handleContextMenu({
-					target: event.target,
-					x: pageX,
-					y: pageY,
-				});
-				touchTimer = undefined;
-			}, seconds(0.25));
-		}
+	function handleTouchMove(_event: TouchEvent) {
+		clearTimeout(touchTimer);
+		longPressed = false;
+		moved = true;
 	}
 
 	function handleTouchEnd(event: TouchEvent) {
-		if (touchTimer) {
-			clearTimeout(touchTimer);
+		clearTimeout(touchTimer);
+		if (longPressed || moved) {
+			event.preventDefault();
+		} else if (!menuAnchor) {
 			const target = event.currentTarget as HTMLElement;
 			const url = target.getAttribute("data-href");
 			if (url) {
 				goto(url);
 			}
 		}
+		longPressed = false;
+		moved = false;
 	}
 
 	async function handleContextSelect(value: string) {
@@ -181,8 +187,6 @@
 				<li
 					class={`
 						min-h-[2.25rem]
-						cursor-pointer
-						select-none
 						p-2
 						flex
 						flex-row
@@ -191,6 +195,8 @@
 						dark:text-white
 						hover:bg-gray-x-light/70
 						dark:hover:bg-gray-x-dark/70
+						no-callout
+						no-swipe
 					`}
 					class:bg-gray-light={article.isSelected}
 					class:dark:bg-gray-dark={article.isSelected}
@@ -201,7 +207,7 @@
 					data-href="/reader/{$feedId}/{article.id}"
 					on:touchstart={handleTouchStart}
 					on:touchend={handleTouchEnd}
-					on:touchmove={handleTouchEnd}
+					on:touchmove={handleTouchMove}
 				>
 					<div
 						class="w-4 h-4 flex-shrink-0 relative top-1 flex flex-row items-center"
