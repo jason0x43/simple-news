@@ -136,13 +136,6 @@ export function init() {
 		event.preventDefault();
 	};
 
-	let handleTouchStart = (event: TouchEvent) => {
-		const touch = event.touches[0];
-		if (touch.pageX < 20 || touch.pageX > window.innerWidth - 20) {
-			// ignore touches near the edges of the screen
-			event.preventDefault();
-		}
-	};
 
 	let handleClick = (event: MouseEvent) => {
 		let targetElement = event.target as HTMLElement;
@@ -183,11 +176,6 @@ export function init() {
 		// update state for URL changes
 		window.addEventListener("popstate", handlePopState);
 
-		// disable swipes
-		document
-			.getElementById("app")
-			?.addEventListener("touchstart", handleTouchStart);
-
 		// handle <a> clicks; open ctrl/shift+clicks in another tab/window
 		window.addEventListener("click", handleClick);
 	};
@@ -198,7 +186,6 @@ export function init() {
 		window.removeEventListener("load", handleLoad);
 		window.removeEventListener("hashchange", handleHashChange);
 		window.removeEventListener("popstate", handlePopState);
-		document.getElementById("app")?.removeEventListener("touchstart", handleTouchStart);
 		window.removeEventListener("click", handleClick);
 	};
 }

@@ -33,6 +33,25 @@
 			$root = rootRef;
 		}
 	}
+
+	let edgeTouch = false;
+
+	function handleTouchStart(event: TouchEvent) {
+		const touch = event.touches[0];
+		if (touch.pageX < 20 || touch.pageX > window.innerWidth - 20) {
+			edgeTouch = true;
+		}
+	}
+
+	function handleTouchMove(event: TouchEvent) {
+		if (edgeTouch) {
+			event.preventDefault();
+		}
+	}
+
+	function handleTouchEnd() {
+		edgeTouch = false;
+	}
 </script>
 
 <!-- Layout
@@ -188,12 +207,18 @@ X-Large:
 			class:sm:translate-x-[0]={$feedId && !$articleId}
 			class:sm:translate-x-[-600px]={$articleId}
 			class:lg:translate-x-[-300px]={$articleId}
+			on:touchstart={handleTouchStart}
+			on:touchend={handleTouchEnd}
+			on:touchmove={handleTouchMove}
 		>
 			<div class="flex flex-col justify-between w-[33.3333%] sm:w-[300px]">
 				<FeedsList />
 
 				<div class="grid grid-cols-2 p-3 gap-3">
-					<Button class="whitespace-nowrap" on:click={() => ($managingFeeds = true)}>Manage Feeds</Button>
+					<Button
+						class="whitespace-nowrap"
+						on:click={() => ($managingFeeds = true)}>Manage Feeds</Button
+					>
 					<Select class="[text-align-last:center]" bind:value={$articleFilter}>
 						<option value="unread">Unread</option>
 						<option value="all">All</option>
