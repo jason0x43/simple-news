@@ -96,7 +96,7 @@
 	}
 
 	.content :global(a) {
-		color: theme(colors.blue);
+		color: theme(colors.blue.DEFAULT);
 		text-decoration: underline;
 	}
 

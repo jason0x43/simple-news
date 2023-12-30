@@ -197,12 +197,10 @@
 						dark:hover:bg-gray-x-dark/70
 						no-callout
 						no-swipe
+						${article.saved ? "bg-yellow/20" : ""}
+						${article.isSelected ? "bg-gray/20" : ""}
+						${article.id === activeArticle?.id ? "bg-blue/20" : ""}
 					`}
-					class:bg-gray-light={article.isSelected}
-					class:dark:bg-gray-dark={article.isSelected}
-					class:bg-yellow-light={article.saved}
-					class:dark:bg-yellow-dark={article.saved}
-					class:opacity-50={article.read && !article.isSelected}
 					data-id={article.id}
 					data-href="/reader/{$feedId}/{article.id}"
 					on:touchstart={handleTouchStart}
@@ -211,6 +209,9 @@
 				>
 					<div
 						class="w-4 h-4 flex-shrink-0 relative top-1 flex flex-row items-center"
+						class:opacity-50={article.read &&
+							!article.isSelected &&
+							!article.saved}
 					>
 						{#if article.feed?.icon}
 							<img
@@ -244,11 +245,18 @@
 						class="flex-auto"
 						class:text-gray-dark={article.read && !article.isSelected}
 						class:dark:text-gray-light={article.read && !article.isSelected}
+						class:opacity-50={article.read &&
+							!article.isSelected &&
+							!article.saved}
 					>
 						{@html unescapeHtml(article.title ?? "")}
 					</div>
 
-					<div>
+					<div
+						class:opacity-50={article.read &&
+							!article.isSelected &&
+							!article.saved}
+					>
 						<span class="whitespace-nowrap text-xs text-gray">
 							{getAge(article.published ?? undefined)}
 						</span>

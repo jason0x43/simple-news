@@ -52,10 +52,13 @@
 				role="menuitem"
 				on:click={handleItemClick}
 				on:keypress={handleItemClick}
+				on:touchend={handleItemClick}
 				data-value={item.value}
 				class={`
 					hover:bg-gray-x-light
 					dark:hover:bg-gray-x-dark
+					active:bg-gray-x-light
+					dark:active:bg-gray-x-dark
 					p-3
 					cursor-pointer
 					whitespace-nowrap

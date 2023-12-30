@@ -101,6 +101,7 @@ function diffDates(date1: Date, date2: Date) {
 export function isActionEvent(event: Event) {
 	return (
 		(event instanceof MouseEvent && event.type === "click") ||
+		(event instanceof TouchEvent && event.type === "touchend") ||
 		(event instanceof KeyboardEvent && event.key === "Enter")
 	);
 }
