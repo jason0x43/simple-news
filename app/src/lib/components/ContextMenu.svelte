@@ -30,7 +30,7 @@
 	}
 </script>
 
-<svelte:window on:click={handleClick} />
+<svelte:body on:click|capture={handleClick} />
 
 <Portal {anchor}>
 	<ul
