@@ -136,28 +136,29 @@ export function init() {
 		event.preventDefault();
 	};
 
-
 	let handleClick = (event: MouseEvent) => {
 		let targetElement = event.target as HTMLElement;
 		while (targetElement && targetElement !== document.body) {
+			// Handle clicks on anchors
 			if (targetElement.tagName === "A") {
+				// Ignore clicks when shouldIgnoreChange is enabled
 				if (shouldIgnoreChange?.()) {
-					// Ignore the click
 					return event.preventDefault();
 				}
 
+				// Don't process clicks if modifier keys are pressed or the
+				// link explicitly says not to handle it
 				if (
 					event?.ctrlKey ||
 					event?.shiftKey ||
 					targetElement.hasAttribute("data-native-router")
 				) {
-					// Let the browser handle the click
 					return;
 				}
 
+				// If the link has a relative href, handle it
 				const href = targetElement.getAttribute("href") || "";
 				if (!/^http?s\:\/\//.test(href)) {
-					// Only handle relative URLs
 					if (href) {
 						setUrl(new URL(href, window.location.href));
 					}
