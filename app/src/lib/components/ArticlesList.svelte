@@ -121,6 +121,14 @@
 		moved = false;
 	}
 
+	function handleClick(event: MouseEvent) {
+		const target = event.currentTarget as HTMLElement;
+		const url = target.getAttribute("data-href");
+		if (url) {
+			goto(url);
+		}
+	}
+
 	async function handleContextSelect(value: string) {
 		if (/read/i.test(value)) {
 			const read = !/unread/i.test(value);
@@ -184,46 +192,47 @@
 			on:contextmenu={handleContextMenu}
 		>
 			{#each renderedArticles as article (article.id)}
-				<li
-					class={`
-						min-h-[2.25rem]
-						p-2
-						flex
-						flex-row
-						gap-2
-						text-black
-						dark:text-white
-						hover:bg-gray-x-light/70
-						dark:hover:bg-gray-x-dark/70
-						no-callout
-						no-swipe
-						${article.saved ? "bg-yellow/20" : ""}
-						${article.isSelected ? "bg-gray/20" : ""}
-						${article.id === activeArticle?.id ? "bg-blue/20" : ""}
-					`}
-					data-id={article.id}
-					data-href="/reader/{$feedId}/{article.id}"
-					on:touchstart={handleTouchStart}
-					on:touchend={handleTouchEnd}
-					on:touchmove={handleTouchMove}
-				>
-					<div
-						class="w-4 h-4 flex-shrink-0 relative top-1 flex flex-row items-center"
-						class:opacity-50={article.read &&
-							!article.isSelected &&
-							!article.saved}
+				<li>
+					<a
+						class={`
+							min-h-[2.25rem]
+							p-2
+							flex
+							flex-row
+							gap-2
+							text-black
+							dark:text-white
+							hover:bg-gray-x-light/70
+							dark:hover:bg-gray-x-dark/70
+							no-callout
+							no-swipe
+							${article.saved ? "bg-yellow/20" : ""}
+							${article.isSelected ? "bg-gray/20" : ""}
+							${article.id === activeArticle?.id ? "bg-blue/20" : ""}
+						`}
+						data-id={article.id}
+						href="/reader/{$feedId}/{article.id}"
+						on:touchstart={handleTouchStart}
+						on:touchend={handleTouchEnd}
+						on:touchmove={handleTouchMove}
 					>
-						{#if article.feed?.icon}
-							<img
-								class="object-contain"
-								src={article.feed?.icon}
-								title={article.feed?.title}
-								alt={article.feed?.title}
-							/>
-						{/if}
-						{#if !article.feed?.icon}
-							<div
-								class={`
+						<div
+							class="w-4 h-4 flex-shrink-0 relative top-1 flex flex-row items-center"
+							class:opacity-50={article.read &&
+								!article.isSelected &&
+								!article.saved}
+						>
+							{#if article.feed?.icon}
+								<img
+									class="object-contain"
+									src={article.feed?.icon}
+									title={article.feed?.title}
+									alt={article.feed?.title}
+								/>
+							{/if}
+							{#if !article.feed?.icon}
+								<div
+									class={`
                     bg-gray-x-dark
 										text-white
                     rounded-sm
@@ -234,33 +243,34 @@
                     justify-center
 	                  text-xs
 									`}
-								title={article.feed?.title}
-							>
-								{article.feed?.title[0]}
-							</div>
-						{/if}
-					</div>
+									title={article.feed?.title}
+								>
+									{article.feed?.title[0]}
+								</div>
+							{/if}
+						</div>
 
-					<div
-						class="flex-auto"
-						class:text-gray-dark={article.read && !article.isSelected}
-						class:dark:text-gray-light={article.read && !article.isSelected}
-						class:opacity-50={article.read &&
-							!article.isSelected &&
-							!article.saved}
-					>
-						{@html unescapeHtml(article.title ?? "")}
-					</div>
+						<div
+							class="flex-auto"
+							class:text-gray-dark={article.read && !article.isSelected}
+							class:dark:text-gray-light={article.read && !article.isSelected}
+							class:opacity-50={article.read &&
+								!article.isSelected &&
+								!article.saved}
+						>
+							{@html unescapeHtml(article.title ?? "")}
+						</div>
 
-					<div
-						class:opacity-50={article.read &&
-							!article.isSelected &&
-							!article.saved}
-					>
-						<span class="whitespace-nowrap text-xs text-gray">
-							{getAge(article.published ?? undefined)}
-						</span>
-					</div>
+						<div
+							class:opacity-50={article.read &&
+								!article.isSelected &&
+								!article.saved}
+						>
+							<span class="whitespace-nowrap text-xs text-gray">
+								{getAge(article.published ?? undefined)}
+							</span>
+						</div>
+					</a>
 				</li>
 			{/each}
 		</ul>
