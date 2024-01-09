@@ -29,13 +29,6 @@
 		);
 	}
 
-	function isGroupSelected(group: FeedGroupWithFeeds): boolean {
-		return (
-			group.id === $selectedGroupId ||
-			allFeedsAreSelected(group, $selectedFeedIds)
-		);
-	}
-
 	function toggleExpanded(
 		expanded: Expanded,
 		group: FeedGroupWithFeeds,
@@ -74,8 +67,8 @@
 	<!-- feed groups -->
 	{#each $feedGroups as group (group.name)}
 		<li
-			class:bg-gray-x-light={isGroupSelected(group)}
-			class:dark:bg-gray-x-dark={isGroupSelected(group)}
+			class:bg-gray-x-light={group.id === $selectedGroupId}
+			class:dark:bg-gray-x-dark={group.id === $selectedGroupId}
 		>
 			<div
 				class={`
