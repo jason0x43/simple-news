@@ -6,7 +6,8 @@ use axum_login::{
 use serde::Deserialize;
 use sqlx::SqlitePool;
 use std::fmt::Debug;
-use tower_sessions::{Expiry, SessionManagerLayer, SqliteStore};
+use tower_sessions::{Expiry, SessionManagerLayer};
+use tower_sessions_sqlx_store::SqliteStore;
 
 use crate::{
     error::AppError,

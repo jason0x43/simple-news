@@ -11,9 +11,9 @@ path = "src/lib.rs"
 atom_syndication = "0.12.2"
 axum = { version = "0.7.2", features = ["http2", "original-uri"] }
 axum-extra = { version = "0.9.0", features = ["cookie"] }
-axum-login = "0.12.0"
+axum-login = "0.15.0"
 axum-macros = "0.4.0"
-base64 = "0.21.5"
+base64 = "0.22.0"
 cuid2 = "0.1.2"
 dotenvy = "0.15"
 handlebars = "5.0.0"
@@ -24,7 +24,7 @@ macros = { path = "macros" }
 mime_guess = "2.0.4"
 rand = "0.8.5"
 regex = "1.10.2"
-reqwest = { version = "0.11.22", default-features = false, features = [
+reqwest = { version = "0.12.2", default-features = false, features = [
   "rustls-tls",
 ] }
 rss = "2.0.6"
@@ -39,7 +39,8 @@ time-tz = { version = "2.0.0", features = ["db"] }
 tokio = { version = "1.32.0", features = ["full"] }
 tower = "0.4.13"
 tower-http = { version = "0.5.0", features = ["full"] }
-tower-sessions = { version = "0.9.1", features = ["sqlite-store"] }
+tower-sessions = "0.12.1"
+tower-sessions-sqlx-store = { version = "0.12.0", features = ["sqlite"] }
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
 tsync = "2"
