@@ -66,7 +66,7 @@ impl Display for FeedKind {
         let str = match self {
             FeedKind::Rss => "rss",
         };
-        f.write_str(&str)
+        f.write_str(str)
     }
 }
 

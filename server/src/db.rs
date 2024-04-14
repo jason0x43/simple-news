@@ -5,8 +5,8 @@ use crate::{
         Article, ArticleId, ArticleMarkRequest, ArticleSummary,
         ArticlesMarkRequest, Feed, FeedGroup, FeedGroupFeed, FeedGroupFeedId,
         FeedGroupId, FeedGroupWithFeeds, FeedId, FeedKind, FeedLog, FeedLogId,
-        FeedStat, Password, PasswordId, UpdateFeedRequest,
-        User, UserArticle, UserArticleId, UserId,
+        FeedStat, Password, PasswordId, UpdateFeedRequest, User, UserArticle,
+        UserArticleId, UserId,
     },
     util::{get_timestamp, hash_password},
 };
@@ -195,10 +195,7 @@ impl Password {
         }
     }
 
-    pub(crate) fn matches(
-        &self,
-        password: &str,
-    ) -> Result<(), AppError> {
+    pub(crate) fn matches(&self, password: &str) -> Result<(), AppError> {
         let check = hash_password(password, Some(&self.salt));
         if check.hash != self.hash {
             Err(AppError::Unauthorized)
@@ -417,7 +414,7 @@ impl Feed {
         let feed = SynFeed::load(&self.url).await;
         if let Err(err) = feed {
             log::warn!("error downloading feed {}: {}", self.url, err);
-            FeedLog::create(
+            if let Some(err) = FeedLog::create(
                 pool,
                 self.id.clone(),
                 false,
@@ -425,9 +422,9 @@ impl Feed {
             )
             .await
             .err()
-            .map(|err| {
-                log::debug!("error creating feed update: {}", err);
-            });
+            {
+                log::debug!("error creating feed update: {}", err)
+            }
             return Err(err);
         }
 
@@ -440,7 +437,7 @@ impl Feed {
         let icon = feed.get_icon().await;
         if let Ok(Some(icon)) = icon {
             let icon_str = icon.to_string();
-            query!(
+            if let Some(err) = query!(
                 "UPDATE feeds SET icon = ?1 WHERE id = ?2",
                 icon_str,
                 self.id,
@@ -448,9 +445,9 @@ impl Feed {
             .execute(&mut *tx)
             .await
             .err()
-            .map(|err| {
+            {
                 errors.push(format!("error updating icon: {}", err));
-            });
+            }
         } else if let Err(err) = icon {
             log::warn!("error getting icon for {}: {}", self.url, err);
             errors.push(format!("error getting icon: {}", err));
@@ -462,21 +459,17 @@ impl Feed {
                 item.title,
                 item.published
             );
-            let link: Option<Url> = item
-                .link
-                .clone()
-                .map(|link| {
-                    let url = Url::parse(&link);
-                    match url {
-                        Ok(url) => Some(url),
-                        Err(url::ParseError::RelativeUrlWithoutBase) => {
-                            let base = Url::parse(&self.url);
-                            base.map_or(None, |base| base.join(&link).ok())
-                        }
-                        Err(_) => None,
+            let link: Option<Url> = item.link.clone().and_then(|link| {
+                let url = Url::parse(&link);
+                match url {
+                    Ok(url) => Some(url),
+                    Err(url::ParseError::RelativeUrlWithoutBase) => {
+                        let base = Url::parse(&self.url);
+                        base.map_or(None, |base| base.join(&link).ok())
                     }
-                })
-                .flatten();
+                    Err(_) => None,
+                }
+            });
 
             let article = Article::new(
                 item.content.clone(),
@@ -487,7 +480,7 @@ impl Feed {
                 item.published,
             );
 
-            query!(
+            if let Some(err) = query!(
                 r#"
                 INSERT INTO articles(
                   content, id, feed_id, article_id, title, link, published
@@ -508,20 +501,25 @@ impl Feed {
             .execute(&mut *tx)
             .await
             .err()
-            .map(|err| {
+            {
                 errors.push(format!("error creating article: {}", err));
-            });
+            }
         }
 
         tx.commit().await?;
         log::debug!("added articles");
 
-        FeedLog::create(pool, self.id.clone(), true, Some(errors.join("\n")))
-            .await
-            .err()
-            .map(|err| {
-                log::debug!("error creating feed update: {}", err);
-            });
+        if let Some(err) = FeedLog::create(
+            pool,
+            self.id.clone(),
+            true,
+            Some(errors.join("\n")),
+        )
+        .await
+        .err()
+        {
+            log::debug!("error creating feed update: {}", err)
+        }
 
         Ok(())
     }
@@ -1003,7 +1001,7 @@ impl FeedGroup {
         .execute(pool)
         .await?;
 
-        Ok(self.with_feeds(pool).await?)
+        self.with_feeds(pool).await
     }
 
     /// Move a feed to this group, removing it from all other groups
@@ -1036,7 +1034,7 @@ impl FeedGroup {
 
         tx.commit().await?;
 
-        Ok(self.with_feeds(pool).await?)
+        self.with_feeds(pool).await
     }
 
     /// Remove a feed from this group
@@ -1056,7 +1054,7 @@ impl FeedGroup {
         .execute(pool)
         .await?;
 
-        Ok(self.with_feeds(pool).await?)
+        self.with_feeds(pool).await
     }
 
     /// Return all the article summaries for this feed group

@@ -41,14 +41,14 @@ impl From<rss::Channel> for Feed {
             image: value.image.clone().map(|i| i.url),
             entries: value
                 .items()
-                .into_iter()
+                .iter()
                 .map(|item| {
                     let content = process_content(
                         &FeedItem::Item(item.clone()),
-                        &get_rss_content(&item),
+                        &get_rss_content(item),
                     );
                     let title = item.title.clone().unwrap_or("Untitled".into());
-                    let guid = get_rss_guid(&item);
+                    let guid = get_rss_guid(item);
                     let published = get_rss_date(item);
                     let link = item.link.clone();
 
@@ -73,7 +73,7 @@ impl From<atom::Feed> for Feed {
             image: value.icon.clone().map(|i| i.to_string()),
             entries: value
                 .entries()
-                .into_iter()
+                .iter()
                 .map(|entry| {
                     let content = process_content(
                         &FeedItem::Entry(entry.clone()),
@@ -115,12 +115,10 @@ impl Feed {
         let bytes = client.get(url).send().await?.bytes().await?;
         let feed: Feed = if let Ok(c) = rss::Channel::read_from(&bytes[..]) {
             Ok(c.into())
+        } else if let Ok(f) = atom::Feed::read_from(&bytes[..]) {
+            Ok(f.into())
         } else {
-            if let Ok(f) = atom::Feed::read_from(&bytes[..]) {
-                Ok(f.into())
-            } else {
-                Err(AppError::Error("invalid feed".into()))
-            }
+            Err(AppError::Error("invalid feed".into()))
         }?;
         Ok(feed)
     }
@@ -219,16 +217,16 @@ fn process_content(item: &FeedItem, content: &str) -> String {
     let mut rewriter = HtmlRewriter::new(
         Settings {
             element_content_handlers: vec![
-                (element!("a[style]", |el| {
+                element!("a[style]", |el| {
                     el.remove_attribute("style");
                     Ok(())
-                })),
-                (element!("a", |el| {
+                }),
+                element!("a", |el| {
                     let Some(href) = el.get_attribute("href") else {
                         return Ok(());
                     };
 
-                    if !href.starts_with("/") {
+                    if !href.starts_with('/') {
                         return Ok(());
                     }
 
@@ -237,15 +235,15 @@ fn process_content(item: &FeedItem, content: &str) -> String {
                     };
 
                     let url = base_addr.join(&href)?;
-                    el.set_attribute("href", &url.to_string())?;
+                    el.set_attribute("href", url.as_ref())?;
                     Ok(())
-                })),
-                (element!("img", |el| {
+                }),
+                element!("img", |el| {
                     let Some(src) = el.get_attribute("src") else {
                         return Ok(());
                     };
 
-                    if !src.starts_with("/") {
+                    if !src.starts_with('/') {
                         return Ok(());
                     }
 
@@ -254,9 +252,9 @@ fn process_content(item: &FeedItem, content: &str) -> String {
                     };
 
                     let url = base_addr.join(&src)?;
-                    el.set_attribute("src", &url.to_string())?;
+                    el.set_attribute("src", url.as_ref())?;
                     Ok(())
-                })),
+                }),
             ],
             ..Settings::default()
         },
@@ -269,24 +267,24 @@ fn process_content(item: &FeedItem, content: &str) -> String {
 }
 
 /// Rfc2822 without the optional weekday
-static TIME_FORMAT_1: &'static [FormatItem<'static>] = format_description!(
+static TIME_FORMAT_1: &[FormatItem<'static>] = format_description!(
     "[day] [month repr:short] [year] [hour repr:24]:[minute] [offset_hour sign:mandatory][offset_minute]"
 );
 
 /// Rfc2822 without seconds
-static TIME_FORMAT_2: &'static [FormatItem<'static>] = format_description!(
+static TIME_FORMAT_2: &[FormatItem<'static>] = format_description!(
     "[weekday repr:short], [day] [month repr:short] [year] [hour repr:24]:[minute] [offset_hour sign:mandatory][offset_minute]"
 );
 
 /// Rfc2822
-static TIME_FORMAT_3: &'static [FormatItem<'static>] = format_description!(
+static TIME_FORMAT_3: &[FormatItem<'static>] = format_description!(
     "[weekday repr:short], [day] [month repr:short] [year] [hour repr:24]:[minute]:[second] [offset_hour sign:mandatory][offset_minute]"
 );
 
 /// Parse a time string
 fn parse_time(d: &str) -> Option<OffsetDateTime> {
     let tz_re = Regex::new(r"\b[A-Z]{3}$").unwrap();
-    let d: String = if let Some(m) = tz_re.find(&d) {
+    let d: String = if let Some(m) = tz_re.find(d) {
         let tz: Option<&Tz> = match m.as_str() {
             "PDT" | "PST" => Some(time_tz::timezones::db::PST8PDT),
             "EDT" | "EST" => Some(time_tz::timezones::db::EST5EDT),
@@ -299,7 +297,7 @@ fn parse_time(d: &str) -> Option<OffsetDateTime> {
             let offset = tz.get_offset_primary().to_utc();
             let sign = if offset.whole_hours() < 0 { "-" } else { "+" };
             let offstr = format!("{}{:02}00", sign, offset.whole_hours().abs());
-            tz_re.replace(&d, &offstr).into()
+            tz_re.replace(d, &offstr).into()
         } else {
             d.into()
         }
@@ -328,13 +326,13 @@ fn parse_time(d: &str) -> Option<OffsetDateTime> {
 /// Get the published date of an RSS item
 fn get_rss_date(item: &rss::Item) -> OffsetDateTime {
     if let Some(pub_date) = &item.pub_date {
-        let date = parse_time(pub_date);
-        if date.is_none() {
-            log::warn!("invalid pub date {}", pub_date);
-            get_timestamp(0)
-        } else {
-            date.unwrap()
-        }
+        parse_time(pub_date).map_or_else(
+            || {
+                log::warn!("invalid pub date {}", pub_date);
+                get_timestamp(0)
+            },
+            |d| d,
+        )
     } else if let Some(ext) = &item.dublin_core_ext {
         if ext.dates.is_empty() {
             get_timestamp(0)
