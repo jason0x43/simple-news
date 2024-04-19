@@ -7,7 +7,7 @@ export IMAGE_VERSION=$commit
 if [[ $cmd == "build" ]]; then
   echo "building simple-news:$commit"
   docker compose build server 
-elif [[ $cmd == "run" ]]; then
+elif [[ $cmd == "up" ]]; then
   echo "running simple-news:$commit"
   docker compose up
 elif [[ $cmd == "publish" ]]; then
