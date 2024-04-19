@@ -1,13 +1,14 @@
 services:
   server:
-    image: simple-news:${IMAGE_VERSION}
+    image: simple-news:latest
     build:
-      context: .
+      context: ..
+      dockerfile: server/Dockerfile
       target: runner
     ports:
       - 3333:3333
     volumes:
-      - ${DB_PATH}:/data
+      - .:/data
     environment:
-      DATABASE_URL: sqlite:///data/${DB_FILE:-database.db}
+      DATABASE_URL: sqlite:///data/database.db
       RUST_LOG: simple_news=debug,tower_http=debug,info
