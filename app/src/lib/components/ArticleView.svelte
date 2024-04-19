@@ -1,20 +1,26 @@
 <script lang="ts">
-	import { isActionEvent, verifyHashLinkTarget } from "../util";
-	import { article, articleFeed, feedId } from "../state";
+	import type { Article, Feed } from '$server';
+	import { isActionEvent, verifyHashLinkTarget } from '../util';
 
-	let className = "";
+	export let article: Article;
+	export let feedId: string;
+	export let feeds: Feed[];
+
+	let className = '';
 	export { className as class };
 
+	$: articleFeed = feeds.find((f) => f.id === article.feed_id);
+
 	let scrollBox: HTMLElement | undefined;
-	let prevArticle = $article?.id;
+	let prevArticle = article.id;
 	let contentDiv: HTMLDivElement | undefined;
 
-	$: visible = Boolean($article);
+	$: visible = Boolean(article);
 
 	$: {
-		if ($article && prevArticle !== $article?.id) {
+		if (prevArticle !== article.id) {
 			scrollBox?.scrollTo({ top: 0 });
-			prevArticle = $article.id;
+			prevArticle = article.id;
 		}
 	}
 
@@ -22,13 +28,13 @@
 		if (isActionEvent(event)) {
 			event.preventDefault();
 			const elem = event.target as HTMLElement;
-			const href = elem.getAttribute("href") ?? undefined;
+			const href = elem.getAttribute('href') ?? undefined;
 			if (href) {
-				if (href.startsWith("#")) {
+				if (href.startsWith('#')) {
 					verifyHashLinkTarget(href, contentDiv);
-					window.open(href, "_self");
+					window.open(href, '_self');
 				} else {
-					window.open(href, "_blank");
+					window.open(href, '_blank');
 				}
 			}
 		}
@@ -37,24 +43,24 @@
 
 <div
 	class={`
+			flex-auto
+			overflow-y-auto
 			bg-white
+			px-4
 			text-black
 			dark:bg-black
 			dark:text-white
-			overflow-y-auto
-			px-4
-			flex-auto
 			${className}
 		`}
 	bind:this={scrollBox}
 >
-	{#if visible && $article && $articleFeed}
-		<div class="z-10 max-w-screen-md mx-auto py-5 flex flex-col gap-4">
+	{#if visible && article && articleFeed}
+		<div class="z-10 mx-auto flex max-w-screen-md flex-col gap-4 py-5">
 			<div class="flex flex-col gap-4">
-				<a href={$article.link ?? undefined} target="_blank">
-					<h1>{$article.title}</h1>
+				<a href={article.link ?? undefined} target="_blank">
+					<h1>{article.title}</h1>
 				</a>
-				<h2>{$articleFeed.title}</h2>
+				<h2>{articleFeed.title}</h2>
 			</div>
 			<!-- svelte-ignore a11y-no-static-element-interactions -->
 			<div
@@ -63,31 +69,32 @@
 				on:click={onLinkClick}
 				on:keypress={onLinkClick}
 			>
-				{@html $article.content}
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+				{@html article.content}
 			</div>
 		</div>
 		<a
 			class={`
 					fixed
-					right-0
 					bottom-0
+					right-0
 					z-10
 					block
-					bg-transparent
-					w-20
 					h-20
+					w-20
+					bg-transparent
 					text-transparent
 				`}
-			href={`/reader/${$feedId}`}>&nbsp;</a
+			href={`/reader/${feedId}`}>&nbsp;</a
 		>
 	{/if}
 </div>
 
 <!-- svelte-ignore css-unused-selector -->
 <style lang="postcss">
-	@import url("highlight.js/styles/default.css") screen and
+	@import url('highlight.js/styles/default.css') screen and
 		(prefers-color-scheme: light);
-	@import url("highlight.js/styles/dark.css") screen and
+	@import url('highlight.js/styles/dark.css') screen and
 		(prefers-color-scheme: dark);
 
 	.content {

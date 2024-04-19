@@ -6,18 +6,20 @@
 	import Input from "./Input.svelte";
 	import { showToast } from "../toast";
 	import { getEventValue, seconds } from "../util";
-	import {
-		addFeed,
-		addFeedGroup,
-		feedGroups,
-		feeds,
-		managingFeeds,
-		moveFeedToGroup,
-		refreshFeed,
-		updateFeed,
-	} from "../state";
-	import type { FeedGroupId, FeedId } from "server";
+	// import {
+	// 	addFeed,
+	// 	addFeedGroup,
+	// 	feedGroups,
+	// 	feeds,
+	// 	managingFeeds,
+	// 	moveFeedToGroup,
+	// 	refreshFeed,
+	// 	updateFeed,
+	// } from "../state";
+	import type { FeedGroupId, FeedGroupWithFeeds, FeedId } from "$server";
 	import Refresh from "../icons/Refresh.svelte";
+
+	export let feedGroups: FeedGroupWithFeeds[];
 
 	let busy = false;
 	let addFeedData = { url: "" };

@@ -5,11 +5,12 @@ use crate::{
         Article, ArticleId, ArticleMarkRequest, ArticleSummary,
         ArticlesMarkRequest, Feed, FeedGroup, FeedGroupFeed, FeedGroupFeedId,
         FeedGroupId, FeedGroupWithFeeds, FeedId, FeedKind, FeedLog, FeedLogId,
-        FeedStat, Password, PasswordId, UpdateFeedRequest, User, UserArticle,
-        UserArticleId, UserId,
+        FeedStat, Password, PasswordId, Session, SessionId, UpdateFeedRequest,
+        User, UserArticle, UserArticleId, UserId,
     },
     util::{get_timestamp, hash_password},
 };
+use serde_json::json;
 use sqlx::{query, query_as, SqlitePool};
 use time::OffsetDateTime;
 use url::Url;
@@ -67,7 +68,7 @@ impl User {
 
     pub(crate) async fn get(
         pool: &SqlitePool,
-        id: UserId,
+        id: &UserId,
     ) -> Result<Self, AppError> {
         query_as!(
             User,
@@ -205,69 +206,76 @@ impl Password {
     }
 }
 
-// impl Session {
-//     pub(crate) async fn create(
-//         pool: &SqlitePool,
-//         user_id: UserId,
-//     ) -> Result<Self, AppError> {
-//         let session = Self {
-//             id: SessionId::new(),
-//             data: json!("{}"),
-//             user_id,
-//             expires: get_timestamp(604800),
-//         };
-//
-//         log::debug!("creating session {:?}", session);
-//
-//         query!(
-//             r#"
-//             INSERT INTO sessions (id, data, user_id, expires)
-//             VALUES (?1, ?2, ?3, ?4)
-//             "#,
-//             session.id,
-//             session.data,
-//             session.user_id,
-//             session.expires
-//         )
-//         .execute(pool)
-//         .await?;
-//
-//         Ok(session)
-//     }
-//
-//     pub(crate) async fn get(
-//         pool: &SqlitePool,
-//         session_id: &SessionId,
-//     ) -> Result<Self, AppError> {
-//         query_as!(
-//             Self,
-//             r#"
-//             SELECT
-//               id,
-//               data AS "data: serde_json::Value",
-//               expires AS "expires!: OffsetDateTime",
-//               user_id
-//             FROM sessions
-//             WHERE id = ?1
-//             "#,
-//             session_id
-//         )
-//         .fetch_one(pool)
-//         .await
-//         .map_err(|_| AppError::SessionNotFound)
-//     }
-//
-//     pub(crate) async fn delete(
-//         &self,
-//         pool: &SqlitePool,
-//     ) -> Result<(), AppError> {
-//         query!("DELETE FROM sessions WHERE id = ?1", self.id)
-//             .execute(pool)
-//             .await?;
-//         Ok(())
-//     }
-//
-// }
+impl Session {
+    pub(crate) async fn create(
+        pool: &SqlitePool,
+        user_id: &UserId,
+    ) -> Result<Self, AppError> {
+        let session = Self {
+            id: SessionId::new(),
+            data: json!("{}"),
+            user_id: user_id.clone(),
+            expires: get_timestamp(604800),
+        };
+
+        log::debug!("creating session {:?}", session);
+
+        query!(
+            r#"
+            INSERT INTO sessions (id, data, user_id, expires)
+            VALUES (?1, ?2, ?3, ?4)
+            "#,
+            session.id,
+            session.data,
+            session.user_id,
+            session.expires
+        )
+        .execute(pool)
+        .await?;
+
+        Ok(session)
+    }
+
+    pub(crate) async fn get(
+        pool: &SqlitePool,
+        session_id: &SessionId,
+    ) -> Result<Self, AppError> {
+        query_as!(
+            Self,
+            r#"
+            SELECT
+              id,
+              data AS "data: serde_json::Value",
+              expires AS "expires!: OffsetDateTime",
+              user_id
+            FROM sessions
+            WHERE id = ?1
+            "#,
+            session_id
+        )
+        .fetch_one(pool)
+        .await
+        .map_err(|_| AppError::Unauthorized)
+    }
+
+    pub(crate) async fn delete(
+        &self,
+        pool: &SqlitePool,
+    ) -> Result<(), AppError> {
+        query!("DELETE FROM sessions WHERE id = ?1", self.id)
+            .execute(pool)
+            .await?;
+        Ok(())
+    }
+
+    pub(crate) async fn get_user(
+        self,
+        pool: &SqlitePool,
+    ) -> Result<User, AppError> {
+        User::get(pool, &self.user_id).await
+    }
+
+}
 
 impl Feed {
     /// Create a new feed
@@ -887,13 +895,13 @@ impl FeedGroup {
     /// Create a new feed group
     pub(crate) async fn create(
         pool: &SqlitePool,
-        name: String,
-        user_id: UserId,
+        name: &str,
+        user_id: &UserId,
     ) -> Result<Self, AppError> {
         let group = FeedGroup {
             id: FeedGroupId::new(),
-            name,
-            user_id,
+            name: name.into(),
+            user_id: user_id.clone(),
         };
 
         query!(
@@ -933,9 +941,10 @@ impl FeedGroup {
         .map_err(AppError::SqlxError)
     }
 
-    /// Get all feed groups
+    /// Get all feed groups for a user
     pub(crate) async fn get_all(
         pool: &SqlitePool,
+        user_id: &UserId,
     ) -> Result<Vec<Self>, AppError> {
         query_as!(
             FeedGroup,
@@ -945,7 +954,9 @@ impl FeedGroup {
               name,
               user_id
             FROM feed_groups
-            "#
+            WHERE user_id = ?1
+            "#,
+            user_id
         )
         .fetch_all(pool)
         .await

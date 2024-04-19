@@ -11,7 +11,6 @@ path = "src/lib.rs"
 atom_syndication = "0.12.2"
 axum = { version = "0.7.2", features = ["http2", "original-uri"] }
 axum-extra = { version = "0.9.0", features = ["cookie"] }
-axum-login = "0.15.1"
 axum-macros = "0.4.0"
 base64 = "0.22.0"
 cuid2 = "0.1.2"
@@ -39,8 +38,6 @@ time-tz = { version = "2.0.0", features = ["db"] }
 tokio = { version = "1.32.0", features = ["full"] }
 tower = "0.4.13"
 tower-http = { version = "0.5.0", features = ["full"] }
-tower-sessions = "0.12.1"
-tower-sessions-sqlx-store = { version = "0.12.0", features = ["sqlite"] }
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
 tsync = "2"

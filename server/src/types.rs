@@ -41,6 +41,12 @@ pub struct Password {
     pub user_id: UserId,
 }
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct Credentials {
+    pub username: String,
+    pub password: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type, Id)]
 #[sqlx(transparent)]
 pub struct SessionId(pub String);
@@ -185,6 +191,15 @@ pub struct SessionResponse {
     pub expires: OffsetDateTime,
 }
 
+impl From<Session> for SessionResponse {
+    fn from(value: Session) -> Self {
+        Self {
+            id: value.id,
+            expires: value.expires,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type, Id)]
 #[sqlx(transparent)]
 pub struct FeedLogId(pub String);
@@ -221,7 +236,7 @@ pub struct FeedGroup {
 #[tsync]
 pub struct AddGroupFeedRequest {
     pub feed_id: FeedId,
-    pub move_feed: Option<bool>
+    pub move_feed: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type, Id)]

@@ -1,7 +1,7 @@
 <script lang="ts">
-	import CloseIcon from "../icons/Close.svelte";
-	import Activity from "./Activity.svelte";
-	import { fade } from "svelte/transition";
+	import CloseIcon from '../icons/Close.svelte';
+	import Activity from './Activity.svelte';
+	import { fade } from 'svelte/transition';
 
 	export let title: string | undefined = undefined;
 	export let onClose: (() => void) | undefined = undefined;
@@ -11,18 +11,18 @@
 <div
 	class={`
 		dialog
-		bg-white
-		dark:bg-black
-		dark:text-white
-		md:rounded-md
-		md:shadow-md
 		flex
+		h-full
+		w-full
 		flex-col
 		overflow-hidden
-		w-full
-		h-full
-		sm:max-w-[80%]
+		bg-white
 		sm:max-h-[80%]
+		sm:max-w-[80%]
+		md:rounded-md
+		md:shadow-md
+		dark:bg-black
+		dark:text-white
 	`}
 >
 	{#if title || onClose}
@@ -31,11 +31,11 @@
 			class={`
 				bg-gray-light
 				dark:bg-gray-dark
+				flex
+				items-center
+				justify-between
 				px-3
 				py-2
-				flex
-				justify-between
-				items-center
 			`}
 		>
 			<h4 class="dark:text-white">{title}</h4>
@@ -52,22 +52,22 @@
 			{/if}
 		</div>
 	{/if}
-	<div class="content flex overflow-hidden relative">
+	<div class="content relative flex overflow-hidden">
 		<slot />
 		{#if busy}
 			<div
 				class={`
-					absolute
-					z-10
-					top-0
-					left-0
-					bottom-0
-					right-0
 					bg-background
-					opacity-75
+					absolute
+					bottom-0
+					left-0
+					right-0
+					top-0
+					z-10
 					flex
 					items-center
 					justify-center
+					opacity-75
 				`}
 				in:fade={{ duration: 150 }}
 				out:fade={{ duration: 150 }}

@@ -12,6 +12,12 @@ pub fn derive_id(input: TokenStream) -> TokenStream {
             }
         }
 
+        impl From<&str> for #ident {
+            fn from(value: &str) -> Self {
+                Self(value.into())
+            }
+        }
+
         impl #ident {
             pub fn new() -> Self {
                 Self(cuid2::create_id())

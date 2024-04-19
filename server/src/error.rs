@@ -1,4 +1,4 @@
-use std::{string::FromUtf8Error, str::Utf8Error};
+use std::{str::Utf8Error, string::FromUtf8Error};
 
 use axum::{
     http::StatusCode,
@@ -34,15 +34,21 @@ pub enum AppError {
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-        match self {
+        self.into()
+    }
+}
+
+impl From<AppError> for Response {
+    fn from(value: AppError) -> Response {
+        match value {
             AppError::UserNotFound => {
-                (StatusCode::NOT_FOUND, self.to_string()).into_response()
+                (StatusCode::NOT_FOUND, value.to_string()).into_response()
             }
             AppError::FileNotFound(msg) => {
                 (StatusCode::NOT_FOUND, msg).into_response()
             }
             AppError::Unauthorized => {
-                (StatusCode::UNAUTHORIZED, self.to_string()).into_response()
+                (StatusCode::UNAUTHORIZED, value.to_string()).into_response()
             }
             AppError::ReqwestError(err) => {
                 (StatusCode::INTERNAL_SERVER_ERROR, err.to_string())

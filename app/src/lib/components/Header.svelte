@@ -1,43 +1,47 @@
 <script lang="ts">
-	import Button from "./Button.svelte";
-	import RssIcon from "../icons/Rss.svelte";
-	import UserIcon from "../icons/User.svelte";
-	import { title, logout } from "../state";
-	import { goto, path } from "../router";
+	import Button from './Button.svelte';
+	import RssIcon from '../icons/Rss.svelte';
+	import UserIcon from '../icons/User.svelte';
+	import { goto } from '$app/navigation';
+
+	export let feedId: string | undefined;
 
 	async function handleLogout() {
-		await logout();
-		window.location.href = "/login";
-	}
-
-	function goBack() {
-		goto($path.split("/").slice(0, -1).join("/"));
+		goto('/logout');
 	}
 </script>
 
 <header
 	class={`
-		bg-gray-x-light
-		dark:bg-gray-x-dark
-		dark:text-white
 		grid
 		grid-cols-3
 		items-center
 		border-b
 		border-b-black/10
+		bg-gray-x-light
+		dark:bg-gray-x-dark
+		dark:text-white
 	`}
 >
-	<div class="flex h-full justify-start items-center gap-2">
-		<Button class="block p-2" variant="invisible" on:click={goBack}>
+	<div class="flex h-full items-center justify-start gap-2">
+		<Button
+			class="block p-2"
+			variant="invisible"
+			on:click={() => {
+				if (feedId) {
+					goto(`/feed/${feedId}`);
+				}
+			}}
+		>
 			<RssIcon size={22} />
 		</Button>
 	</div>
-	<div class="flex h-full justify-center items-center gap-2">
+	<div class="flex h-full items-center justify-center gap-2">
 		<Button variant="invisible">
-			<h4>{$title}</h4>
+			<h4>Title</h4>
 		</Button>
 	</div>
-	<div class="flex h-full justify-end items-center gap-2">
+	<div class="flex h-full items-center justify-end gap-2">
 		<Button class="p-2" variant="invisible" on:click={handleLogout}>
 			<UserIcon size={20} />
 		</Button>

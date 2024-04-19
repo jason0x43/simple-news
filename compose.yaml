@@ -1,0 +1,24 @@
+name: simple-news
+
+services:
+  server:
+    image: simple-news-server:latest
+    build:
+      context: server
+      target: runner
+    ports:
+      - 3333:3333
+    volumes:
+      - ./server:/data
+    environment:
+      DATABASE_URL: sqlite:///data/database.db
+      RUST_LOG: simple_news=debug,tower_http=debug,info
+
+  app:
+    image: simple-news-app:latest
+    build:
+      context: app
+    ports:
+      - 3000:3000
+    environment:
+      PUBLIC_API_HOST: http://server:3333

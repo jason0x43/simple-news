@@ -1,12 +1,9 @@
-mod api;
-mod auth;
 mod db;
 mod error;
+mod extractors;
 mod handlers;
 mod rss;
-mod spa;
 mod state;
-mod templates;
 mod types;
 mod types_ts;
 mod util;
@@ -14,24 +11,19 @@ mod util;
 use std::time::Duration;
 
 use axum::{
-    error_handling::HandleErrorLayer,
-    http::{header, request::Parts as RequestParts, HeaderValue, StatusCode},
-    routing::{get, post},
+    http::{header, request::Parts as RequestParts, HeaderValue},
     Router,
 };
 use dotenvy::dotenv;
 use error::AppError;
 use log::info;
 use sqlx::{migrate, query, sqlite::SqlitePoolOptions};
-use tower::ServiceBuilder;
 use tower_http::{
-    compression::CompressionLayer,
     cors::{AllowOrigin, CorsLayer},
     trace::TraceLayer,
 };
 
 use crate::{
-    auth::create_auth_layer,
     state::AppState,
     types::{Feed, FeedLog},
     util::get_timestamp,
@@ -66,21 +58,9 @@ async fn main() -> Result<(), AppError> {
         latest_migration.description
     );
 
-    // The error handling layer is required since AuthManagerLayer is fallible
-    let auth_service = ServiceBuilder::new()
-        .layer(HandleErrorLayer::new(|_| async { StatusCode::BAD_REQUEST }))
-        .layer(create_auth_layer(&pool).await?);
-
     let app = Router::new()
-        .route("/login", get(handlers::login_page))
-        .route("/login", post(handlers::login_form))
-        .nest("/api", api::get_router())
-        .nest("/reader", spa::get_router())
-        .route("/", get(handlers::root))
-        .fallback(handlers::public_files)
-        .with_state(AppState { pool: pool.clone() })
-        .layer(auth_service)
-        .layer(CompressionLayer::new());
+        .nest("/api", handlers::get_router())
+        .with_state(AppState { pool: pool.clone() });
 
     let cors_enabled =
         std::env::var("CORS_ENABLED").unwrap_or("0".into()) == "1";

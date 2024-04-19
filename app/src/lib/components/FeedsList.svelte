@@ -1,21 +1,22 @@
 <script lang="ts">
-	import type { FeedGroupWithFeeds } from "server";
-	import {
-		articleFilter,
-		clearUpdatedArticleIds,
-		feedGroups,
-		feedId,
-		feedStats,
-		feeds,
-		selectedFeedIds,
-		selectedGroupId,
-	} from "../state";
+	import { getAppContext } from '$lib/context';
+	import type { Feed, FeedGroupWithFeeds, FeedStats } from '$server';
 	import {
 		allFeedsAreSelected,
 		getSavedCount,
-		someFeedsAreSelected,
-	} from "../util";
-	import Button from "./Button.svelte";
+		someFeedsAreSelected
+	} from '../util';
+	import Button from './Button.svelte';
+
+	export let articleFilter: 'all' | 'unread';
+	export let feeds: Feed[];
+	export let feedId: string | undefined;
+	export let feedGroups: FeedGroupWithFeeds[];
+	export let feedStats: FeedStats;
+	export let selectedFeedIds: string[];
+	export let selectedGroupId: string | undefined;
+
+	const updatedArticleIds = getAppContext('updatedArticleIds');
 
 	let expanded: { [title: string]: boolean } = {};
 
@@ -24,14 +25,14 @@
 	function isExpanded(expanded: Expanded, group: FeedGroupWithFeeds): boolean {
 		return (
 			expanded[group.name] ||
-			(someFeedsAreSelected(group, $selectedFeedIds) &&
-				!allFeedsAreSelected(group, $selectedFeedIds))
+			(someFeedsAreSelected(group, selectedFeedIds) &&
+				!allFeedsAreSelected(group, selectedFeedIds))
 		);
 	}
 
 	function toggleExpanded(
 		expanded: Expanded,
-		group: FeedGroupWithFeeds,
+		group: FeedGroupWithFeeds
 	): Expanded {
 		const isExpanded = expanded[group.name];
 		const newExpanded: Expanded = {};
@@ -49,32 +50,31 @@
 		class={`
 			flex
 			flex-row
-			py-1
 			px-2
 			hover:bg-gray-x-light/70
 			dark:hover:bg-gray-x-dark/70
 		`}
-		class:bg-gray-x-light={$feedId === "saved"}
-		class:dark:bg-gray-x-dark={$feedId === "saved"}
+		class:bg-gray-x-light={feedId === 'saved'}
+		class:dark:bg-gray-x-dark={feedId === 'saved'}
 	>
-		<div class="flex flex-row justify-start w-5 pr-2 text-[9px]">⭐</div>
-		<a class="flex-auto truncate" href="/reader/saved">Saved</a>
-		{#if $feedStats}
-			<span>{getSavedCount($feedStats)}</span>
+		<div class="flex w-5 flex-row justify-start pr-2 text-[9px]">⭐</div>
+		<a class="flex-auto truncate py-1" href="/feed/saved">Saved</a>
+		{#if feedStats}
+			<span>{getSavedCount(feedStats)}</span>
 		{/if}
 	</li>
 
 	<!-- feed groups -->
-	{#each $feedGroups as group (group.name)}
+	{#each feedGroups as group (group.name)}
 		<li
-			class:bg-gray-x-light={group.id === $selectedGroupId}
-			class:dark:bg-gray-x-dark={group.id === $selectedGroupId}
+			class:bg-gray-x-light={group.id === selectedGroupId}
+			class:dark:bg-gray-x-dark={group.id === selectedGroupId}
 		>
 			<div
 				class={`
 					flex
 					flex-row
-					py-1
+					items-center
 					px-2
 					hover:bg-gray-x-light/70
 					dark:hover:bg-gray-x-dark/70
@@ -82,30 +82,30 @@
 			>
 				<Button
 					variant="invisible"
-					class="flex flex-row w-5 !justify-start pl-[1px] pr-2"
+					class="flex w-5 flex-row !justify-start pl-[1px] pr-2"
 					on:click={() => {
 						expanded = toggleExpanded(expanded, group);
 					}}><div class:rotate-90={isExpanded(expanded, group)}>▷</div></Button
 				>
 				<a
-					class="flex-auto truncate"
-					href={`/reader/group-${group.id}`}
+					class="flex-auto truncate py-1"
+					href={`/feed/group-${group.id}`}
 					on:click={() => {
-						clearUpdatedArticleIds();
+						$updatedArticleIds = new Set();
 					}}
 				>
 					{group.name}
 				</a>
-				{#if $feedStats}
+				{#if feedStats}
 					<div>
 						{group.feed_ids.reduce(
 							(unread, id) =>
 								unread +
-								($articleFilter === "all"
-									? $feedStats?.[id]?.total ?? 0
-									: ($feedStats?.[id]?.total ?? 0) -
-									  ($feedStats?.[id]?.read ?? 0)),
-							0,
+								(articleFilter === 'all'
+									? feedStats?.[id]?.total ?? 0
+									: (feedStats?.[id]?.total ?? 0) -
+										(feedStats?.[id]?.read ?? 0)),
+							0
 						)}
 					</div>
 				{/if}
@@ -116,27 +116,27 @@
 				{#each group.feed_ids as id}
 					<li
 						class={`
+							my
 							flex
 							flex-row
+							items-center
+							rounded-sm
 							pl-9
 							pr-2
-							py-1
-							my
-							rounded-sm
 							hover:bg-gray-x-light/70
 							dark:hover:bg-gray-x-dark/70
 						`}
-						class:bg-gray-x-light={$selectedFeedIds.includes(id)}
-						class:dark:bg-gray-x-dark={$selectedFeedIds.includes(id)}
+						class:bg-gray-x-light={selectedFeedIds.includes(id)}
+						class:dark:bg-gray-x-dark={selectedFeedIds.includes(id)}
 					>
-						<a href={`/reader/feed-${id}`} class="flex-auto">
-							{$feeds.find((f) => f.id === id)?.title}
+						<a href={`/feed/feed-${id}`} class="flex-auto py-1">
+							{feeds.find((f) => f.id === id)?.title}
 						</a>
-						{#if $feedStats}
+						{#if feedStats}
 							<div>
-								{$articleFilter === "all"
-									? $feedStats[id]?.total ?? 0
-									: ($feedStats[id]?.total ?? 0) - ($feedStats[id]?.read ?? 0)}
+								{articleFilter === 'all'
+									? feedStats[id]?.total ?? 0
+									: (feedStats[id]?.total ?? 0) - (feedStats[id]?.read ?? 0)}
 							</div>
 						{/if}
 					</li>

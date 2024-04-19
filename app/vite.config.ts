@@ -1,18 +1,9 @@
-import { defineConfig } from "vite";
-import { svelte } from "@sveltejs/vite-plugin-svelte";
+import { sveltekit } from '@sveltejs/kit/vite';
+import { defineConfig } from 'vite';
 
-// https://vitejs.dev/config/
 export default defineConfig({
-	plugins: [svelte()],
+	plugins: [sveltekit()],
 	build: {
-		sourcemap: "inline",
-	},
-	server: {
-		proxy: {
-			"/api": {
-				target: "http://localhost:3333",
-				changeOrigin: true,
-			},
-		},
+		sourcemap: 'inline'
 	},
 });
