@@ -27,8 +27,7 @@ RUN --mount=source=package.json,target=package.json \
     --mount=source=src,target=src \
     pnpm build
 
-# FROM node:20-slim
-FROM node:20
+FROM node:20-slim
 WORKDIR /app
 COPY --from=build /app/build build/
 COPY --from=prod-deps /app/node_modules node_modules/
