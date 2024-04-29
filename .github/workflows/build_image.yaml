@@ -96,6 +96,8 @@ jobs:
           cache-to: type=gha,mode=max
 
   deploy:
+    needs: [build-app, build-server]
+
     runs-on: ubuntu-latest
 
     steps:
