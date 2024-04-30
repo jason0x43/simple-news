@@ -16,4 +16,5 @@ export async function markArticles(data: MarkArticlesRequest): Promise<void> {
 	}
 
 	await invalidate('app:articles');
+	await invalidate('app:feedStats');
 }
