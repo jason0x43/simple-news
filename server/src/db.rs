@@ -1141,11 +1141,11 @@ impl FeedGroup {
                 read AS "read!: bool",
                 saved AS "saved!: bool"
             FROM articles AS a
-            INNER JOIN feed_groups AS fg ON fg.id = ?1
-            INNER JOIN feed_group_feeds AS fgf ON fgf.feed_group_id = fg.id
-            INNER JOIN feeds AS f ON f.id = fgf.feed_id
-            LEFT JOIN user_articles AS ua ON ua.article_id = a.id
-            WHERE a.feed_id = f.id
+                INNER JOIN feeds AS f ON f.id = a.feed_id
+                INNER JOIN feed_group_feeds AS fgf ON fgf.feed_id = f.id
+                INNER JOIN feed_groups AS fg ON fg.id = fgf.feed_group_id
+                LEFT JOIN user_articles AS ua ON ua.article_id = a.id
+            WHERE fg.id = ?1
             ORDER BY a.published ASC
             "#,
             self.id
