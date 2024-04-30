@@ -109,7 +109,7 @@ export interface FeedStat {
   saved: number;
 }
 
-export type FeedStats = Record<FeedId, FeedStat | undefined>
+export type FeedStats = Record<FeedId, FeedStat>
 
 export interface ArticleMarkRequest {
   read?: boolean;

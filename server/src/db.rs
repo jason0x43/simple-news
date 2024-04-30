@@ -5,8 +5,8 @@ use crate::{
         Article, ArticleId, ArticleMarkRequest, ArticleSummary,
         ArticlesMarkRequest, Feed, FeedGroup, FeedGroupFeed, FeedGroupFeedId,
         FeedGroupId, FeedGroupWithFeeds, FeedId, FeedKind, FeedLog, FeedLogId,
-        FeedStat, Password, PasswordId, Session, SessionId, UpdateFeedRequest,
-        User, UserArticle, UserArticleId, UserId,
+        FeedStat, FeedStats, Password, PasswordId, Session, SessionId,
+        UpdateFeedRequest, User, UserArticle, UserArticleId, UserId,
     },
     util::{get_timestamp, hash_password},
 };
@@ -274,7 +274,13 @@ impl Session {
     ) -> Result<User, AppError> {
         User::get(pool, &self.user_id).await
     }
+}
 
+struct FeedStatRow {
+    feed_id: FeedId,
+    read: Option<i64>,
+    saved: Option<i64>,
+    count: i64,
 }
 
 impl Feed {
@@ -545,37 +551,6 @@ impl Feed {
         Ok(())
     }
 
-    /// Get all the feeds a user is subscribed to
-    pub(crate) async fn get_subscribed(
-        pool: &SqlitePool,
-        user_id: &UserId,
-    ) -> Result<Vec<Feed>, AppError> {
-        Ok(query_as!(
-            Feed,
-            r#"
-            SELECT
-              id,
-              url,
-              title,
-              kind,
-              disabled AS "disabled!: bool",
-              icon,
-              html_url
-            FROM feeds
-            WHERE id IN (
-                SELECT DISTINCT f.id
-                FROM feeds AS f
-                INNER JOIN feed_group_feeds AS fgf ON f.id = fgf.feed_id
-                INNER JOIN feed_groups AS fg ON fgf.feed_group_id = fg.id
-                WHERE fg.user_id = ?1
-            )
-            "#,
-            user_id
-        )
-        .fetch_all(pool)
-        .await?)
-    }
-
     /// Return the number of articles in this feed
     pub(crate) async fn article_count(
         &self,
@@ -655,6 +630,54 @@ impl Feed {
             read: num_read.count,
             saved: num_saved.count,
         })
+    }
+
+    pub(crate) async fn get_subscribed_stats(
+        pool: &SqlitePool,
+        user_id: &UserId,
+    ) -> Result<FeedStats, AppError> {
+        let rows: Vec<FeedStatRow> = query_as!(
+            FeedStatRow,
+            r#"
+            SELECT
+              f.id AS feed_id,
+              ua.read AS read,
+              ua.saved AS saved,
+              COUNT(*) AS count
+            FROM articles AS a
+              INNER JOIN feeds AS f ON a.feed_id = f.id
+              INNER JOIN feed_group_feeds AS fgf ON fgf.feed_id = f.id
+              INNER JOIN feed_groups AS fg ON fg.id = fgf.feed_group_id
+              LEFT JOIN user_articles AS ua ON ua.article_id = a.id
+            WHERE fg.user_id = ?1
+            GROUP BY f.id, ua.read, ua.saved
+            "#,
+            user_id,
+        )
+        .fetch_all(pool)
+        .await?;
+
+        let mut stats = FeedStats::new();
+
+        for row in rows {
+            let stat = stats.entry(row.feed_id.clone()).or_insert(FeedStat {
+                total: 0,
+                read: 0,
+                saved: 0,
+            });
+
+            stat.total += row.count as i32;
+
+            if row.read.unwrap_or(0) == 1 {
+                stat.read += row.count as i32;
+            }
+
+            if row.saved.unwrap_or(0) == 1 {
+                stat.saved += row.count as i32;
+            }
+        }
+
+        Ok(stats)
     }
 }
 

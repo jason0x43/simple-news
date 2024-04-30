@@ -12,7 +12,11 @@ use crate::{
     rss::Feed as SynFeed,
     state::AppState,
     types::{
-        AddFeedRequest, AddGroupFeedRequest, Article, ArticleId, ArticleMarkRequest, ArticleSummary, ArticlesMarkRequest, CreateFeedGroupRequest, CreateUserRequest, Credentials, Feed, FeedGroup, FeedGroupId, FeedGroupWithFeeds, FeedId, FeedLog, FeedStat, FeedStats, Session, SessionResponse, UpdateFeedRequest, User, UserId
+        AddFeedRequest, AddGroupFeedRequest, Article, ArticleId,
+        ArticleMarkRequest, ArticleSummary, ArticlesMarkRequest,
+        CreateFeedGroupRequest, CreateUserRequest, Credentials, Feed,
+        FeedGroup, FeedGroupId, FeedGroupWithFeeds, FeedId, FeedLog, FeedStat,
+        FeedStats, Session, SessionResponse, UpdateFeedRequest, User, UserId,
     },
 };
 
@@ -298,31 +302,14 @@ pub(crate) async fn get_feed_stat(
     Ok(Json(feed.stats(&state.pool, &session.user_id).await?))
 }
 
-#[derive(Deserialize)]
-pub(crate) struct GetFeedStatsQuery {
-    pub(crate) all: Option<bool>,
-}
-
+/// Get the stats for a users subscribed feeds
 pub(crate) async fn get_feed_stats(
     session: Session,
     state: State<AppState>,
-    Query(query): Query<GetFeedStatsQuery>,
 ) -> Result<Json<FeedStats>, AppError> {
-    let feeds = if query.all.unwrap_or(false) {
-        Feed::get_all(&state.pool).await?
-    } else {
-        Feed::get_subscribed(&state.pool, &session.user_id).await?
-    };
-
-    let mut stats = FeedStats::new();
-    for feed in feeds.iter() {
-        stats.insert(
-            feed.id.clone(),
-            Some(feed.stats(&state.pool, &session.user_id).await?),
-        );
-    }
-
-    Ok(Json(stats))
+    Ok(Json(
+        Feed::get_subscribed_stats(&state.pool, &session.user_id).await?,
+    ))
 }
 
 /// Check if the session is authorized to work with a given user ID's resources

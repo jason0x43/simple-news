@@ -268,7 +268,7 @@ pub struct FeedStat {
 }
 
 #[tsync]
-pub type FeedStats = HashMap<FeedId, Option<FeedStat>>;
+pub type FeedStats = HashMap<FeedId, FeedStat>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[tsync]
