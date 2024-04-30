@@ -77,11 +77,10 @@ pub(crate) async fn get_articles(
     Query(query): Query<ArticlesQuery>,
 ) -> Result<Json<Vec<ArticleSummary>>, AppError> {
     let user = session.get_user(&state.pool).await?;
-    let articles = user.articles(&state.pool).await?;
     let articles = if query.saved.unwrap_or(false) {
-        articles.into_iter().filter(|a| a.saved).collect()
+        user.saved_articles(&state.pool).await?
     } else {
-        articles
+        user.articles(&state.pool).await?
     };
     Ok(Json(articles))
 }

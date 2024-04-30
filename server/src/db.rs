@@ -173,9 +173,41 @@ impl User {
             INNER JOIN feed_groups AS fg ON fg.user_id = ?1
             INNER JOIN feed_group_feeds AS fgf
               ON fgf.feed_id = f.id AND fgf.feed_group_id = fg.id
-            LEFT OUTER JOIN user_articles AS ua
+            LEFT JOIN user_articles AS ua
               ON ua.article_id = a.id
             WHERE ua.user_id = ?1
+            ORDER BY published ASC
+            "#,
+            self.id
+        )
+        .fetch_all(pool)
+        .await?)
+    }
+
+    pub(crate) async fn saved_articles(
+        &self,
+        pool: &SqlitePool,
+    ) -> Result<Vec<ArticleSummary>, AppError> {
+        Ok(query_as!(
+            ArticleSummary,
+            r#"
+            SELECT
+                a.id,
+                a.article_id,
+                a.feed_id,
+                a.title,
+                a.published AS "published: OffsetDateTime",
+                a.link,
+                read AS "read!: bool",
+                saved AS "saved!: bool"
+            FROM articles AS a
+            INNER JOIN feeds AS f ON f.id = a.feed_id
+            INNER JOIN feed_groups AS fg ON fg.user_id = ?1
+            INNER JOIN feed_group_feeds AS fgf
+              ON fgf.feed_id = f.id AND fgf.feed_group_id = fg.id
+            LEFT JOIN user_articles AS ua
+              ON ua.article_id = a.id
+            WHERE ua.user_id = ?1 AND ua.saved = 1
             ORDER BY published ASC
             "#,
             self.id
