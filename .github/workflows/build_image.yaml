@@ -75,7 +75,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Persistent Rust build cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: rust-build-cache
           key: ${{ runner.os }}-rust-build-cache-${{ hashFiles('**/Cargo.lock') }}
