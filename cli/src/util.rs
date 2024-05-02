@@ -2,11 +2,13 @@ use std::{
     collections::HashSet,
     fs::File,
     io::{Read, Write},
-    sync::Arc,
 };
 
 use comfy_table::{presets::UTF8_FULL, ContentArrangement, Table};
-use reqwest::{cookie::Jar, Client, Response, Url};
+use reqwest::{
+    header::{HeaderMap, HeaderValue, AUTHORIZATION},
+    Client, Response, Url,
+};
 use serde::{Deserialize, Serialize};
 use server::SessionId;
 use time::{
@@ -79,11 +81,11 @@ impl Cache {
             let matches = ids
                 .iter()
                 .filter(|id| id.to_string().starts_with(id_part))
-                .map(|id| id.clone())
+                .cloned()
                 .collect::<Vec<String>>();
             if matches.len() == 1 {
                 Ok(matches[0].clone())
-            } else if matches.len() == 0 {
+            } else if matches.is_empty() {
                 Err(AppError::Error("no matching ID".into()))
             } else {
                 Err(AppError::Error("ambiguous ID".into()))
@@ -118,16 +120,14 @@ pub(crate) fn get_api() -> Result<Url, AppError> {
 pub(crate) fn get_client() -> Result<Client, AppError> {
     let cache = Cache::load()?;
     let session_id = cache.get_session_id()?;
-    let host = cache.get_host()?;
-    let jar = Jar::default();
-    let url = host.parse::<Url>().unwrap();
-    let cookie = format!(
-        "session_id={}; Domain={}",
-        session_id,
-        url.domain().unwrap()
+
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        AUTHORIZATION,
+        HeaderValue::from_str(&format!("Bearer {session_id}")).unwrap(),
     );
-    jar.add_cookie_str(&cookie, &url);
-    let client = Client::builder().cookie_provider(Arc::new(jar)).build()?;
+
+    let client = Client::builder().default_headers(headers).build()?;
     Ok(client)
 }
 
@@ -143,7 +143,7 @@ pub(crate) async fn assert_ok(
     }
 }
 
-static LOCAL_TIME_FORMAT: &'static [FormatItem<'static>] = format_description!(
+static LOCAL_TIME_FORMAT: &[FormatItem<'static>] = format_description!(
     "[weekday], [day] [month repr:short] [year] [hour repr:24]:[minute]"
 );
 
