@@ -3,7 +3,7 @@ use crate::{
     rss::Feed as SynFeed,
     types::{
         Article, ArticleId, ArticleMarkRequest, ArticleSummary,
-        ArticlesMarkRequest, Feed, FeedGroup, FeedGroupFeed, FeedGroupFeedId,
+        ArticlesMarkRequest, Feed, FeedGroup, FeedGroupFeed,
         FeedGroupId, FeedGroupWithFeeds, FeedId, FeedKind, FeedLog, FeedLogId,
         FeedStat, FeedStats, Password, PasswordId, Session, SessionId,
         UpdateFeedRequest, User, UserArticle, UserArticleId, UserId,
@@ -11,9 +11,11 @@ use crate::{
     util::{get_timestamp, hash_password},
 };
 use serde_json::json;
-use sqlx::{query, query_as, SqlitePool};
+use sqlx::{query, query_as, query_scalar, PgPool};
 use time::OffsetDateTime;
 use url::Url;
+
+type DbPool = PgPool;
 
 impl User {
     fn new(email: &str, username: &str) -> Self {
@@ -26,7 +28,7 @@ impl User {
     }
 
     pub(crate) async fn create(
-        pool: &SqlitePool,
+        pool: &DbPool,
         email: &str,
         username: &str,
         password: &str,
@@ -39,9 +41,9 @@ impl User {
         query!(
             r#"
             INSERT INTO users (id, email, username, config)
-            VALUES (?1, ?2, ?3, ?4)
+            VALUES ($1, $2, $3, $4)
             "#,
-            user.id,
+            user.id.as_str(),
             user.email,
             user.username,
             user.config
@@ -52,12 +54,12 @@ impl User {
         query!(
             r#"
             INSERT INTO passwords (id, hash, salt, user_id)
-            VALUES (?1, ?2, ?3, ?4)
+            VALUES ($1, $2, $3, $4)
             "#,
-            password.id,
+            password.id.as_str(),
             password.hash,
             password.salt,
-            password.user_id
+            password.user_id.as_str()
         )
         .execute(&mut *tx)
         .await?;
@@ -67,94 +69,71 @@ impl User {
     }
 
     pub(crate) async fn get(
-        pool: &SqlitePool,
+        pool: &DbPool,
         id: &UserId,
     ) -> Result<Self, AppError> {
-        query_as!(
+        Ok(query_as!(
             User,
             r#"
             SELECT
               id,
               email,
               username,
-              config AS "config: serde_json::Value"
+              config
             FROM users
-            WHERE id = ?1
+            WHERE id = $1
             "#,
-            id
+            id.as_str()
         )
         .fetch_one(pool)
-        .await
-        .map_err(|_| AppError::UserNotFound)
+        .await?)
     }
 
     pub(crate) async fn get_by_username(
-        pool: &SqlitePool,
+        pool: &DbPool,
         username: &str,
     ) -> Result<Self, AppError> {
-        query_as!(
+        Ok(query_as!(
             User,
             r#"
-            SELECT
-              id,
-              email,
-              username,
-              config AS "config: serde_json::Value"
+            SELECT id, email, username, config
             FROM users
-            WHERE username = ?1
+            WHERE username = $1
             "#,
             username
         )
         .fetch_one(pool)
-        .await
-        .map_err(|_| AppError::UserNotFound)
+        .await?)
     }
 
-    pub(crate) async fn get_all(
-        pool: &SqlitePool,
-    ) -> Result<Vec<Self>, AppError> {
-        query_as!(
-            User,
-            r#"
-            SELECT
-              id,
-              email,
-              username,
-              config AS "config: serde_json::Value"
-            FROM users
-            "#
+    pub(crate) async fn get_all(pool: &DbPool) -> Result<Vec<Self>, AppError> {
+        Ok(
+            query_as!(User, r#"SELECT id, email, username, config FROM users"#)
+                .fetch_all(pool)
+                .await?,
         )
-        .fetch_all(pool)
-        .await
-        .map_err(AppError::SqlxError)
     }
 
     pub(crate) async fn password(
         &self,
-        pool: &SqlitePool,
+        pool: &DbPool,
     ) -> Result<Password, AppError> {
-        let pword = query_as!(
+        Ok(query_as!(
             Password,
             r#"
-            SELECT
-              id,
-              hash,
-              salt,
-              user_id
+            SELECT id, hash, salt, user_id
             FROM passwords
-            WHERE user_id = ?1
+            WHERE user_id = $1
             "#,
-            self.id
+            self.id.as_str()
         )
         .fetch_one(pool)
-        .await?;
-
-        Ok(pword)
+        .await?)
     }
 
     pub(crate) async fn articles(
         &self,
-        pool: &SqlitePool,
+        pool: &DbPool,
     ) -> Result<Vec<ArticleSummary>, AppError> {
         Ok(query_as!(
             ArticleSummary,
@@ -170,15 +149,15 @@ impl User {
                 saved AS "saved!: bool"
             FROM articles AS a
             INNER JOIN feeds AS f ON f.id = a.feed_id
-            INNER JOIN feed_groups AS fg ON fg.user_id = ?1
+            INNER JOIN feed_groups AS fg ON fg.user_id = $1
             INNER JOIN feed_group_feeds AS fgf
               ON fgf.feed_id = f.id AND fgf.feed_group_id = fg.id
             LEFT JOIN user_articles AS ua
               ON ua.article_id = a.id
-            WHERE ua.user_id = ?1
+            WHERE ua.user_id = $1
             ORDER BY published ASC
             "#,
-            self.id
+            self.id.as_str()
         )
         .fetch_all(pool)
         .await?)
@@ -186,7 +165,7 @@ impl User {
 
     pub(crate) async fn saved_articles(
         &self,
-        pool: &SqlitePool,
+        pool: &DbPool,
     ) -> Result<Vec<ArticleSummary>, AppError> {
         Ok(query_as!(
             ArticleSummary,
@@ -198,19 +177,19 @@ impl User {
                 a.title,
                 a.published AS "published: OffsetDateTime",
                 a.link,
-                read AS "read!: bool",
-                saved AS "saved!: bool"
+                read,
+                saved
             FROM articles AS a
             INNER JOIN feeds AS f ON f.id = a.feed_id
-            INNER JOIN feed_groups AS fg ON fg.user_id = ?1
+            INNER JOIN feed_groups AS fg ON fg.user_id = $1
             INNER JOIN feed_group_feeds AS fgf
               ON fgf.feed_id = f.id AND fgf.feed_group_id = fg.id
             LEFT JOIN user_articles AS ua
               ON ua.article_id = a.id
-            WHERE ua.user_id = ?1 AND ua.saved = 1
+            WHERE ua.user_id = $1 AND ua.saved = TRUE
             ORDER BY published ASC
             "#,
-            self.id
+            self.id.as_str()
         )
         .fetch_all(pool)
         .await?)
@@ -240,7 +219,7 @@ impl Password {
 
 impl Session {
     pub(crate) async fn create(
-        pool: &SqlitePool,
+        pool: &DbPool,
         user_id: &UserId,
     ) -> Result<Self, AppError> {
         let session = Self {
@@ -255,11 +234,11 @@ impl Session {
         query!(
             r#"
             INSERT INTO sessions (id, data, user_id, expires)
-            VALUES (?1, ?2, ?3, ?4)
+            VALUES ($1, $2, $3, $4)
             "#,
-            session.id,
+            session.id.as_str(),
             session.data,
-            session.user_id,
+            session.user_id.as_str(),
             session.expires
         )
         .execute(pool)
@@ -269,7 +248,7 @@ impl Session {
     }
 
     pub(crate) async fn get(
-        pool: &SqlitePool,
+        pool: &DbPool,
         session_id: &SessionId,
     ) -> Result<Self, AppError> {
         query_as!(
@@ -281,20 +260,17 @@ impl Session {
               expires AS "expires!: OffsetDateTime",
               user_id
             FROM sessions
-            WHERE id = ?1
+            WHERE id = $1
             "#,
-            session_id
+            session_id.as_str()
         )
         .fetch_one(pool)
         .await
         .map_err(|_| AppError::Unauthorized)
     }
 
-    pub(crate) async fn delete(
-        &self,
-        pool: &SqlitePool,
-    ) -> Result<(), AppError> {
-        query!("DELETE FROM sessions WHERE id = ?1", self.id)
+    pub(crate) async fn delete(&self, pool: &DbPool) -> Result<(), AppError> {
+        query!("DELETE FROM sessions WHERE id = $1", self.id.as_str())
             .execute(pool)
             .await?;
         Ok(())
@@ -302,7 +278,7 @@ impl Session {
 
     pub(crate) async fn get_user(
         self,
-        pool: &SqlitePool,
+        pool: &DbPool,
     ) -> Result<User, AppError> {
         User::get(pool, &self.user_id).await
     }
@@ -310,15 +286,23 @@ impl Session {
 
 struct FeedStatRow {
     feed_id: FeedId,
-    read: Option<i64>,
-    saved: Option<i64>,
+    read: bool,
+    saved: bool,
     count: i64,
+}
+
+impl FeedKind {
+    fn as_str(&self) -> &'static str {
+        match self {
+            FeedKind::Rss => "rss",
+        }
+    }
 }
 
 impl Feed {
     /// Create a new feed
     pub(crate) async fn create(
-        pool: &SqlitePool,
+        pool: &DbPool,
         url: Url,
         title: &str,
         kind: Option<FeedKind>,
@@ -336,12 +320,12 @@ impl Feed {
         query!(
             r#"
             INSERT INTO feeds (id, url, title, kind, disabled)
-            VALUES (?1, ?2, ?3, ?4, ?5)
+            VALUES ($1, $2, $3, $4, $5)
             "#,
-            feed.id,
+            feed.id.as_str(),
             feed.url,
             feed.title,
-            feed.kind,
+            feed.kind.as_str(),
             feed.disabled,
         )
         .execute(pool)
@@ -356,10 +340,10 @@ impl Feed {
 
     /// Delete a feed
     pub(crate) async fn delete(
-        pool: &SqlitePool,
+        pool: &DbPool,
         id: &FeedId,
     ) -> Result<(), AppError> {
-        query!("DELETE FROM feeds WHERE id = ?1", id)
+        query!("DELETE FROM feeds WHERE id = $1", id.as_str())
             .execute(pool)
             .await?;
         Ok(())
@@ -368,7 +352,7 @@ impl Feed {
     /// Update a feed's properties
     pub(crate) async fn update(
         &mut self,
-        pool: &SqlitePool,
+        pool: &DbPool,
         data: UpdateFeedRequest,
     ) -> Result<(), AppError> {
         let title = data.title.unwrap_or(self.title.clone());
@@ -377,12 +361,12 @@ impl Feed {
         query_as!(
             Feed,
             r#"
-            UPDATE feeds SET title = ?1, url = ?2
-            WHERE id = ?3
+            UPDATE feeds SET title = $1, url = $2
+            WHERE id = $3
             "#,
             title,
             url,
-            self.id,
+            self.id.as_str(),
         )
         .execute(pool)
         .await
@@ -399,7 +383,7 @@ impl Feed {
 
     /// Get a feed
     pub(crate) async fn get(
-        pool: &SqlitePool,
+        pool: &DbPool,
         id: &FeedId,
     ) -> Result<Feed, AppError> {
         query_as!(
@@ -414,9 +398,9 @@ impl Feed {
               icon,
               html_url
             FROM feeds
-            WHERE id = ?1
+            WHERE id = $1
             "#,
-            id
+            id.as_str()
         )
         .fetch_one(pool)
         .await
@@ -427,9 +411,7 @@ impl Feed {
     }
 
     /// Get all feeds
-    pub(crate) async fn get_all(
-        pool: &SqlitePool,
-    ) -> Result<Vec<Self>, AppError> {
+    pub(crate) async fn get_all(pool: &DbPool) -> Result<Vec<Self>, AppError> {
         query_as!(
             Feed,
             r#"
@@ -453,10 +435,7 @@ impl Feed {
     }
 
     /// Refresh this feed
-    pub(crate) async fn refresh(
-        &self,
-        pool: &SqlitePool,
-    ) -> Result<(), AppError> {
+    pub(crate) async fn refresh(&self, pool: &DbPool) -> Result<(), AppError> {
         let feed = SynFeed::load(&self.url).await;
         if let Err(err) = feed {
             log::warn!("error downloading feed {}: {}", self.url, err);
@@ -484,9 +463,9 @@ impl Feed {
         if let Ok(Some(icon)) = icon {
             let icon_str = icon.to_string();
             if let Some(err) = query!(
-                "UPDATE feeds SET icon = ?1 WHERE id = ?2",
+                "UPDATE feeds SET icon = $1 WHERE id = $2",
                 icon_str,
-                self.id,
+                self.id.as_str(),
             )
             .execute(&mut *tx)
             .await
@@ -531,15 +510,15 @@ impl Feed {
                 INSERT INTO articles(
                   content, id, feed_id, article_id, title, link, published
                 )
-                VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7)
+                VALUES($1, $2, $3, $4, $5, $6, $7)
                 ON CONFLICT(article_id, feed_id)
                 DO UPDATE
-                SET content = ?1, published = ?7, title = ?5, link = ?6
+                SET content = $1, published = $7, title = $5, link = $6
                 "#,
                 article.content,
-                article.id,
-                article.feed_id,
-                article.article_id,
+                article.id.as_str(),
+                article.feed_id.as_str(),
+                article.article_id.as_str(),
                 article.title,
                 article.link,
                 article.published
@@ -571,7 +550,7 @@ impl Feed {
     }
 
     /// Refresh all feeds
-    pub(crate) async fn refresh_all(pool: &SqlitePool) -> Result<(), AppError> {
+    pub(crate) async fn refresh_all(pool: &DbPool) -> Result<(), AppError> {
         let feeds = Feed::get_all(pool).await?;
         for feed in feeds.iter() {
             let id = feed.id.clone();
@@ -586,20 +565,19 @@ impl Feed {
     /// Return the number of articles in this feed
     pub(crate) async fn article_count(
         &self,
-        pool: &SqlitePool,
-    ) -> Result<i32, AppError> {
-        let count_row = query!(
-            "SELECT COUNT(*) AS count FROM articles WHERE feed_id = ?1",
-            self.id
+        pool: &DbPool,
+    ) -> Result<i64, AppError> {
+        Ok(query_scalar!(
+            r#"SELECT COUNT(*) AS "count!" FROM articles WHERE feed_id = $1"#,
+            self.id.as_str()
         )
         .fetch_one(pool)
-        .await?;
-        Ok(count_row.count)
+        .await?)
     }
 
     pub(crate) async fn articles(
         &self,
-        pool: &SqlitePool,
+        pool: &DbPool,
     ) -> Result<Vec<ArticleSummary>, AppError> {
         Ok(query_as!(
             ArticleSummary,
@@ -616,10 +594,10 @@ impl Feed {
             FROM articles AS a
             LEFT OUTER JOIN user_articles
                 ON user_articles.article_id = a.id
-            WHERE feed_id = ?1
+            WHERE feed_id = $1
             ORDER BY published ASC
             "#,
-            self.id
+            self.id.as_str()
         )
         .fetch_all(pool)
         .await?)
@@ -627,45 +605,45 @@ impl Feed {
 
     pub(crate) async fn stats(
         &self,
-        pool: &SqlitePool,
+        pool: &DbPool,
         user_id: &UserId,
     ) -> Result<FeedStat, AppError> {
         let count = self.article_count(pool).await?;
-        let num_read = query!(
+        let num_read = query_scalar!(
             r#"
-            SELECT COUNT(*) AS count
+            SELECT COUNT(*) AS "count!"
             FROM user_articles AS ua
             INNER JOIN articles AS a ON a.id = ua.article_id
-            WHERE ua.user_id = ?1 AND ua.read = 1 AND a.feed_id = ?2
+            WHERE ua.user_id = $1 AND ua.read = TRUE AND a.feed_id = $2
             "#,
-            user_id,
-            self.id
+            user_id.as_str(),
+            self.id.as_str()
         )
         .fetch_one(pool)
         .await?;
 
-        let num_saved = query!(
+        let num_saved = query_scalar!(
             r#"
-            SELECT COUNT(*) AS count
+            SELECT COUNT(*) AS "count!"
             FROM user_articles AS ua
             INNER JOIN articles AS a ON a.id = ua.article_id
-            WHERE ua.user_id = ?1 AND ua.saved = 1 AND a.feed_id = ?2
+            WHERE ua.user_id = $1 AND ua.saved = TRUE AND a.feed_id = $2
             "#,
-            user_id,
-            self.id
+            user_id.as_str(),
+            self.id.as_str()
         )
         .fetch_one(pool)
         .await?;
 
         Ok(FeedStat {
             total: count,
-            read: num_read.count,
-            saved: num_saved.count,
+            read: num_read,
+            saved: num_saved,
         })
     }
 
     pub(crate) async fn get_subscribed_stats(
-        pool: &SqlitePool,
+        pool: &DbPool,
         user_id: &UserId,
     ) -> Result<FeedStats, AppError> {
         let rows: Vec<FeedStatRow> = query_as!(
@@ -675,16 +653,16 @@ impl Feed {
               f.id AS feed_id,
               ua.read AS read,
               ua.saved AS saved,
-              COUNT(*) AS count
+              COUNT(*) AS "count!"
             FROM articles AS a
               INNER JOIN feeds AS f ON a.feed_id = f.id
               INNER JOIN feed_group_feeds AS fgf ON fgf.feed_id = f.id
               INNER JOIN feed_groups AS fg ON fg.id = fgf.feed_group_id
               LEFT JOIN user_articles AS ua ON ua.article_id = a.id
-            WHERE fg.user_id = ?1
+            WHERE fg.user_id = $1
             GROUP BY f.id, ua.read, ua.saved
             "#,
-            user_id,
+            user_id.as_str(),
         )
         .fetch_all(pool)
         .await?;
@@ -698,14 +676,14 @@ impl Feed {
                 saved: 0,
             });
 
-            stat.total += row.count as i32;
+            stat.total += row.count;
 
-            if row.read.unwrap_or(0) == 1 {
-                stat.read += row.count as i32;
+            if row.read {
+                stat.read += row.count;
             }
 
-            if row.saved.unwrap_or(0) == 1 {
-                stat.saved += row.count as i32;
+            if row.saved {
+                stat.saved += row.count;
             }
         }
 
@@ -734,7 +712,7 @@ impl Article {
     }
 
     pub(crate) async fn get(
-        pool: &SqlitePool,
+        pool: &DbPool,
         article_id: &ArticleId,
     ) -> Result<Self, AppError> {
         Ok(query_as!(
@@ -746,19 +724,19 @@ impl Article {
               feed_id,
               title,
               content,
-              published AS "published: OffsetDateTime",
+              published,
               link
             FROM articles
-            WHERE id = ?1
+            WHERE id = $1
             "#,
-            article_id
+            article_id.as_str()
         )
         .fetch_one(pool)
         .await?)
     }
 
     pub(crate) async fn mark_all(
-        pool: &SqlitePool,
+        pool: &DbPool,
         user_id: &UserId,
         data: &ArticlesMarkRequest,
     ) -> Result<i32, AppError> {
@@ -775,15 +753,15 @@ impl Article {
                 INSERT INTO user_articles(
                   read, saved, id, user_id, article_id
                 )
-                VALUES(?1, ?2, ?3, ?4, ?5)
+                VALUES($1, $2, $3, $4, $5)
                 ON CONFLICT(user_id, article_id)
-                DO UPDATE SET read = ?1, saved = ?2
+                DO UPDATE SET read = $1, saved = $2
                 "#,
                 ua.read,
                 ua.saved,
-                ua.id,
-                ua.user_id,
-                ua.article_id,
+                ua.id.as_str(),
+                ua.user_id.as_str(),
+                ua.article_id.as_str(),
             )
             .execute(&mut *tx)
             .await?;
@@ -795,7 +773,7 @@ impl Article {
 
     pub(crate) async fn mark(
         &self,
-        pool: &SqlitePool,
+        pool: &DbPool,
         user_id: &UserId,
         mark: &ArticleMarkRequest,
     ) -> Result<ArticleSummary, AppError> {
@@ -812,14 +790,12 @@ impl Article {
         let a = self.clone();
         let a_mark = query!(
             r#"
-            SELECT
-              read AS "read!: bool",
-              saved AS "saved!: bool"
+            SELECT read, saved
             FROM user_articles
-            WHERE user_id = ?1 AND article_id = ?2
+            WHERE user_id = $1 AND article_id = $2
             "#,
-            user_id,
-            self.id,
+            user_id.as_str(),
+            self.id.as_str(),
         )
         .fetch_one(pool)
         .await?;
@@ -839,7 +815,7 @@ impl Article {
 
 impl FeedLog {
     pub(crate) async fn create(
-        pool: &SqlitePool,
+        pool: &DbPool,
         feed_id: FeedId,
         success: bool,
         message: Option<String>,
@@ -855,11 +831,11 @@ impl FeedLog {
         query!(
             r#"
             INSERT INTO feed_logs(id, time, feed_id, success, message)
-            VALUES(?1, ?2, ?3, ?4, ?5)
+            VALUES($1, $2, $3, $4, $5)
             "#,
-            entry.id,
+            entry.id.as_str(),
             entry.time,
-            entry.feed_id,
+            entry.feed_id.as_str(),
             entry.success,
             entry.message,
         )
@@ -870,7 +846,7 @@ impl FeedLog {
     }
 
     pub(crate) async fn find_for_feed(
-        pool: &SqlitePool,
+        pool: &DbPool,
         feed_id: FeedId,
     ) -> Result<Vec<Self>, AppError> {
         query_as!(
@@ -878,31 +854,29 @@ impl FeedLog {
             r#"
             SELECT
               id,
-              time AS "time!: OffsetDateTime",
+              time,
               feed_id,
-              success AS "success!: bool",
+              success,
               message
             FROM feed_logs
-            WHERE feed_id = ?1
+            WHERE feed_id = $1
             "#,
-            feed_id
+            feed_id.as_str()
         )
         .fetch_all(pool)
         .await
         .map_err(AppError::SqlxError)
     }
 
-    pub(crate) async fn get_all(
-        pool: &SqlitePool,
-    ) -> Result<Vec<Self>, AppError> {
+    pub(crate) async fn get_all(pool: &DbPool) -> Result<Vec<Self>, AppError> {
         query_as!(
             FeedLog,
             r#"
             SELECT
               id,
-              time AS "time!: OffsetDateTime",
+              time,
               feed_id,
-              success AS "success!: bool",
+              success,
               message
             FROM feed_logs
             "#,
@@ -913,19 +887,14 @@ impl FeedLog {
     }
 
     pub(crate) async fn last_update(
-        pool: &SqlitePool,
+        pool: &DbPool,
     ) -> Result<OffsetDateTime, AppError> {
         let latest = query_as!(
             FeedLog,
             r#"
-            SELECT
-              id,
-              time AS "time!: OffsetDateTime",
-              feed_id,
-              success AS "success!: bool",
-              message
+            SELECT id, time, feed_id, success, message
             FROM feed_logs
-            WHERE success = 1
+            WHERE success = TRUE
             ORDER BY time DESC
             LIMIT 1
             "#,
@@ -949,7 +918,7 @@ struct FeedIdRecord {
 impl FeedGroup {
     /// Create a new feed group
     pub(crate) async fn create(
-        pool: &SqlitePool,
+        pool: &DbPool,
         name: &str,
         user_id: &UserId,
     ) -> Result<Self, AppError> {
@@ -962,11 +931,11 @@ impl FeedGroup {
         query!(
             r#"
             INSERT INTO feed_groups(id, name, user_id)
-            VALUES(?1, ?2, ?3)
+            VALUES($1, $2, $3)
             "#,
-            group.id,
+            group.id.as_str(),
             group.name,
-            group.user_id,
+            group.user_id.as_str(),
         )
         .execute(pool)
         .await?;
@@ -976,52 +945,44 @@ impl FeedGroup {
 
     /// Get a feed group by ID
     pub(crate) async fn get(
-        pool: &SqlitePool,
+        pool: &DbPool,
         feed_group_id: &FeedGroupId,
     ) -> Result<Self, AppError> {
-        query_as!(
+        Ok(query_as!(
             Self,
             r#"
-            SELECT
-              id,
-              name,
-              user_id
+            SELECT id, name, user_id
             FROM feed_groups
-            WHERE id = ?1
+            WHERE id = $1
             "#,
-            feed_group_id
+            feed_group_id.as_str()
         )
         .fetch_one(pool)
-        .await
-        .map_err(AppError::SqlxError)
+        .await?)
     }
 
     /// Get all feed groups for a user
     pub(crate) async fn get_all(
-        pool: &SqlitePool,
+        pool: &DbPool,
         user_id: &UserId,
     ) -> Result<Vec<Self>, AppError> {
-        query_as!(
+        Ok(query_as!(
             FeedGroup,
             r#"
-            SELECT
-              id,
-              name,
-              user_id
+            SELECT id, name, user_id
             FROM feed_groups
-            WHERE user_id = ?1
+            WHERE user_id = $1
             "#,
-            user_id
+            user_id.as_str()
         )
         .fetch_all(pool)
-        .await
-        .map_err(AppError::SqlxError)
+        .await?)
     }
 
     /// Return a struct that describes this FeedGroup and lists its feeds
     pub(crate) async fn with_feeds(
         &self,
-        pool: &SqlitePool,
+        pool: &DbPool,
     ) -> Result<FeedGroupWithFeeds, AppError> {
         let feed_ids = query_as!(
             FeedIdRecord,
@@ -1029,9 +990,9 @@ impl FeedGroup {
             SELECT f.id
             FROM feeds AS f
             INNER JOIN feed_group_feeds AS fgf ON f.id = fgf.feed_id
-            WHERE fgf.feed_group_id = ?1
+            WHERE fgf.feed_group_id = $1
             "#,
-            self.id
+            self.id.as_str()
         )
         .fetch_all(pool)
         .await?
@@ -1050,19 +1011,18 @@ impl FeedGroup {
     /// Add a feed to this group
     pub(crate) async fn add_feed(
         &self,
-        pool: &SqlitePool,
+        pool: &DbPool,
         feed_id: FeedId,
     ) -> Result<FeedGroupWithFeeds, AppError> {
         let group_feed = FeedGroupFeed::new(feed_id, self.id.clone());
 
         query!(
             r#"
-            INSERT INTO feed_group_feeds(id, feed_id, feed_group_id)
-            VALUES(?1, ?2, ?3)
+            INSERT INTO feed_group_feeds(feed_id, feed_group_id)
+            VALUES($1, $2)
             "#,
-            group_feed.id,
-            group_feed.feed_id,
-            group_feed.feed_group_id,
+            group_feed.feed_id.as_str(),
+            group_feed.feed_group_id.as_str(),
         )
         .execute(pool)
         .await?;
@@ -1073,7 +1033,7 @@ impl FeedGroup {
     /// Move a feed to this group, removing it from all other groups
     pub(crate) async fn move_feed(
         &self,
-        pool: &SqlitePool,
+        pool: &DbPool,
         feed_id: FeedId,
     ) -> Result<FeedGroupWithFeeds, AppError> {
         let group_feed = FeedGroupFeed::new(feed_id.clone(), self.id.clone());
@@ -1081,19 +1041,21 @@ impl FeedGroup {
         let mut tx = pool.begin().await?;
 
         // remove the feed from all groups
-        query!("DELETE FROM feed_group_feeds WHERE feed_id = ?1", feed_id)
-            .execute(&mut *tx)
-            .await?;
+        query!(
+            "DELETE FROM feed_group_feeds WHERE feed_id = $1",
+            feed_id.as_str()
+        )
+        .execute(&mut *tx)
+        .await?;
 
         // add the feed to this group
         query!(
             r#"
-            INSERT INTO feed_group_feeds(id, feed_id, feed_group_id)
-            VALUES(?1, ?2, ?3)
+            INSERT INTO feed_group_feeds(feed_id, feed_group_id)
+            VALUES($1, $2)
             "#,
-            group_feed.id,
-            group_feed.feed_id,
-            group_feed.feed_group_id,
+            group_feed.feed_id.as_str(),
+            group_feed.feed_group_id.as_str(),
         )
         .execute(pool)
         .await?;
@@ -1106,16 +1068,16 @@ impl FeedGroup {
     /// Remove a feed from this group
     pub(crate) async fn remove_feed(
         &self,
-        pool: &SqlitePool,
+        pool: &DbPool,
         feed_id: &FeedId,
     ) -> Result<FeedGroupWithFeeds, AppError> {
         query!(
             r#"
             DELETE FROM feed_group_feeds
-            WHERE feed_group_id = ?1 AND feed_id = ?2
+            WHERE feed_group_id = $1 AND feed_id = $2
             "#,
-            self.id,
-            feed_id,
+            self.id.as_str(),
+            feed_id.as_str(),
         )
         .execute(pool)
         .await?;
@@ -1126,7 +1088,7 @@ impl FeedGroup {
     /// Return all the article summaries for this feed group
     pub(crate) async fn articles(
         &self,
-        pool: &SqlitePool,
+        pool: &DbPool,
     ) -> Result<Vec<ArticleSummary>, AppError> {
         Ok(query_as!(
             ArticleSummary,
@@ -1136,19 +1098,19 @@ impl FeedGroup {
                 a.article_id,
                 a.feed_id,
                 a.title,
-                a.published AS "published: OffsetDateTime",
+                a.published,
                 a.link,
-                read AS "read!: bool",
-                saved AS "saved!: bool"
+                read,
+                saved
             FROM articles AS a
                 INNER JOIN feeds AS f ON f.id = a.feed_id
                 INNER JOIN feed_group_feeds AS fgf ON fgf.feed_id = f.id
                 INNER JOIN feed_groups AS fg ON fg.id = fgf.feed_group_id
                 LEFT JOIN user_articles AS ua ON ua.article_id = a.id
-            WHERE fg.id = ?1
+            WHERE fg.id = $1
             ORDER BY a.published ASC
             "#,
-            self.id
+            self.id.as_str()
         )
         .fetch_all(pool)
         .await?)
@@ -1175,7 +1137,6 @@ impl UserArticle {
 impl FeedGroupFeed {
     fn new(feed_id: FeedId, feed_group_id: FeedGroupId) -> Self {
         Self {
-            id: FeedGroupFeedId::new(),
             feed_id,
             feed_group_id,
         }

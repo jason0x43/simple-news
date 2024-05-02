@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT description\n        FROM _sqlx_migrations\n        WHERE success = TRUE\n        ORDER BY installed_on DESC\n        LIMIT 1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "description",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "2bb3322ba79c10177f60799529a34d6225aad2634bb7bcb6a0c8a08840d71876"
+}

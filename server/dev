@@ -5,16 +5,20 @@ commit=$(git rev-parse --short HEAD)
 export IMAGE_VERSION=$commit
 
 if [[ $cmd == "build" ]]; then
-  echo "building simple-news:$commit"
   docker compose build server 
+
 elif [[ $cmd == "up" ]]; then
-  echo "running simple-news:$commit"
   docker compose up
+
+elif [[ $cmd == "db" ]]; then
+  docker compose exec db psql ${DATABASE_URL}
+
 elif [[ $cmd == "publish" ]]; then
   echo "publishing simple-news:$commit"
   docker tag simple-news:$commit ghcr.io/jason0x43/simple-news:$commit
   echo "tagged simple-news:$commit as ghcr.io/jason0x43/simple-news:$commit"
   docker push ghcr.io/jason0x43/simple-news:$commit
+
 else
   echo "unknown command '$cmd'"
   echo "usage: $0 <build|run>"

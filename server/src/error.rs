@@ -19,11 +19,11 @@ pub enum AppError {
     #[error("Unauthorized")]
     Unauthorized,
 
-    #[error("sqlx error: {0}")]
-    SqlxError(sqlx::Error),
+    #[error("sqlx error")]
+    SqlxError(#[from] sqlx::Error),
 
-    #[error("reqwest error: {0}")]
-    ReqwestError(reqwest::Error),
+    #[error("reqwest error")]
+    ReqwestError(#[from] reqwest::Error),
 
     #[error("file not found: {0}")]
     FileNotFound(String),
@@ -62,18 +62,6 @@ impl From<AppError> for Response {
                 (StatusCode::INTERNAL_SERVER_ERROR, err).into_response()
             }
         }
-    }
-}
-
-impl From<sqlx::Error> for AppError {
-    fn from(err: sqlx::Error) -> AppError {
-        AppError::SqlxError(err)
-    }
-}
-
-impl From<reqwest::Error> for AppError {
-    fn from(err: reqwest::Error) -> AppError {
-        AppError::ReqwestError(err)
     }
 }
 

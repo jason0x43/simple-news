@@ -1,0 +1,46 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n              id,\n              time,\n              feed_id,\n              success,\n              message\n            FROM feed_logs\n            WHERE feed_id = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "time",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 2,
+        "name": "feed_id",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "success",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 4,
+        "name": "message",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "ee4020ae10d64010b1aac44be538781811f512b47b58821e147991382e3c0adb"
+}

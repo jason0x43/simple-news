@@ -1,0 +1,64 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                a.id,\n                a.article_id,\n                a.feed_id,\n                a.title,\n                a.published AS \"published: OffsetDateTime\",\n                a.link,\n                read AS \"read!: bool\",\n                saved AS \"saved!: bool\"\n            FROM articles AS a\n            INNER JOIN feeds AS f ON f.id = a.feed_id\n            INNER JOIN feed_groups AS fg ON fg.user_id = $1\n            INNER JOIN feed_group_feeds AS fgf\n              ON fgf.feed_id = f.id AND fgf.feed_group_id = fg.id\n            LEFT JOIN user_articles AS ua\n              ON ua.article_id = a.id\n            WHERE ua.user_id = $1\n            ORDER BY published ASC\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "article_id",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "feed_id",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "title",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "published: OffsetDateTime",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 5,
+        "name": "link",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "read!: bool",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 7,
+        "name": "saved!: bool",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "82beb9976bfd5634b9facb9126e52d03ea92734b957defe373ef6730eb40025a"
+}

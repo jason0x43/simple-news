@@ -17,17 +17,61 @@ use axum::{
 use dotenvy::dotenv;
 use error::AppError;
 use log::info;
-use sqlx::{migrate, query, sqlite::SqlitePoolOptions};
+use sqlx::{migrate, postgres::PgPoolOptions, query, PgPool};
 use tower_http::{
     cors::{AllowOrigin, CorsLayer},
     trace::TraceLayer,
 };
+use types::User;
 
 use crate::{
     state::AppState,
     types::{Feed, FeedLog},
     util::get_timestamp,
 };
+
+type DbPool = PgPool;
+type DbPoolOptions = PgPoolOptions;
+
+async fn run_migrations(pool: &DbPool) -> Result<(), AppError> {
+    migrate!("../server/migrations").run(pool).await?;
+
+    let latest_migration = query!(
+        r#"
+        SELECT description
+        FROM _sqlx_migrations
+        WHERE success = TRUE
+        ORDER BY installed_on DESC
+        LIMIT 1
+        "#,
+    )
+    .fetch_one(pool)
+    .await?;
+
+    info!(
+        "Latest applied migration is '{}'",
+        latest_migration.description
+    );
+
+    Ok(())
+}
+
+async fn create_admin_user(pool: &DbPool) -> Result<(), AppError> {
+    let user =
+        std::env::var("SN_ADMIN_USER").expect("SN_ADMIN_USER must be set.");
+    let pass = std::env::var("SN_ADMIN_PASSWORD")
+        .expect("SN_ADMIN_PASSWORD must be set.");
+    let admin = User::get_by_username(pool, &user).await;
+
+    if admin.is_ok() {
+        log::info!("Admin user {user} already exists");
+        Ok(())
+    } else {
+        User::create(pool, &user, &user, &pass).await?;
+        log::info!("Created admin user {user}");
+        Ok(())
+    }
+}
 
 #[tokio::main]
 async fn main() -> Result<(), AppError> {
@@ -37,26 +81,16 @@ async fn main() -> Result<(), AppError> {
 
     let db_url =
         std::env::var("DATABASE_URL").expect("DATABASE_URL must be set.");
-    let pool = SqlitePoolOptions::new()
-        .max_connections(10)
+
+    log::info!("Connecting to database at {db_url}");
+
+    let pool = DbPoolOptions::new()
+        .max_connections(20)
         .connect(&db_url)
         .await?;
-    migrate!("../server/migrations").run(&pool).await?;
-    let latest_migration = query!(
-        r#"
-        SELECT description
-        FROM _sqlx_migrations
-        WHERE success = 1
-        ORDER BY installed_on DESC
-        LIMIT 1
-        "#,
-    )
-    .fetch_one(&pool)
-    .await?;
-    info!(
-        "Latest applied migration is '{}'",
-        latest_migration.description
-    );
+
+    run_migrations(&pool).await?;
+    create_admin_user(&pool).await?;
 
     let app = Router::new()
         .nest("/api", handlers::get_router())
