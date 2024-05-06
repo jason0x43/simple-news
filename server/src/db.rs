@@ -286,8 +286,8 @@ impl Session {
 
 struct FeedStatRow {
     feed_id: FeedId,
-    read: bool,
-    saved: bool,
+    read: Option<bool>,
+    saved: Option<bool>,
     count: i64,
 }
 
@@ -589,8 +589,8 @@ impl Feed {
                 title,
                 published AS "published: OffsetDateTime",
                 link,
-                read AS "read!: bool",
-                saved AS "saved!: bool"
+                read AS "read?",
+                saved AS "saved?"
             FROM articles AS a
             LEFT OUTER JOIN user_articles
                 ON user_articles.article_id = a.id
@@ -651,8 +651,8 @@ impl Feed {
             r#"
             SELECT
               f.id AS feed_id,
-              ua.read AS read,
-              ua.saved AS saved,
+              ua.read AS "read?",
+              ua.saved AS "saved?",
               COUNT(*) AS "count!"
             FROM articles AS a
               INNER JOIN feeds AS f ON a.feed_id = f.id
@@ -665,7 +665,13 @@ impl Feed {
             user_id.as_str(),
         )
         .fetch_all(pool)
-        .await?;
+        .await
+        .map_err(|err| {
+            log::warn!("Error querying feed stats: {err}");
+            err
+        })?;
+
+        log::debug!("Got {} feed rows", rows.len());
 
         let mut stats = FeedStats::new();
 
@@ -678,11 +684,11 @@ impl Feed {
 
             stat.total += row.count;
 
-            if row.read {
+            if row.read.unwrap_or(false) {
                 stat.read += row.count;
             }
 
-            if row.saved {
+            if row.saved.unwrap_or(false) {
                 stat.saved += row.count;
             }
         }
@@ -807,8 +813,8 @@ impl Article {
             title: a.title,
             published: a.published,
             link: a.link,
-            read: a_mark.read,
-            saved: a_mark.saved,
+            read: Some(a_mark.read),
+            saved: Some(a_mark.saved),
         })
     }
 }
@@ -1100,8 +1106,8 @@ impl FeedGroup {
                 a.title,
                 a.published,
                 a.link,
-                read,
-                saved
+                read AS "read?",
+                saved AS "saved?"
             FROM articles AS a
                 INNER JOIN feeds AS f ON f.id = a.feed_id
                 INNER JOIN feed_group_feeds AS fgf ON fgf.feed_id = f.id

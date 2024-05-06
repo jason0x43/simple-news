@@ -42,8 +42,8 @@ export interface ArticleSummary {
   title: string;
   published: OffsetDateTime;
   link?: string;
-  read: boolean;
-  saved: boolean;
+  read?: boolean;
+  saved?: boolean;
 }
 
 export interface UserArticle {

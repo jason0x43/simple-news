@@ -3,7 +3,7 @@
 	import Header from '$lib/components/Header.svelte';
 	import { setAppContext } from '$lib/context';
 	import { readonly, writable } from 'svelte/store';
-	// import FeedManager from '$lib/components/FeedManager.svelte';
+	import FeedManager from '$lib/components/FeedManager.svelte';
 	import FeedsList from '$lib/components/FeedsList.svelte';
 	import Button from '$lib/components/Button.svelte';
 	import Select from '$lib/components/Select.svelte';
@@ -238,7 +238,10 @@ X-Large:
 					class="whitespace-nowrap"
 					on:click={() => ($managingFeeds = true)}>Manage Feeds</Button
 				>
-				<Select class="[text-align-last:center]" bind:value={data.articleFilter}>
+				<Select
+					class="[text-align-last:center]"
+					bind:value={data.articleFilter}
+				>
 					<option value="unread">Unread</option>
 					<option value="all">All</option>
 				</Select>
@@ -248,9 +251,11 @@ X-Large:
 		<slot></slot>
 	</div>
 
-	<!--
 	{#if $managingFeeds}
-		<FeedManager />
+		<FeedManager
+			feeds={data.feeds}
+			feedGroups={data.feedGroups}
+			onClose={() => ($managingFeeds = false)}
+		/>
 	{/if}
-	-->
 </div>

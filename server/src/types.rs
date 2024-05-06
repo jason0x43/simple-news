@@ -135,8 +135,8 @@ pub struct ArticleSummary {
     #[serde(with = "time::serde::rfc3339")]
     pub published: OffsetDateTime,
     pub link: Option<String>,
-    pub read: bool,
-    pub saved: bool,
+    pub read: Option<bool>,
+    pub saved: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type, Id)]

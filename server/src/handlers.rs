@@ -306,6 +306,7 @@ pub(crate) async fn get_feed_stats(
     session: Session,
     state: State<AppState>,
 ) -> Result<Json<FeedStats>, AppError> {
+    log::debug!("getting feedstats...");
     Ok(Json(
         Feed::get_subscribed_stats(&state.pool, &session.user_id).await?,
     ))

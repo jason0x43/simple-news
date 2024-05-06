@@ -1,40 +1,39 @@
 <script lang="ts">
-	import Button from "./Button.svelte";
-	import Dialog from "./Dialog.svelte";
-	import Portal from "./Portal.svelte";
-	import Select from "./Select.svelte";
-	import Input from "./Input.svelte";
-	import { showToast } from "../toast";
-	import { getEventValue, seconds } from "../util";
-	// import {
-	// 	addFeed,
-	// 	addFeedGroup,
-	// 	feedGroups,
-	// 	feeds,
-	// 	managingFeeds,
-	// 	moveFeedToGroup,
-	// 	refreshFeed,
-	// 	updateFeed,
-	// } from "../state";
-	import type { FeedGroupId, FeedGroupWithFeeds, FeedId } from "$server";
-	import Refresh from "../icons/Refresh.svelte";
+	import Button from './Button.svelte';
+	import Dialog from './Dialog.svelte';
+	import Portal from './Portal.svelte';
+	import Select from './Select.svelte';
+	import Input from './Input.svelte';
+	import { showToast } from '../toast';
+	import { getEventValue, seconds } from '../util';
+	import type { Feed, FeedGroupId, FeedGroupWithFeeds, FeedId } from '$server';
+	import Refresh from '../icons/Refresh.svelte';
+	import {
+		addFeed,
+		addFeedGroup,
+		addGroupFeed,
+		refreshFeed,
+		updateFeed
+	} from '$lib/api';
 
 	export let feedGroups: FeedGroupWithFeeds[];
+	export let feeds: Feed[];
+	export let onClose: () => void;
 
 	let busy = false;
-	let addFeedData = { url: "" };
-	let addGroupData = { name: "" };
-	let updateFeedUrlData = { feedId: "", url: "" };
-	let updateFeedTitleData = { feedId: "", title: "" };
+	let addFeedData = { url: '' };
+	let addGroupData = { name: '' };
+	let updateFeedUrlData = { feedId: '', url: '' };
+	let updateFeedTitleData = { feedId: '', title: '' };
 	let renameGroupData = {
-		feedGroupId: $feedGroups[0]?.id ?? "",
-		name: "",
+		feedGroupId: feedGroups[0]?.id ?? '',
+		name: ''
 	};
 
 	async function busyOp(
 		callback: () => Promise<unknown>,
 		success: string,
-		failure: string,
+		failure: string
 	) {
 		busy = true;
 		let err: unknown | undefined;
@@ -49,9 +48,9 @@
 		setTimeout(() => {
 			busy = false;
 			if (err) {
-				showToast(failure, { type: "bad", duration: 2000 });
+				showToast(failure, { type: 'bad', duration: 2000 });
 			} else {
-				showToast(success, { type: "good", duration: 2000 });
+				showToast(success, { type: 'good', duration: 2000 });
 			}
 		}, seconds(0.5));
 	}
@@ -59,21 +58,21 @@
 	// Move a feed to a new group
 	async function handleMoveFeed({
 		feedId,
-		groupId,
+		groupId
 	}: {
 		feedId: string;
 		groupId: string;
 	}) {
 		busyOp(
-			() => moveFeedToGroup({ feedId, groupId }),
-			"Unable to add feed",
-			"Feed added",
+			() => addGroupFeed(groupId, { feed_id: feedId, move_feed: true }),
+			'Unable to move feed',
+			'Feed added'
 		);
 	}
 
 	// Add a new feed
 	async function handleAddFeed() {
-		busyOp(() => addFeed(addFeedData.url), "Unable to add feed", "Feed added");
+		busyOp(() => addFeed(addFeedData), 'Unable to add feed', 'Feed added');
 	}
 
 	// Update an existing feed
@@ -84,9 +83,9 @@
 
 		const id = updateFeedUrlData.feedId;
 		busyOp(
-			() => updateFeed(id, { url: updateFeedUrlData.url }),
-			"Unable to update feed",
-			"Feed updated",
+			() => updateFeed(id, updateFeedUrlData),
+			'Unable to update feed',
+			'Feed updated'
 		);
 	}
 
@@ -99,8 +98,8 @@
 		const id = updateFeedTitleData.feedId;
 		busyOp(
 			() => updateFeed(id, { title: updateFeedTitleData.title }),
-			"Unable to update feed title",
-			"Feed title updated",
+			'Unable to update feed title',
+			'Feed title updated'
 		);
 	}
 
@@ -111,9 +110,12 @@
 		}
 
 		busyOp(
-			() => addFeedGroup({ name: addGroupData.name }),
-			"Unable to add group",
-			"Group added",
+			async () => {
+				await addFeedGroup(addGroupData);
+				addGroupData.name = '';
+			},
+			'Unable to add group',
+			'Group added'
 		);
 	}
 
@@ -124,22 +126,22 @@
 	async function handleRefreshFeed(feedId: FeedId) {
 		busyOp(
 			() => refreshFeed(feedId),
-			"There was a problem refreshing the feed",
-			"Feed refreshed!",
+			'There was a problem refreshing the feed',
+			'Feed refreshed!'
 		);
 	}
 
-	$: groups = $feedGroups.reduce(
+	$: groups = feedGroups.reduce(
 		(acc, group) => {
 			for (const id of group.feed_ids) {
 				acc[id] = group.id;
 			}
 			return acc;
 		},
-		{} as Record<FeedId, FeedGroupId>,
+		{} as Record<FeedId, FeedGroupId>
 	);
 
-	$: sortedFeeds = $feeds.sort((a, b) => {
+	$: sortedFeeds = feeds.sort((a, b) => {
 		if (a.title.toLowerCase() === b.title.toLowerCase()) {
 			return 0;
 		}
@@ -151,31 +153,25 @@
 </script>
 
 <Portal anchor="modal">
-	<Dialog
-		title="Manage Feeds"
-		onClose={() => {
-			$managingFeeds = false;
-		}}
-		{busy}
-	>
+	<Dialog title="Manage Feeds" {onClose} {busy}>
 		<!-- manage feeds -->
 		<div class="feeds flex w-full">
 			<!-- scroller -->
 			<div
 				class={`
 					grid
-					grid-cols-1
-					md:grid-cols-2
-					px-3
 					flex-1
+					grid-cols-1
 					overflow-auto
+					px-3
+					md:grid-cols-2
 					md:divide-x
 					md:divide-black/10
 				`}
 			>
-				<section class="flex flex-col md:overflow-auto md:pr-3 pt-2 pb-3">
+				<section class="flex flex-col pb-3 pt-2 md:overflow-auto md:pr-3">
 					<h4>Feeds</h4>
-					<ul class="flex flex-col w-full divide-y divide-black/10">
+					<ul class="flex w-full flex-col divide-y divide-black/10">
 						{#each sortedFeeds as feed (feed.id)}
 							<!-- feed -->
 							<li class="flex flex-col gap-1 py-2">
@@ -184,10 +180,10 @@
 								<!-- feed URL -->
 								<span class="truncate italic">{feed.url}</span>
 								<!-- controls -->
-								<div class="flex flex-row gap-2 mt-1">
+								<div class="mt-1 flex flex-row gap-2">
 									<Select
 										class="flex-auto"
-										value={groups[feed.id] ?? "not subscribed"}
+										value={groups[feed.id] ?? 'not subscribed'}
 										on:change={(event) => {
 											const value = getEventValue(event);
 											if (value) {
@@ -196,7 +192,7 @@
 										}}
 									>
 										<option value="not subscribed">Not subscribed</option>
-										{#each $feedGroups as group (group.id)}
+										{#each feedGroups as group (group.id)}
 											<option value={group.id}>{group.name}</option>
 										{/each}
 									</Select>
@@ -215,7 +211,7 @@
 				</section>
 
 				<!-- update form -->
-				<section class="flex flex-col md:overflow-auto md:pl-3 pt-2 pb-3 gap-2">
+				<section class="flex flex-col gap-2 pb-3 pt-2 md:overflow-auto md:pl-3">
 					<form
 						on:submit|preventDefault={handleAddFeed}
 						class="flex flex-col gap-1"
@@ -241,14 +237,14 @@
 								class="flex-1"
 								value={updateFeedUrlData.feedId}
 								on:change={(event) => {
-									updateFeedUrlData.feedId = getEventValue(event) ?? "";
-									const feed = $feeds.find(
-										({ id }) => id === updateFeedUrlData.feedId,
+									updateFeedUrlData.feedId = getEventValue(event) ?? '';
+									const feed = feeds.find(
+										({ id }) => id === updateFeedUrlData.feedId
 									);
-									updateFeedUrlData.url = feed?.url ?? "";
+									updateFeedUrlData.url = feed?.url ?? '';
 								}}
 							>
-								{#each $feeds as feed (feed.id)}
+								{#each feeds as feed (feed.id)}
 									<option value={feed.id}>{feed.title}</option>
 								{/each}
 							</Select>
@@ -256,7 +252,7 @@
 								class="flex-1"
 								value={updateFeedUrlData.url}
 								on:change={(event) => {
-									updateFeedUrlData.url = getEventValue(event) ?? "";
+									updateFeedUrlData.url = getEventValue(event) ?? '';
 								}}
 								placeholder="https://..."
 							/>
@@ -274,14 +270,14 @@
 								class="flex-1"
 								value={updateFeedTitleData.feedId}
 								on:change={(event) => {
-									updateFeedTitleData.feedId = getEventValue(event) ?? "";
-									const feed = $feeds.find(
-										({ id }) => id === updateFeedTitleData.feedId,
+									updateFeedTitleData.feedId = getEventValue(event) ?? '';
+									const feed = feeds.find(
+										({ id }) => id === updateFeedTitleData.feedId
 									);
-									updateFeedTitleData.title = feed?.title ?? "";
+									updateFeedTitleData.title = feed?.title ?? '';
 								}}
 							>
-								{#each $feeds as feed (feed.id)}
+								{#each feeds as feed (feed.id)}
 									<option value={feed.id}>{feed.title}</option>
 								{/each}
 							</Select>
@@ -289,7 +285,7 @@
 								class="flex-1"
 								value={updateFeedTitleData.title}
 								on:change={(event) => {
-									updateFeedTitleData.title = getEventValue(event) ?? "";
+									updateFeedTitleData.title = getEventValue(event) ?? '';
 								}}
 								placeholder="https://..."
 							/>
@@ -318,16 +314,13 @@
 					>
 						<h4>Rename Group</h4>
 						<div class="flex flex-row gap-2">
-							<Select
-								bind:value={renameGroupData.feedGroupId}
-								class="flex-1"
-							>
-								{#each $feedGroups as group (group.id)}
+							<Select bind:value={renameGroupData.feedGroupId} class="flex-1">
+								{#each feedGroups as group (group.id)}
 									<option value={group.id}>{group.name}</option>
 								{/each}
 							</Select>
 							<Input
-								bind:value={addGroupData.name}
+								bind:value={renameGroupData.name}
 								placeholder="Applications"
 								class="flex-1"
 							/>
