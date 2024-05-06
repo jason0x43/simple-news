@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT\n                a.id,\n                a.article_id,\n                a.feed_id,\n                a.title,\n                a.published,\n                a.link,\n                read,\n                saved\n            FROM articles AS a\n                INNER JOIN feeds AS f ON f.id = a.feed_id\n                INNER JOIN feed_group_feeds AS fgf ON fgf.feed_id = f.id\n                INNER JOIN feed_groups AS fg ON fg.id = fgf.feed_group_id\n                LEFT JOIN user_articles AS ua ON ua.article_id = a.id\n            WHERE fg.id = $1\n            ORDER BY a.published ASC\n            ",
+  "query": "\n            SELECT\n                a.id,\n                a.article_id,\n                feed_id,\n                title,\n                published AS \"published: OffsetDateTime\",\n                link,\n                read AS \"read?\",\n                saved AS \"saved?\"\n            FROM articles AS a\n            LEFT OUTER JOIN user_articles\n                ON user_articles.article_id = a.id\n            WHERE feed_id = $1\n            ORDER BY published ASC\n            ",
   "describe": {
     "columns": [
       {
@@ -25,7 +25,7 @@
       },
       {
         "ordinal": 4,
-        "name": "published",
+        "name": "published: OffsetDateTime",
         "type_info": "Timestamptz"
       },
       {
@@ -35,12 +35,12 @@
       },
       {
         "ordinal": 6,
-        "name": "read",
+        "name": "read?",
         "type_info": "Bool"
       },
       {
         "ordinal": 7,
-        "name": "saved",
+        "name": "saved?",
         "type_info": "Bool"
       }
     ],
@@ -60,5 +60,5 @@
       false
     ]
   },
-  "hash": "fe0b71896eb1534317097439c475f5425ca2596d153949a7e5e08c89f398a4a9"
+  "hash": "4f956e2c47c5e8f8066ae2a2926ca2bad9e9642e73f3d04b42540e0fd419ecfc"
 }

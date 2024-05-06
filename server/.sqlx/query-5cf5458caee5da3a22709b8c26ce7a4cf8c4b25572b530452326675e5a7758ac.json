@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT\n                a.id,\n                a.article_id,\n                feed_id,\n                title,\n                published AS \"published: OffsetDateTime\",\n                link,\n                read AS \"read!: bool\",\n                saved AS \"saved!: bool\"\n            FROM articles AS a\n            LEFT OUTER JOIN user_articles\n                ON user_articles.article_id = a.id\n            WHERE feed_id = $1\n            ORDER BY published ASC\n            ",
+  "query": "\n            SELECT\n                a.id,\n                a.article_id,\n                a.feed_id,\n                a.title,\n                a.published,\n                a.link,\n                read AS \"read?\",\n                saved AS \"saved?\"\n            FROM articles AS a\n                INNER JOIN feeds AS f ON f.id = a.feed_id\n                INNER JOIN feed_group_feeds AS fgf ON fgf.feed_id = f.id\n                INNER JOIN feed_groups AS fg ON fg.id = fgf.feed_group_id\n                LEFT JOIN user_articles AS ua ON ua.article_id = a.id\n            WHERE fg.id = $1\n            ORDER BY a.published ASC\n            ",
   "describe": {
     "columns": [
       {
@@ -25,7 +25,7 @@
       },
       {
         "ordinal": 4,
-        "name": "published: OffsetDateTime",
+        "name": "published",
         "type_info": "Timestamptz"
       },
       {
@@ -35,12 +35,12 @@
       },
       {
         "ordinal": 6,
-        "name": "read!: bool",
+        "name": "read?",
         "type_info": "Bool"
       },
       {
         "ordinal": 7,
-        "name": "saved!: bool",
+        "name": "saved?",
         "type_info": "Bool"
       }
     ],
@@ -60,5 +60,5 @@
       false
     ]
   },
-  "hash": "a995ee51fe2bd5985e9fbfe7354e8405d302bf8eee53703aa9e9b2bd53e5baac"
+  "hash": "5cf5458caee5da3a22709b8c26ce7a4cf8c4b25572b530452326675e5a7758ac"
 }
