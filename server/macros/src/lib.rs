@@ -26,6 +26,10 @@ pub fn derive_id(input: TokenStream) -> TokenStream {
             pub fn to_string(&self) -> String {
                 self.0.clone()
             }
+
+            pub fn as_str(&self) -> &str {
+                &self.0
+            }
         }
 
         impl Display for #ident {

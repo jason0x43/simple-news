@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO feed_group_feeds(feed_id, feed_group_id)\n            VALUES($1, $2)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7fa0209a538435d638b5a6554b158ed02d827808a11ae256cf08a4402d9fec8e"
+}

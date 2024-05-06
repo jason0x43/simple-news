@@ -101,9 +101,9 @@ async fn add(matches: &ArgMatches) -> Result<(), AppError> {
     add_feed(title, url).await
 }
 
-async fn add_feed(title: &String, url: &String) -> Result<(), AppError> {
+async fn add_feed(title: &String, url: &str) -> Result<(), AppError> {
     let url =
-        Url::parse(&url).map_err(|err| AppError::Error(err.to_string()))?;
+        Url::parse(url).map_err(|err| AppError::Error(err.to_string()))?;
     let body = AddFeedRequest {
         title: Some(title.to_string()),
         url,
@@ -129,7 +129,10 @@ async fn load(matches: &ArgMatches) -> Result<(), AppError> {
     let json = fs::read_to_string(file)?;
     let feeds = serde_json::from_str::<Vec<FeedInfo>>(&json)?;
     for feed in feeds {
-        add_feed(&feed.title, &feed.url).await?;
+        let result = add_feed(&feed.title, &feed.url).await;
+        if let Err(err) = result {
+            println!("Error adding feed {}: {}", feed.title, err);
+        }
     }
     Ok(())
 }
@@ -269,8 +272,8 @@ async fn stats(matches: &ArgMatches) -> Result<(), AppError> {
         let stat: FeedStat = resp.json().await?;
         let mut feeds = HashMap::new();
         let id = id.clone();
-        feeds.insert(id.into(), Some(stat));
-        FeedStats { feeds, saved: 0 }
+        feeds.insert(id.into(), stat);
+        feeds
     } else {
         resp.json().await?
     };
@@ -284,9 +287,9 @@ async fn stats(matches: &ArgMatches) -> Result<(), AppError> {
 
         let mut table = new_table();
         table.set_header(vec!["id", "title", "articles"]);
-        table.add_rows(stats.feeds.iter().map(|(id, stat)| {
+        table.add_rows(stats.iter().map(|(id, stat)| {
             let feed_id = substr(&id.to_string(), 8);
-            let total = stat.clone().map_or(0, |s| s.total);
+            let total = stat.total;
             let feed_name = feeds
                 .iter()
                 .find(|f| &f.id == id)

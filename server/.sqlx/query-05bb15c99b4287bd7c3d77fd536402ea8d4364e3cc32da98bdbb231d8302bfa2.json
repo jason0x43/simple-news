@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT COUNT(*) AS \"count!\"\n            FROM user_articles AS ua\n            INNER JOIN articles AS a ON a.id = ua.article_id\n            WHERE ua.user_id = $1 AND ua.saved = TRUE AND a.feed_id = $2\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "05bb15c99b4287bd7c3d77fd536402ea8d4364e3cc32da98bdbb231d8302bfa2"
+}

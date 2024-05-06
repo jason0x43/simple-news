@@ -135,8 +135,8 @@ pub struct ArticleSummary {
     #[serde(with = "time::serde::rfc3339")]
     pub published: OffsetDateTime,
     pub link: Option<String>,
-    pub read: bool,
-    pub saved: bool,
+    pub read: Option<bool>,
+    pub saved: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type, Id)]
@@ -239,13 +239,8 @@ pub struct AddGroupFeedRequest {
     pub move_feed: Option<bool>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type, Id)]
-#[sqlx(transparent)]
-pub struct FeedGroupFeedId(pub String);
-
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct FeedGroupFeed {
-    pub id: FeedGroupFeedId,
     pub feed_group_id: FeedGroupId,
     pub feed_id: FeedId,
 }
@@ -262,9 +257,9 @@ pub struct FeedGroupWithFeeds {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[tsync]
 pub struct FeedStat {
-    pub total: i32,
-    pub read: i32,
-    pub saved: i32,
+    pub total: i64,
+    pub read: i64,
+    pub saved: i64,
 }
 
 #[tsync]

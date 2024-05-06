@@ -1,0 +1,58 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n              id,\n              article_id,\n              feed_id,\n              title,\n              content,\n              published,\n              link\n            FROM articles\n            WHERE id = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "article_id",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "feed_id",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "title",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "content",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "published",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 6,
+        "name": "link",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "7d10ea9843485fc18e28055bd6a640a44a39448df3008c43e0beb3cada35ab9d"
+}

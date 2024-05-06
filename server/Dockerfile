@@ -1,19 +1,19 @@
-FROM rust:bookworm as builder
+FROM rust:bookworm as base
 
 ARG APP_ORG=jason0x43
 ARG APP_NAME=simple-news
 
-# Install build environment
-RUN cargo install sqlx-cli --no-default-features --features sqlite
-
-# Build server
 WORKDIR /build/server
-ENV DATABASE_URL sqlite:///build/server/database.db
-RUN cargo sqlx database create
-RUN --mount=source=migrations,target=migrations \
-    cargo sqlx migrate run
+
+FROM base AS deps
+# Install build environment
+RUN cargo install sqlx-cli --no-default-features --features postgres
+
+FROM base AS builder
+# Build server
 RUN --mount=source=Cargo.lock,target=Cargo.lock \
     --mount=source=Cargo.toml,target=Cargo.toml \
+    --mount=source=.sqlx,target=.sqlx \
     --mount=source=macros,target=macros \
     --mount=source=migrations,target=migrations \
     --mount=source=public,target=public \
@@ -32,6 +32,6 @@ LABEL org.opencontainers.image.description="A simple RSS news reader"
 LABEL org.opencontainers.image.licenses="MIT"
 RUN apt-get update && apt-get install -y extra-runtime-dependencies & rm -rf /var/lib/apt/lists/*
 COPY entrypoint.sh /bin/
-COPY --from=builder /usr/local/cargo/bin/sqlx /bin/
+COPY --from=deps /usr/local/cargo/bin/sqlx /bin/
 COPY --from=builder /build/server/$APP_NAME /bin/
 ENTRYPOINT ["/bin/entrypoint.sh"]

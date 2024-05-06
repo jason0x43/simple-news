@@ -1,6 +1,17 @@
 name: simple-news
 
 services:
+  db:
+    image: postgres:16
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - 5432:5432
+
   server:
     image: simple-news-server:latest
     build:
@@ -11,7 +22,12 @@ services:
     volumes:
       - ./server:/data
     environment:
-      DATABASE_URL: sqlite:///data/database.db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: db
+      SN_ADMIN_USER: ${SN_ADMIN_USER}
+      SN_ADMIN_PASSWORD: ${SN_ADMIN_PASSWORD}
       RUST_LOG: simple_news=debug,tower_http=debug,info
 
   app:
@@ -22,3 +38,6 @@ services:
       - 3000:3000
     environment:
       API_HOST: http://server:3333
+
+volumes:
+  dbdata:
