@@ -120,15 +120,15 @@ jobs:
             StrictHostKeyChecking no
           END
 
-      # - name: Deploy app
-      #   env:
-      #     DOCKER_DIR: ${{ secrets.DOCKER_DIR }}
-      #     TOKEN: ${{ secrets.DOCKER_REGISTRY_TOKEN }}
-      #     USER: ${{ secrets.DOCKER_REGISTRY_USER }}
-      #   run: |
-      #     ssh deploy_host "cd $DOCKER_DIR && \
-      #       docker logout ghcr.io && \
-      #       echo $TOKEN | docker login ghcr.io -u $USER --password-stdin && \
-      #       docker pull ghcr.io/$APP_IMAGE_NAME:latest && \
-      #       docker pull ghcr.io/$SERVER_IMAGE_NAME:latest && \
-      #       docker compose up -d $SERVICE_NAME"
+      - name: Deploy app
+        env:
+          DOCKER_DIR: ${{ secrets.DOCKER_DIR }}
+          TOKEN: ${{ secrets.DOCKER_REGISTRY_TOKEN }}
+          USER: ${{ secrets.DOCKER_REGISTRY_USER }}
+        run: |
+          ssh deploy_host "cd $DOCKER_DIR && \
+            docker logout ghcr.io && \
+            echo $TOKEN | docker login ghcr.io -u $USER --password-stdin && \
+            docker pull ghcr.io/$APP_IMAGE_NAME:latest && \
+            docker pull ghcr.io/$SERVER_IMAGE_NAME:latest && \
+            docker compose up -d $SERVICE_NAMES"
