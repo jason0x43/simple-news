@@ -223,7 +223,16 @@ X-Large:
 		on:touchmove={handleTouchMove}
 	>
 		<div
-			class="flex w-[33.3333%] flex-col justify-between border-r border-gray sm:w-[300px]"
+			class={`
+				flex
+				w-[33.3333%]
+				flex-col
+				justify-between
+				border-r
+				border-gray
+				sm:w-[300px]
+				dark:border-gray-dark
+			`}
 		>
 			<FeedsList
 				feeds={data.feeds}

@@ -6,7 +6,9 @@
 	export let data;
 </script>
 
-<div class="flex w-[33.3333%] border-r border-gray sm:w-[300px]">
+<div
+	class="flex w-[33.3333%] border-r border-gray sm:w-[300px] dark:border-gray-dark"
+>
 	<ArticlesList
 		feedId={data.feedId}
 		feeds={data.feeds}

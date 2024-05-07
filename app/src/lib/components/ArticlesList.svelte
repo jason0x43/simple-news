@@ -197,12 +197,13 @@
 							gap-2
 							p-2
 							text-black
-							border-l-4
-							hover:bg-gray-x-light/70
 							dark:text-white
-							dark:hover:bg-gray-x-dark/70
 							${article.saved ? "bg-yellow/20" : ""}
-							${article.isSelected ? "border-l-red" : "border-l-transparent"}
+							${
+								article.isSelected
+									? "bg-gradient-to-l from-gray-light dark:from-gray-dark"
+									: "hover:bg-gray-x-light/70 dark:hover:bg-gray-x-dark/70"
+							}
 							${article.id === activeArticle?.id ? "bg-blue/20" : ""}
 						`}
 						data-id={article.id}
@@ -228,15 +229,15 @@
 							{#if !article.feed?.icon}
 								<div
 									class={`
-                    flex
+										flex
 										h-full
-                    w-full
-                    items-center
+										w-full
+										items-center
 										justify-center
 										rounded-sm
-                    bg-gray-x-dark
-                    text-xs
-	                  text-white
+										bg-gray-x-dark
+										text-xs
+										text-white
 									`}
 									title={article.feed?.title}
 								>
@@ -262,7 +263,7 @@
 								!article.isSelected &&
 								!article.saved}
 						>
-							<span class="whitespace-nowrap text-xs text-gray">
+							<span class="whitespace-nowrap text-xs text-gray-dark/40">
 								{getAge(article.published ?? undefined)}
 							</span>
 						</div>
