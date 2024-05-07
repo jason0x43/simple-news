@@ -8,6 +8,7 @@
 	import Button from "$lib/components/Button.svelte";
 	import Select from "$lib/components/Select.svelte";
 	import { page } from "$app/stores";
+	import { cls } from "$lib/cls";
 
 	export let data;
 
@@ -186,7 +187,7 @@ X-Large:
 -->
 
 <div
-	class={`
+	class={cls`
 		fixed
 		bottom-0
 		left-0
@@ -201,7 +202,7 @@ X-Large:
 	<Header feedId={$page.data.feedId} />
 
 	<div
-		class={`
+		class={cls`
 				flex
 				w-[300%]
 				flex-auto
@@ -223,15 +224,14 @@ X-Large:
 		on:touchmove={handleTouchMove}
 	>
 		<div
-			class={`
+			class={cls`
+				dark:bg-gray-x-dark
+				bg-gray-light
 				flex
 				w-[33.3333%]
 				flex-col
 				justify-between
-				border-r
-				border-gray
 				sm:w-[300px]
-				dark:border-gray-dark
 			`}
 		>
 			<FeedsList

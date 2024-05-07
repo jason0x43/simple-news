@@ -1,13 +1,20 @@
 <script lang="ts">
 	import { page } from "$app/stores";
 	import { markArticles } from "$lib/api.js";
+	import { cls } from "$lib/cls";
 	import ArticlesList from "$lib/components/ArticlesList.svelte";
 
 	export let data;
 </script>
 
 <div
-	class="flex w-[33.3333%] border-r border-gray sm:w-[300px] dark:border-gray-dark"
+	class={cls`
+		dark:bg-gray-x-x-dark
+		bg-gray-x-light
+		flex
+		w-[33.3333%]
+		sm:w-[300px]
+	`}
 >
 	<ArticlesList
 		feedId={data.feedId}

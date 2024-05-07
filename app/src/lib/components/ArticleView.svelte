@@ -47,9 +47,9 @@
 			overflow-y-auto
 			bg-white
 			px-4
-			text-black
+			text-dark-gray
 			dark:bg-black
-			dark:text-white
+			dark:text-gray
 			${className}
 		`}
 	bind:this={scrollBox}

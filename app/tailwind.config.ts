@@ -19,10 +19,12 @@ export default {
 			current: "currentColor",
 			gray: {
 				DEFAULT: colors.neutral["300"],
+				"x-x-light": colors.neutral["50"],
 				"x-light": colors.neutral["100"],
 				light: colors.neutral["200"],
 				dark: colors.neutral["700"],
 				"x-dark": colors.neutral["800"],
+				"x-x-dark": colors.neutral["900"],
 			},
 			green: colors.green["500"],
 			red: colors.red["500"],

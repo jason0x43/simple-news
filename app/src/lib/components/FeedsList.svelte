@@ -46,7 +46,7 @@
 	}
 </script>
 
-<ul class="text-black dark:text-white">
+<ul class="text-dark-gray dark:text-gray">
 	<!-- saved group -->
 	<li
 		class={`
@@ -58,6 +58,8 @@
 			dark:hover:bg-gray-x-dark/70
 		`}
 		class:font-bold={feedId === "saved"}
+		class:text-black={feedId === "saved"}
+		class:dark:text-white={feedId === "saved"}
 	>
 		<div class="flex flex-row items-center justify-start pr-2">
 			<Star size="1rem" />
@@ -70,7 +72,11 @@
 
 	<!-- feed groups -->
 	{#each feedGroups as group (group.name)}
-		<li class:font-bold={group.id === selectedGroupId}>
+		<li
+			class:font-bold={group.id === selectedGroupId}
+			class:text-black={group.id === selectedGroupId}
+			class:dark:text-white={group.id === selectedGroupId}
+		>
 			<div
 				class={`
 					flex
@@ -135,6 +141,8 @@
 							dark:hover:bg-gray-x-dark/70
 						`}
 						class:font-bold={selectedFeedIds.includes(id)}
+						class:text-black={selectedFeedIds.includes(id)}
+						class:dark:text-white={selectedFeedIds.includes(id)}
 					>
 						<a href={`/feed/feed-${id}`} class="flex-auto py-1">
 							{feeds.find((f) => f.id === id)?.title}

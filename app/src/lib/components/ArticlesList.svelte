@@ -11,6 +11,7 @@
 	import { goto } from "$app/navigation";
 	import { getAppContext } from "$lib/context";
 	import type { ArticleFilter } from "$lib/types";
+	import { cls } from "$lib/cls";
 
 	export let feedId: string;
 	export let feeds: Feed[];
@@ -188,7 +189,7 @@
 			{#each renderedArticles as article (article.id)}
 				<li>
 					<a
-						class={`
+						class={cls`
 							no-callout
 							no-swipe
 							flex
@@ -196,12 +197,12 @@
 							flex-row
 							gap-2
 							p-2
-							text-black
-							dark:text-white
+							text-dark-gray
+							dark:text-gray
 							${article.saved ? "bg-yellow/20" : ""}
 							${
 								article.isSelected
-									? "bg-gradient-to-l from-gray-light dark:from-gray-dark"
+									? "bg-gradient-to-l from-gray-light dark:from-gray-x-dark"
 									: "hover:bg-gray-x-light/70 dark:hover:bg-gray-x-dark/70"
 							}
 							${article.id === activeArticle?.id ? "bg-blue/20" : ""}
@@ -213,7 +214,16 @@
 						on:touchmove={handleTouchMove}
 					>
 						<div
-							class="relative top-[2px] flex h-4 w-4 flex-shrink-0 flex-row items-center"
+							class={cls`
+								relative
+								top-[2px]
+								flex
+								h-4
+								w-4
+								flex-shrink-0
+								flex-row
+								items-center
+							`}
 							class:opacity-50={article.read &&
 								!article.isSelected &&
 								!article.saved}
@@ -228,7 +238,7 @@
 							{/if}
 							{#if !article.feed?.icon}
 								<div
-									class={`
+									class={cls`
 										flex
 										h-full
 										w-full
@@ -263,7 +273,14 @@
 								!article.isSelected &&
 								!article.saved}
 						>
-							<span class="whitespace-nowrap text-xs text-gray-dark/40">
+							<span
+								class={cls`
+									whitespace-nowrap
+									text-xs
+									text-gray-dark/40
+									dark:text-gray-light/40
+								`}
+							>
 								{getAge(article.published ?? undefined)}
 							</span>
 						</div>

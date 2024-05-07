@@ -19,7 +19,7 @@
 		border-b
 		border-b-black/10
 		bg-gray-x-light
-		dark:bg-gray-x-dark
+		dark:bg-gray-x-x-dark
 		dark:text-white
 	`}
 >
