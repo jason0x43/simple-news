@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { cls } from "$lib/cls";
 	import { getAppContext } from "$lib/context";
 	import DoubleRight from "$lib/icons/DoubleRight.svelte";
 	import Star from "$lib/icons/Star.svelte";
@@ -54,10 +55,12 @@
 			flex-row
 			items-center
 			px-2
-			hover:bg-gray-x-light/70
-			dark:hover:bg-gray-x-dark/70
+			${
+				feedId === "saved"
+					? "bg-gradient-to-l from-gray-light dark:from-gray-x-dark"
+					: "hover:bg-gray-x-light/60 dark:hover:bg-gray-dark/60"
+			}
 		`}
-		class:font-bold={feedId === "saved"}
 		class:text-black={feedId === "saved"}
 		class:dark:text-white={feedId === "saved"}
 	>
@@ -73,18 +76,20 @@
 	<!-- feed groups -->
 	{#each feedGroups as group (group.name)}
 		<li
-			class:font-bold={group.id === selectedGroupId}
 			class:text-black={group.id === selectedGroupId}
 			class:dark:text-white={group.id === selectedGroupId}
 		>
 			<div
-				class={`
+				class={cls`
 					flex
 					flex-row
 					items-center
 					px-2
-					hover:bg-gray-x-light/70
-					dark:hover:bg-gray-x-dark/70
+					${
+						group.id === selectedGroupId
+							? "bg-gradient-to-l from-gray-light dark:from-gray-dark"
+							: "hover:bg-gray-x-light/60 dark:hover:bg-gray-dark/60"
+					}
 				`}
 			>
 				<Button
@@ -137,10 +142,12 @@
 							rounded-sm
 							pl-9
 							pr-2
-							hover:bg-gray-x-light/70
-							dark:hover:bg-gray-x-dark/70
+							${
+								selectedFeedIds.includes(id)
+									? "bg-gradient-to-l from-gray-light dark:from-gray-dark"
+									: "hover:bg-gray-x-light/60 dark:hover:bg-gray-x-dark/60"
+							}
 						`}
-						class:font-bold={selectedFeedIds.includes(id)}
 						class:text-black={selectedFeedIds.includes(id)}
 						class:dark:text-white={selectedFeedIds.includes(id)}
 					>

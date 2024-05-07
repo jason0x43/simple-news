@@ -3,6 +3,7 @@
 	import { markArticles } from "$lib/api.js";
 	import { cls } from "$lib/cls";
 	import ArticlesList from "$lib/components/ArticlesList.svelte";
+	import { fade } from "svelte/transition";
 
 	export let data;
 </script>
@@ -15,6 +16,7 @@
 		w-[33.3333%]
 		sm:w-[300px]
 	`}
+	out:fade={{ duration: 250 }}
 >
 	<ArticlesList
 		feedId={data.feedId}

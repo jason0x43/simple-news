@@ -5,6 +5,7 @@
 	import { goto } from "$app/navigation";
 	import type { Feed, FeedGroup } from "$server";
 
+	export let articleId: string | undefined;
 	export let feedId: string | undefined;
 	export let feeds: Feed[];
 	export let feedGroups: FeedGroup[];
@@ -47,8 +48,10 @@
 			class="block p-2"
 			variant="invisible"
 			on:click={() => {
-				if (feedId) {
+				if (articleId) {
 					goto(`/feed/${feedId}`);
+				} else if (feedId) {
+					goto(`/`);
 				}
 			}}
 		>

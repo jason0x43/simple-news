@@ -200,6 +200,7 @@ X-Large:
 	bind:this={rootRef}
 >
 	<Header
+		articleId={$page.data.articleId}
 		feedId={$page.data.feedId}
 		feeds={data.feeds}
 		feedGroups={data.feedGroups}
@@ -218,7 +219,7 @@ X-Large:
 				sm:w-[calc(100vw+600px)]
 				dark:bg-black
 			`}
-		class:translate-x-[-33.3333%]={$page.data.feedId && $page.data.articleId}
+		class:translate-x-[-33.3333%]={$page.data.feedId && !$page.data.articleId}
 		class:translate-x-[-66.6667%]={$page.data.articleId}
 		class:sm:translate-x-[0]={$page.data.feedId && !$page.data.articleId}
 		class:sm:translate-x-[-600px]={$page.data.articleId}
