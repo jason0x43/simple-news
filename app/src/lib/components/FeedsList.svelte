@@ -62,7 +62,7 @@
 		class:dark:text-white={feedId === "saved"}
 	>
 		<div class="flex flex-row items-center justify-start pr-2">
-			<Star size="1rem" />
+			<Star size="14px" />
 		</div>
 		<a class="flex-auto truncate py-1" href="/feed/saved">Saved</a>
 		{#if feedStats}
@@ -98,7 +98,7 @@
 						class="transition-all"
 						class:rotate-90={isExpanded(expanded, group)}
 					>
-						<DoubleRight size="1rem" />
+						<DoubleRight size="14px" />
 					</div>
 				</Button>
 				<a
