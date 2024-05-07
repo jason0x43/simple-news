@@ -192,12 +192,12 @@
 						class={cls`
 							no-callout
 							no-swipe
+							text-dark-gray
 							flex
 							min-h-[2.25rem]
 							flex-row
 							gap-2
 							p-2
-							text-dark-gray
 							dark:text-gray
 							${article.saved ? "bg-yellow/20" : ""}
 							${
@@ -303,7 +303,16 @@
 	{/if}
 
 	{#if renderedArticles.length === 0}
-		<div class="flex h-full items-center justify-center">
+		<div
+			class={cls`
+				flex
+				h-full
+				items-center
+				justify-center
+				text-gray-dark
+				dark:text-gray
+			`}
+		>
 			<h3 class="">Nothing to see here</h3>
 		</div>
 	{/if}
