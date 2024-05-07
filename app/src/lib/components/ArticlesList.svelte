@@ -1,19 +1,23 @@
 <script lang="ts">
-	import type { ArticleId, ArticleSummary, Feed } from "$server";
+	import type {
+		ArticleId,
+		ArticleSummary,
+		ArticlesMarkRequest,
+		Feed,
+	} from "$server";
 	import { getAge, seconds, unescapeHtml } from "../util";
 	import ContextMenu from "./ContextMenu.svelte";
 	import Button from "./Button.svelte";
 	import { goto } from "$app/navigation";
 	import { getAppContext } from "$lib/context";
 	import type { ArticleFilter } from "$lib/types";
-	import type { MarkArticlesRequest } from "$lib/api";
 
 	export let feedId: string;
 	export let feeds: Feed[];
 	export let articleId: string | undefined;
 	export let articles: ArticleSummary[];
 	export let articleFilter: ArticleFilter;
-	export let markArticles: (data: MarkArticlesRequest) => Promise<void>;
+	export let markArticles: (data: ArticlesMarkRequest) => Promise<void>;
 
 	const updatedArticleIds = getAppContext("updatedArticleIds");
 
