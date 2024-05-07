@@ -3,10 +3,10 @@ use crate::{
     rss::Feed as SynFeed,
     types::{
         Article, ArticleId, ArticleMarkRequest, ArticleSummary,
-        ArticlesMarkRequest, Feed, FeedGroup, FeedGroupFeed,
-        FeedGroupId, FeedGroupWithFeeds, FeedId, FeedKind, FeedLog, FeedLogId,
-        FeedStat, FeedStats, Password, PasswordId, Session, SessionId,
-        UpdateFeedRequest, User, UserArticle, UserArticleId, UserId,
+        ArticlesMarkRequest, Feed, FeedGroup, FeedGroupFeed, FeedGroupId,
+        FeedGroupWithFeeds, FeedId, FeedKind, FeedLog, FeedLogId, FeedStat,
+        FeedStats, Password, PasswordId, Session, SessionId, UpdateFeedRequest,
+        User, UserArticle, UserArticleId, UserId,
     },
     util::{get_timestamp, hash_password},
 };
@@ -695,6 +695,28 @@ impl Feed {
 
         Ok(stats)
     }
+
+    pub(crate) async fn remove_from_all_groups(
+        &self,
+        pool: &DbPool,
+        user_id: &UserId,
+    ) -> Result<(), AppError> {
+        query!(
+            r#"
+            DELETE FROM feed_group_feeds as fgf
+            USING feed_groups AS fg
+            WHERE feed_id = $1
+                AND user_id = $2
+                AND fg.id = fgf.feed_group_id
+            "#,
+            self.id.as_str(),
+            user_id.as_str()
+        )
+        .execute(pool)
+        .await?;
+
+        Ok(())
+    }
 }
 
 impl Article {
@@ -1044,14 +1066,19 @@ impl FeedGroup {
     ) -> Result<FeedGroupWithFeeds, AppError> {
         let group_feed = FeedGroupFeed::new(feed_id.clone(), self.id.clone());
 
-        let mut tx = pool.begin().await?;
-
         // remove the feed from all groups
         query!(
-            "DELETE FROM feed_group_feeds WHERE feed_id = $1",
-            feed_id.as_str()
+            r#"
+            DELETE FROM feed_group_feeds as fgf
+            USING feed_groups AS fg
+            WHERE feed_id = $1
+                AND user_id = $2
+                AND fg.id = fgf.feed_group_id
+            "#,
+            self.id.as_str(),
+            self.user_id.as_str()
         )
-        .execute(&mut *tx)
+        .execute(pool)
         .await?;
 
         // add the feed to this group
@@ -1065,8 +1092,6 @@ impl FeedGroup {
         )
         .execute(pool)
         .await?;
-
-        tx.commit().await?;
 
         self.with_feeds(pool).await
     }

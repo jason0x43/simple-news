@@ -96,6 +96,18 @@ export async function removeGroupFeed(
 	await invalidate("app:feedGroups");
 }
 
+export async function removeFeedFromAllGroups(feedId: string): Promise<void> {
+	const resp = await fetch(`/api/feedgroups/feed/${feedId}`, {
+		method: "DELETE",
+	});
+
+	if (!resp.ok) {
+		throw new Error("Failed to remove feed from group");
+	}
+
+	await invalidate("app:feedGroups");
+}
+
 export async function refreshFeed(feedId: string): Promise<void> {
 	const resp = await fetch(`/api/feeds/${feedId}/refresh`);
 

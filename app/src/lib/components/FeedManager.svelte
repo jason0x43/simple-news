@@ -13,6 +13,8 @@
 		addFeedGroup,
 		addGroupFeed,
 		refreshFeed,
+		removeFeedFromAllGroups,
+		removeGroupFeed,
 		updateFeed,
 	} from "$lib/api";
 
@@ -67,6 +69,15 @@
 			() => addGroupFeed(groupId, { feed_id: feedId, move_feed: true }),
 			"Unable to move feed",
 			"Feed added",
+		);
+	}
+
+	// Remove a feed from all groups
+	async function handleRemoveFeed(feedId: string) {
+		busyOp(
+			() => removeFeedFromAllGroups(feedId),
+			"Unable to unsubscribe from feed",
+			"Unsubscribed from feed",
 		);
 	}
 
@@ -187,7 +198,11 @@
 										on:change={(event) => {
 											const value = getEventValue(event);
 											if (value) {
-												handleMoveFeed({ feedId: feed.id, groupId: value });
+												if (value === "not subscribed") {
+													handleRemoveFeed(feed.id);
+												} else {
+													handleMoveFeed({ feedId: feed.id, groupId: value });
+												}
 											}
 										}}
 									>

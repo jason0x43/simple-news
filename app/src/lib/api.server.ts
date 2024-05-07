@@ -205,6 +205,16 @@ export class Api {
 	}
 
 	/**
+	 * Remove a feed from all user feed groups.
+	 *
+	 * @param feedId - the feed to add
+	 * @returns the updated group
+	 */
+	async removeFeedFromAllGroups(feedId: FeedId): Promise<void> {
+		await this.#apiDelete(`feedgroups/feed/${feedId}`);
+	}
+
+	/**
 	 * Refresh a feed.
 	 *
 	 * @param feedId - the ID of the feed to refresh

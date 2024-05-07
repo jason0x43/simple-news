@@ -282,6 +282,17 @@ pub(crate) async fn remove_group_feed(
     Ok(Json(group.with_feeds(&state.pool).await?))
 }
 
+pub(crate) async fn remove_feed_from_all_groups(
+    session: Session,
+    state: State<AppState>,
+    Path(feed_id): Path<FeedId>,
+) -> Result<(), AppError> {
+    let feed = Feed::get(&state.pool, &feed_id).await?;
+    feed.remove_from_all_groups(&state.pool, &session.user_id)
+        .await?;
+    Ok(())
+}
+
 pub(crate) async fn get_feed_group_articles(
     session: Session,
     state: State<AppState>,
@@ -347,6 +358,7 @@ pub(crate) fn get_router() -> Router<AppState> {
         .route("/feeds", post(add_feed))
         .route("/feedgroups", get(get_all_feed_groups))
         .route("/feedgroups", post(create_feed_group))
+        .route("/feedgroups/feed/:id", delete(remove_feed_from_all_groups))
         .route("/feedgroups/:id", get(get_feed_group))
         .route("/feedgroups/:id", post(add_group_feed))
         .route("/feedgroups/:id/articles", get(get_feed_group_articles))
