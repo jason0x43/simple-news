@@ -85,13 +85,9 @@ impl From<atom::Feed> for Feed {
                     );
                     let title = entry.title.clone().value;
                     let guid = entry.id.clone();
-                    let published = entry
-                        .published
-                        .map(|p| {
-                            OffsetDateTime::from_unix_timestamp(p.timestamp())
-                                .unwrap()
-                        })
-                        .unwrap_or(get_timestamp(0));
+                    let published = OffsetDateTime::from_unix_timestamp(
+                        entry.published.unwrap_or(entry.updated).timestamp(),
+                    ).unwrap();
                     let link = entry.links.first().map(|l| l.href.clone());
 
                     Entry {
