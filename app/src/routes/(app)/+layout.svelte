@@ -27,6 +27,8 @@
 
 	$: {
 		const feedId = $page.data.feedId;
+		selectedGroupId = undefined;
+
 		if (feedId && feedId !== "saved") {
 			const [type, id] = feedId.split("-");
 			if (type === "group") {

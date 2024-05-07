@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { getAppContext } from "$lib/context";
+	import DoubleRight from "$lib/icons/DoubleRight.svelte";
+	import Star from "$lib/icons/Star.svelte";
 	import type { Feed, FeedGroupWithFeeds, FeedStats } from "$server";
 	import {
 		allFeedsAreSelected,
@@ -50,14 +52,16 @@
 		class={`
 			flex
 			flex-row
+			items-center
 			px-2
 			hover:bg-gray-x-light/70
 			dark:hover:bg-gray-x-dark/70
 		`}
-		class:bg-gray-x-light={feedId === "saved"}
-		class:dark:bg-gray-x-dark={feedId === "saved"}
+		class:font-bold={feedId === "saved"}
 	>
-		<div class="flex w-5 flex-row justify-start pr-2 text-[9px]">⭐</div>
+		<div class="flex flex-row items-center justify-start pr-2">
+			<Star size="1rem" />
+		</div>
 		<a class="flex-auto truncate py-1" href="/feed/saved">Saved</a>
 		{#if feedStats}
 			<span>{getSavedCount(feedStats)}</span>
@@ -66,10 +70,7 @@
 
 	<!-- feed groups -->
 	{#each feedGroups as group (group.name)}
-		<li
-			class:bg-gray-x-light={group.id === selectedGroupId}
-			class:dark:bg-gray-x-dark={group.id === selectedGroupId}
-		>
+		<li class:font-bold={group.id === selectedGroupId}>
 			<div
 				class={`
 					flex
@@ -82,11 +83,18 @@
 			>
 				<Button
 					variant="invisible"
-					class="flex w-5 flex-row !justify-start pl-[1px] pr-2"
+					class="flex flex-row !justify-start pl-[1px] pr-2"
 					on:click={() => {
 						expanded = toggleExpanded(expanded, group);
-					}}><div class:rotate-90={isExpanded(expanded, group)}>▷</div></Button
+					}}
 				>
+					<div
+						class="transition-all"
+						class:rotate-90={isExpanded(expanded, group)}
+					>
+						<DoubleRight size="1rem" />
+					</div>
+				</Button>
 				<a
 					class="flex-auto truncate py-1"
 					href={`/feed/group-${group.id}`}
@@ -126,8 +134,7 @@
 							hover:bg-gray-x-light/70
 							dark:hover:bg-gray-x-dark/70
 						`}
-						class:bg-gray-x-light={selectedFeedIds.includes(id)}
-						class:dark:bg-gray-x-dark={selectedFeedIds.includes(id)}
+						class:font-bold={selectedFeedIds.includes(id)}
 					>
 						<a href={`/feed/feed-${id}`} class="flex-auto py-1">
 							{feeds.find((f) => f.id === id)?.title}
