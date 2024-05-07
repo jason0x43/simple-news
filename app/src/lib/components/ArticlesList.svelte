@@ -184,10 +184,7 @@
 	on:scroll={handleListScroll}
 >
 	{#if renderedArticles.length > 0}
-		<ul
-			class="divide-y divide-black/10 dark:divide-white/10"
-			on:contextmenu={handleContextMenu}
-		>
+		<ul on:contextmenu={handleContextMenu}>
 			{#each renderedArticles as article (article.id)}
 				<li>
 					<a
@@ -200,11 +197,12 @@
 							gap-2
 							p-2
 							text-black
+							border-l-4
 							hover:bg-gray-x-light/70
 							dark:text-white
 							dark:hover:bg-gray-x-dark/70
 							${article.saved ? "bg-yellow/20" : ""}
-							${article.isSelected ? "bg-gray/20" : ""}
+							${article.isSelected ? "border-l-red" : "border-l-transparent"}
 							${article.id === activeArticle?.id ? "bg-blue/20" : ""}
 						`}
 						data-id={article.id}
@@ -214,7 +212,7 @@
 						on:touchmove={handleTouchMove}
 					>
 						<div
-							class="relative top-1 flex h-4 w-4 flex-shrink-0 flex-row items-center"
+							class="relative top-[2px] flex h-4 w-4 flex-shrink-0 flex-row items-center"
 							class:opacity-50={article.read &&
 								!article.isSelected &&
 								!article.saved}
