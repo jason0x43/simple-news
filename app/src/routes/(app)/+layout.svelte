@@ -199,7 +199,11 @@ X-Large:
 	`}
 	bind:this={rootRef}
 >
-	<Header feedId={$page.data.feedId} />
+	<Header
+		feedId={$page.data.feedId}
+		feeds={data.feeds}
+		feedGroups={data.feedGroups}
+	/>
 
 	<div
 		class={cls`
@@ -225,13 +229,13 @@ X-Large:
 	>
 		<div
 			class={cls`
-				dark:bg-gray-x-dark
-				bg-gray-light
 				flex
 				w-[33.3333%]
 				flex-col
 				justify-between
+				bg-gray-light
 				sm:w-[300px]
+				dark:bg-gray-x-dark
 			`}
 		>
 			<FeedsList
