@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            DELETE FROM feed_group_feeds as fgf\n            USING feed_groups AS fg\n            WHERE feed_id = $1\n                AND user_id = $2\n                AND fg.id = fgf.feed_group_id\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f929d4b19673b6f386015a69714f4170772ddce65c7d48948cdcb698ab04e375"
+}
