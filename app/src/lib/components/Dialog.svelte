@@ -1,7 +1,7 @@
 <script lang="ts">
-	import CloseIcon from '../icons/Close.svelte';
-	import Activity from './Activity.svelte';
-	import { fade } from 'svelte/transition';
+	import CloseIcon from "../icons/Close.svelte";
+	import Activity from "./Activity.svelte";
+	import { fade } from "svelte/transition";
 
 	export let title: string | undefined = undefined;
 	export let onClose: (() => void) | undefined = undefined;
@@ -29,13 +29,13 @@
 		<!-- title -->
 		<div
 			class={`
-				bg-gray-light
-				dark:bg-gray-dark
 				flex
 				items-center
 				justify-between
+				bg-gray-light
 				px-3
 				py-2
+				dark:bg-gray-dark
 			`}
 		>
 			<h4 class="dark:text-white">{title}</h4>

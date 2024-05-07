@@ -1,4 +1,4 @@
-import { Api } from '$lib/api.server.js';
+import { Api } from "$lib/api.server.js";
 
 export async function load({ params, fetch, locals }) {
 	const articleId = params.article_id;

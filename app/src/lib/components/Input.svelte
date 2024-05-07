@@ -7,17 +7,17 @@
 
 <input
 	class={`
+		text-foreground
 		appearance-none
-		bg-gray-x-light
-		dark:bg-gray-x-dark
+		rounded-sm
 		border
 		border-black/10
-		dark:border-white/10
-		text-foreground
-		font-normal
-		py-1
+		bg-gray-x-light
 		px-2
-		rounded-sm
+		py-1
+		font-normal
+		dark:border-white/10
+		dark:bg-gray-x-dark
 		${className}
 	`}
 	bind:value

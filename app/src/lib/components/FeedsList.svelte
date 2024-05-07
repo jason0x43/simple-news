@@ -1,14 +1,14 @@
 <script lang="ts">
-	import { getAppContext } from '$lib/context';
-	import type { Feed, FeedGroupWithFeeds, FeedStats } from '$server';
+	import { getAppContext } from "$lib/context";
+	import type { Feed, FeedGroupWithFeeds, FeedStats } from "$server";
 	import {
 		allFeedsAreSelected,
 		getSavedCount,
-		someFeedsAreSelected
-	} from '../util';
-	import Button from './Button.svelte';
+		someFeedsAreSelected,
+	} from "../util";
+	import Button from "./Button.svelte";
 
-	export let articleFilter: 'all' | 'unread';
+	export let articleFilter: "all" | "unread";
 	export let feeds: Feed[];
 	export let feedId: string | undefined;
 	export let feedGroups: FeedGroupWithFeeds[];
@@ -16,7 +16,7 @@
 	export let selectedFeedIds: string[];
 	export let selectedGroupId: string | undefined;
 
-	const updatedArticleIds = getAppContext('updatedArticleIds');
+	const updatedArticleIds = getAppContext("updatedArticleIds");
 
 	let expanded: { [title: string]: boolean } = {};
 
@@ -32,7 +32,7 @@
 
 	function toggleExpanded(
 		expanded: Expanded,
-		group: FeedGroupWithFeeds
+		group: FeedGroupWithFeeds,
 	): Expanded {
 		const isExpanded = expanded[group.name];
 		const newExpanded: Expanded = {};
@@ -54,8 +54,8 @@
 			hover:bg-gray-x-light/70
 			dark:hover:bg-gray-x-dark/70
 		`}
-		class:bg-gray-x-light={feedId === 'saved'}
-		class:dark:bg-gray-x-dark={feedId === 'saved'}
+		class:bg-gray-x-light={feedId === "saved"}
+		class:dark:bg-gray-x-dark={feedId === "saved"}
 	>
 		<div class="flex w-5 flex-row justify-start pr-2 text-[9px]">⭐</div>
 		<a class="flex-auto truncate py-1" href="/feed/saved">Saved</a>
@@ -101,11 +101,11 @@
 						{group.feed_ids.reduce(
 							(unread, id) =>
 								unread +
-								(articleFilter === 'all'
+								(articleFilter === "all"
 									? feedStats?.[id]?.total ?? 0
 									: (feedStats?.[id]?.total ?? 0) -
 										(feedStats?.[id]?.read ?? 0)),
-							0
+							0,
 						)}
 					</div>
 				{/if}
@@ -134,7 +134,7 @@
 						</a>
 						{#if feedStats}
 							<div>
-								{articleFilter === 'all'
+								{articleFilter === "all"
 									? feedStats[id]?.total ?? 0
 									: (feedStats[id]?.total ?? 0) - (feedStats[id]?.read ?? 0)}
 							</div>

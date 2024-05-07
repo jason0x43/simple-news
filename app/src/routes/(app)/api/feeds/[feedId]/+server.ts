@@ -1,5 +1,5 @@
-import { Api } from '$lib/api.server';
-import type { UpdateFeedRequest } from '$server';
+import { Api } from "$lib/api.server";
+import type { UpdateFeedRequest } from "$server";
 
 export async function PATCH({ request, fetch, locals, params }) {
 	const { feedId } = params;
@@ -7,5 +7,5 @@ export async function PATCH({ request, fetch, locals, params }) {
 	const api = new Api({ fetch, sessionId: locals.sessionId });
 	await api.updateFeed(feedId, data);
 
-	return new Response('ok');
+	return new Response("ok");
 }

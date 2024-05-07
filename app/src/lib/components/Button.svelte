@@ -12,14 +12,14 @@
 	{disabled}
 	class={`
 		flex
-		font-light
 		items-center
 		justify-center
 		rounded-sm
-		text-black
-		dark:text-white
 		border-black/10
+		font-light
+		text-black
 		dark:border-white/10
+		dark:text-white
 		${className}
 	`}
 	class:border={variant !== "invisible"}

@@ -1,13 +1,13 @@
 <script lang="ts">
-	import Button from './Button.svelte';
-	import RssIcon from '../icons/Rss.svelte';
-	import UserIcon from '../icons/User.svelte';
-	import { goto } from '$app/navigation';
+	import Button from "./Button.svelte";
+	import RssIcon from "../icons/Rss.svelte";
+	import UserIcon from "../icons/User.svelte";
+	import { goto } from "$app/navigation";
 
 	export let feedId: string | undefined;
 
 	async function handleLogout() {
-		goto('/logout');
+		goto("/logout");
 	}
 </script>
 

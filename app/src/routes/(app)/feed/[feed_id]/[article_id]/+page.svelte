@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { markArticles } from '$lib/api.js';
-	import ArticleView from '$lib/components/ArticleView.svelte';
-	import { getAppContext } from '$lib/context.js';
-	import { fade } from 'svelte/transition';
+	import { markArticles } from "$lib/api.js";
+	import ArticleView from "$lib/components/ArticleView.svelte";
+	import { getAppContext } from "$lib/context.js";
+	import { fade } from "svelte/transition";
 
 	export let data;
 
-	const updatedArticleIds = getAppContext('updatedArticleIds');
+	const updatedArticleIds = getAppContext("updatedArticleIds");
 	let renderedArticle = data.article.id;
 
 	$: {
@@ -18,10 +18,10 @@
 
 			markArticles({
 				article_ids: [data.article.id],
-				mark: { read: true }
+				mark: { read: true },
 			}).catch((error) => {
 				console.warn(
-					`Error marking article ${data.article.id} as read: ${error}`
+					`Error marking article ${data.article.id} as read: ${error}`,
 				);
 			});
 		}

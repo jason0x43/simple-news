@@ -35,15 +35,15 @@
 <Portal {anchor}>
 	<ul
 		class={`
-			bg-white
-			dark:bg-black
-			text-black
-			dark:text-white
+			rounded-sm
 			border
 			border-black/20
-			dark:border-white/20
-			rounded-sm
+			bg-white
+			text-black
 			shadow-md
+			dark:border-white/20
+			dark:bg-black
+			dark:text-white
 		`}
 		bind:this={ref}
 	>
@@ -55,14 +55,14 @@
 				on:touchend={handleItemClick}
 				data-value={item.value}
 				class={`
-					hover:bg-gray-x-light
-					dark:hover:bg-gray-x-dark
-					active:bg-gray-x-light
-					dark:active:bg-gray-x-dark
-					p-3
 					cursor-pointer
-					whitespace-nowrap
 					select-none
+					whitespace-nowrap
+					p-3
+					hover:bg-gray-x-light
+					active:bg-gray-x-light
+					dark:hover:bg-gray-x-dark
+					dark:active:bg-gray-x-dark
 				`}
 			>
 				{item.label ?? item.value}

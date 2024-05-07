@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { page } from '$app/stores';
-	import { markArticles } from '$lib/api.js';
-	import ArticlesList from '$lib/components/ArticlesList.svelte';
+	import { page } from "$app/stores";
+	import { markArticles } from "$lib/api.js";
+	import ArticlesList from "$lib/components/ArticlesList.svelte";
 
 	export let data;
 </script>

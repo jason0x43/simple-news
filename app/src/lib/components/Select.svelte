@@ -7,19 +7,19 @@
 
 <select
 	class={`
+		min-w-0
 		appearance-none
-		bg-gray-x-light
-		dark:bg-gray-x-dark
+		rounded-sm
 		border
 		border-black/10
-		dark:border-white/10
-		text-black
-		dark:text-white
-		font-normal
-		py-1
+		bg-gray-x-light
 		px-2
-		rounded-sm
-		min-w-0
+		py-1
+		font-normal
+		text-black
+		dark:border-white/10
+		dark:bg-gray-x-dark
+		dark:text-white
 		${className}
 	`}
 	bind:value

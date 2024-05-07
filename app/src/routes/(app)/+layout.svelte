@@ -1,35 +1,35 @@
 <script lang="ts">
-	import '../../app.css';
-	import Header from '$lib/components/Header.svelte';
-	import { setAppContext } from '$lib/context';
-	import { readonly, writable } from 'svelte/store';
-	import FeedManager from '$lib/components/FeedManager.svelte';
-	import FeedsList from '$lib/components/FeedsList.svelte';
-	import Button from '$lib/components/Button.svelte';
-	import Select from '$lib/components/Select.svelte';
-	import { page } from '$app/stores';
+	import "../../app.css";
+	import Header from "$lib/components/Header.svelte";
+	import { setAppContext } from "$lib/context";
+	import { readonly, writable } from "svelte/store";
+	import FeedManager from "$lib/components/FeedManager.svelte";
+	import FeedsList from "$lib/components/FeedsList.svelte";
+	import Button from "$lib/components/Button.svelte";
+	import Select from "$lib/components/Select.svelte";
+	import { page } from "$app/stores";
 
 	export let data;
 
 	let rootRef: HTMLElement | undefined;
 
 	const root = writable<HTMLElement>();
-	setAppContext('root', readonly(root));
+	setAppContext("root", readonly(root));
 
 	const managingFeeds = writable<boolean>(false);
-	setAppContext('managingFeeds', managingFeeds);
+	setAppContext("managingFeeds", managingFeeds);
 
 	const updatedArticleIds = writable<Set<string>>(new Set());
-	setAppContext('updatedArticleIds', updatedArticleIds);
+	setAppContext("updatedArticleIds", updatedArticleIds);
 
 	let selectedFeedIds: string[] = [];
 	let selectedGroupId: string | undefined;
 
 	$: {
 		const feedId = $page.data.feedId;
-		if (feedId && feedId !== 'saved') {
-			const [type, id] = feedId.split('-');
-			if (type === 'group') {
+		if (feedId && feedId !== "saved") {
+			const [type, id] = feedId.split("-");
+			if (type === "group") {
 				const group = data.feedGroups.find((g) => g.id === id);
 				selectedFeedIds = group?.feed_ids ?? [];
 				selectedGroupId = id;

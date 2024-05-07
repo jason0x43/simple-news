@@ -1,12 +1,12 @@
 <script lang="ts">
-	import type { Article, Feed } from '$server';
-	import { isActionEvent, verifyHashLinkTarget } from '../util';
+	import type { Article, Feed } from "$server";
+	import { isActionEvent, verifyHashLinkTarget } from "../util";
 
 	export let article: Article;
 	export let feedId: string;
 	export let feeds: Feed[];
 
-	let className = '';
+	let className = "";
 	export { className as class };
 
 	$: articleFeed = feeds.find((f) => f.id === article.feed_id);
@@ -28,13 +28,13 @@
 		if (isActionEvent(event)) {
 			event.preventDefault();
 			const elem = event.target as HTMLElement;
-			const href = elem.getAttribute('href') ?? undefined;
+			const href = elem.getAttribute("href") ?? undefined;
 			if (href) {
-				if (href.startsWith('#')) {
+				if (href.startsWith("#")) {
 					verifyHashLinkTarget(href, contentDiv);
-					window.open(href, '_self');
+					window.open(href, "_self");
 				} else {
-					window.open(href, '_blank');
+					window.open(href, "_blank");
 				}
 			}
 		}
@@ -92,9 +92,9 @@
 
 <!-- svelte-ignore css-unused-selector -->
 <style lang="postcss">
-	@import url('highlight.js/styles/default.css') screen and
+	@import url("highlight.js/styles/default.css") screen and
 		(prefers-color-scheme: light);
-	@import url('highlight.js/styles/dark.css') screen and
+	@import url("highlight.js/styles/dark.css") screen and
 		(prefers-color-scheme: dark);
 
 	.content {

@@ -1,11 +1,11 @@
-import type { FeedGroupWithFeeds, FeedId, FeedStats } from '$server';
+import type { FeedGroupWithFeeds, FeedId, FeedStats } from "$server";
 
 /**
  * Return true if all feed IDs are in a given group
  */
 export function allFeedsAreSelected(
 	group: FeedGroupWithFeeds,
-	feedIds: FeedId[]
+	feedIds: FeedId[],
 ): boolean {
 	return (
 		group.feed_ids.length > 0 &&
@@ -18,7 +18,7 @@ export function allFeedsAreSelected(
  */
 export function someFeedsAreSelected(
 	group: FeedGroupWithFeeds,
-	feedIds: FeedId[]
+	feedIds: FeedId[],
 ) {
 	return (
 		group.feed_ids.length > 0 &&
@@ -33,19 +33,19 @@ export function unescapeHtml(text: string): string {
 	return text
 		.replace(/&quot;/g, '"')
 		.replace(/&apos;/g, "'")
-		.replace(/&lt;/g, '<')
-		.replace(/&gt;/g, '>')
-		.replace(/&amp;/g, '&');
+		.replace(/&lt;/g, "<")
+		.replace(/&gt;/g, ">")
+		.replace(/&amp;/g, "&");
 }
 
 /**
  * Return the age of a timestamp in an abbreviated human readable format
  */
 export function getAge(
-	timestamp: Date | number | string | undefined | null
+	timestamp: Date | number | string | undefined | null,
 ): string {
 	if (timestamp == null) {
-		return '?';
+		return "?";
 	}
 
 	const date0 = new Date();
@@ -91,7 +91,7 @@ function diffDates(date1: Date, date2: Date) {
 		days,
 		weeks,
 		months,
-		years
+		years,
 	};
 }
 
@@ -100,9 +100,9 @@ function diffDates(date1: Date, date2: Date) {
  */
 export function isActionEvent(event: Event) {
 	return (
-		(event instanceof MouseEvent && event.type === 'click') ||
-		(event instanceof TouchEvent && event.type === 'touchend') ||
-		(event instanceof KeyboardEvent && event.key === 'Enter')
+		(event instanceof MouseEvent && event.type === "click") ||
+		(event instanceof TouchEvent && event.type === "touchend") ||
+		(event instanceof KeyboardEvent && event.key === "Enter")
 	);
 }
 
@@ -149,15 +149,15 @@ export function getSavedCount(stats: FeedStats): number {
  */
 export function verifyHashLinkTarget(
 	link: string,
-	root: HTMLElement | undefined
+	root: HTMLElement | undefined,
 ): void {
-	if (!link.startsWith('#') || !root) {
+	if (!link.startsWith("#") || !root) {
 		return;
 	}
 
 	const target = root.querySelector(link);
 	if (!target) {
-		for (const h of document.querySelectorAll('h1, h2, h3, h4')) {
+		for (const h of document.querySelectorAll("h1, h2, h3, h4")) {
 			const id = textToId(h.textContent);
 			if (id && `#${id}` === link) {
 				h.id = id;
@@ -177,6 +177,6 @@ function textToId(text: string | null): string | null {
 
 	return text
 		.toLowerCase()
-		.replace(/\s+/g, '-')
-		.replace(/[^a-z0-9-]/g, '');
+		.replace(/\s+/g, "-")
+		.replace(/[^a-z0-9-]/g, "");
 }
