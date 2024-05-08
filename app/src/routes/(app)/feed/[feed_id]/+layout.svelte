@@ -17,6 +17,7 @@
 		sm:w-[300px]
 	`}
 	out:fade={{ duration: 250 }}
+	in:fade={{ duration: 250 }}
 >
 	<ArticlesList
 		feedId={data.feedId}
