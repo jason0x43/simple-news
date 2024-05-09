@@ -168,6 +168,19 @@ export function verifyHashLinkTarget(
 }
 
 /**
+ * Start an interval and return a cleanup function
+ */
+export function interval(callback: () => void, time: number) {
+	const refresher = setInterval(() => {
+		callback();
+	}, time);
+
+	return () => {
+		clearInterval(refresher);
+	};
+}
+
+/**
  * Convert text to a link ID
  */
 function textToId(text: string | null): string | null {

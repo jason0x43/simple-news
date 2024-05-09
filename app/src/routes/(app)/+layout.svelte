@@ -9,6 +9,9 @@
 	import Select from "$lib/components/Select.svelte";
 	import { page } from "$app/stores";
 	import { cls } from "$lib/cls";
+	import { onMount } from "svelte";
+	import { invalidate } from "$app/navigation";
+	import { interval, minutes } from "$lib/util";
 
 	export let data;
 
@@ -68,6 +71,18 @@
 	function handleTouchEnd() {
 		edgeTouch = false;
 	}
+
+	let ready = false;
+
+	onMount(() => {
+		setTimeout(() => {
+			ready = true;
+		});
+
+		return interval(() => {
+			invalidate("app:feedStats");
+		}, minutes(15));
+	});
 </script>
 
 <!-- Layout
@@ -186,29 +201,33 @@ X-Large:
       ---------------------------------------------------------
 -->
 
-<Header
-	articleId={$page.data.articleId}
-	feedId={$page.data.feedId}
-	class="fixed flex-row sm:flex-col left-0 w-full h-9 sm:h-full sm:w-9"
-/>
-
 <div
-	class={cls`
+	class="opacity-0 transition-opacity duration-300"
+	class:opacity-100={ready}
+>
+	<Header
+		articleId={$page.data.articleId}
+		feedId={$page.data.feedId}
+		class="fixed left-0 h-9 w-full flex-row sm:h-full sm:w-9 sm:flex-col"
+	/>
+
+	<div
+		class={cls`
 		fixed
 		bottom-0
 		left-0
-		sm:left-9
 		right-0
 		top-9
-		sm:top-0
 		flex
 		flex-row
 		overflow-hidden
+		sm:left-9
+		sm:top-0
 	`}
-	bind:this={rootRef}
->
-	<div
-		class={cls`
+		bind:this={rootRef}
+	>
+		<div
+			class={cls`
 				flex
 				min-w-[300%]
 				max-w-[300%]
@@ -223,17 +242,17 @@ X-Large:
 				lg:max-w-[calc(100%+300px)]
 				dark:bg-black
 			`}
-		class:translate-x-[-33.3333%]={$page.data.feedId && !$page.data.articleId}
-		class:translate-x-[-66.6667%]={$page.data.articleId}
-		class:sm:translate-x-[0]={$page.data.feedId && !$page.data.articleId}
-		class:sm:translate-x-[-600px]={$page.data.articleId}
-		class:lg:translate-x-[-300px]={$page.data.articleId}
-		on:touchstart={handleTouchStart}
-		on:touchend={handleTouchEnd}
-		on:touchmove={handleTouchMove}
-	>
-		<div
-			class={cls`
+			class:translate-x-[-33.3333%]={$page.data.feedId && !$page.data.articleId}
+			class:translate-x-[-66.6667%]={$page.data.articleId}
+			class:sm:translate-x-[0]={$page.data.feedId && !$page.data.articleId}
+			class:sm:translate-x-[-600px]={$page.data.articleId}
+			class:lg:translate-x-[-300px]={$page.data.articleId}
+			on:touchstart={handleTouchStart}
+			on:touchend={handleTouchEnd}
+			on:touchmove={handleTouchMove}
+		>
+			<div
+				class={cls`
 				flex
 				w-[33.3333%]
 				flex-shrink-0
@@ -243,41 +262,42 @@ X-Large:
 				sm:w-[300px]
 				dark:bg-gray-x-dark
 			`}
-		>
-			<FeedsList
-				feeds={data.feeds}
-				{selectedFeedIds}
-				{selectedGroupId}
-				articleFilter={data.articleFilter}
-				feedId={$page.data.feedId}
-				feedStats={data.feedStats}
-				feedGroups={data.feedGroups}
-			/>
+			>
+				<FeedsList
+					feeds={data.feeds}
+					{selectedFeedIds}
+					{selectedGroupId}
+					articleFilter={data.articleFilter}
+					feedId={$page.data.feedId}
+					feedStats={data.feedStats}
+					feedGroups={data.feedGroups}
+				/>
 
-			<div class="grid grid-cols-2 gap-3 p-3">
-				<Button
-					class="whitespace-nowrap"
-					on:click={() => ($managingFeeds = true)}>Manage Feeds</Button
-				>
+				<div class="grid grid-cols-2 gap-3 p-3">
+					<Button
+						class="whitespace-nowrap"
+						on:click={() => ($managingFeeds = true)}>Manage Feeds</Button
+					>
 
-				<Select
-					class="[text-align-last:center]"
-					bind:value={data.articleFilter}
-				>
-					<option value="unread">Unread</option>
-					<option value="all">All</option>
-				</Select>
+					<Select
+						class="[text-align-last:center]"
+						bind:value={data.articleFilter}
+					>
+						<option value="unread">Unread</option>
+						<option value="all">All</option>
+					</Select>
+				</div>
 			</div>
+
+			<slot></slot>
 		</div>
 
-		<slot></slot>
+		{#if $managingFeeds}
+			<FeedManager
+				feeds={data.feeds}
+				feedGroups={data.feedGroups}
+				onClose={() => ($managingFeeds = false)}
+			/>
+		{/if}
 	</div>
-
-	{#if $managingFeeds}
-		<FeedManager
-			feeds={data.feeds}
-			feedGroups={data.feedGroups}
-			onClose={() => ($managingFeeds = false)}
-		/>
-	{/if}
 </div>
