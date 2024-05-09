@@ -240,6 +240,8 @@ X-Large:
 				sm:max-w-[calc(100%+600px)]
 				lg:min-w-[calc(100%+300px)]
 				lg:max-w-[calc(100%+300px)]
+				xl:min-w-[calc(100%)]
+				xl:max-w-[calc(100%)]
 				dark:bg-black
 			`}
 			class:translate-x-[-33.3333%]={$page.data.feedId && !$page.data.articleId}
@@ -247,6 +249,7 @@ X-Large:
 			class:sm:translate-x-[0]={$page.data.feedId && !$page.data.articleId}
 			class:sm:translate-x-[-600px]={$page.data.articleId}
 			class:lg:translate-x-[-300px]={$page.data.articleId}
+			class:xl:translate-x-0={$page.data.articleId}
 			on:touchstart={handleTouchStart}
 			on:touchend={handleTouchEnd}
 			on:touchmove={handleTouchMove}

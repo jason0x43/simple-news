@@ -336,7 +336,7 @@
 
 <style lang="postcss">
 	.selected {
-		@apply bg-gradient-to-l from-white to-gray dark:from-black dark:to-gray-dark;
+		@apply bg-gradient-to-l from-white to-gray-light dark:from-black dark:to-gray-dark;
 	}
 
 	.not-selected {
