@@ -13,6 +13,7 @@
 		dark:bg-gray-x-x-dark
 		bg-gray-x-light
 		flex
+		flex-shrink-0
 		w-[33.3333%]
 		sm:w-[300px]
 	`}

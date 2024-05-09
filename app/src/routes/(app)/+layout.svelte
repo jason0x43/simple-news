@@ -186,37 +186,40 @@ X-Large:
       ---------------------------------------------------------
 -->
 
+<Header
+	articleId={$page.data.articleId}
+	feedId={$page.data.feedId}
+	class="fixed flex-row sm:flex-col left-0 z-10 w-full h-9 sm:h-full sm:w-9"
+/>
+
 <div
 	class={cls`
 		fixed
 		bottom-0
 		left-0
+		sm:left-9
 		right-0
-		top-0
+		top-9
+		sm:top-0
 		flex
-		flex-col
-		overflow-hidden
+		flex-row
 	`}
 	bind:this={rootRef}
 >
-	<Header
-		articleId={$page.data.articleId}
-		feedId={$page.data.feedId}
-		feeds={data.feeds}
-		feedGroups={data.feedGroups}
-	/>
-
 	<div
 		class={cls`
 				flex
-				w-[300%]
-				flex-auto
+				min-w-[300%]
+				max-w-[300%]
 				flex-row
 				overflow-hidden
 				bg-white
 				transition-transform
 				duration-500
-				sm:w-[calc(100vw+600px)]
+				sm:min-w-[calc(100%+600px)]
+				sm:max-w-[calc(100%+600px)]
+				lg:min-w-[calc(100%+300px)]
+				lg:max-w-[calc(100%+300px)]
 				dark:bg-black
 			`}
 		class:translate-x-[-33.3333%]={$page.data.feedId && !$page.data.articleId}
@@ -232,6 +235,7 @@ X-Large:
 			class={cls`
 				flex
 				w-[33.3333%]
+				flex-shrink-0
 				flex-col
 				justify-between
 				bg-gray-light
@@ -254,6 +258,7 @@ X-Large:
 					class="whitespace-nowrap"
 					on:click={() => ($managingFeeds = true)}>Manage Feeds</Button
 				>
+
 				<Select
 					class="[text-align-last:center]"
 					bind:value={data.articleFilter}

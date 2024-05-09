@@ -10,6 +10,7 @@
 		someFeedsAreSelected,
 	} from "../util";
 	import Button from "./Button.svelte";
+	import StatusValue from "./StatusValue.svelte";
 
 	export let articleFilter: "all" | "unread";
 	export let feeds: Feed[];
@@ -57,7 +58,7 @@
 			px-2
 			${
 				feedId === "saved"
-					? "bg-gradient-to-l from-gray-light dark:from-gray-x-dark"
+					? "bg-gradient-to-l from-gray-x-light dark:from-gray-x-dark"
 					: "hover:bg-gray-x-light/60 dark:hover:bg-gray-dark/60"
 			}
 		`}
@@ -69,7 +70,7 @@
 		</div>
 		<a class="flex-auto truncate py-1" href="/feed/saved">Saved</a>
 		{#if feedStats}
-			<span>{getSavedCount(feedStats)}</span>
+			<StatusValue value={getSavedCount(feedStats)} />
 		{/if}
 	</li>
 
@@ -87,7 +88,7 @@
 					px-2
 					${
 						group.id === selectedGroupId
-							? "bg-gradient-to-l from-gray-light dark:from-gray-dark"
+							? "bg-gradient-to-l from-gray-x-light dark:from-gray-dark"
 							: "hover:bg-gray-x-light/60 dark:hover:bg-gray-dark/60"
 					}
 				`}
@@ -116,8 +117,8 @@
 					{group.name}
 				</a>
 				{#if feedStats}
-					<div>
-						{group.feed_ids.reduce(
+					<StatusValue
+						value={group.feed_ids.reduce(
 							(unread, id) =>
 								unread +
 								(articleFilter === "all"
@@ -126,7 +127,7 @@
 										(feedStats?.[id]?.read ?? 0)),
 							0,
 						)}
-					</div>
+					/>
 				{/if}
 			</div>
 
@@ -144,7 +145,7 @@
 							pr-2
 							${
 								selectedFeedIds.includes(id)
-									? "bg-gradient-to-l from-gray-light dark:from-gray-dark"
+									? "bg-gradient-to-l from-gray-x-light dark:from-gray-dark"
 									: "hover:bg-gray-x-light/60 dark:hover:bg-gray-x-dark/60"
 							}
 						`}
@@ -155,11 +156,11 @@
 							{feeds.find((f) => f.id === id)?.title}
 						</a>
 						{#if feedStats}
-							<div>
-								{articleFilter === "all"
+							<StatusValue
+								value={articleFilter === "all"
 									? feedStats[id]?.total ?? 0
 									: (feedStats[id]?.total ?? 0) - (feedStats[id]?.read ?? 0)}
-							</div>
+							/>
 						{/if}
 					</li>
 				{/each}
