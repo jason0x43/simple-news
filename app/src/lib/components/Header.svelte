@@ -21,7 +21,7 @@
 		flex
 		items-center
 		justify-between
-		bg-gray-dark
+		bg-gray
 		dark:bg-gray-dark
 		${className}
 	`}
@@ -40,7 +40,7 @@
 		<RssIcon size={22} />
 	</Button>
 	<Button
-		class="p-2 text-white dark:text-black"
+		class="p-2"
 		variant="invisible"
 		on:click={handleLogout}
 	>
