@@ -7,14 +7,15 @@
 	export let data;
 
 	const updatedArticleIds = getAppContext("updatedArticleIds");
-	let renderedArticle = data.article.id;
+	let renderedArticle: string | undefined;
 
 	$: {
 		if (renderedArticle !== data.article.id) {
+			renderedArticle = data.article.id;
+
 			updatedArticleIds.update((current) => {
 				return new Set(current).add(data.article.id);
 			});
-			renderedArticle = data.article.id;
 
 			markArticles({
 				article_ids: [data.article.id],
