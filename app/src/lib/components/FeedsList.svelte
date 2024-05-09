@@ -58,7 +58,7 @@
 			px-2
 			${
 				feedId === "saved"
-					? "bg-gradient-to-l from-gray-x-light dark:from-gray-x-dark"
+					? "bg-gradient-to-l from-gray-x-light dark:from-gray-x-x-dark"
 					: "hover:bg-gray-x-light/60 dark:hover:bg-gray-dark/60"
 			}
 		`}
@@ -88,7 +88,7 @@
 					px-2
 					${
 						group.id === selectedGroupId
-							? "bg-gradient-to-l from-gray-x-light dark:from-gray-dark"
+							? "bg-gradient-to-l from-gray-x-light dark:from-gray-x-x-dark"
 							: "hover:bg-gray-x-light/60 dark:hover:bg-gray-dark/60"
 					}
 				`}
@@ -145,7 +145,7 @@
 							pr-2
 							${
 								selectedFeedIds.includes(id)
-									? "bg-gradient-to-l from-gray-x-light dark:from-gray-dark"
+									? "bg-gradient-to-l from-gray-x-light dark:from-gray-x-x-dark"
 									: "hover:bg-gray-x-light/60 dark:hover:bg-gray-x-dark/60"
 							}
 						`}

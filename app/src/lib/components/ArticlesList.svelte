@@ -202,7 +202,7 @@
 							${article.saved ? "bg-yellow/20" : ""}
 							${
 								article.isSelected
-									? "bg-gradient-to-l from-white dark:from-gray-x-dark"
+									? "bg-gradient-to-l from-white dark:from-black"
 									: "hover:bg-gray-x-light/70 dark:hover:bg-gray-x-dark/70"
 							}
 							${article.id === activeArticle?.id ? "bg-blue/20" : ""}
