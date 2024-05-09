@@ -204,6 +204,7 @@ X-Large:
 <div
 	class="opacity-0 transition-opacity duration-300"
 	class:opacity-100={ready}
+	bind:this={rootRef}
 >
 	<Header
 		articleId={$page.data.articleId}
@@ -224,7 +225,6 @@ X-Large:
 		sm:left-9
 		sm:top-0
 	`}
-		bind:this={rootRef}
 	>
 		<div
 			class={cls`
@@ -261,9 +261,9 @@ X-Large:
 				flex-shrink-0
 				flex-col
 				justify-between
-				sm:w-[300px]
 				border-r
 				border-gray-light
+				sm:w-[300px]
 			`}
 			>
 				<FeedsList
@@ -287,7 +287,7 @@ X-Large:
 						value={data.articleFilter}
 						onChange={(value) => {
 							const query = new URLSearchParams($page.url.searchParams);
-							query.set('filter', value);
+							query.set("filter", value);
 							goto(`?${query}`);
 						}}
 					>
