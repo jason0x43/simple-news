@@ -50,30 +50,31 @@
 
 <ul class="text-dark-gray dark:text-gray">
 	<!-- saved group -->
-	<li
-		class="flex flex-row items-center px-2"
-		class:selected={feedId === "saved"}
-		class:not-selected={feedId !== "saved"}
-	>
-		<div class="flex flex-row items-center justify-start pr-2">
-			<Star size="14px" />
+	<li>
+		<div
+			class="flex flex-row items-center px-2"
+			class:selected={feedId === "saved"}
+			class:not-selected={feedId !== "saved"}
+		>
+			<div class="flex flex-row items-center justify-start pr-2">
+				<Star size="14px" />
+			</div>
+			<a class="flex-auto truncate py-1" href="/feed/saved">Saved</a>
+			{#if feedStats}
+				<StatusValue value={getSavedCount(feedStats)} />
+			{/if}
 		</div>
-		<a class="flex-auto truncate py-1" href="/feed/saved">Saved</a>
-		{#if feedStats}
-			<StatusValue value={getSavedCount(feedStats)} />
-		{/if}
 	</li>
 
 	<!-- feed groups -->
 	{#each feedGroups as group (group.name)}
-		<li
-			class:text-black={group.id === selectedGroupId}
-			class:dark:text-white={group.id === selectedGroupId}
-		>
+		<li>
 			<div
-				class="flex flex-row items-center px-2"
+				class="mx-2 flex flex-row items-center rounded-md px-2"
 				class:selected={group.id === selectedGroupId}
 				class:not-selected={group.id !== selectedGroupId}
+				class:text-black={group.id === selectedGroupId}
+				class:dark:text-white={group.id === selectedGroupId}
 			>
 				<Button
 					variant="invisible"
@@ -116,29 +117,31 @@
 			<!-- feeds -->
 			<ul class:hidden={!isExpanded(expanded, group)}>
 				{#each group.feed_ids as id}
-					<li
-						class={`
-							my
-							flex
-							flex-row
-							items-center
-							rounded-sm
-							pl-9
-							pr-2
-						`}
-						class:selected={selectedFeedIds.includes(id)}
-						class:not-selected={!selectedFeedIds.includes(id)}
-					>
-						<a href={`/feed/feed-${id}`} class="flex-auto py-1">
-							{feeds.find((f) => f.id === id)?.title}
-						</a>
-						{#if feedStats}
-							<StatusValue
-								value={articleFilter === "all"
-									? feedStats[id]?.total ?? 0
-									: (feedStats[id]?.total ?? 0) - (feedStats[id]?.read ?? 0)}
-							/>
-						{/if}
+					<li>
+						<div
+							class={`
+								flex
+								flex-row
+								items-center
+								pl-9
+								pr-2
+								mx-2
+								rounded-md
+							`}
+							class:selected={selectedFeedIds.includes(id) && group.id !== selectedGroupId}
+							class:not-selected={!selectedFeedIds.includes(id) || group.id === selectedGroupId}
+						>
+							<a href={`/feed/feed-${id}`} class="flex-auto py-1">
+								{feeds.find((f) => f.id === id)?.title}
+							</a>
+							{#if feedStats}
+								<StatusValue
+									value={articleFilter === "all"
+										? feedStats[id]?.total ?? 0
+										: (feedStats[id]?.total ?? 0) - (feedStats[id]?.read ?? 0)}
+								/>
+							{/if}
+						</div>
 					</li>
 				{/each}
 			</ul>
@@ -148,16 +151,10 @@
 
 <style lang="postcss">
 	.selected {
-		@apply bg-gradient-to-l
-				from-gray-x-light
-				to-gray
-				text-black
-				dark:from-gray-x-x-dark
-				dark:to-gray-dark
-				dark:text-white;
+		@apply bg-hover-light dark:bg-hover-dark
 	}
 
 	.not-selected {
-		@apply hover:bg-gray-x-light/60 dark:hover:bg-gray-x-dark/60;
+		@apply hover:bg-hover-light dark:hover:bg-hover-dark;
 	}
 </style>

@@ -10,13 +10,14 @@
 	class={`
 		min-w-0
 		appearance-none
-		rounded-sm
+		rounded-md
 		border
 		border-black/10
 		bg-gray-x-light
 		px-2
 		py-1
-		font-normal
+		font-semibold
+		text-xs
 		text-black
 		dark:border-white/10
 		dark:bg-gray-x-dark

@@ -198,7 +198,9 @@
 							flex-row
 							gap-2
 							p-2
+							mx-2
 							dark:text-gray
+							rounded-md
 							${article.saved ? "bg-yellow/20" : ""}
 							${article.id === activeArticle?.id ? "bg-blue/20" : ""}
 						`}
@@ -336,10 +338,10 @@
 
 <style lang="postcss">
 	.selected {
-		@apply bg-gradient-to-l from-white to-gray-light dark:from-black dark:to-gray-dark;
+		@apply bg-hover-light dark:bg-hover-dark;
 	}
 
 	.not-selected {
-		@apply hover:bg-gray-x-light/70 dark:hover:bg-gray-x-dark/70;
+		@apply hover:bg-hover-light dark:hover:bg-hover-dark;
 	}
 </style>

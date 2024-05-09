@@ -262,8 +262,8 @@ X-Large:
 				flex-col
 				justify-between
 				sm:w-[300px]
-				bg-gray-light
-				dark:bg-gray-x-dark
+				border-r
+				border-gray-light
 			`}
 			>
 				<FeedsList

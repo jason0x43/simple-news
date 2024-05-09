@@ -16,9 +16,10 @@
 		flex
 		items-center
 		justify-center
-		rounded-sm
+		rounded-md
 		border-black/10
-		font-light
+		font-semibold
+		text-xs
 		text-black
 		dark:border-white/10
 		dark:text-white
