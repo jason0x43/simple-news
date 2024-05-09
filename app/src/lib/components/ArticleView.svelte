@@ -85,7 +85,7 @@
 					bg-transparent
 					text-transparent
 				`}
-			href={`/reader/${feedId}`}>&nbsp;</a
+			href={`/feed/${feedId}`}>&nbsp;</a
 		>
 	{/if}
 </div>
