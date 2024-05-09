@@ -51,19 +51,9 @@
 <ul class="text-dark-gray dark:text-gray">
 	<!-- saved group -->
 	<li
-		class={`
-			flex
-			flex-row
-			items-center
-			px-2
-			${
-				feedId === "saved"
-					? "bg-gradient-to-l from-gray-x-light dark:from-gray-x-x-dark"
-					: "hover:bg-gray-x-light/60 dark:hover:bg-gray-dark/60"
-			}
-		`}
-		class:text-black={feedId === "saved"}
-		class:dark:text-white={feedId === "saved"}
+		class="flex flex-row items-center px-2"
+		class:selected={feedId === "saved"}
+		class:not-selected={feedId !== "saved"}
 	>
 		<div class="flex flex-row items-center justify-start pr-2">
 			<Star size="14px" />
@@ -81,17 +71,9 @@
 			class:dark:text-white={group.id === selectedGroupId}
 		>
 			<div
-				class={cls`
-					flex
-					flex-row
-					items-center
-					px-2
-					${
-						group.id === selectedGroupId
-							? "bg-gradient-to-l from-gray-x-light dark:from-gray-x-x-dark"
-							: "hover:bg-gray-x-light/60 dark:hover:bg-gray-dark/60"
-					}
-				`}
+				class="flex flex-row items-center px-2"
+				class:selected={group.id === selectedGroupId}
+				class:not-selected={group.id !== selectedGroupId}
 			>
 				<Button
 					variant="invisible"
@@ -143,14 +125,9 @@
 							rounded-sm
 							pl-9
 							pr-2
-							${
-								selectedFeedIds.includes(id)
-									? "bg-gradient-to-l from-gray-x-light dark:from-gray-x-x-dark"
-									: "hover:bg-gray-x-light/60 dark:hover:bg-gray-x-dark/60"
-							}
 						`}
-						class:text-black={selectedFeedIds.includes(id)}
-						class:dark:text-white={selectedFeedIds.includes(id)}
+						class:selected={selectedFeedIds.includes(id)}
+						class:not-selected={!selectedFeedIds.includes(id)}
 					>
 						<a href={`/feed/feed-${id}`} class="flex-auto py-1">
 							{feeds.find((f) => f.id === id)?.title}
@@ -168,3 +145,19 @@
 		</li>
 	{/each}
 </ul>
+
+<style lang="postcss">
+	.selected {
+		@apply bg-gradient-to-l
+				from-gray-x-light
+				to-gray
+				text-black
+				dark:from-gray-x-x-dark
+				dark:to-gray-dark
+				dark:text-white;
+	}
+
+	.not-selected {
+		@apply hover:bg-gray-x-light/60 dark:hover:bg-gray-x-dark/60;
+	}
+</style>

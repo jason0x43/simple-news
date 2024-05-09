@@ -258,8 +258,8 @@ X-Large:
 				flex-shrink-0
 				flex-col
 				justify-between
-				bg-gray-light
 				sm:w-[300px]
+				bg-gray-light
 				dark:bg-gray-x-dark
 			`}
 			>

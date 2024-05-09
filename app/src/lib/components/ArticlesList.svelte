@@ -200,13 +200,10 @@
 							p-2
 							dark:text-gray
 							${article.saved ? "bg-yellow/20" : ""}
-							${
-								article.isSelected
-									? "bg-gradient-to-l from-white dark:from-black"
-									: "hover:bg-gray-x-light/70 dark:hover:bg-gray-x-dark/70"
-							}
 							${article.id === activeArticle?.id ? "bg-blue/20" : ""}
 						`}
+						class:selected={article.isSelected}
+						class:not-selected={!article.isSelected}
 						data-id={article.id}
 						href="/feed/{feedId}/{article.id}"
 						on:touchstart={handleTouchStart}
@@ -336,3 +333,13 @@
 		onClose={handleContextClose}
 	/>
 {/if}
+
+<style lang="postcss">
+	.selected {
+		@apply bg-gradient-to-l from-white to-gray dark:from-black dark:to-gray-dark;
+	}
+
+	.not-selected {
+		@apply hover:bg-gray-x-light/70 dark:hover:bg-gray-x-dark/70;
+	}
+</style>
