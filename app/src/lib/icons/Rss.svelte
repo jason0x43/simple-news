@@ -1,5 +1,8 @@
 <script lang="ts">
 	export let size: number | undefined = undefined;
+
+	let className = "";
+	export { className as class };
 </script>
 
 <svg
@@ -9,6 +12,7 @@
 	width={size ?? 30}
 	height={size ?? 30}
 	fill="currentColor"
+	class={className}
 >
 	<g transform="matrix(0.486202,0,0,-0.486202,157.669,842.287)">
 		<path

@@ -189,7 +189,7 @@ X-Large:
 <Header
 	articleId={$page.data.articleId}
 	feedId={$page.data.feedId}
-	class="fixed flex-row sm:flex-col left-0 z-10 w-full h-9 sm:h-full sm:w-9"
+	class="fixed flex-row sm:flex-col left-0 w-full h-9 sm:h-full sm:w-9"
 />
 
 <div
@@ -203,6 +203,7 @@ X-Large:
 		sm:top-0
 		flex
 		flex-row
+		overflow-hidden
 	`}
 	bind:this={rootRef}
 >

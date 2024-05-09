@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { cls } from "$lib/cls";
+
 	export let variant: "normal" | "invisible" = "normal";
 	export let disabled = false;
 
@@ -10,7 +12,7 @@
 	on:click
 	type="button"
 	{disabled}
-	class={`
+	class={cls`
 		flex
 		items-center
 		justify-center

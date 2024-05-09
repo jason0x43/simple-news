@@ -22,12 +22,12 @@
 		items-center
 		justify-between
 		bg-gray-dark
-		dark:bg-gray-light
+		dark:bg-gray/70
 		${className}
 	`}
 >
 	<Button
-		class="p-2 text-white dark:text-black"
+		class="p-2"
 		variant="invisible"
 		on:click={() => {
 			if (articleId) {
@@ -37,13 +37,13 @@
 			}
 		}}
 	>
-		<RssIcon size={22} />
+		<RssIcon size={22} class="text-white dark:text-black" />
 	</Button>
 	<Button
 		class="p-2 text-white dark:text-black"
 		variant="invisible"
 		on:click={handleLogout}
 	>
-		<UserIcon size={20} />
+		<UserIcon size={20} class="text-white dark:text-black" />
 	</Button>
 </header>
