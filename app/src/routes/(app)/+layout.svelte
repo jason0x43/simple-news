@@ -10,7 +10,7 @@
 	import { page } from "$app/stores";
 	import { cls } from "$lib/cls";
 	import { onMount } from "svelte";
-	import { invalidate } from "$app/navigation";
+	import { goto, invalidate } from "$app/navigation";
 	import { interval, minutes } from "$lib/util";
 
 	export let data;
@@ -281,7 +281,12 @@ X-Large:
 
 					<Select
 						class="[text-align-last:center]"
-						bind:value={data.articleFilter}
+						value={data.articleFilter}
+						onChange={(value) => {
+							const query = new URLSearchParams($page.url.searchParams);
+							query.set('filter', value);
+							goto(`?${query}`);
+						}}
 					>
 						<option value="unread">Unread</option>
 						<option value="all">All</option>

@@ -1,5 +1,6 @@
 <script lang="ts">
 	export let value: string;
+	export let onChange: ((value: string) => void) | undefined = undefined;
 
 	let className = "";
 	export { className as class };
@@ -23,7 +24,9 @@
 		${className}
 	`}
 	bind:value
-	on:change
+	on:change={(event) => {
+		onChange?.(event.currentTarget.value);
+	}}
 	{...$$restProps}
 >
 	<slot />
