@@ -38,7 +38,11 @@ export default {
 				},
 				hover: {
 					light: colors.gray["100"],
-					dark: colors.gray["700"]
+					dark: colors.gray["900"]
+				},
+				border: {
+					light: colors.gray["200"],
+					dark: colors.gray["800"]
 				}
 			},
 		}

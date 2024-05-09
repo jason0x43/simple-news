@@ -256,15 +256,16 @@ X-Large:
 		>
 			<div
 				class={cls`
-				flex
-				w-[33.3333%]
-				flex-shrink-0
-				flex-col
-				justify-between
-				border-r
-				border-gray-light
-				sm:w-[300px]
-			`}
+					border-border-light
+					dark:border-border-dark
+					flex
+					w-[33.3333%]
+					flex-shrink-0
+					flex-col
+					justify-between
+					sm:w-[300px]
+					sm:border-r
+				`}
 			>
 				<FeedsList
 					feeds={data.feeds}

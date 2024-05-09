@@ -8,19 +8,19 @@
 
 <select
 	class={`
+		border-border-light
+		dark:border-border-dark
 		min-w-0
 		appearance-none
 		rounded-md
 		border
-		border-black/10
-		bg-gray-x-light
+		bg-hover-light
 		px-2
 		py-1
-		font-semibold
 		text-xs
+		font-semibold
 		text-black
-		dark:border-white/10
-		dark:bg-gray-x-dark
+		dark:bg-hover-dark
 		dark:text-white
 		${className}
 	`}

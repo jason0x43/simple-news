@@ -23,8 +23,9 @@
 		w-[33.3333%]
 		flex-shrink-0
 		sm:w-[300px]
-		border-r
-		border-gray-light
+		sm:border-r
+		border-border-light
+		dark:border-border-dark
 	`}
 	out:fade={{ duration: 250 }}
 	in:fade={{ duration: 250 }}

@@ -17,7 +17,8 @@
 		items-center
 		justify-center
 		rounded-md
-		border-black/10
+		border-border-light
+		dark:border-border-dark
 		font-semibold
 		text-xs
 		text-black
@@ -26,8 +27,8 @@
 		${className}
 	`}
 	class:border={variant !== "invisible"}
-	class:bg-gray-x-light={variant !== "invisible"}
-	class:dark:bg-gray-x-dark={variant !== "invisible"}
+	class:bg-hover-light={variant !== "invisible"}
+	class:dark:bg-hover-dark={variant !== "invisible"}
 	class:px-2={variant !== "invisible"}
 	class:py-1={variant !== "invisible"}
 	{...$$restProps}

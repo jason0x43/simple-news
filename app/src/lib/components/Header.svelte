@@ -21,10 +21,11 @@
 		flex
 		items-center
 		justify-between
-		border-r
-		border-gray-light
-		bg-gray-x-light
-		dark:bg-gray-dark
+		sm:border-r
+		border-border-light
+		dark:border-border-dark
+		bg-hover-light
+		dark:bg-hover-dark
 		${className}
 	`}
 >
