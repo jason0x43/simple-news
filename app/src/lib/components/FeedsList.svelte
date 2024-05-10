@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { cls } from "$lib/cls";
 	import { getAppContext } from "$lib/context";
 	import DoubleRight from "$lib/icons/DoubleRight.svelte";
 	import Star from "$lib/icons/Star.svelte";
@@ -10,6 +9,7 @@
 		someFeedsAreSelected,
 	} from "../util";
 	import Button from "./Button.svelte";
+	import FeedsListItem from "./FeedsListItem.svelte";
 	import StatusValue from "./StatusValue.svelte";
 
 	export let articleFilter: "all" | "unread";
@@ -48,14 +48,10 @@
 	}
 </script>
 
-<ul class="text-dark-gray dark:text-gray">
+<ul class="text-dark-gray dark:text-gray py-2">
 	<!-- saved group -->
 	<li>
-		<div
-			class="flex flex-row items-center px-2"
-			class:selected={feedId === "saved"}
-			class:not-selected={feedId !== "saved"}
-		>
+		<FeedsListItem selected={feedId === "saved"}>
 			<div class="flex flex-row items-center justify-start pr-2">
 				<Star size="14px" />
 			</div>
@@ -63,19 +59,13 @@
 			{#if feedStats}
 				<StatusValue value={getSavedCount(feedStats)} />
 			{/if}
-		</div>
+		</FeedsListItem>
 	</li>
 
 	<!-- feed groups -->
 	{#each feedGroups as group (group.name)}
 		<li>
-			<div
-				class="mx-2 flex flex-row items-center rounded-md px-2"
-				class:selected={group.id === selectedGroupId}
-				class:not-selected={group.id !== selectedGroupId}
-				class:text-black={group.id === selectedGroupId}
-				class:dark:text-white={group.id === selectedGroupId}
-			>
+			<FeedsListItem selected={group.id === selectedGroupId}>
 				<Button
 					variant="invisible"
 					class="flex flex-row !justify-start pl-[1px] pr-2"
@@ -112,24 +102,16 @@
 						)}
 					/>
 				{/if}
-			</div>
+			</FeedsListItem>
 
 			<!-- feeds -->
 			<ul class:hidden={!isExpanded(expanded, group)}>
 				{#each group.feed_ids as id}
 					<li>
-						<div
-							class={`
-								flex
-								flex-row
-								items-center
-								pl-9
-								pr-2
-								mx-2
-								rounded-md
-							`}
-							class:selected={selectedFeedIds.includes(id) && group.id !== selectedGroupId}
-							class:not-selected={!selectedFeedIds.includes(id) || group.id === selectedGroupId}
+						<FeedsListItem
+							selected={selectedFeedIds.includes(id) &&
+								group.id !== selectedGroupId}
+							nested
 						>
 							<a href={`/feed/feed-${id}`} class="flex-auto py-1">
 								{feeds.find((f) => f.id === id)?.title}
@@ -141,20 +123,10 @@
 										: (feedStats[id]?.total ?? 0) - (feedStats[id]?.read ?? 0)}
 								/>
 							{/if}
-						</div>
+						</FeedsListItem>
 					</li>
 				{/each}
 			</ul>
 		</li>
 	{/each}
 </ul>
-
-<style lang="postcss">
-	.selected {
-		@apply bg-hover-light dark:bg-hover-dark
-	}
-
-	.not-selected {
-		@apply hover:bg-hover-light dark:hover:bg-hover-dark;
-	}
-</style>

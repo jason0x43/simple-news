@@ -19,11 +19,10 @@
 <header
 	class={cls`
 		flex
+		h-full
+		w-full
 		items-center
 		justify-between
-		sm:border-r
-		border-border-light
-		dark:border-border-dark
 		bg-hover-light
 		dark:bg-hover-dark
 		${className}

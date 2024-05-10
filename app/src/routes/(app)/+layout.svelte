@@ -202,28 +202,42 @@ X-Large:
 -->
 
 <div
-	class="opacity-0 transition-opacity duration-300"
+	class="fixed h-full w-full opacity-0 transition-opacity duration-300"
 	class:opacity-100={ready}
 	bind:this={rootRef}
 >
-	<Header
-		articleId={$page.data.articleId}
-		feedId={$page.data.feedId}
-		class="fixed left-0 h-9 w-full flex-row sm:h-full sm:w-9 sm:flex-col"
-	/>
+	<div
+		class={cls`
+			fixed
+			left-0
+			top-0
+			z-10
+			h-9
+			w-full
+			border-b
+			border-border-light
+			sm:h-full
+			sm:w-9
+			sm:border-b-0
+			sm:border-r
+			dark:border-border-dark
+		`}
+	>
+		<Header
+			articleId={$page.data.articleId}
+			feedId={$page.data.feedId}
+			class="sm:flex-col"
+		/>
+	</div>
 
 	<div
 		class={cls`
-		fixed
-		bottom-0
-		left-0
-		right-0
-		top-9
 		flex
+		h-full
 		flex-row
-		overflow-hidden
-		sm:left-9
-		sm:top-0
+		pt-9
+		sm:ml-9
+		sm:pt-0
 	`}
 	>
 		<div
@@ -256,15 +270,15 @@ X-Large:
 		>
 			<div
 				class={cls`
-					border-border-light
-					dark:border-border-dark
 					flex
 					w-[33.3333%]
 					flex-shrink-0
 					flex-col
 					justify-between
+					border-border-light
 					sm:w-[300px]
 					sm:border-r
+					dark:border-border-dark
 				`}
 			>
 				<FeedsList

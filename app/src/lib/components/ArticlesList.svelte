@@ -181,7 +181,7 @@
 </script>
 
 <div
-	class="flex-auto select-none overflow-y-auto {className}"
+	class="flex-auto select-none overflow-y-auto py-2 {className}"
 	on:scroll={handleListScroll}
 >
 	{#if renderedArticles.length > 0}
