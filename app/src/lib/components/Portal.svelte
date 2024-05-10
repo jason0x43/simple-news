@@ -86,7 +86,7 @@
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div
-	class="portal"
+	class="absolute left-[50%] top-[50%] z-50"
 	class:modal={anchor === "modal"}
 	on:click={handleClick}
 	on:keypress={handleClick}
@@ -98,23 +98,19 @@
 	<slot />
 </div>
 
-<style>
-	.portal {
-		position: absolute;
-		z-index: 50;
-
-		top: 50%;
-		left: 50%;
-	}
-
+<style lang="postcss">
 	.modal {
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: rgba(128, 128, 128, 0.85);
+		@apply bottom-0
+			left-0
+			right-0
+			top-0
+			flex
+			items-center
+			justify-center
+			bg-gray
+			bg-opacity-70
+			backdrop-blur
+			dark:bg-gray-dark
+			dark:bg-opacity-70;
 	}
 </style>

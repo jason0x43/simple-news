@@ -43,6 +43,10 @@ export default {
 				border: {
 					light: colors.gray["200"],
 					dark: colors.gray["800"]
+				},
+				modal: {
+					light: '#f9f9f9c0',
+					dark: '#292939d0',
 				}
 			},
 		}
