@@ -5,18 +5,20 @@
 	import Select from "./Select.svelte";
 	import Input from "./Input.svelte";
 	import { showToast } from "../toast";
-	import { getEventValue, seconds } from "../util";
+	import { seconds } from "../util";
 	import type { Feed, FeedGroupId, FeedGroupWithFeeds, FeedId } from "$server";
 	import Refresh from "../icons/Refresh.svelte";
+	import Save from "../icons/Save.svelte";
+	import Edit from "../icons/Edit.svelte";
 	import {
 		addFeed,
 		addFeedGroup,
 		addGroupFeed,
 		refreshFeed,
 		removeFeedFromAllGroups,
-		removeGroupFeed,
 		updateFeed,
 	} from "$lib/api";
+	import Close from "$lib/icons/Close.svelte";
 
 	export let feedGroups: FeedGroupWithFeeds[];
 	export let feeds: Feed[];
@@ -25,8 +27,6 @@
 	let busy = false;
 	let addFeedData = { url: "" };
 	let addGroupData = { name: "" };
-	let updateFeedUrlData = { feedId: "", url: "" };
-	let updateFeedTitleData = { feedId: "", title: "" };
 	let renameGroupData = {
 		feedGroupId: feedGroups[0]?.id ?? "",
 		name: "",
@@ -57,61 +57,9 @@
 		}, seconds(0.5));
 	}
 
-	// Move a feed to a new group
-	async function handleMoveFeed({
-		feedId,
-		groupId,
-	}: {
-		feedId: string;
-		groupId: string;
-	}) {
-		busyOp(
-			() => addGroupFeed(groupId, { feed_id: feedId, move_feed: true }),
-			"Unable to move feed",
-			"Feed added",
-		);
-	}
-
-	// Remove a feed from all groups
-	async function handleRemoveFeed(feedId: string) {
-		busyOp(
-			() => removeFeedFromAllGroups(feedId),
-			"Unable to unsubscribe from feed",
-			"Unsubscribed from feed",
-		);
-	}
-
 	// Add a new feed
 	async function handleAddFeed() {
 		busyOp(() => addFeed(addFeedData), "Unable to add feed", "Feed added");
-	}
-
-	// Update an existing feed
-	async function handleUpdateFeedUrl() {
-		if (!updateFeedUrlData.feedId || !updateFeedUrlData.url) {
-			return;
-		}
-
-		const id = updateFeedUrlData.feedId;
-		busyOp(
-			() => updateFeed(id, updateFeedUrlData),
-			"Unable to update feed",
-			"Feed updated",
-		);
-	}
-
-	// Update an existing feed
-	async function handleUpdateFeedTitle() {
-		if (!updateFeedTitleData.feedId || !updateFeedTitleData.title) {
-			return;
-		}
-
-		const id = updateFeedTitleData.feedId;
-		busyOp(
-			() => updateFeed(id, { title: updateFeedTitleData.title }),
-			"Unable to update feed title",
-			"Feed title updated",
-		);
 	}
 
 	// Add a new group
@@ -161,6 +109,31 @@
 		}
 		return -1;
 	});
+
+	let editing = "";
+
+	async function handleSubmit(event: SubmitEvent) {
+		const form = event.target as HTMLFormElement;
+		const value = new FormData(form);
+		const id = editing;
+		const title = value.get("title") as string;
+		const url = value.get("url") as string;
+		const groupId = value.get("group") as string;
+
+		await busyOp(
+			() =>
+				Promise.all([
+					updateFeed(id, { title, url }),
+					groupId === "not subscribed"
+						? removeFeedFromAllGroups(id)
+						: addGroupFeed(groupId, { feed_id: id, move_feed: true }),
+				]),
+			"Unable to update feed",
+			"Feed updated",
+		);
+
+		editing = "";
+	}
 </script>
 
 <Portal anchor="modal">
@@ -177,49 +150,98 @@
 					px-3
 					md:grid-cols-2
 					md:divide-x
-					md:divide-black/10
+					md:divide-border-light
+					md:dark:divide-border-dark
 				`}
 			>
 				<section class="flex flex-col pb-3 pt-2 md:overflow-auto md:pr-3">
 					<h4>Feeds</h4>
-					<ul class="flex w-full flex-col divide-y divide-black/10">
+					<ul
+						class={`
+							flex
+							w-full
+							flex-col
+							divide-y
+							divide-border-light
+							dark:divide-border-dark
+						`}
+					>
 						{#each sortedFeeds as feed (feed.id)}
 							<!-- feed -->
-							<li class="flex flex-col gap-1 py-2">
-								<!-- feed title -->
-								<h6 class="truncate">{feed.title}</h6>
-								<!-- feed URL -->
-								<span class="truncate italic">{feed.url}</span>
-								<!-- controls -->
-								<div class="mt-1 flex flex-row gap-2">
-									<Select
-										class="flex-auto"
-										value={groups[feed.id] ?? "not subscribed"}
-										on:change={(event) => {
-											const value = getEventValue(event);
-											if (value) {
-												if (value === "not subscribed") {
-													handleRemoveFeed(feed.id);
-												} else {
-													handleMoveFeed({ feedId: feed.id, groupId: value });
-												}
-											}
-										}}
-									>
-										<option value="not subscribed">Not subscribed</option>
-										{#each feedGroups as group (group.id)}
-											<option value={group.id}>{group.name}</option>
-										{/each}
-									</Select>
+							<li class="flex flex-row gap-4 py-2">
+								<form
+									class="flex flex-grow flex-row gap-3 overflow-hidden"
+									on:submit|preventDefault={handleSubmit}
+								>
+									<div class="flex flex-grow flex-col gap-1">
+										<!-- feed title -->
+										<Input
+											name="title"
+											variant="editable"
+											disabled={editing !== feed.id}
+											value={feed.title}
+											class="flex-grow-0 font-bold"
+										/>
 
-									<Button
-										on:click={() => {
-											handleRefreshFeed(feed.id);
-										}}
-									>
-										<Refresh size="1em" />
-									</Button>
-								</div>
+										<!-- feed URL -->
+										<Input
+											name="url"
+											variant="editable"
+											disabled={editing !== feed.id}
+											value={feed.url}
+										/>
+
+										<!-- feed group -->
+										<Select
+											name="group"
+											variant="editable"
+											disabled={editing !== feed.id}
+											value={groups[feed.id] ?? "not subscribed"}
+										>
+											<option value="not subscribed">Not subscribed</option>
+											{#each feedGroups as group (group.id)}
+												<option value={group.id}>{group.name}</option>
+											{/each}
+										</Select>
+									</div>
+
+									<div class="flex flex-col gap-1">
+										<Button
+											disabled={editing !== "" && editing !== feed.id}
+											on:click={() => {
+												if (editing === feed.id) {
+													editing = "";
+												} else {
+													editing = feed.id;
+												}
+											}}
+											class="flex-grow"
+										>
+											{#if editing === feed.id}
+												<Close size="1.25em" />
+											{:else}
+												<Edit size="1.25em" />
+											{/if}
+										</Button>
+
+										<Button
+											disabled={editing !== "" && editing !== feed.id}
+											type={editing === feed.id ? "submit" : "button"}
+											on:click={() => {
+												if (editing !== feed.id) {
+													handleRefreshFeed(feed.id);
+												}
+											}}
+											class="flex-grow"
+										>
+											{#if editing === feed.id}
+												<Save size="1.25em" />
+											{:else}
+												<Refresh size="1.25em" />
+											{/if}
+										</Button>
+									</div>
+								</form>
 							</li>
 						{/each}
 					</ul>
@@ -238,73 +260,7 @@
 								placeholder="https://..."
 								class="flex-auto"
 							/>
-							<Button type="submit">Save</Button>
-						</div>
-					</form>
-
-					<form
-						on:submit|preventDefault={handleUpdateFeedUrl}
-						class="flex flex-col gap-1 overflow-hidden"
-					>
-						<h4>Update Feed URL</h4>
-						<div class="flex flex-row gap-2 overflow-hidden">
-							<Select
-								class="flex-1"
-								value={updateFeedUrlData.feedId}
-								on:change={(event) => {
-									updateFeedUrlData.feedId = getEventValue(event) ?? "";
-									const feed = feeds.find(
-										({ id }) => id === updateFeedUrlData.feedId,
-									);
-									updateFeedUrlData.url = feed?.url ?? "";
-								}}
-							>
-								{#each feeds as feed (feed.id)}
-									<option value={feed.id}>{feed.title}</option>
-								{/each}
-							</Select>
-							<Input
-								class="flex-1"
-								value={updateFeedUrlData.url}
-								on:change={(event) => {
-									updateFeedUrlData.url = getEventValue(event) ?? "";
-								}}
-								placeholder="https://..."
-							/>
-							<Button type="submit">Save</Button>
-						</div>
-					</form>
-
-					<form
-						on:submit|preventDefault={handleUpdateFeedTitle}
-						class="flex flex-col gap-1"
-					>
-						<h4>Update Feed Title</h4>
-						<div class="flex flex-row gap-2">
-							<Select
-								class="flex-1"
-								value={updateFeedTitleData.feedId}
-								on:change={(event) => {
-									updateFeedTitleData.feedId = getEventValue(event) ?? "";
-									const feed = feeds.find(
-										({ id }) => id === updateFeedTitleData.feedId,
-									);
-									updateFeedTitleData.title = feed?.title ?? "";
-								}}
-							>
-								{#each feeds as feed (feed.id)}
-									<option value={feed.id}>{feed.title}</option>
-								{/each}
-							</Select>
-							<Input
-								class="flex-1"
-								value={updateFeedTitleData.title}
-								on:change={(event) => {
-									updateFeedTitleData.title = getEventValue(event) ?? "";
-								}}
-								placeholder="https://..."
-							/>
-							<Button type="submit">Save</Button>
+							<Button type="submit"><Save size="1.25em" /></Button>
 						</div>
 					</form>
 
@@ -319,7 +275,7 @@
 								placeholder="Applications"
 								class="flex-auto"
 							/>
-							<Button type="submit">Save</Button>
+							<Button type="submit"><Save size="1.25em" /></Button>
 						</div>
 					</form>
 
@@ -339,7 +295,7 @@
 								placeholder="Applications"
 								class="flex-1"
 							/>
-							<Button type="submit">Save</Button>
+							<Button type="submit"><Save size="1.25em" /></Button>
 						</div>
 					</form>
 				</section>

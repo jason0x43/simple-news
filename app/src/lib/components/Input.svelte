@@ -1,5 +1,7 @@
 <script lang="ts">
 	export let value: string;
+	export let disabled = false;
+	export let variant: "normal" | "invisible" | "editable" = "normal";
 
 	let className = "";
 	export { className as class };
@@ -9,17 +11,26 @@
 	class={`
 		text-foreground
 		appearance-none
-		rounded-sm
+		overflow-ellipsis
+		rounded-md
 		border
-		border-black/10
-		bg-gray-x-light
-		px-2
-		py-1
 		font-normal
-		dark:border-white/10
-		dark:bg-gray-x-dark
 		${className}
 	`}
+	class:px-2={variant === "normal"}
+	class:px-1={variant === "editable"}
+	class:py-1={variant === "normal"}
+	class:bg-gray-x-x-light={variant === "normal" ||
+		(variant === "editable" && !disabled)}
+	class:dark:bg-gray-x-x-dark={variant === "normal" ||
+		(variant === "editable" && !disabled)}
+	class:border-border-light={variant === "normal" ||
+		(variant === "editable" && !disabled)}
+	class:dark:border-border-dark={variant === "normal" ||
+		(variant === "editable" && !disabled)}
+	class:bg-transparent={variant === "editable" && disabled}
+	class:border-transparent={variant === "editable" && disabled}
 	bind:value
+	{disabled}
 	{...$$restProps}
 />

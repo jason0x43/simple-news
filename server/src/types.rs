@@ -236,7 +236,7 @@ pub struct FeedGroup {
 #[tsync]
 pub struct AddGroupFeedRequest {
     pub feed_id: FeedId,
-    pub move_feed: Option<bool>,
+    pub move_feed: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]

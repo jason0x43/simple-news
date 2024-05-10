@@ -32,10 +32,13 @@
 				flex
 				items-center
 				justify-between
-				bg-gray-light
+				bg-hover-light
 				px-3
 				py-2
-				dark:bg-gray-dark
+				dark:bg-hover-dark
+				border-b
+				border-border-light
+				dark:border-border-dark
 			`}
 		>
 			<h4 class="dark:text-white">{title}</h4>

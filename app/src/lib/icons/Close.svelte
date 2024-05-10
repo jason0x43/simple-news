@@ -1,10 +1,10 @@
 <script lang="ts">
-	export let size: number | undefined = undefined;
+	export let size: number | string = 30
 </script>
 
 <svg
-	width={size ?? 30}
-	height={size ?? 30}
+	width={size}
+	height={size}
 	stroke-width="0"
 	viewBox="0 0 24 24"
 >

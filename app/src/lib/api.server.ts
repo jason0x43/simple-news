@@ -161,11 +161,16 @@ export class Api {
 	async addGroupFeed({
 		feedId,
 		groupId,
+		moveFeed,
 	}: {
 		feedId: FeedId;
 		groupId: FeedGroupId;
+		moveFeed: boolean;
 	}): Promise<void> {
-		const body: AddGroupFeedRequest = { feed_id: feedId };
+		const body: AddGroupFeedRequest = {
+			feed_id: feedId,
+			move_feed: moveFeed ?? false,
+		};
 		await this.#apiPost(`feedgroups/${groupId}`, body);
 	}
 

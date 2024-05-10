@@ -1064,22 +1064,22 @@ impl FeedGroup {
         pool: &DbPool,
         feed_id: FeedId,
     ) -> Result<FeedGroupWithFeeds, AppError> {
-        let group_feed = FeedGroupFeed::new(feed_id.clone(), self.id.clone());
-
         // remove the feed from all groups
         query!(
             r#"
-            DELETE FROM feed_group_feeds as fgf
-            USING feed_groups AS fg
+            DELETE FROM feed_group_feeds
+            USING feed_groups
             WHERE feed_id = $1
                 AND user_id = $2
-                AND fg.id = fgf.feed_group_id
+                AND feed_groups.id = feed_group_id
             "#,
-            self.id.as_str(),
+            feed_id.as_str(),
             self.user_id.as_str()
         )
         .execute(pool)
         .await?;
+
+        let group_feed = FeedGroupFeed::new(feed_id.clone(), self.id.clone());
 
         // add the feed to this group
         query!(

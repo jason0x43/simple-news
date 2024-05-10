@@ -243,7 +243,6 @@ pub(crate) async fn get_all_feed_groups(
 ) -> Result<Json<Vec<FeedGroupWithFeeds>>, AppError> {
     let groups: Vec<FeedGroup> =
         FeedGroup::get_all(&state.pool, &session.user_id).await?;
-    log::debug!("got groups: {:?}", groups);
     let mut groups_with_feeds: Vec<FeedGroupWithFeeds> = vec![];
     for group in groups {
         let group_with_feeds = group.with_feeds(&state.pool).await?;
@@ -261,9 +260,13 @@ pub(crate) async fn add_group_feed(
     let group = FeedGroup::get(&state.pool, &id).await?;
     check_authorized(&session, &group.user_id)?;
 
-    if body.move_feed.unwrap_or(false) {
+    log::debug!("adding group feed with {:?}", body);
+
+    if body.move_feed {
+        log::debug!("moving feed {} to {id}", body.feed_id);
         group.move_feed(&state.pool, body.feed_id).await?;
     } else {
+        log::debug!("adding feed {} to {id}", body.feed_id);
         group.add_feed(&state.pool, body.feed_id).await?;
     }
 
