@@ -48,7 +48,7 @@
 	}
 </script>
 
-<ul class="text-dark-gray dark:text-gray py-2">
+<ul class="py-2">
 	<!-- saved group -->
 	<li>
 		<FeedsListItem selected={feedId === "saved"}>

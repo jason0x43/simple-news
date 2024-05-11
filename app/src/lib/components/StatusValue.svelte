@@ -2,4 +2,4 @@
 	export let value: string | number;
 </script>
 
-<span class="text-xs text-gray-dark/40 dark:text-gray-light/40">{value}</span>
+<span class="text-xs text-disabled dark:text-disabled-dark">{value}</span>
