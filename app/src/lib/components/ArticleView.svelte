@@ -152,7 +152,7 @@
 	}
 
 	.content :global(blockquote) {
-		@apply mt-4 border-l-4 border-border-light pl-2 italic dark:border-border-dark;
+		@apply my-4 border-l-4 border-border-light pl-2 italic dark:border-border-dark;
 	}
 
 	.content :global(*) {
