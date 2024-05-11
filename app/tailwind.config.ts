@@ -45,20 +45,24 @@ export default {
 					light: colors.yellow["50"],
 				},
 				hover: {
-					light: colors.gray["100"],
-					dark: colors.gray["900"],
+					light: colors.neutral["100"],
+					dark: "#101010",
 				},
 				border: {
-					light: colors.gray["200"],
-					dark: colors.gray["800"],
+					light: colors.neutral["200"],
+					dark: colors.neutral["900"],
+				},
+				text: {
+					light: colors.neutral["700"],
+					dark: colors.neutral["400"],
 				},
 				disabled: {
-					light: colors.gray["300"],
-					dark: colors.gray["700"],
+					light: colors.neutral["300"],
+					dark: colors.neutral["700"],
 				},
 				modal: {
-					light: "#f9f9f9c0",
-					dark: "#292939d0",
+					light: colors.neutral["200"],
+					dark: colors.neutral["800"],
 				},
 			},
 		},

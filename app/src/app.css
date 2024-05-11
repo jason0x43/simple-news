@@ -19,7 +19,7 @@
 		@apply text-[20px] sm:text-[16px];
 	}
 	body {
-		@apply text-sm text-gray-dark dark:text-gray;
+		@apply text-sm text-text-light dark:text-text-dark;
 	}
 	h1 {
 		@apply text-3xl font-black sm:text-4xl;

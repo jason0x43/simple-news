@@ -22,7 +22,6 @@
 		md:rounded-md
 		md:shadow-md
 		dark:bg-black
-		dark:text-white
 	`}
 >
 	{#if title || onClose}
@@ -41,7 +40,7 @@
 				dark:border-border-dark
 			`}
 		>
-			<h4 class="dark:text-white">{title}</h4>
+			<h4>{title}</h4>
 			{#if onClose}
 				<button
 					class="rounded-md"

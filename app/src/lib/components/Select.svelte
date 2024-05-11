@@ -10,22 +10,22 @@
 
 <select
 	class={`
-		text-foreground
 		min-w-0
 		appearance-none
 		rounded-md
 		border
-		dark:text-white
 		${className}
 	`}
+	class:text-disabled={disabled && variant !== "editable"}
+	class:dark:text-disabled-dark={disabled && variant !== "editable"}
 	class:px-2={variant === "normal"}
 	class:px-1={variant === "editable"}
 	class:py-1={variant === "normal"}
 	class:font-semibold={variant === "normal"}
 	class:text-xs={variant === "normal"}
-	class:bg-gray-x-x-light={variant === "normal" ||
+	class:bg-hover-light={variant === "normal" ||
 		(variant === "editable" && !disabled)}
-	class:dark:bg-gray-x-x-dark={variant === "normal" ||
+	class:dark:bg-hover-dark={variant === "normal" ||
 		(variant === "editable" && !disabled)}
 	class:border-border-light={variant === "normal" ||
 		(variant === "editable" && !disabled)}

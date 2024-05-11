@@ -111,10 +111,10 @@
 			flex
 			items-center
 			justify-center
-			bg-gray
+			bg-modal-light
 			bg-opacity-70
 			backdrop-blur
-			dark:bg-gray-dark
+			dark:bg-modal-dark
 			dark:bg-opacity-70;
 	}
 </style>

@@ -192,15 +192,13 @@
 						class={cls`
 							no-callout
 							no-swipe
-							text-dark-gray
+							mx-2
 							flex
 							min-h-[2.25rem]
 							flex-row
 							gap-2
-							p-2
-							mx-2
-							dark:text-gray
 							rounded-md
+							p-2
 							${article.saved ? "bg-yellow/20" : ""}
 							${article.id === activeArticle?.id ? "bg-blue/20" : ""}
 						`}
@@ -246,7 +244,6 @@
 										rounded-sm
 										bg-gray-x-dark
 										text-xs
-										text-white
 									`}
 									title={article.feed?.title}
 								>
@@ -257,8 +254,6 @@
 
 						<div
 							class="flex-auto"
-							class:text-gray-dark={article.read && !article.isSelected}
-							class:dark:text-gray-light={article.read && !article.isSelected}
 							class:opacity-50={article.read &&
 								!article.isSelected &&
 								!article.saved}
@@ -274,10 +269,10 @@
 						>
 							<span
 								class={cls`
+									text-disabled
 									whitespace-nowrap
 									text-xs
-									text-gray-dark/40
-									dark:text-gray-light/40
+									dark:text-disabled-dark
 								`}
 							>
 								{getAge(article.published ?? undefined)}
@@ -302,16 +297,7 @@
 	{/if}
 
 	{#if renderedArticles.length === 0}
-		<div
-			class={cls`
-				flex
-				h-full
-				items-center
-				justify-center
-				text-gray-dark
-				dark:text-gray
-			`}
-		>
+		<div class="flex h-full items-center justify-center">
 			<h3 class="">Nothing to see here</h3>
 		</div>
 	{/if}

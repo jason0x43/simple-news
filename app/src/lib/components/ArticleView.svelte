@@ -43,15 +43,13 @@
 
 <div
 	class={`
-			flex-auto
-			overflow-y-auto
-			bg-white
-			px-4
-			text-dark-gray
-			dark:bg-black
-			dark:text-gray
-			${className}
-		`}
+		flex-auto
+		overflow-y-auto
+		bg-white
+		px-4
+		dark:bg-black
+		${className}
+	`}
 	bind:this={scrollBox}
 >
 	{#if visible && article && articleFeed}
@@ -98,158 +96,138 @@
 		(prefers-color-scheme: dark);
 
 	.content {
-		font-size: 120%;
-		line-height: 1.4rem;
+		@apply text-base;
 	}
 
 	.content :global(a) {
-		color: theme(colors.blue.DEFAULT);
-		text-decoration: underline;
+		@apply text-blue underline;
 	}
 
 	.content :global(:not(.linkback) + .linkback) {
-		margin-top: 1rem;
+		@apply mt-4;
 	}
 
 	.content :global(.linkback) {
-		font-style: italic;
+		@apply italic;
 	}
 
 	.content :global(.linkback a) {
-		font-style: normal;
-	}
-
-	.content :global(h1) {
-		margin-top: 0;
-		line-height: 1.3em;
+		@apply not-italic;
 	}
 
 	.content :global(figure) {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		margin: 1rem 0;
+		@apply my-4 flex flex-col items-center;
 	}
 
 	.content :global(figcaption) {
-		font-style: italic;
-		opacity: 0.7;
+		@apply italic opacity-70;
 	}
 
 	.content :global(cite) {
-		font-size: calc(var(--font-size) * 0.9);
+		@apply text-sm;
 	}
 
 	.content :global(p) {
-		margin: 1rem 0;
+		@apply my-4;
 	}
 
 	.content :global(pre) {
-		overflow-x: auto;
+		@apply overflow-x-auto;
+	}
+
+	.content :global(ul) {
+		@apply flex flex-col list-disc pl-8 gap-2;
 	}
 
 	.content :global(li) {
-		margin: 0.5em 0;
+		@apply m-0;
 	}
 
 	.content :global(aside) {
-		margin: 1.5em 0;
-		font-size: calc(var(--font-size) * 1.25);
+		@apply my-6 text-lg;
 	}
 
 	.content :global(q) {
-		font-style: italic;
-		color: #999;
-		margin: 0 64px;
-		display: block;
+		@apply mx-[64px] block italic text-neutral-400;
 	}
 
 	.content :global(blockquote) {
-		font-style: italic;
-		border-left: solid 0.5rem #ddf;
-		padding-left: 0.5rem;
-		margin-top: 1rem;
+		@apply mt-4 border-l-4 border-border-light pl-2 italic dark:border-border-dark;
 	}
 
 	.content :global(*) {
-		max-width: 100% !important;
+		@apply !max-w-full;
 	}
 
 	.content :global(img) {
-		border-radius: 6px;
-		height: auto;
-		margin: 0 auto;
+		@apply mx-auto my-0 h-auto rounded-md;
 	}
 
 	.content :global(p) :global(img) {
-		vertical-align: middle;
+		@apply align-middle;
 	}
 
 	.content :global(table) {
-		width: 100%;
+		@apply w-full;
 	}
 
 	.content :global(.image img),
 	.content :global(figure img) {
-		margin: 0;
+		@apply m-0;
 	}
 
 	.content :global(.feedflare) {
-		display: none;
+		@apply hidden;
 	}
 
 	.content :global(.center) {
-		text-align: center;
+		@apply text-center;
 	}
 
 	.content :global(hr) {
-		height: 1px;
-		border: none;
-		background: #ddd;
+		@apply h-[1px] border-0 bg-neutral-800;
 	}
 
 	.content :global(pre) {
-		padding: 1rem;
-		font-size: 90%;
-		background: var(--matte);
-		border: solid 1px var(--highlight-text);
-		border-radius: 6px;
+		@apply rounded-md
+			border
+			border-border-light
+			bg-hover-light
+			p-4
+			text-sm
+			dark:border-border-dark
+			dark:bg-hover-dark;
 	}
 
 	.content :global(p) :global(code) {
-		font-size: 90%;
-		padding: 0.05rem 0.1rem 0.15rem 0.1rem;
-		background: var(--matte);
-		border: solid 1px var(--highlight-text);
-		border-radius: 3px;
+		@apply rounded-md
+			border
+			border-border-light
+			bg-hover-light
+			px-[0.1rem]
+			pb-[0.15rem]
+			pt-[0.05rem]
+			text-sm
+			dark:border-border-dark
+			dark:bg-hover-dark;
 	}
 
 	.content :global(.center-wrap) {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
+		@apply flex flex-col items-center;
 	}
 
 	.content :global(.share_submission) {
-		display: flex;
-		flex-direction: row;
-		gap: 0.5rem;
+		@apply flex flex-row gap-2;
 	}
 	/* from tor.com feeds */
 	.content :global(.ebook-links) {
-		display: flex;
-		flex-direction: row;
-		list-style-type: none;
-		padding: 0;
-		gap: 1rem;
+		@apply flex list-none flex-row gap-4 p-0;
 	}
 	.content :global(.ebook-links img),
 	.content :global(.ebook-links li) {
-		margin: 0;
+		@apply m-0;
 	}
 	.content :global(.squib .alignleft) {
-		margin: 0;
-		margin-right: 1em;
-		float: left;
+		@apply float-left m-0 mr-4;
 	}
 </style>
