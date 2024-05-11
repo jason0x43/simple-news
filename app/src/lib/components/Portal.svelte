@@ -2,6 +2,7 @@
 	import { onMount } from "svelte";
 	import { fade } from "svelte/transition";
 	import { getAppContext } from "../context";
+	import { browser } from "$app/environment";
 
 	export let target: HTMLElement | null | undefined = undefined;
 	export let anchor: { x?: number; y?: number } | "modal" | undefined =
@@ -16,28 +17,30 @@
 	let outDuration = 0;
 
 	$: {
-		style = [];
-		let rect = ref?.getBoundingClientRect() ?? { height: 0, width: 0 };
+		if (browser) {
+			style = [];
+			let rect = ref?.getBoundingClientRect() ?? { height: 0, width: 0 };
 
-		if (anchor && typeof anchor === "object") {
-			let tx = "-50%";
-			let ty = "-50%";
+			if (anchor && typeof anchor === "object") {
+				let tx = "-50%";
+				let ty = "-50%";
 
-			if (typeof anchor.y === "number") {
-				let y = Math.min(anchor.y, window.innerHeight - rect.height);
-				style.push(`top:${y}px`);
-				ty = "0";
+				if (typeof anchor.y === "number") {
+					let y = Math.min(anchor.y, window.innerHeight - rect.height);
+					style.push(`top:${y}px`);
+					ty = "0";
+				}
+				if (typeof anchor.x === "number") {
+					let x = Math.min(anchor.x, window.innerWidth - rect.width);
+					style.push(`left:${x}px`);
+					tx = "0";
+				}
+				style.push(`transform:translate(${tx},${ty})`);
 			}
-			if (typeof anchor.x === "number") {
-				let x = Math.min(anchor.x, window.innerWidth - rect.width);
-				style.push(`left:${x}px`);
-				tx = "0";
-			}
-			style.push(`transform:translate(${tx},${ty})`);
-		}
 
-		if (zIndex !== undefined) {
-			style.push(`z-index:${zIndex}`);
+			if (zIndex !== undefined) {
+				style.push(`z-index:${zIndex}`);
+			}
 		}
 	}
 
@@ -73,6 +76,7 @@
 	onMount(() => {
 		const elem = target ?? $root ?? window.document?.body;
 		elem?.append(ref);
+		console.log('appending portal to', elem)
 
 		const rect = ref.getBoundingClientRect();
 		if (rect.right > window.innerWidth) {

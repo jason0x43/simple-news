@@ -18,6 +18,7 @@ import type {
 	UpdateFeedRequest,
 	User,
 } from "$server";
+import { error } from "@sveltejs/kit";
 
 export class Api {
 	#sessionId: string | undefined;
@@ -244,7 +245,7 @@ export class Api {
 	 */
 	#assertOk(resp: Response): Response {
 		if (!resp.ok) {
-			throw new Error(resp.statusText);
+			error(resp.status, resp.statusText);
 		}
 		return resp;
 	}

@@ -1,64 +1,59 @@
 <script lang="ts">
-	let next: string | undefined;
-	let errors: string | undefined;
+	import Input from "$lib/components/Input.svelte";
+	import Button from "$lib/components/Button.svelte";
+	import { enhance } from "$app/forms";
+	import { page } from "$app/stores";
+	import { showToast } from "$lib/toast";
+	import Toast from "$lib/components/Toast.svelte";
+	import { onMount } from "svelte";
+	import { cls } from "$lib/cls";
+
+	$: {
+		if ($page.form?.invalid) {
+			showToast("Invalid username and/or password", {
+				type: "bad",
+				duration: 2000,
+			});
+		}
+	}
+
+	let ready = false;
+
+	$: console.log("ready:", ready);
+
+	onMount(() => {
+		setTimeout(() => {
+			ready = true;
+		});
+	});
 </script>
 
-<main class="login">
-	<form method="post">
-		<input name="username" placeholder="Username" />
-		<input name="password" placeholder="Password" type="password" />
-		{#if next}<input name="next" type="hidden" value={next} />{/if}
-		<button type="submit">Login</button>
+<Toast />
 
-		{#if errors}
-			<div class="error">{errors}</div>
-		{/if}
+<div
+	class="absolute-center transition-opacity"
+	class:opacity-0={!ready}
+	class:opacity-1={ready}
+>
+	<form
+		method="POST"
+		class={cls`
+			flex
+			flex-col
+			items-center
+			gap-4
+			rounded-md
+			border
+			border-border-light
+			p-4
+			dark:border-border-dark
+		`}
+		use:enhance
+	>
+		<div class="flex flex-col gap-2">
+			<Input name="username" placeholder="Username" />
+			<Input name="password" placeholder="Password" type="password" />
+		</div>
+		<Button type="submit">Login</Button>
 	</form>
-</main>
-
-<style>
-	.login {
-		position: fixed;
-		height: 100%;
-		width: 100%;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	form {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 1rem;
-		background: #d0d0d0;
-		padding: 1rem;
-		border-radius: 0.375rem;
-	}
-
-	input {
-		font-size: 100%;
-		padding: 0.5rem;
-		border: none;
-		border-radius: 0.375rem;
-		line-height: inherit;
-	}
-
-	button {
-		font-size: 100%;
-		line-height: inherit;
-		border: none;
-		background: transparent;
-		padding: 0;
-	}
-
-	@media (prefers-color-scheme: dark) {
-		form {
-			background: #444;
-		}
-
-		button {
-			color: white;
-		}
-	}
-</style>
+</div>

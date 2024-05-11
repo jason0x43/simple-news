@@ -1,5 +1,4 @@
 <script lang="ts">
-	import "../../app.css";
 	import Header from "$lib/components/Header.svelte";
 	import { setAppContext } from "$lib/context";
 	import { readonly, writable } from "svelte/store";

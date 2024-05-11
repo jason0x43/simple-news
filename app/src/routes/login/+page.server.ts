@@ -1,5 +1,5 @@
 import { Api } from "$lib/api.server";
-import { fail, redirect } from "@sveltejs/kit";
+import { fail, redirect, type Actions } from "@sveltejs/kit";
 
 export const actions = {
 	default: async ({ cookies, request, url, fetch }) => {
@@ -18,27 +18,27 @@ export const actions = {
 		}
 
 		const api = new Api({ fetch });
-		const session = await api.login({ username, password });
 
-		if (!session) {
-			return fail(400, { credentials: true });
+		try {
+			const session = await api.login({ username, password });
+			cookies.set("session", session.id, {
+				// send cookie for every page
+				path: "/",
+				// server side only cookie so you can't use `document.cookie`
+				httpOnly: true,
+				// only requests from same site can send cookies
+				// https://developer.mozilla.org/en-US/docs/Glossary/CSRF
+				sameSite: "strict",
+				// only sent over HTTPS in production
+				secure: process.env.NODE_ENV === "production",
+				// set cookie to expire after a month
+				maxAge: 60 * 60 * 24 * 30,
+			});
+		} catch (error) {
+			console.log("returning error:", error);
+			return fail(401, { invalid: true });
 		}
-
-		cookies.set("session", session.id, {
-			// send cookie for every page
-			path: "/",
-			// server side only cookie so you can't use `document.cookie`
-			httpOnly: true,
-			// only requests from same site can send cookies
-			// https://developer.mozilla.org/en-US/docs/Glossary/CSRF
-			sameSite: "strict",
-			// only sent over HTTPS in production
-			secure: process.env.NODE_ENV === "production",
-			// set cookie to expire after a month
-			maxAge: 60 * 60 * 24 * 30,
-		});
-
-		// redirect the user
+		
 		redirect(302, next);
 	},
-};
+} satisfies Actions;
