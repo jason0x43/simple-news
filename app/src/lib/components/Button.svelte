@@ -20,11 +20,10 @@
 		rounded-md
 		text-xs
 		font-semibold
-		dark:text-white
 		${className}
 	`}
-	class:text-black={!disabled}
-	class:text-gray-400={disabled}
+	class:text-disabled={disabled}
+	class:dark:text-disabled-dark={disabled}
 	class:border={variant === "normal"}
 	class:bg-hover-light={variant === "normal"}
 	class:dark:bg-hover-dark={variant === "normal"}

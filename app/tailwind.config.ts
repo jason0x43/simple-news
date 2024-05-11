@@ -27,8 +27,16 @@ export default {
 					"x-dark": colors.gray["800"],
 					"x-x-dark": colors.gray["900"],
 				},
-				green: colors.green["500"],
-				red: colors.red["500"],
+				green: {
+					DEFAULT: colors.green["500"],
+					light: colors.green["200"],
+					dark: colors.green["700"],
+				},
+				red: {
+					DEFAULT: colors.red["500"],
+					light: colors.red["200"],
+					dark: colors.red["700"],
+				},
 				transparent: "transparent",
 				white: colors.white,
 				yellow: {
@@ -38,18 +46,22 @@ export default {
 				},
 				hover: {
 					light: colors.gray["100"],
-					dark: colors.gray["900"]
+					dark: colors.gray["900"],
 				},
 				border: {
 					light: colors.gray["200"],
-					dark: colors.gray["800"]
+					dark: colors.gray["800"],
+				},
+				disabled: {
+					light: colors.gray["300"],
+					dark: colors.gray["700"],
 				},
 				modal: {
-					light: '#f9f9f9c0',
-					dark: '#292939d0',
-				}
+					light: "#f9f9f9c0",
+					dark: "#292939d0",
+				},
 			},
-		}
+		},
 	},
 
 	plugins: [],

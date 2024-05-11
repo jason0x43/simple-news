@@ -7,53 +7,69 @@
 	import Toast from "$lib/components/Toast.svelte";
 	import { onMount } from "svelte";
 	import { cls } from "$lib/cls";
+	import { fade } from "svelte/transition";
+
+	let ready = false;
+	let username = "";
+	let password = "";
+	let inputRef: HTMLInputElement;
 
 	$: {
 		if ($page.form?.invalid) {
-			showToast("Invalid username and/or password", {
-				type: "bad",
-				duration: 2000,
-			});
+			handleInvalid();
 		}
 	}
 
-	let ready = false;
+	function handleInvalid() {
+		showToast("Invalid username and/or password", {
+			type: "bad",
+			duration: 2000,
+		});
+		username = "";
+		password = "";
 
-	$: console.log("ready:", ready);
+		inputRef.focus();
+	}
 
 	onMount(() => {
-		setTimeout(() => {
-			ready = true;
-		});
+		ready = true;
 	});
 </script>
 
 <Toast />
 
-<div
-	class="absolute-center transition-opacity"
-	class:opacity-0={!ready}
-	class:opacity-1={ready}
->
-	<form
-		method="POST"
-		class={cls`
-			flex
-			flex-col
-			items-center
-			gap-4
-			rounded-md
-			border
-			border-border-light
-			p-4
-			dark:border-border-dark
-		`}
-		use:enhance
-	>
-		<div class="flex flex-col gap-2">
-			<Input name="username" placeholder="Username" />
-			<Input name="password" placeholder="Password" type="password" />
-		</div>
-		<Button type="submit">Login</Button>
-	</form>
-</div>
+{#if ready}
+	<div class="absolute-center" in:fade={{ duration: 250 }}>
+		<form
+			method="POST"
+			class={cls`
+				flex
+				flex-col
+				items-center
+				gap-4
+				rounded-md
+				border
+				border-border-light
+				p-4
+				dark:border-border-dark
+			`}
+			use:enhance
+		>
+			<div class="flex flex-col gap-2">
+				<Input
+					name="username"
+					placeholder="Username"
+					bind:ref={inputRef}
+					bind:value={username}
+				/>
+				<Input
+					name="password"
+					placeholder="Password"
+					type="password"
+					bind:value={password}
+				/>
+			</div>
+			<Button disabled={!username || !password} type="submit">Login</Button>
+		</form>
+	</div>
+{/if}

@@ -4,16 +4,14 @@
 	import Portal from "./Portal.svelte";
 </script>
 
-<Portal anchor={{ y: 10 }} zIndex={55}>
-	<ul class="list-none flex flex-col gap-4" >
+<Portal anchor={{ y: 20 }} zIndex={55}>
+	<ul class="flex list-none flex-col gap-4">
 		{#each $toasts as toast}
 			<li
-				class="border border-gray-x-light bg-white px-4 py-1 rounded-md"
-				class:bg-green={toast.type === "good"}
-				class:border-green-dark={toast.type === "good"}
-				class:bg-red={toast.type === "bad"}
-				class:border-red-dark={toast.type === "bad"}
-				class:text-white={toast.type === "bad" || toast.type === "good"}
+				class="rounded-md border px-4 py-1"
+				class:normal={toast.type === "normal"}
+				class:good={toast.type === "good"}
+				class:bad={toast.type === "bad"}
 				in:fade={{ duration: 250 }}
 				out:fade={{ duration: 250 }}
 			>
@@ -22,3 +20,20 @@
 		{/each}
 	</ul>
 </Portal>
+
+<style lang="postcss">
+	.normal {
+		@apply border-border-light
+			bg-hover-light
+			dark:border-border-dark
+			dark:bg-hover-dark;
+	}
+
+	.good {
+		@apply bg-green border-green-dark text-white;
+	}
+
+	.bad {
+		@apply bg-red/50 border-red-dark/50 text-white;
+	}
+</style>

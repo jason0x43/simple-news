@@ -7,6 +7,11 @@
 	.absolute-center {
 		@apply absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2;
 	}
+
+	/** Disable the iOS context menu */
+	.no-callout {
+		-webkit-touch-callout: none;
+	}
 }
 
 @layer base {
@@ -14,7 +19,7 @@
 		@apply text-[20px] sm:text-[16px];
 	}
 	body {
-		@apply text-sm text-black;
+		@apply text-sm text-gray-dark dark:text-gray;
 	}
 	h1 {
 		@apply text-3xl font-black sm:text-4xl;
@@ -36,19 +41,10 @@
 	}
 }
 
-@layer components {
-	/** Disable the iOS context menu */
-	.no-callout {
-		-webkit-touch-callout: none;
-	}
-}
-
 *:focus {
-	outline: none;
+	@apply outline-none;
 }
 
 #app {
-	height: 100%;
-	width: 100%;
-	position: relative;
+	@apply h-full w-full relative;
 }

@@ -1,4 +1,5 @@
 <script lang="ts">
+	export let ref: HTMLInputElement | undefined = undefined;
 	export let value: string = "";
 	export let disabled = false;
 	export let variant: "normal" | "invisible" | "editable" = "normal";
@@ -9,12 +10,13 @@
 
 <input
 	class={`
-		text-foreground
+		placeholder-disabled
 		appearance-none
 		overflow-ellipsis
 		rounded-md
 		border
 		font-normal
+		dark:placeholder-disabled-dark
 		${className}
 	`}
 	class:px-2={variant === "normal"}
@@ -31,6 +33,7 @@
 	class:bg-transparent={variant === "editable" && disabled}
 	class:border-transparent={variant === "editable" && disabled}
 	bind:value
+	bind:this={ref}
 	{disabled}
 	{...$$restProps}
 />
