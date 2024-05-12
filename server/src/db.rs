@@ -769,13 +769,44 @@ impl Article {
         data: &ArticlesMarkRequest,
     ) -> Result<i32, AppError> {
         let mut tx = pool.begin().await?;
+
+        let article_ids: Vec<String> =
+            data.article_ids.iter().map(|id| id.to_string()).collect();
+
+        let existing = query_as!(
+            UserArticle,
+            r#"
+            SELECT * FROM user_articles
+            WHERE user_id = $1 AND article_id = ANY($2)
+            "#,
+            user_id.as_str(),
+            article_ids.as_slice(),
+        )
+        .fetch_all(&mut *tx)
+        .await?;
+
         for id in &data.article_ids {
-            let ua = UserArticle::new(
-                user_id.clone(),
-                id.clone(),
-                data.mark.read,
-                data.mark.saved,
-            );
+            let mut ua =
+                existing.iter().find(|ua| ua.article_id == *id).map_or_else(
+                    || {
+                        UserArticle::new(
+                            user_id.clone(),
+                            id.clone(),
+                            None,
+                            None,
+                        )
+                    },
+                    |ua| ua.clone(),
+                );
+
+            if let Some(read) = data.mark.read {
+                ua.read = read;
+            }
+
+            if let Some(saved) = data.mark.saved {
+                ua.saved = saved;
+            }
+
             query!(
                 r#"
                 INSERT INTO user_articles(
@@ -794,6 +825,7 @@ impl Article {
             .execute(&mut *tx)
             .await?;
         }
+
         tx.commit().await?;
 
         Ok(data.article_ids.len() as i32)
