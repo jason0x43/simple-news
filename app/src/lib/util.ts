@@ -1,3 +1,4 @@
+import { invalidate } from "$app/navigation";
 import type { FeedGroupWithFeeds, FeedId, FeedStats } from "$server";
 
 /**
@@ -170,13 +171,17 @@ export function verifyHashLinkTarget(
 /**
  * Start an interval and return a cleanup function
  */
-export function interval(callback: () => void, time: number) {
+export function periodicInvalidate(url: string, time: number) {
 	const refresher = setInterval(() => {
-		callback();
+		invalidate(url);
+		console.log(`Refreshed ${url}`);
 	}, time);
+
+	console.log(`Periodically refreshing ${url}`);
 
 	return () => {
 		clearInterval(refresher);
+		console.log(`Stopped refreshing ${url}`);
 	};
 }
 

@@ -9,8 +9,8 @@
 	import { page } from "$app/stores";
 	import { cls } from "$lib/cls";
 	import { onMount } from "svelte";
-	import { goto, invalidate } from "$app/navigation";
-	import { interval, minutes } from "$lib/util";
+	import { goto } from "$app/navigation";
+	import { periodicInvalidate, minutes } from "$lib/util";
 
 	export let data;
 
@@ -78,9 +78,7 @@
 			ready = true;
 		});
 
-		return interval(() => {
-			invalidate("app:feedStats");
-		}, minutes(15));
+		return periodicInvalidate("app:feedStats", minutes(15));
 	});
 </script>
 
