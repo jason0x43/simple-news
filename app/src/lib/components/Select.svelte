@@ -9,30 +9,13 @@
 </script>
 
 <select
-	class={`
-		min-w-0
-		appearance-none
-		rounded-md
-		border
-		${className}
-	`}
-	class:text-disabled={disabled && variant !== "editable"}
-	class:dark:text-disabled-dark={disabled && variant !== "editable"}
-	class:px-2={variant === "normal"}
+	class={className}
+	class:normal={variant === "normal"}
 	class:px-1={variant === "editable"}
-	class:py-1={variant === "normal"}
-	class:font-semibold={variant === "normal"}
-	class:text-xs={variant === "normal"}
-	class:bg-hover-light={variant === "normal" ||
+	class:disabled-not-editable={disabled && variant !== "editable"}
+	class:normal-editable={variant === "normal" ||
 		(variant === "editable" && !disabled)}
-	class:dark:bg-hover-dark={variant === "normal" ||
-		(variant === "editable" && !disabled)}
-	class:border-border-light={variant === "normal" ||
-		(variant === "editable" && !disabled)}
-	class:dark:border-border-dark={variant === "normal" ||
-		(variant === "editable" && !disabled)}
-	class:border-transparent={variant === "editable" && disabled}
-	class:bg-transparent={variant === "editable" && disabled}
+	class:disabled-editable={variant === "editable" && disabled}
 	bind:value
 	on:change={(event) => {
 		onChange?.(event.currentTarget.value);
@@ -42,3 +25,27 @@
 >
 	<slot />
 </select>
+
+<style lang="postcss">
+	select {
+		@apply min-w-0 appearance-none rounded-md border;
+	}
+	.normal {
+		@apply px-2 py-1 text-xs font-bold;
+	}
+	.editable {
+		@apply border-transparent bg-transparent px-1 py-1;
+	}
+	.disabled {
+		@apply text-disabled-light dark:text-disabled-dark;
+	}
+	.disabled-editable {
+		@apply border-transparent bg-transparent;
+	}
+	.disabled-not-editable {
+		@apply text-disabled-light dark:text-disabled-dark;
+	}
+	.normal-editable {
+		@apply border-border-light bg-hover-light dark:border-border-dark dark:bg-hover-dark;
+	}
+</style>
