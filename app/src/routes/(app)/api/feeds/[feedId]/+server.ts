@@ -1,9 +1,9 @@
 import { Api } from "$lib/api.server";
-import type { UpdateFeedRequest } from "$server";
+import { UpdateFeedRequest } from "simple-news-types";
 
 export async function PATCH({ request, fetch, locals, params }) {
 	const { feedId } = params;
-	const data: UpdateFeedRequest = await request.json();
+	const data = UpdateFeedRequest.parse(await request.json());
 	const api = new Api({ fetch, sessionId: locals.sessionId });
 	await api.updateFeed(feedId, data);
 

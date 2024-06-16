@@ -1,37 +1,32 @@
-FROM rust:bookworm as base
+FROM node:20-slim AS base
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
+WORKDIR /app
 
-ARG APP_ORG=jason0x43
-ARG APP_NAME=simple-news
+FROM base as prod-deps
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    --mount=source=package.json,target=package.json \
+    --mount=source=pnpm-lock.yaml,target=pnpm-lock.yaml \
+    pnpm i --prod --frozen-lockfile
 
-WORKDIR /build/server
+FROM base as build
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    --mount=source=package.json,target=package.json \
+    --mount=source=pnpm-lock.yaml,target=pnpm-lock.yaml \
+    pnpm i --frozen-lockfile
 
-FROM base AS deps
-# Install build environment
-RUN cargo install sqlx-cli --no-default-features --features postgres
-
-FROM base AS builder
-# Build server
-RUN --mount=source=Cargo.lock,target=Cargo.lock \
-    --mount=source=Cargo.toml,target=Cargo.toml \
-    --mount=source=.sqlx,target=.sqlx \
-    --mount=source=macros,target=macros \
-    --mount=source=migrations,target=migrations \
-    --mount=source=public,target=public \
+RUN --mount=source=package.json,target=package.json \
+    --mount=source=pnpm-lock.yaml,target=pnpm-lock.yaml \
+    --mount=source=tsconfig.json,target=tsconfig.json \
     --mount=source=src,target=src \
-    --mount=type=cache,target=/build/server/target/ \
-    --mount=type=cache,target=/usr/local/cargo/registry/ \
-    <<EOF
-set -e
-cargo build --locked --release
-cp ./target/release/$APP_NAME /build/server
-EOF
+    pnpm build
 
-FROM debian:bookworm-slim as runner
-LABEL org.opencontainers.image.source=https://github.com/$APP_ORG/$APP_NAME
-LABEL org.opencontainers.image.description="A simple RSS news reader"
-LABEL org.opencontainers.image.licenses="MIT"
-RUN apt-get update && apt-get install -y extra-runtime-dependencies & rm -rf /var/lib/apt/lists/*
-COPY entrypoint.sh /bin/
-COPY --from=deps /usr/local/cargo/bin/sqlx /bin/
-COPY --from=builder /build/server/$APP_NAME /bin/
-ENTRYPOINT ["/bin/entrypoint.sh"]
+FROM node:20-slim
+WORKDIR /app
+COPY --from=build /app/build build/
+COPY --from=prod-deps /app/node_modules node_modules/
+COPY package.json .
+EXPOSE 3000
+ENV NODE_ENV=production
+CMD [ "node", "build" ]

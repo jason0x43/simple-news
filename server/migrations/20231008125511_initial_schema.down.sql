@@ -1,9 +1,0 @@
-DROP TABLE feed_logs;
-DROP TABLE feed_group_feeds;
-DROP TABLE feed_groups;
-DROP TABLE user_articles;
-DROP TABLE articles;
-DROP TABLE feeds;
-DROP TABLE sessions;
-DROP TABLE passwords;
-DROP TABLE users;

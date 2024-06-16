@@ -1,6 +1,11 @@
 // See https://kit.svelte.dev/docs/types#app
 
-import type { Article, Feed, FeedStats, FeedGroupWithFeeds } from "$server";
+import type {
+	Article,
+	Feed,
+	FeedStats,
+	FeedGroupWithFeeds,
+} from "simple-news-types";
 import type { ArticleFilter } from "$lib/state";
 
 // for information about these interfaces

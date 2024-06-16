@@ -1,0 +1,18 @@
+{
+	"name": "simple-news-client",
+	"description": "A client for interacting with the simple news server",
+	"private": true,
+	"main": "build/index.js",
+	"type": "module",
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsc --watch --preserveWatchOutput"
+	},
+	"dependencies": {
+		"simple-news-types": "workspace:*",
+		"zod": "^3.23.8"
+	},
+	"devDependencies": {
+		"simple-news-server": "workspace:*"
+	}
+}

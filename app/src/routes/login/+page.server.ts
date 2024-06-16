@@ -20,8 +20,8 @@ export const actions = {
 		const api = new Api({ fetch });
 
 		try {
-			const session = await api.login({ username, password });
-			cookies.set("session", session.id, {
+			const sessionId = await api.login(username, password);
+			cookies.set("session", sessionId, {
 				// send cookie for every page
 				path: "/",
 				// server side only cookie so you can't use `document.cookie`
@@ -38,7 +38,7 @@ export const actions = {
 			console.log("returning error:", error);
 			return fail(401, { invalid: true });
 		}
-		
+
 		redirect(302, next);
 	},
 } satisfies Actions;

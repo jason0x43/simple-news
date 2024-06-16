@@ -1,5 +1,28 @@
 {
-  "name": "server",
-  "private": "true",
-  "types": "./types.ts"
+	"name": "simple-news-server",
+	"description": "Server for simple-news app",
+	"private": "true",
+	"main": "build/index.js",
+	"type": "module",
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsc-watch --preserveWatchOutput --onSuccess 'node ./build'"
+	},
+	"dependencies": {
+		"@paralleldrive/cuid2": "^2.2.2",
+		"cheerio": "1.0.0-rc.12",
+		"hyper-express": "^6.16.1",
+		"kysely": "^0.27.3",
+		"pg": "^8.11.5",
+		"rss-parser": "^3.13.0"
+	},
+	"devDependencies": {
+		"@commander-js/extra-typings": "^12.1.0",
+		"@types/pg": "^8.11.6",
+		"commander": "^12.1.0",
+		"kanel": "^3.8.9",
+		"kanel-kysely": "^0.4.0",
+		"simple-news-types": "workspace:*",
+		"tsc-watch": "^6.2.0"
+	}
 }

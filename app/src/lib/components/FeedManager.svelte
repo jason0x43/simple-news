@@ -6,7 +6,6 @@
 	import Input from "./Input.svelte";
 	import { showToast } from "../toast";
 	import { seconds } from "../util";
-	import type { Feed, FeedGroupId, FeedGroupWithFeeds, FeedId } from "$server";
 	import Refresh from "../icons/Refresh.svelte";
 	import Save from "../icons/Save.svelte";
 	import Edit from "../icons/Edit.svelte";
@@ -19,13 +18,19 @@
 		updateFeed,
 	} from "$lib/api";
 	import Close from "$lib/icons/Close.svelte";
+	import type {
+		Feed,
+		FeedGroupId,
+		FeedGroupWithFeeds,
+		FeedId,
+	} from "simple-news-types";
 
 	export let feedGroups: FeedGroupWithFeeds[];
 	export let feeds: Feed[];
 	export let onClose: () => void;
 
 	let busy = false;
-	let addFeedData = { url: "" };
+	let addFeedData = { url: "", title: "" };
 	let addGroupData = { name: "" };
 	let renameGroupData = {
 		feedGroupId: feedGroups[0]?.id ?? "",
@@ -126,7 +131,7 @@
 					updateFeed(id, { title, url }),
 					groupId === "not subscribed"
 						? removeFeedFromAllGroups(id)
-						: addGroupFeed(groupId, { feed_id: id, move_feed: true }),
+						: addGroupFeed(groupId, { feed_id: id as FeedId, move_feed: true }),
 				]),
 			"Unable to update feed",
 			"Feed updated",

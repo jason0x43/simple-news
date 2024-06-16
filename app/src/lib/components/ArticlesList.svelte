@@ -1,10 +1,4 @@
 <script lang="ts">
-	import type {
-		ArticleId,
-		ArticleSummary,
-		ArticlesMarkRequest,
-		Feed,
-	} from "$server";
 	import { getAge, seconds, unescapeHtml } from "../util";
 	import ContextMenu from "./ContextMenu.svelte";
 	import Button from "./Button.svelte";
@@ -12,13 +6,19 @@
 	import { getAppContext } from "$lib/context";
 	import type { ArticleFilter } from "$lib/types";
 	import { cls } from "$lib/cls";
+	import type {
+	ArticleId,
+		ArticleSummary,
+		Feed,
+		MarkArticlesRequest,
+	} from "simple-news-types";
 
 	export let feedId: string;
 	export let feeds: Feed[];
 	export let articleId: string | undefined;
 	export let articles: ArticleSummary[];
 	export let articleFilter: ArticleFilter;
-	export let markArticles: (data: ArticlesMarkRequest) => Promise<void>;
+	export let markArticles: (data: MarkArticlesRequest) => Promise<void>;
 
 	const updatedArticleIds = getAppContext("updatedArticleIds");
 
@@ -149,13 +149,13 @@
 
 			if (ids) {
 				ids.forEach((id) => ($updatedArticleIds = $updatedArticleIds.add(id)));
-				await markArticles({ article_ids: ids, mark: { read } });
+				await markArticles({ articleIds: ids, mark: { read } });
 			}
 		} else if (/save/i.test(value)) {
 			if (activeArticle) {
 				$updatedArticleIds = $updatedArticleIds.add(activeArticle.id);
 				await markArticles({
-					article_ids: [activeArticle.id],
+					articleIds: [activeArticle.id],
 					mark: { saved: !activeArticle.saved },
 				});
 			}
@@ -290,7 +290,7 @@
 					ids.forEach(
 						(id) => ($updatedArticleIds = $updatedArticleIds.add(id)),
 					);
-					markArticles({ article_ids: ids, mark: { read: true } });
+					markArticles({ articleIds: ids, mark: { read: true } });
 				}}>Mark all read</Button
 			>
 		</div>

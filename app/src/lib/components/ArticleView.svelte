@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Article, Feed } from "$server";
+	import type { Article, Feed } from "simple-news-types";
 	import { isActionEvent, verifyHashLinkTarget } from "../util";
 
 	export let article: Article;

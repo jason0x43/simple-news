@@ -1,5 +1,5 @@
 import { Api } from "$lib/api.server.js";
-import type { ArticleSummary } from "$server";
+import type { ArticleSummary } from "simple-news-types";
 
 export async function load({ params, fetch, depends, locals }) {
 	depends("app:articles");

@@ -18,7 +18,7 @@
 			});
 
 			markArticles({
-				article_ids: [data.article.id],
+				articleIds: [data.article.id],
 				mark: { read: true },
 			}).catch((error) => {
 				console.warn(

@@ -76,7 +76,6 @@
 	onMount(() => {
 		const elem = target ?? $root ?? window.document?.body;
 		elem?.append(ref);
-		console.log('appending portal to', elem)
 
 		const rect = ref.getBoundingClientRect();
 		if (rect.right > window.innerWidth) {

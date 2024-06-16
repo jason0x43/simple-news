@@ -11,6 +11,7 @@
 	import { onMount } from "svelte";
 	import { goto } from "$app/navigation";
 	import { periodicInvalidate, minutes } from "$lib/util";
+	import { FeedGroupId, FeedId } from "simple-news-types";
 
 	export let data;
 
@@ -25,8 +26,8 @@
 	const updatedArticleIds = writable<Set<string>>(new Set());
 	setAppContext("updatedArticleIds", updatedArticleIds);
 
-	let selectedFeedIds: string[] = [];
-	let selectedGroupId: string | undefined;
+	let selectedFeedIds: FeedId[] = [];
+	let selectedGroupId: FeedGroupId | undefined;
 
 	$: {
 		const feedId = $page.data.feedId;
@@ -37,9 +38,9 @@
 			if (type === "group") {
 				const group = data.feedGroups.find((g) => g.id === id);
 				selectedFeedIds = group?.feed_ids ?? [];
-				selectedGroupId = id;
+				selectedGroupId = FeedGroupId.parse(id);
 			} else {
-				selectedFeedIds = [id];
+				selectedFeedIds = [FeedId.parse(id)];
 			}
 		} else {
 			selectedFeedIds = [];

@@ -1,0 +1,17 @@
+{
+	"name": "simple-news",
+	"version": "0.1.0",
+	"author": "Jason Cheatham <jason@jasoncheatham.com>",
+	"license": "MIT",
+	"scripts": {
+		"dev": "pnpm run --parallel dev"
+	},
+	"devDependencies": {
+		"eslint": "8",
+		"@eslint/js": "^9.5.0",
+		"typescript": "^5.3.3",
+		"typescript-eslint": "^7.13.0",
+		"prettier": "^3.2.5"
+	},
+	"packageManager": "pnpm@9.3.0+sha512.ee7b93e0c2bd11409c6424f92b866f31d3ea1bef5fbe47d3c7500cdc3c9668833d2e55681ad66df5b640c61fa9dc25d546efa54d76d7f8bf54b13614ac293631"
+}

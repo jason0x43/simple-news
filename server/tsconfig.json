@@ -1,0 +1,15 @@
+{
+	"compilerOptions": {
+		"lib": ["ES2022"],
+		"target": "es2022",
+		"module": "es2022",
+		"moduleResolution": "node",
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"outDir": "build",
+		"strict": true,
+		"allowJs": true,
+		"checkJs": true,
+		"skipLibCheck": true
+	}
+}

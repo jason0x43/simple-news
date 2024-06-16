@@ -1,0 +1,6 @@
+packages:
+  - cli
+  - client
+  - server
+  - types
+  - app

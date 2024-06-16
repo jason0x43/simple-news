@@ -2,7 +2,7 @@
 	import { getAppContext } from "$lib/context";
 	import DoubleRight from "$lib/icons/DoubleRight.svelte";
 	import Star from "$lib/icons/Star.svelte";
-	import type { Feed, FeedGroupWithFeeds, FeedStats } from "$server";
+	import type { Feed, FeedGroupWithFeeds, FeedId, FeedStats } from "simple-news-types";
 	import {
 		allFeedsAreSelected,
 		getSavedCount,
@@ -17,7 +17,7 @@
 	export let feedId: string | undefined;
 	export let feedGroups: FeedGroupWithFeeds[];
 	export let feedStats: FeedStats;
-	export let selectedFeedIds: string[];
+	export let selectedFeedIds: FeedId[];
 	export let selectedGroupId: string | undefined;
 
 	const updatedArticleIds = getAppContext("updatedArticleIds");

@@ -1,26 +1,331 @@
-#!/bin/bash
+#!/usr/bin/env node
 
-cmd=$1
-commit=$(git rev-parse --short HEAD)
-export IMAGE_VERSION=$commit
+// @ts-check
 
-if [[ $cmd == "build" ]]; then
-  docker compose build server 
+import { Command } from "@commander-js/extra-typings";
+import kanel from "kanel";
+import { writeFileSync, promises as fs } from "node:fs";
+import * as path from "node:path";
+import { fileURLToPath } from "node:url";
+import {
+	FileMigrationProvider,
+	Kysely,
+	Migrator,
+	PostgresDialect,
+} from "kysely";
+import Pg from "pg";
+import { spawnSync } from "node:child_process";
+import { createId } from "@paralleldrive/cuid2";
+import kanelKysely from "kanel-kysely";
 
-elif [[ $cmd == "up" ]]; then
-  docker compose up
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-elif [[ $cmd == "db" ]]; then
-  docker compose exec db psql ${DATABASE_URL}
+const program = new Command();
 
-elif [[ $cmd == "publish" ]]; then
-  echo "publishing simple-news:$commit"
-  docker tag simple-news:$commit ghcr.io/jason0x43/simple-news:$commit
-  echo "tagged simple-news:$commit as ghcr.io/jason0x43/simple-news:$commit"
-  docker push ghcr.io/jason0x43/simple-news:$commit
+program.name("dev").description("Dev utilities").configureHelp({
+	sortSubcommands: true,
+});
 
-else
-  echo "unknown command '$cmd'"
-  echo "usage: $0 <build|run>"
-  exit 1
-fi
+const dbCmd = program.command("db").description("Database commands");
+
+dbCmd
+	.command("adduser")
+	.description("Add a user")
+	.argument("<username>", "A username")
+	.action(async (username) => {
+		await doDb(async (db) => {
+			const user = await db
+				.insertInto("users")
+				.values({
+					id: createId(),
+					username,
+				})
+				.returning(["id", "username"])
+				.executeTakeFirstOrThrow();
+			console.log(user);
+		});
+	});
+
+dbCmd
+	.command("console")
+	.description("Open a database console")
+	.action(async () => {
+		spawnSync("docker", ["compose", "exec", "db", "psql", getDbUrl()], {
+			stdio: "inherit",
+		});
+	});
+
+const migrateCmd = dbCmd
+	.command("migrate")
+	.description("Run database migrations");
+
+migrateCmd
+	.command("all")
+	.description("Run all migrations")
+	.action(async () => {
+		await doDb(async (db) => {
+			const migrator = getMigrator(db);
+			await doMigrate(migrator);
+		});
+		await genDb();
+	});
+
+migrateCmd
+	.command("down")
+	.description("Revert migrations")
+	.argument("[count]", "Run [count] migrations", Number, 1)
+	.action(async (count) => {
+		await doDb(async (db) => {
+			const migrator = getMigrator(db);
+			for (let i = 0; i < count; i++) {
+				await doMigrate(migrator, "down");
+			}
+		});
+		await genDb();
+	});
+
+migrateCmd
+	.command("list")
+	.description("List migrations")
+	.action(async () => {
+		await doDb(async (db) => {
+			const migrator = getMigrator(db);
+
+			const migrations = await migrator.getMigrations();
+			for (const migration of migrations) {
+				const ran = migration.executedAt ? "x" : "_";
+				console.log(`${ran}  ${migration.name}`);
+			}
+		});
+	});
+
+migrateCmd
+	.command("redo")
+	.description("Revert migrations")
+	.argument("[count]", "Redo [count] migrations", Number, 1)
+	.action(async (count) => {
+		await doDb(async (db) => {
+			const migrator = getMigrator(db);
+
+			for (let i = 0; i < count; i++) {
+				await doMigrate(migrator, "down");
+			}
+			for (let i = 0; i < count; i++) {
+				await doMigrate(migrator, "up");
+			}
+		});
+		await genDb();
+	});
+
+migrateCmd
+	.command("up")
+	.description("Run migrations")
+	.argument("[count]", "Run [count] migrations", Number, 1)
+	.action(async (count) => {
+		await doDb(async (db) => {
+			const migrator = getMigrator(db);
+
+			for (let i = 0; i < count; i++) {
+				await doMigrate(migrator, "up");
+			}
+		});
+		await genDb();
+	});
+
+migrateCmd
+	.command("create")
+	.description("Create a new db migration")
+	.argument("<name>", "Name for the migration")
+	.action(async (name) => {
+		const migrationName = `${new Date().toISOString()}_${name}.js`;
+		const migrationFile = path.join(
+			__dirname,
+			"src",
+			"migrations",
+			migrationName,
+		);
+
+		writeFileSync(
+			migrationFile,
+			dedent(`
+				import { Kysely } from 'kysely';
+
+				/**
+				 * @param {Kysely<any>} db
+				 * @returns {Promise<void>}
+				 */
+				export async function up(db) {
+				}
+
+				/**
+				 * @param {Kysely<any>} db
+				 * @returns {Promise<void>}
+				 */
+				export async function down(db) {
+				}
+			`),
+		);
+
+		console.log(`Created migration ${migrationName}`);
+	});
+
+try {
+	await program.parseAsync();
+} catch (err) {
+	console.error(`${err}`);
+	process.exit(1);
+}
+
+/**
+ * @param {string} str
+ * @returns string
+ */
+function dedent(str) {
+	let indent = str.length;
+	const lines = str.split("\n");
+
+	for (const line of lines) {
+		if (line.trim().length === 0) {
+			continue;
+		}
+		const ind = line.search(/\S/);
+		if (ind < indent) {
+			indent = ind;
+		}
+	}
+
+	return lines
+		.map((line) => line.slice(indent))
+		.join("\n")
+		.trim();
+}
+
+/**
+ * @param {string} name
+ * @returns {string}
+ */
+function getEnv(name) {
+	const val = process.env[name];
+	if (val === undefined) {
+		throw new Error(`${name} must be defined`);
+	}
+	return val;
+}
+
+/**
+ * @returns {Kysely}
+ */
+function getDb() {
+	return new Kysely({
+		dialect: new PostgresDialect({
+			pool: new Pg.Pool({
+				user: getEnv("POSTGRES_USER"),
+				password: getEnv("POSTGRES_PASSWORD"),
+				database: getEnv("POSTGRES_DB"),
+				host: "localhost",
+			}),
+		}),
+	});
+}
+
+/**
+ * @param {Kysely} db
+ * @returns {Migrator}
+ */
+function getMigrator(db) {
+	return new Migrator({
+		db,
+		provider: new FileMigrationProvider({
+			fs,
+			path,
+			migrationFolder: path.join(__dirname, "src", "migrations"),
+		}),
+	});
+}
+
+/**
+ * @param {Migrator} migrator
+ * @param {'up' | 'down'} [direction]
+ */
+async function doMigrate(migrator, direction) {
+	/** @type {import("kysely").MigrationResultSet} */
+	let resultSet;
+
+	if (!direction) {
+		resultSet = await migrator.migrateToLatest();
+	} else if (direction === "up") {
+		resultSet = await migrator.migrateUp();
+	} else {
+		resultSet = await migrator.migrateDown();
+	}
+
+	for (const result of resultSet.results ?? []) {
+		if (result.status === "Success") {
+			const actioned = direction == "down" ? "reverted" : "applied";
+			console.log(`${actioned} migration ${result.migrationName}`);
+		} else {
+			const actioning = direction == "down" ? "reverting" : "applying";
+			console.log(
+				`${actioning} migration ${result.migrationName} failed: ${resultSet.error}`,
+			);
+		}
+	}
+
+	if (resultSet.error) {
+		throw resultSet.error;
+	}
+}
+
+/**
+ * @param {(db: import("kysely").Kysely) => Promise<void>} callback
+ * @returns Promise<void>
+ */
+async function doDb(callback) {
+	const db = getDb();
+	try {
+		await callback(db);
+	} finally {
+		await db.destroy();
+	}
+}
+
+/**
+ * Regenerate the TS db schema
+ */
+async function genDb() {
+	await kanel.processDatabase({
+		connection: {
+			host: getEnv("POSTGRES_HOST"),
+			user: getEnv("POSTGRES_USER"),
+			password: getEnv("POSTGRES_PASSWORD"),
+			database: getEnv("POSTGRES_DB"),
+		},
+
+		preDeleteOutputFolder: true,
+		outputPath: "./src/schemas",
+
+		customTypeMap: {
+			"pg_catalog.bytea": "Uint8Array",
+		},
+
+		preRenderHooks: [kanelKysely.makeKyselyHook()],
+
+		typeFilter: (t) => !t.name.startsWith("kysely"),
+
+		enumStyle: "type",
+	});
+}
+
+/**
+ * Get the database URL
+ *
+ * @returns {string}
+ */
+function getDbUrl() {
+	const user = getEnv("POSTGRES_USER");
+	const password = encodeURIComponent(getEnv("POSTGRES_PASSWORD"));
+	const db = getEnv("POSTGRES_DB");
+	const host = getEnv("POSTGRES_HOST");
+	return `postgres://${user}:${password}@${host}:5432/${db}`;
+}

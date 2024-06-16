@@ -1,5 +1,5 @@
 import { invalidate } from "$app/navigation";
-import type { FeedGroupWithFeeds, FeedId, FeedStats } from "$server";
+import type { FeedGroupWithFeeds, FeedId, FeedStats } from "simple-news-types";
 
 /**
  * Return true if all feed IDs are in a given group

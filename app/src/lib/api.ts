@@ -1,13 +1,13 @@
 import { invalidate } from "$app/navigation";
 import type {
+    AddFeedGroupRequest,
 	AddFeedRequest,
 	AddGroupFeedRequest,
-	ArticlesMarkRequest,
-	CreateFeedGroupRequest,
+	MarkArticlesRequest,
 	UpdateFeedRequest,
-} from "$server";
+} from "simple-news-types";
 
-export async function markArticles(data: ArticlesMarkRequest): Promise<void> {
+export async function markArticles(data: MarkArticlesRequest): Promise<void> {
 	const resp = await fetch("/api/mark", {
 		method: "POST",
 		body: JSON.stringify(data),
@@ -51,7 +51,7 @@ export async function updateFeed(
 }
 
 export async function addFeedGroup(
-	data: CreateFeedGroupRequest,
+	data: AddFeedGroupRequest,
 ): Promise<void> {
 	const resp = await fetch("/api/feedgroups", {
 		method: "POST",
