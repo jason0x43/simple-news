@@ -17,9 +17,9 @@ type DownloadedFeed = {
 type ParsedFeedItem = {
 	id: string;
 	title: string;
-	link: string;
+	link: string | undefined;
 	updated: string;
-	content: string;
+	content: string | undefined;
 };
 
 type ParsedFeed = {
@@ -88,25 +88,30 @@ const AtomLink = z.object({
 /** Atom 1.0 doc */
 const AtomDoc = z.object({
 	feed: z.object({
-		title: TextNode,
-		link: z.union([z.array(AtomLink), AtomLink]),
-		subtitle: TextNode,
-		updated: TextNode,
-		icon: z.optional(TextNode),
-		author: z.object({
-			name: TextNode,
-			email: TextNode,
-		}),
 		id: TextNode,
+		title: TextNode,
+		updated: TextNode,
+		link: z.optional(z.union([z.array(AtomLink), AtomLink])),
+		subtitle: z.optional(TextNode),
+		icon: z.optional(TextNode),
+		author: z.optional(
+			z.object({
+				name: TextNode,
+				email: z.optional(TextNode),
+			}),
+		),
 		entry: z.array(
 			z.object({
 				id: TextNode,
 				title: TextNode,
 				updated: TextNode,
-				link: z.union([z.array(AtomLink), AtomLink]),
-				content: TextNode.extend({
-					$$type: z.optional(z.string()),
-				}),
+				published: z.optional(TextNode),
+				link: z.optional(z.union([z.array(AtomLink), AtomLink])),
+				content: z.optional(
+					TextNode.extend({
+						$$type: z.optional(z.string()),
+					}),
+				),
 			}),
 		),
 	}),
@@ -139,18 +144,13 @@ export async function downloadFeed(feedUrl: string): Promise<DownloadedFeed> {
 			console.warn(`Error getting icon for ${feedUrl}: ${error}`);
 		}
 
-		const articles: DownloadedArticle[] = [];
-
-		for (const item of parsedFeed.items) {
-			const content = getContent(item);
-			articles.push({
-				article_id: item.id,
-				content,
-				title: item.title,
-				link: item.link,
-				published: new Date(item.updated),
-			});
-		}
+		const articles: DownloadedArticle[] = parsedFeed.items.map((item) => ({
+			article_id: item.id,
+			content: getContent(item) ?? "",
+			title: item.title,
+			link: item.link,
+			published: new Date(item.updated),
+		}));
 
 		console.debug(`Processed feed ${feedUrl}`);
 
@@ -198,16 +198,18 @@ function parseFeed(xml: string): ParsedFeed {
 		parsedFeed.title = feedDoc.feed.title.$text;
 		if (Array.isArray(feedDoc.feed.link)) {
 			parsedFeed.link = feedDoc.feed.link[0].$$href;
-		} else {
+		} else if (feedDoc.feed.link) {
 			parsedFeed.link = feedDoc.feed.link.$$href;
 		}
 		parsedFeed.icon = feedDoc.feed.icon?.$text;
 		parsedFeed.items = feedDoc.feed.entry.map((entry) => ({
 			id: entry.id.$text,
 			title: entry.title.$text,
-			link: Array.isArray(entry.link) ? entry.link[0].$$href : entry.link.$$href,
+			link: Array.isArray(entry.link)
+				? entry.link[0].$$href
+				: entry.link?.$$href,
 			updated: entry.updated.$text,
-			content: entry.content.$text,
+			content: entry.content?.$text,
 		}));
 	} else {
 		const channel = getRssChannel(feedDoc);
@@ -318,7 +320,7 @@ async function getIconUrl(feed: ParsedFeed): Promise<string | undefined> {
 /**
  * Get the content of a feed item
  */
-function getContent(entry: ParsedFeedItem): string {
+function getContent(entry: ParsedFeedItem): string | undefined {
 	let content = entry.content;
 
 	if (content) {
