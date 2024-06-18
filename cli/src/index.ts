@@ -100,8 +100,8 @@ feedCmd
 	});
 
 feedCmd
-	.command("get")
-	.description("Get a feed")
+	.command("show")
+	.description("Show config for a feed")
 	.argument("<feed_id>", "A feed ID to get logs for", (val) => {
 		const cache = Cache.load();
 		return FeedId.parse(cache.getMatchingId("feed", val));
