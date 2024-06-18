@@ -80,7 +80,7 @@ feedCmd
 feedCmd
 	.command("list")
 	.description("List feeds")
-	.option("-t, --table", "Print a table instead of JSON")
+	.option("-j, --json", "JSON output")
 	.action(async (options) => {
 		const client = getClient();
 		const cache = Cache.load();
@@ -89,13 +89,18 @@ feedCmd
 			cache.addId("feed", feed.id);
 		}
 
-		if (options.table) {
-			table(feeds.map((feed) => ({
-				id: feed.id,
-				title: feed.title
-			})), { showHeader: true });
-		} else {
+		if (options.json) {
 			console.log(JSON.stringify(feeds, null, 2));
+		} else {
+			table(
+				feeds
+					.map((feed) => ({
+						id: feed.id,
+						title: feed.title,
+					}))
+					.sort((a, b) => a.title.localeCompare(b.title)),
+				{ showHeader: true },
+			);
 		}
 	});
 
@@ -109,6 +114,9 @@ feedCmd
 	.action(async (feed_id) => {
 		const client = getClient();
 		const feed = await client.getFeed(feed_id);
+		if (feed.icon && feed.icon.startsWith('data:image')) {
+			feed.icon = 'data:image...';
+		}
 		console.log(JSON.stringify(feed, null, 2));
 	});
 
