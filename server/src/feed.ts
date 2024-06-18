@@ -1,69 +1,215 @@
-import Parser, { Item } from "rss-parser";
-import { Feed } from "./schemas/public/Feed.js";
+import { XMLParser } from "fast-xml-parser";
 import { isValidUrl, quickFetch } from "./util.js";
 import { NewArticle } from "./schemas/public/Article.js";
 import { createHash } from "node:crypto";
 import * as cheerio from "cheerio";
+import { z } from "zod";
 
-type ParsedFeed = Parser.Output<Record<string, unknown>>;
-
-type FeedItem = Parser.Item & {
-	"content:encoded"?: string;
-};
-
-type DownloadedArticle = Omit<NewArticle, "id">;
+type DownloadedArticle = Omit<NewArticle, "id" | "feed_id">;
 
 type DownloadedFeed = {
+	title: string;
+	link: string;
 	icon: string | undefined;
 	articles: DownloadedArticle[];
 };
 
-export async function downloadFeed(feed: Feed): Promise<DownloadedFeed> {
-	try {
-		console.debug(`Refreshing feed ${feed.title}`);
+type ParsedFeedItem = {
+	id: string;
+	title: string;
+	link: string;
+	updated: string;
+	content: string;
+};
 
-		const response = await quickFetch(feed.url);
+type ParsedFeed = {
+	title: string;
+	link: string;
+	icon: string | undefined;
+	items: ParsedFeedItem[];
+};
+
+/** RSS 2.0 doc */
+const RssDoc = z.object({
+	rss: z.object({
+		channel: z.object({
+			title: z.string(),
+			link: z.string(),
+			description: z.string(),
+			pubDate: z.optional(z.string()),
+			lastBuildDate: z.optional(z.string()),
+			image: z.optional(
+				z.object({
+					url: z.string(),
+					title: z.string(),
+					link: z.string(),
+					width: z.optional(z.number()),
+					height: z.optional(z.number()),
+					description: z.optional(z.string()),
+				}),
+			),
+			item: z.array(
+				z.object({
+					title: z.optional(z.string()),
+					description: z.optional(z.string()),
+					link: z.optional(z.string()),
+					guid: z.optional(
+						z.union([
+							z.string(),
+							z.object({
+								"@_isPermaLink": z.string(),
+								"#text": z.string(),
+							}),
+						]),
+					),
+					pubDate: z.optional(z.string()),
+				}),
+			),
+		}),
+	}),
+});
+type RssDoc = z.infer<typeof RssDoc>;
+
+const AtomLink = z.object({
+	"@_href": z.string(),
+	"@_rel": z.optional(z.string()),
+	"@_type": z.optional(z.string()),
+	"@_title": z.optional(z.string()),
+});
+
+/** Atom 1.0 doc */
+const AtomDoc = z.object({
+	feed: z.object({
+		title: z.string(),
+		link: z.array(AtomLink),
+		subtitle: z.string(),
+		updated: z.string(),
+		icon: z.optional(z.string()),
+		author: z.object({
+			name: z.string(),
+			email: z.string(),
+		}),
+		id: z.string(),
+		entry: z.array(
+			z.object({
+				id: z.string(),
+				title: z.string(),
+				updated: z.string(),
+				link: AtomLink,
+				content: z.object({
+					"#text": z.string(),
+					"@_type": z.optional(z.string()),
+				}),
+			}),
+		),
+	}),
+});
+type AtomDoc = z.infer<typeof AtomDoc>;
+
+const FeedDoc = z.union([RssDoc, AtomDoc]);
+type FeedDoc = z.infer<typeof FeedDoc>;
+
+/**
+ * Download and parse a feed
+ */
+export async function downloadFeed(feedUrl: string): Promise<DownloadedFeed> {
+	console.debug(`Downloading feed ${feedUrl}...`);
+
+	try {
+		const response = await quickFetch(feedUrl);
 		const xml = await response.text();
 		if (xml.length === 0) {
 			throw new Error(`Error downloading feed: empty body`);
 		}
 
-		// TODO: consider switching to fast-xml-parser instead of rss-parser
-
-		const parser = new Parser();
-		const parsedFeed = await parser.parseString(xml);
+		const parsedFeed = parseFeed(xml);
 
 		let icon: string | undefined = undefined;
 
 		try {
 			icon = await getIcon(parsedFeed);
 		} catch (error) {
-			console.warn(`Error getting icon for ${feed.title}: ${error}`);
+			console.warn(`Error getting icon for ${feedUrl}: ${error}`);
 		}
 
 		const articles: DownloadedArticle[] = [];
 
-		for (const entry of parsedFeed.items) {
-			const articleId = getArticleId(entry);
-			const content = getContent(entry);
+		for (const item of parsedFeed.items) {
+			const content = getContent(item);
 			articles.push({
-				article_id: articleId,
-				feed_id: feed.id,
+				article_id: item.id,
 				content,
-				title: entry.title ?? "Untitled",
-				link: entry.link ?? null,
-				// TODO: use entry updated date if pubDate isn't there
-				published: entry.pubDate ? new Date(entry.pubDate) : new Date(),
+				title: item.title,
+				link: item.link,
+				published: new Date(item.updated),
 			});
 		}
 
-		console.debug(`Processed feed ${feed.title}`);
+		console.debug(`Processed feed ${feedUrl}`);
 
-		return { icon, articles };
+		return {
+			title: parsedFeed.title,
+			link: parsedFeed.link,
+			icon,
+			articles,
+		};
 	} catch (error) {
-		console.warn(`error downloading feed ${feed.title}: ${error}`);
+		console.warn(`error downloading feed ${feedUrl}: ${error}`);
 		throw new Error(`unable to download feed: ${error}`);
 	}
+}
+
+function isAtomDoc(doc: FeedDoc): doc is AtomDoc {
+	return "feed" in doc;
+}
+
+/**
+ * Parse an XML feed document
+ */
+function parseFeed(xml: string): ParsedFeed {
+	const parser = new XMLParser({ ignoreAttributes: false });
+	const xmlDoc = parser.parse(xml);
+	const feedDoc = FeedDoc.parse(xmlDoc);
+
+	const parsedFeed: ParsedFeed = {
+		title: "",
+		link: "",
+		icon: undefined,
+		items: [],
+	};
+
+	if (isAtomDoc(feedDoc)) {
+		parsedFeed.title = feedDoc.feed.title;
+		parsedFeed.link = feedDoc.feed.link[0]["@_href"];
+		parsedFeed.icon = feedDoc.feed.icon;
+		parsedFeed.items = feedDoc.feed.entry.map((entry) => ({
+			id: entry.id,
+			title: entry.title,
+			link: entry.link["@_href"],
+			updated: entry.updated,
+			content: entry.content["#text"],
+		}));
+	} else {
+		parsedFeed.title = feedDoc.rss.channel.title;
+		parsedFeed.link = feedDoc.rss.channel.link;
+		parsedFeed.icon = feedDoc.rss.channel.image?.url;
+		parsedFeed.items = feedDoc.rss.channel.item.map((item) => ({
+			id:
+				(typeof item.guid === "string"
+					? item.guid
+					: item.guid != null
+						? item.guid["#text"]
+						: undefined) ??
+				item.link ??
+				hashStrings(item.title ?? "", item.description ?? ""),
+			title: item.title ?? "",
+			link: item.link ?? "",
+			updated: item.pubDate ? new Date(item.pubDate).toISOString() : "",
+			content: item.description ?? "",
+		}));
+	}
+
+	return parsedFeed;
 }
 
 /**
@@ -90,15 +236,13 @@ async function getIcon(feed: ParsedFeed): Promise<string | undefined> {
  * Get the icon URL for a feed
  */
 async function getIconUrl(feed: ParsedFeed): Promise<string | undefined> {
-	if (feed.image && isValidUrl(feed.image.url)) {
-		console.debug(`Trying feed image URL ${feed.image.url} for icon`);
-		const response = await quickFetch(feed.image.url, { method: "HEAD" });
+	if (feed.icon && isValidUrl(feed.icon)) {
+		console.debug(`Trying feed image URL ${feed.icon} for icon`);
+		const response = await quickFetch(feed.icon, { method: "HEAD" });
 		await response.body?.cancel();
 		if (response.status === 200) {
-			console.debug(
-				`Using feed icon ${feed.image.url} for ${feed.title} icon URL`,
-			);
-			return feed.image.url;
+			console.debug(`Using feed icon ${feed.icon} for ${feed.title} icon URL`);
+			return feed.icon;
 		}
 	}
 
@@ -157,45 +301,29 @@ async function getIconUrl(feed: ParsedFeed): Promise<string | undefined> {
 /**
  * Get the content of a feed item
  */
-function getContent(entry: FeedItem): string {
-	let content = entry["content:encoded"] ?? entry.content ?? entry.summary;
+function getContent(entry: ParsedFeedItem): string {
+	let content = entry.content;
+
 	if (content) {
 		try {
 			const $ = cheerio.load(content);
 			$("a").each((_, a) => {
 				$(a).removeAttr("style");
 			});
-			content = $("body").html() ?? undefined;
+			content = $("body").html() ?? "";
 		} catch (error) {
 			console.warn("Error processing document content");
 		}
 	}
 
-	return content ?? "";
+	return content;
 }
 
 /**
- * Return a unique ID for an article
- *
- * This ID should be consistent between runs so we can update existing articles.
+ * Generate a hash of a list of strings
  */
-function getArticleId(article: Item & { [key: string]: unknown }): string {
-	if (article.guid) {
-		return article.guid;
-	}
-
-	if (article.id) {
-		return article.id as string;
-	}
-
-	if (article.link) {
-		return article.link;
-	}
-
+function hashStrings(...strings: string[]): string {
 	const hash = createHash("sha256");
-	hash.update(
-		article.title ?? "" + article.summary ?? "" + article.content ?? "",
-	);
-
+	hash.update(strings.join(""));
 	return `sha256:${hash.digest("hex")}`;
 }

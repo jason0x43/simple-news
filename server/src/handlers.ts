@@ -14,6 +14,7 @@ import { ArticleId } from "./schemas/public/Article.js";
 import { FeedId } from "./schemas/public/Feed.js";
 import { AppError } from "./error.js";
 import { FeedGroupId } from "./schemas/public/FeedGroup.js";
+import { downloadFeed } from "./feed.js";
 
 type Handler = UserRouteHandler;
 
@@ -254,4 +255,10 @@ export default {
 		);
 		res.json(articles);
 	},
+
+	testFeedUrl: async (req, res) => {
+		const url = req.query_parameters.url;
+		const feed = await downloadFeed(url);
+		res.json(feed);
+	}
 } satisfies Record<string, Handler>;

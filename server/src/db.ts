@@ -279,7 +279,7 @@ export class Db {
 		try {
 			console.debug(`Refreshing feed ${feed.title}`);
 
-			const downloadedFeed = await downloadFeed(feed);
+			const downloadedFeed = await downloadFeed(feed.url);
 
 			if (downloadedFeed.icon) {
 				await this.#db
@@ -295,6 +295,7 @@ export class Db {
 					.insertInto("article")
 					.values({
 						id: createId() as ArticleId,
+						feed_id: feed.id,
 						...article,
 					})
 					.onConflict((conflict) =>
@@ -348,9 +349,11 @@ export class Db {
 		await Promise.all(
 			activeFeeds.map(async (feed) => {
 				const lastUpdate = await this.getLastUpdate(feed.id);
+				console.debug(`Last update for ${feed.title}: ${lastUpdate}`);
 				if (!lastUpdate || now.getTime() - lastUpdate.getTime() >= minDelayMs) {
 					return this.refreshFeed(feed);
 				}
+				console.debug(`Skipping feed ${feed.title}`);
 			}),
 		);
 

@@ -1,7 +1,10 @@
 import { Command } from "@commander-js/extra-typings";
 import { Config } from "./config.js";
+import { Cache } from "./cache.js";
 import { promptPassword } from "./util.js";
 import { Client } from "simple-news-client";
+import { FeedId } from "simple-news-types";
+import { table } from "./table.js";
 
 const program = new Command();
 
@@ -60,6 +63,101 @@ sessionCmd
 			sessionId,
 		};
 		console.log(`Logged in to ${config.activeHost} as ${username}`);
+	});
+
+const feedCmd = program.command("feed").description("Manage feeds");
+
+feedCmd
+	.command("test")
+	.description("Test a feed URL")
+	.argument("<url>", "URL of the feed")
+	.action(async (url) => {
+		const client = getClient();
+		const doc = await client.testFeedUrl(url);
+		console.log(JSON.stringify(doc, null, 2));
+	});
+
+feedCmd
+	.command("list")
+	.description("List feeds")
+	.option("-t, --table", "Print a table instead of JSON")
+	.action(async (options) => {
+		const client = getClient();
+		const cache = Cache.load();
+		const feeds = await client.getFeeds();
+		for (const feed of feeds) {
+			cache.addId("feed", feed.id);
+		}
+
+		if (options.table) {
+			table(feeds.map((feed) => ({
+				id: feed.id,
+				title: feed.title
+			})), { showHeader: true });
+		} else {
+			console.log(JSON.stringify(feeds, null, 2));
+		}
+	});
+
+feedCmd
+	.command("get")
+	.description("Get a feed")
+	.argument("<feed_id>", "A feed ID to get logs for", (val) => {
+		const cache = Cache.load();
+		return FeedId.parse(cache.getMatchingId("feed", val));
+	})
+	.action(async (feed_id) => {
+		const client = getClient();
+		const feed = await client.getFeed(feed_id);
+		console.log(JSON.stringify(feed, null, 2));
+	});
+
+feedCmd
+	.command("update")
+	.description("Update a feed")
+	.argument("<feed_id>", "A feed ID to update", (val) => {
+		const cache = Cache.load();
+		return FeedId.parse(cache.getMatchingId("feed", val));
+	})
+	.option("-u, --url <url>", "A new feed URL")
+	.option("-t, --title <title>", "A new feed title")
+	.action(async (feed_id, options) => {
+		const client = getClient();
+		await client.updateFeed(feed_id, {
+			title: options.title,
+			url: options.url,
+		});
+		console.log("Feed updated!");
+	});
+
+feedCmd
+	.command("log")
+	.description("Get feed download logs")
+	.argument("[feed_id]", "A feed ID to get logs for", (val) => {
+		const cache = Cache.load();
+		return FeedId.parse(cache.getMatchingId("feed", val));
+	})
+	.option("-e, --errors", "Only show errors")
+	.option("-t, --text", "Show a text format instead of JSON")
+	.action(async (feed_id, options) => {
+		const client = getClient();
+		let logs = await client.getFeedLogs(feed_id);
+
+		if (options.errors) {
+			logs = logs.filter((log) => !log.success);
+		}
+
+		if (options.text) {
+			for (const log of logs) {
+				if (log.success) {
+					console.log(`${log.time} ${log.feed_id} SUCCESS`);
+				} else {
+					console.log(`${log.time} ${log.feed_id} ERROR: ${log.message}`);
+				}
+			}
+		} else {
+			console.log(JSON.stringify(logs, null, 2));
+		}
 	});
 
 try {

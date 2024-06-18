@@ -10,6 +10,7 @@ import {
 	FeedGroupId,
 	FeedGroupsResponse,
 	FeedId,
+	FeedLog,
 	FeedStat,
 	FeedStats,
 	FeedsResponse,
@@ -80,6 +81,14 @@ export class Client {
 	async getFeedStats(): Promise<FeedStats> {
 		const resp = await this.#apiGet("feedstats");
 		return FeedStats.parse(await resp.json());
+	}
+
+	/**
+	 * Return all feeds.
+	 */
+	async getFeed(id: FeedId): Promise<Feed> {
+		const resp = await this.#apiGet(`feeds/${id}`);
+		return Feed.parse(await resp.json());
 	}
 
 	/**
@@ -238,6 +247,23 @@ export class Client {
 		await this.#apiGet(`feeds/refresh`);
 		const resp = await this.#apiGet(`feedstats`);
 		return FeedStats.parse(await resp.json());
+	}
+
+	/**
+	 * Test a feed URL
+	 */
+	async testFeedUrl(url: string): Promise<object> {
+		const params = new URLSearchParams({ url });
+		const resp = await this.#apiGet(`feed?${params}`);
+		return await resp.json();
+	}
+
+	/**
+	 * Get feed logs
+	 */
+	async getFeedLogs(feedId?: FeedId): Promise<FeedLog[]> {
+		const resp = await this.#apiGet(`feeds${feedId ? `/${feedId}` : ""}/log`);
+		return await resp.json();
 	}
 
 	async #apiGet(path: string): Promise<Response> {

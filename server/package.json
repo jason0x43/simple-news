@@ -11,10 +11,11 @@
 	"dependencies": {
 		"@paralleldrive/cuid2": "^2.2.2",
 		"cheerio": "1.0.0-rc.12",
+		"fast-xml-parser": "^4.4.0",
 		"hyper-express": "^6.16.1",
 		"kysely": "^0.27.3",
 		"pg": "^8.11.5",
-		"rss-parser": "^3.13.0"
+		"zod": "^3.23.8"
 	},
 	"devDependencies": {
 		"@commander-js/extra-typings": "^12.1.0",

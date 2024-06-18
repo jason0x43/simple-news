@@ -156,3 +156,12 @@ export const AddGroupFeedRequest = z.object({
 	move_feed: z.boolean(),
 });
 export type AddGroupFeedRequest = z.infer<typeof AddGroupFeedRequest>;
+
+export const FeedLog = z.object({
+	id: z.string(),
+	feed_id: z.string(),
+	time: z.string().datetime(),
+	success: z.boolean(),
+	message: z.nullable(z.string()),
+});
+export type FeedLog = z.infer<typeof FeedLog>;

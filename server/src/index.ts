@@ -82,6 +82,8 @@ server.delete("/feedgroups/:id/:feed_id", userRoute, handlers.deleteGroupFeed);
 
 server.get("/feedstats", userRoute, handlers.getFeedStats);
 
+server.get("/feed", userRoute, handlers.testFeedUrl);
+
 try {
 	await server.listen(Number(port));
 	console.log(`Listening on port ${port}...`);
