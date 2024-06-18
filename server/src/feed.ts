@@ -55,7 +55,7 @@ const RssChannel = z.object({
 			link: z.optional(TextNode),
 			guid: z.optional(
 				TextNode.extend({
-					"@_isPermaLink": z.optional(z.string()),
+					$$isPermaLink: z.optional(z.string()),
 				}),
 			),
 			pubDate: z.optional(TextNode),
@@ -79,10 +79,10 @@ const RssDoc = z.union([
 type RssDoc = z.infer<typeof RssDoc>;
 
 const AtomLink = z.object({
-	"@_href": z.string(),
-	"@_rel": z.optional(z.string()),
-	"@_type": z.optional(z.string()),
-	"@_title": z.optional(z.string()),
+	$$href: z.string(),
+	$$rel: z.optional(z.string()),
+	$$type: z.optional(z.string()),
+	$$title: z.optional(z.string()),
 });
 
 /** Atom 1.0 doc */
@@ -103,9 +103,9 @@ const AtomDoc = z.object({
 				id: TextNode,
 				title: TextNode,
 				updated: TextNode,
-				link: AtomLink,
+				link: z.union([z.array(AtomLink), AtomLink]),
 				content: TextNode.extend({
-					"@_type": z.optional(z.string()),
+					$$type: z.optional(z.string()),
 				}),
 			}),
 		),
@@ -182,6 +182,7 @@ function parseFeed(xml: string): ParsedFeed {
 		ignoreAttributes: false,
 		alwaysCreateTextNode: true,
 		textNodeName: "$text",
+		attributeNamePrefix: "$$",
 	});
 	const xmlDoc = parser.parse(xml);
 	const feedDoc = FeedDoc.parse(xmlDoc);
@@ -196,15 +197,15 @@ function parseFeed(xml: string): ParsedFeed {
 	if (isAtomDoc(feedDoc)) {
 		parsedFeed.title = feedDoc.feed.title.$text;
 		if (Array.isArray(feedDoc.feed.link)) {
-			parsedFeed.link = feedDoc.feed.link[0]["@_href"];
+			parsedFeed.link = feedDoc.feed.link[0].$$href;
 		} else {
-			parsedFeed.link = feedDoc.feed.link["@_href"];
+			parsedFeed.link = feedDoc.feed.link.$$href;
 		}
 		parsedFeed.icon = feedDoc.feed.icon?.$text;
 		parsedFeed.items = feedDoc.feed.entry.map((entry) => ({
 			id: entry.id.$text,
 			title: entry.title.$text,
-			link: entry.link["@_href"],
+			link: Array.isArray(entry.link) ? entry.link[0].$$href : entry.link.$$href,
 			updated: entry.updated.$text,
 			content: entry.content.$text,
 		}));
