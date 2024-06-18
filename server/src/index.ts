@@ -5,8 +5,8 @@ import { getEnv } from "./util.js";
 import { adminRequired, sessionRequired } from "./middlewares.js";
 
 const db = new Db();
-
 const adminUser = getEnv("SN_ADMIN_USER");
+const shutdownTasks: (() => void)[] = [];
 
 try {
 	await db.getAccountByUsername(adminUser);
@@ -86,22 +86,23 @@ server.get("/feed", userRoute, handlers.testFeedUrl);
 
 try {
 	await server.listen(Number(port));
+	shutdownTasks.push(() => server.close());
 	console.log(`Listening on port ${port}...`);
 } catch (error) {
 	console.log(`Failed to attach to port ${port}:`, error);
 }
 
 // Start a periodic refresh task
-//const updateMs = 1800 * 1000;
-//const refresher = setInterval(async () => {
-//	await db.refreshActiveFeeds(updateMs);
-//}, updateMs);
-//db.refreshActiveFeeds(updateMs);
+const updateMs = 600 * 1000;
+const refresher = setInterval(async () => {
+	await db.refreshActiveFeeds(updateMs);
+}, updateMs);
+shutdownTasks.push(() => clearInterval(refresher));
+db.refreshActiveFeeds(updateMs);
 
 function shutdown() {
 	console.log("Shutting down services...");
-	//clearInterval(refresher);
-	server.close();
+	shutdownTasks.forEach((task) => task());
 }
 
 process.on("SIGINT", shutdown);
