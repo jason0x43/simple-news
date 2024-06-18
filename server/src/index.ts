@@ -92,18 +92,15 @@ try {
 }
 
 // Start a periodic refresh task
-const updateMs = 1800 * 1000;
-const refresher = setInterval(async () => {
-	await db.refreshActiveFeeds(updateMs);
-}, updateMs);
-
-console.log("Started refresh task");
-
-db.refreshActiveFeeds(updateMs);
+//const updateMs = 1800 * 1000;
+//const refresher = setInterval(async () => {
+//	await db.refreshActiveFeeds(updateMs);
+//}, updateMs);
+//db.refreshActiveFeeds(updateMs);
 
 function shutdown() {
 	console.log("Shutting down services...");
-	clearInterval(refresher);
+	//clearInterval(refresher);
 	server.close();
 }
 

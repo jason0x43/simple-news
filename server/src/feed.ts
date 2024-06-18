@@ -29,40 +29,38 @@ type ParsedFeed = {
 	items: ParsedFeedItem[];
 };
 
+const TextNode = z.object({ $text: z.string() });
+
 /** RSS 2.0 doc */
 const RssDoc = z.object({
 	rss: z.object({
 		channel: z.object({
-			title: z.string(),
-			link: z.string(),
-			description: z.string(),
-			pubDate: z.optional(z.string()),
-			lastBuildDate: z.optional(z.string()),
+			title: TextNode,
+			link: TextNode,
+			description: TextNode,
+			pubDate: z.optional(TextNode),
+			lastBuildDate: z.optional(TextNode),
 			image: z.optional(
 				z.object({
-					url: z.string(),
-					title: z.string(),
-					link: z.string(),
+					url: TextNode,
+					title: TextNode,
+					link: TextNode,
 					width: z.optional(z.number()),
 					height: z.optional(z.number()),
-					description: z.optional(z.string()),
+					description: z.optional(TextNode),
 				}),
 			),
 			item: z.array(
 				z.object({
-					title: z.optional(z.string()),
-					description: z.optional(z.string()),
-					link: z.optional(z.string()),
+					title: z.optional(TextNode),
+					description: z.optional(TextNode),
+					link: z.optional(TextNode),
 					guid: z.optional(
-						z.union([
-							z.string(),
-							z.object({
-								"@_isPermaLink": z.string(),
-								"#text": z.string(),
-							}),
-						]),
+						TextNode.extend({
+							"@_isPermaLink": z.optional(z.string()),
+						}),
 					),
-					pubDate: z.optional(z.string()),
+					pubDate: z.optional(TextNode),
 				}),
 			),
 		}),
@@ -80,24 +78,23 @@ const AtomLink = z.object({
 /** Atom 1.0 doc */
 const AtomDoc = z.object({
 	feed: z.object({
-		title: z.string(),
-		link: z.array(AtomLink),
-		subtitle: z.string(),
-		updated: z.string(),
-		icon: z.optional(z.string()),
+		title: TextNode,
+		link: z.union([z.array(AtomLink), AtomLink]),
+		subtitle: TextNode,
+		updated: TextNode,
+		icon: z.optional(TextNode),
 		author: z.object({
-			name: z.string(),
-			email: z.string(),
+			name: TextNode,
+			email: TextNode,
 		}),
-		id: z.string(),
+		id: TextNode,
 		entry: z.array(
 			z.object({
-				id: z.string(),
-				title: z.string(),
-				updated: z.string(),
+				id: TextNode,
+				title: TextNode,
+				updated: TextNode,
 				link: AtomLink,
-				content: z.object({
-					"#text": z.string(),
+				content: TextNode.extend({
 					"@_type": z.optional(z.string()),
 				}),
 			}),
@@ -167,7 +164,11 @@ function isAtomDoc(doc: FeedDoc): doc is AtomDoc {
  * Parse an XML feed document
  */
 function parseFeed(xml: string): ParsedFeed {
-	const parser = new XMLParser({ ignoreAttributes: false });
+	const parser = new XMLParser({
+		ignoreAttributes: false,
+		alwaysCreateTextNode: true,
+		textNodeName: "$text",
+	});
 	const xmlDoc = parser.parse(xml);
 	const feedDoc = FeedDoc.parse(xmlDoc);
 
@@ -179,33 +180,33 @@ function parseFeed(xml: string): ParsedFeed {
 	};
 
 	if (isAtomDoc(feedDoc)) {
-		parsedFeed.title = feedDoc.feed.title;
-		parsedFeed.link = feedDoc.feed.link[0]["@_href"];
-		parsedFeed.icon = feedDoc.feed.icon;
+		parsedFeed.title = feedDoc.feed.title.$text;
+		if (Array.isArray(feedDoc.feed.link)) {
+			parsedFeed.link = feedDoc.feed.link[0]["@_href"];
+		} else {
+			parsedFeed.link = feedDoc.feed.link["@_href"];
+		}
+		parsedFeed.icon = feedDoc.feed.icon?.$text;
 		parsedFeed.items = feedDoc.feed.entry.map((entry) => ({
-			id: entry.id,
-			title: entry.title,
+			id: entry.id.$text,
+			title: entry.title.$text,
 			link: entry.link["@_href"],
-			updated: entry.updated,
-			content: entry.content["#text"],
+			updated: entry.updated.$text,
+			content: entry.content.$text,
 		}));
 	} else {
-		parsedFeed.title = feedDoc.rss.channel.title;
-		parsedFeed.link = feedDoc.rss.channel.link;
-		parsedFeed.icon = feedDoc.rss.channel.image?.url;
+		parsedFeed.title = feedDoc.rss.channel.title.$text;
+		parsedFeed.link = feedDoc.rss.channel.link.$text;
+		parsedFeed.icon = feedDoc.rss.channel.image?.url.$text;
 		parsedFeed.items = feedDoc.rss.channel.item.map((item) => ({
 			id:
-				(typeof item.guid === "string"
-					? item.guid
-					: item.guid != null
-						? item.guid["#text"]
-						: undefined) ??
-				item.link ??
-				hashStrings(item.title ?? "", item.description ?? ""),
-			title: item.title ?? "",
-			link: item.link ?? "",
-			updated: item.pubDate ? new Date(item.pubDate).toISOString() : "",
-			content: item.description ?? "",
+				item.guid?.$text ??
+				item.link?.$text ??
+				hashStrings(item.title?.$text ?? "", item.description?.$text ?? ""),
+			title: item.title?.$text ?? "",
+			link: item.link?.$text ?? "",
+			updated: item.pubDate ? new Date(item.pubDate.$text).toISOString() : "",
+			content: item.description?.$text ?? "",
 		}));
 	}
 
