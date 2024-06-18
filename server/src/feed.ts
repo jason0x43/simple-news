@@ -18,7 +18,7 @@ type ParsedFeedItem = {
 	id: string;
 	title: string;
 	link: string | undefined;
-	updated: string;
+	updated: Date;
 	content: string | undefined;
 };
 
@@ -64,19 +64,39 @@ const RssChannel = z.object({
 });
 type RssChannel = z.infer<typeof RssChannel>;
 
-/** RSS 2.0 doc */
 const RssDoc = z.union([
 	z.object({
 		rss: z.object({
 			channel: RssChannel,
 		}),
 	}),
-	// some doc's skip the rss node
+	// some docs skip the rss node
 	z.object({
 		channel: RssChannel,
 	}),
 ]);
 type RssDoc = z.infer<typeof RssDoc>;
+
+const RdfDoc = z.object({
+	"rdf:RDF": z.object({
+		channel: z.object({
+			title: TextNode,
+			link: TextNode,
+			description: TextNode,
+			"dc:date": TextNode,
+		}),
+		item: z.array(
+			z.object({
+				"$$rdf:about": z.string(),
+				"dc:date": TextNode,
+				title: z.optional(TextNode),
+				description: z.optional(TextNode),
+				link: z.optional(TextNode),
+			}),
+		),
+	}),
+});
+type RdfDoc = z.infer<typeof RdfDoc>;
 
 const AtomLink = z.object({
 	$$href: z.string(),
@@ -85,7 +105,6 @@ const AtomLink = z.object({
 	$$title: z.optional(z.string()),
 });
 
-/** Atom 1.0 doc */
 const AtomDoc = z.object({
 	feed: z.object({
 		id: TextNode,
@@ -118,7 +137,7 @@ const AtomDoc = z.object({
 });
 type AtomDoc = z.infer<typeof AtomDoc>;
 
-const FeedDoc = z.union([RssDoc, AtomDoc]);
+const FeedDoc = z.union([RssDoc, AtomDoc, RdfDoc]);
 type FeedDoc = z.infer<typeof FeedDoc>;
 
 /**
@@ -149,7 +168,7 @@ export async function downloadFeed(feedUrl: string): Promise<DownloadedFeed> {
 			content: getContent(item) ?? "",
 			title: item.title,
 			link: item.link,
-			published: new Date(item.updated),
+			published: item.updated,
 		}));
 
 		console.debug(`Processed feed ${feedUrl}`);
@@ -168,6 +187,10 @@ export async function downloadFeed(feedUrl: string): Promise<DownloadedFeed> {
 
 function isAtomDoc(doc: FeedDoc): doc is AtomDoc {
 	return "feed" in doc;
+}
+
+function isRdfDoc(doc: FeedDoc): doc is RdfDoc {
+	return "rdf:RDF" in doc;
 }
 
 function getRssChannel(doc: RssDoc): RssChannel {
@@ -208,8 +231,22 @@ function parseFeed(xml: string): ParsedFeed {
 			link: Array.isArray(entry.link)
 				? entry.link[0].$$href
 				: entry.link?.$$href,
-			updated: entry.updated.$text,
+			updated: new Date(entry.updated.$text),
 			content: entry.content?.$text,
+		}));
+	} else if (isRdfDoc(feedDoc)) {
+		const channel = feedDoc["rdf:RDF"].channel;
+		parsedFeed.title = channel.title.$text;
+		parsedFeed.link = channel.link.$text;
+		parsedFeed.items = feedDoc["rdf:RDF"].item.map((item) => ({
+			id:
+				item["$$rdf:about"] ??
+				item.link?.$text ??
+				hashStrings(item.title?.$text ?? "", item.description?.$text ?? ""),
+			title: item.title?.$text ?? "",
+			link: item.link?.$text ?? "",
+			updated: new Date(item["dc:date"].$text),
+			content: item.description?.$text ?? "",
 		}));
 	} else {
 		const channel = getRssChannel(feedDoc);
@@ -223,7 +260,7 @@ function parseFeed(xml: string): ParsedFeed {
 				hashStrings(item.title?.$text ?? "", item.description?.$text ?? ""),
 			title: item.title?.$text ?? "",
 			link: item.link?.$text ?? "",
-			updated: item.pubDate ? new Date(item.pubDate.$text).toISOString() : "",
+			updated: item.pubDate ? new Date(item.pubDate.$text) : new Date(),
 			content: item.description?.$text ?? "",
 		}));
 	}
