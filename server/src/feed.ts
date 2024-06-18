@@ -30,42 +30,52 @@ type ParsedFeed = {
 };
 
 const TextNode = z.object({ $text: z.string() });
+const NumberNode = z.object({ $text: z.number() });
 
-/** RSS 2.0 doc */
-const RssDoc = z.object({
-	rss: z.object({
-		channel: z.object({
+const RssChannel = z.object({
+	title: TextNode,
+	link: TextNode,
+	description: TextNode,
+	pubDate: z.optional(TextNode),
+	lastBuildDate: z.optional(TextNode),
+	image: z.optional(
+		z.object({
+			url: TextNode,
 			title: TextNode,
 			link: TextNode,
-			description: TextNode,
+			width: z.optional(NumberNode),
+			height: z.optional(NumberNode),
+			description: z.optional(TextNode),
+		}),
+	),
+	item: z.array(
+		z.object({
+			title: z.optional(TextNode),
+			description: z.optional(TextNode),
+			link: z.optional(TextNode),
+			guid: z.optional(
+				TextNode.extend({
+					"@_isPermaLink": z.optional(z.string()),
+				}),
+			),
 			pubDate: z.optional(TextNode),
-			lastBuildDate: z.optional(TextNode),
-			image: z.optional(
-				z.object({
-					url: TextNode,
-					title: TextNode,
-					link: TextNode,
-					width: z.optional(z.number()),
-					height: z.optional(z.number()),
-					description: z.optional(TextNode),
-				}),
-			),
-			item: z.array(
-				z.object({
-					title: z.optional(TextNode),
-					description: z.optional(TextNode),
-					link: z.optional(TextNode),
-					guid: z.optional(
-						TextNode.extend({
-							"@_isPermaLink": z.optional(z.string()),
-						}),
-					),
-					pubDate: z.optional(TextNode),
-				}),
-			),
+		}),
+	),
+});
+type RssChannel = z.infer<typeof RssChannel>;
+
+/** RSS 2.0 doc */
+const RssDoc = z.union([
+	z.object({
+		rss: z.object({
+			channel: RssChannel,
 		}),
 	}),
-});
+	// some doc's skip the rss node
+	z.object({
+		channel: RssChannel,
+	}),
+]);
 type RssDoc = z.infer<typeof RssDoc>;
 
 const AtomLink = z.object({
@@ -160,6 +170,10 @@ function isAtomDoc(doc: FeedDoc): doc is AtomDoc {
 	return "feed" in doc;
 }
 
+function getRssChannel(doc: RssDoc): RssChannel {
+	return "rss" in doc ? doc.rss.channel : doc.channel;
+}
+
 /**
  * Parse an XML feed document
  */
@@ -195,10 +209,11 @@ function parseFeed(xml: string): ParsedFeed {
 			content: entry.content.$text,
 		}));
 	} else {
-		parsedFeed.title = feedDoc.rss.channel.title.$text;
-		parsedFeed.link = feedDoc.rss.channel.link.$text;
-		parsedFeed.icon = feedDoc.rss.channel.image?.url.$text;
-		parsedFeed.items = feedDoc.rss.channel.item.map((item) => ({
+		const channel = getRssChannel(feedDoc);
+		parsedFeed.title = channel.title.$text;
+		parsedFeed.link = channel.link.$text;
+		parsedFeed.icon = channel.image?.url.$text;
+		parsedFeed.items = channel.item.map((item) => ({
 			id:
 				item.guid?.$text ??
 				item.link?.$text ??
