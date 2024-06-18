@@ -321,7 +321,7 @@ export class Db {
 				})
 				.execute();
 		} catch (error) {
-			console.warn(`Error downloading feed ${feed.title}: ${error}`);
+			console.warn(`Error downloading feed ${feed.url}: ${error}`);
 			await this.#db
 				.insertInto("feed_log")
 				.values({
