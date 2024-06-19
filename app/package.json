@@ -2,6 +2,10 @@
 	"name": "simple-news-app",
 	"description": "A simple RSS reader",
 	"private": true,
+	"main": "build/index.js",
+	"files": [
+		"build"
+	],
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",

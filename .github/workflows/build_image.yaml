@@ -41,7 +41,7 @@ jobs:
       - name: Build and push app image
         uses: docker/build-push-action@v5
         with:
-          context: app
+          target: app
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -77,7 +77,7 @@ jobs:
       - name: Build and push server image
         uses: docker/build-push-action@v5
         with:
-          context: server
+          target: server
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

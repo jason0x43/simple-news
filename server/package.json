@@ -3,6 +3,9 @@
 	"description": "Server for simple-news app",
 	"private": "true",
 	"main": "build/index.js",
+	"files": [
+		"build"
+	],
 	"type": "module",
 	"scripts": {
 		"build": "tsc",
@@ -15,6 +18,7 @@
 		"hyper-express": "^6.16.1",
 		"kysely": "^0.27.3",
 		"pg": "^8.11.5",
+		"simple-news-types": "workspace:*",
 		"zod": "^3.23.8"
 	},
 	"devDependencies": {
@@ -23,7 +27,6 @@
 		"commander": "^12.1.0",
 		"kanel": "^3.8.9",
 		"kanel-kysely": "^0.4.0",
-		"simple-news-types": "workspace:*",
 		"tsc-watch": "^6.2.0"
 	}
 }
