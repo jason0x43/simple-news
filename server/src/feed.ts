@@ -275,8 +275,6 @@ async function getIcon(feed: ParsedFeed): Promise<string | undefined> {
 	const url = await getIconUrl(feed);
 
 	if (url) {
-		console.debug(`Getting icon data for ${url}`);
-
 		try {
 			const resp = await fetch(url);
 			const buf = Buffer.from(await resp.arrayBuffer());
@@ -293,19 +291,14 @@ async function getIcon(feed: ParsedFeed): Promise<string | undefined> {
  */
 async function getIconUrl(feed: ParsedFeed): Promise<string | undefined> {
 	if (feed.icon && isValidUrl(feed.icon)) {
-		console.debug(`Trying feed image URL ${feed.icon} for icon`);
 		const response = await quickFetch(feed.icon, { method: "HEAD" });
 		await response.body?.cancel();
 		if (response.status === 200) {
-			console.debug(`Using feed icon ${feed.icon} for ${feed.title} icon URL`);
 			return feed.icon;
 		}
 	}
 
 	if (feed.link && isValidUrl(feed.link)) {
-		console.debug(
-			`Looking in content of ${feed.link} (${typeof feed.link}) for icon`,
-		);
 		const feedBase = new URL(feed.link).origin;
 		const htmlResponse = await quickFetch(feedBase);
 		const html = await htmlResponse.text();
@@ -313,11 +306,8 @@ async function getIconUrl(feed: ParsedFeed): Promise<string | undefined> {
 		const iconLink = $('link[rel*="icon"]');
 
 		if (iconLink.length > 0) {
-			console.debug(`Trying iconLink ${iconLink}`);
 			const iconHref = iconLink.attr("href") as string;
 			const iconUrl = new URL(iconHref, feedBase);
-
-			console.debug(`Made iconUrl ${iconUrl}`);
 
 			// Try https by default
 			iconUrl.protocol = "https";
@@ -326,7 +316,6 @@ async function getIconUrl(feed: ParsedFeed): Promise<string | undefined> {
 			});
 			await iconResponse.body?.cancel();
 			if (iconResponse.status === 200) {
-				console.debug(`Using link ${iconUrl} for ${feed.title} icon URL`);
 				return `${iconUrl}`;
 			}
 
@@ -336,7 +325,6 @@ async function getIconUrl(feed: ParsedFeed): Promise<string | undefined> {
 			});
 			await httpIconResponse.body?.cancel();
 			if (httpIconResponse.status === 200) {
-				console.debug(`Using link ${iconUrl} for ${feed.title} icon URL`);
 				return `${iconUrl}`;
 			}
 		}
@@ -348,7 +336,6 @@ async function getIconUrl(feed: ParsedFeed): Promise<string | undefined> {
 			response.status === 200 &&
 			response.headers.get("content-length") !== "0"
 		) {
-			console.debug(`Using favicon ${favicon} for ${feed.title} icon URL`);
 			return `${favicon}`;
 		}
 	}
