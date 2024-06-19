@@ -20,7 +20,7 @@ try {
 }
 
 const server = createServer({ db });
-const port = process.env.SN_API_PORT ?? 3000;
+const port = process.env.API_PORT ?? 3000;
 
 server.set_error_handler((_request, response, error) => {
 	console.warn(error);
@@ -93,7 +93,7 @@ try {
 }
 
 // Start a periodic refresh task
-const envUpdateSec = Number(process.env.SN_UPDATE_SEC);
+const envUpdateSec = Number(process.env.FEED_UPDATE_SEC);
 const updateSec = isNaN(envUpdateSec) ? 1800 : envUpdateSec;
 const updateMs = updateSec * 1000;
 const refresher = setInterval(async () => {

@@ -34,6 +34,7 @@ export class Client {
 		this.#apiHost = apiHost;
 		this.#sessionId = options?.sessionId;
 		this.#fetch = options?.fetch ?? fetch;
+		console.log(`Initialized client for host ${apiHost}`);
 	}
 
 	/**

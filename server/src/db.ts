@@ -35,10 +35,7 @@ export class Db {
 		this.#db = new Kysely({
 			dialect: new PostgresDialect({
 				pool: new Pg.Pool({
-					user: getEnv("POSTGRES_USER"),
-					password: getEnv("POSTGRES_PASSWORD"),
-					database: getEnv("POSTGRES_DB"),
-					host: getEnv("POSTGRES_HOST"),
+					connectionString: getEnv("DATABASE_URL"),
 				}),
 			}),
 		});

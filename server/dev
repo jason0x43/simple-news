@@ -51,9 +51,13 @@ dbCmd
 	.command("console")
 	.description("Open a database console")
 	.action(async () => {
-		spawnSync("docker", ["compose", "exec", "db", "psql", getDbUrl()], {
-			stdio: "inherit",
-		});
+		spawnSync(
+			"docker",
+			["compose", "exec", "db", "psql", getEnv("DATABASE_URL")],
+			{
+				stdio: "inherit",
+			},
+		);
 	});
 
 const migrateCmd = dbCmd
@@ -220,10 +224,7 @@ function getDb() {
 	return new Kysely({
 		dialect: new PostgresDialect({
 			pool: new Pg.Pool({
-				user: getEnv("POSTGRES_USER"),
-				password: getEnv("POSTGRES_PASSWORD"),
-				database: getEnv("POSTGRES_DB"),
-				host: "localhost",
+				connectionString: getEnv("DATABASE_URL"),
 			}),
 		}),
 	});
@@ -295,12 +296,7 @@ async function doDb(callback) {
  */
 async function genDb() {
 	await kanel.processDatabase({
-		connection: {
-			host: getEnv("POSTGRES_HOST"),
-			user: getEnv("POSTGRES_USER"),
-			password: getEnv("POSTGRES_PASSWORD"),
-			database: getEnv("POSTGRES_DB"),
-		},
+		connection: getEnv("DATABASE_URL"),
 
 		preDeleteOutputFolder: true,
 		outputPath: "./src/schemas",
@@ -315,17 +311,4 @@ async function genDb() {
 
 		enumStyle: "type",
 	});
-}
-
-/**
- * Get the database URL
- *
- * @returns {string}
- */
-function getDbUrl() {
-	const user = getEnv("POSTGRES_USER");
-	const password = encodeURIComponent(getEnv("POSTGRES_PASSWORD"));
-	const db = getEnv("POSTGRES_DB");
-	const host = getEnv("POSTGRES_HOST");
-	return `postgres://${user}:${password}@${host}:5432/${db}`;
 }
