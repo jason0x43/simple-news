@@ -41,6 +41,10 @@ export class Db {
 		});
 	}
 
+	get db(): Kysely<Database> {
+		return this.#db;
+	}
+
 	async getAccounts(): Promise<Account[]> {
 		return await this.#db.selectFrom("account").selectAll().execute();
 	}

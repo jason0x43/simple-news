@@ -3,20 +3,23 @@ import { createServer } from "./server.js";
 import { Db } from "./db.js";
 import { getEnv } from "./util.js";
 import { adminRequired, sessionRequired } from "./middlewares.js";
+import { runMigrations } from "./migrate.js";
 
 const db = new Db();
 const adminUser = getEnv("SN_ADMIN_USER");
 const shutdownTasks: (() => void)[] = [];
 
+console.log("Running database migrations...");
+await runMigrations(db.db);
+console.log("Database is up to date");
+
+console.log('Creating admin user...');
 try {
 	await db.getAccountByUsername(adminUser);
 	console.log(`Admin user ${adminUser} already exists`);
 } catch (error) {
-	try {
-		await db.addAccount(adminUser, adminUser, getEnv("SN_ADMIN_PASSWORD"));
-	} catch (err) {
-		console.warn(`couldn't create admin user ${adminUser}: ${err}`);
-	}
+	await db.addAccount(adminUser, adminUser, getEnv("SN_ADMIN_PASSWORD"));
+	console.log(`Created admin user ${adminUser}`);
 }
 
 const server = createServer({ db });
