@@ -4,7 +4,7 @@ import { Cache } from "./cache.js";
 import { promptPassword } from "./util.js";
 import { Client } from "simple-news-client";
 import { FeedId } from "simple-news-types";
-import { table } from "./table.js";
+import { printJson, printTable, print, printError } from "./output.js";
 
 const program = new Command();
 
@@ -20,7 +20,7 @@ program
 	.description("Show the current config")
 	.action(async () => {
 		const config = Config.load();
-		console.log(config.toJSON());
+		printJson(config);
 	});
 
 const hostCmd = program.command("host").description("Manage api hosts");
@@ -29,9 +29,9 @@ hostCmd.command("list").action(async () => {
 	const config = Config.load();
 	for (const host of Object.keys(config.hosts)) {
 		if (host === config.activeHost) {
-			console.log(`*${host}`);
+			print(`*${host}`);
 		} else {
-			console.log(` ${host}`);
+			print(` ${host}`);
 		}
 	}
 });
@@ -44,7 +44,7 @@ hostCmd
 	.action((name, address) => {
 		const config = Config.load();
 		config.addHost(name, address);
-		console.log(config.toJSON());
+		printJson(config);
 	});
 
 const sessionCmd = program.command("session").description("Manage sessions");
@@ -62,7 +62,7 @@ sessionCmd
 			username,
 			sessionId,
 		};
-		console.log(`Logged in to ${config.activeHost} as ${username}`);
+		print(`Logged in to ${config.activeHost} as ${username}`);
 	});
 
 const feedCmd = program.command("feed").description("Manage feeds");
@@ -90,9 +90,9 @@ feedCmd
 		}
 
 		if (options.json) {
-			console.log(JSON.stringify(feeds, null, 2));
+			printJson(feeds);
 		} else {
-			table(
+			printTable(
 				feeds
 					.map((feed) => ({
 						id: feed.id,
@@ -114,10 +114,10 @@ feedCmd
 	.action(async (feed_id) => {
 		const client = getClient();
 		const feed = await client.getFeed(feed_id);
-		if (feed.icon && feed.icon.startsWith('data:image')) {
-			feed.icon = 'data:image...';
+		if (feed.icon && feed.icon.startsWith("data:image")) {
+			feed.icon = "data:image...";
 		}
-		console.log(JSON.stringify(feed, null, 2));
+		printJson(feed);
 	});
 
 feedCmd
@@ -135,7 +135,7 @@ feedCmd
 			title: options.title,
 			url: options.url,
 		});
-		console.log("Feed updated!");
+		print("Feed updated!");
 	});
 
 feedCmd
@@ -158,20 +158,31 @@ feedCmd
 		if (options.text) {
 			for (const log of logs) {
 				if (log.success) {
-					console.log(`${log.time} ${log.feed_id} SUCCESS`);
+					print(`${log.time} ${log.feed_id} SUCCESS`);
 				} else {
-					console.log(`${log.time} ${log.feed_id} ERROR: ${log.message}`);
+					print(`${log.time} ${log.feed_id} ERROR: ${log.message}`);
 				}
 			}
 		} else {
-			console.log(JSON.stringify(logs, null, 2));
+			printJson(logs);
 		}
+	});
+
+const articlesCmd = program.command("articles").description("Manage articles");
+
+articlesCmd
+	.command("saved")
+	.description("List saved articles")
+	.action(async () => {
+		const client = getClient();
+		let articles = await client.getSavedArticles();
+		printJson(articles);
 	});
 
 try {
 	await program.parseAsync();
 } catch (error) {
-	console.error(`Error: ${error}`);
+	printError(`Error: ${error}`);
 }
 
 function getClient(): Client {

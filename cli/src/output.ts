@@ -1,4 +1,4 @@
-export function table<T extends object>(
+export function printTable<T extends object>(
 	items: T[],
 	options?: { columns?: (keyof T)[]; showHeader?: boolean },
 ) {
@@ -69,4 +69,22 @@ export function table<T extends object>(
 	process.stdout.write(
 		"╰" + columnWidths.map((cw) => "".padEnd(cw + 2, "─")).join("┴") + "╯\n",
 	);
+}
+
+export function printJson(
+	data: object,
+) {
+	console.log(JSON.stringify(data, null, 2));
+}
+
+export function print(
+	...args: unknown[]
+) {
+	console.log(...args);
+}
+
+export function printError(
+	...args: unknown[]
+) {
+	console.error(...args);
 }

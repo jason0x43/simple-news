@@ -77,7 +77,7 @@ export default {
 		const { db } = req.app.locals;
 		const { account } = req.locals;
 		const saved = req.query.saved === "true";
-		const articles = db.getArticles(account!, { saved });
+		const articles = await db.getArticles(account!, { saved });
 		res.json(articles);
 	},
 
