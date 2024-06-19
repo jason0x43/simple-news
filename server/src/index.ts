@@ -20,7 +20,7 @@ try {
 }
 
 const server = createServer({ db });
-const port = process.env.API_PORT ?? 3030;
+const port = process.env.SN_API_PORT ?? 3000;
 
 server.set_error_handler((_request, response, error) => {
 	console.warn(error);
@@ -87,18 +87,21 @@ server.get("/feed", userRoute, handlers.testFeedUrl);
 try {
 	await server.listen(Number(port));
 	shutdownTasks.push(() => server.close());
-	console.log(`Listening on port ${port}...`);
+	console.log(`Listening on port ${port}`);
 } catch (error) {
 	console.log(`Failed to attach to port ${port}:`, error);
 }
 
 // Start a periodic refresh task
-const updateMs = 600 * 1000;
+const envUpdateSec = Number(process.env.SN_UPDATE_SEC);
+const updateSec = isNaN(envUpdateSec) ? 1800 : envUpdateSec;
+const updateMs = updateSec * 1000;
 const refresher = setInterval(async () => {
 	await db.refreshActiveFeeds(updateMs);
 }, updateMs);
 shutdownTasks.push(() => clearInterval(refresher));
-db.refreshActiveFeeds(updateMs);
+
+console.log(`Updating feeds every ${updateSec} seconds`);
 
 function shutdown() {
 	console.log("Shutting down services...");
