@@ -74,17 +74,6 @@ jobs:
             type=sha,
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Persistent Rust build cache
-        uses: actions/cache@v4
-        with:
-          path: rust-build-cache
-          key: ${{ runner.os }}-rust-build-cache-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Inject Rust build cache
-        uses: reproducible-containers/buildkit-cache-dance@v2
-        with:
-          cache-source: rust-build-cache
-
       - name: Build and push server image
         uses: docker/build-push-action@v5
         with:

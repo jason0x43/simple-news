@@ -23,6 +23,9 @@ RUN --mount=source=package.json,target=package.json \
     pnpm build
 
 FROM node:20-slim
+LABEL org.opencontainers.image.source=https://github.com/jason0x43/simple-news
+LABEL org.opencontainers.image.description="A simple RSS news reader"
+LABEL org.opencontainers.image.licenses="MIT"
 WORKDIR /app
 COPY --from=build /app/build build/
 COPY --from=prod-deps /app/node_modules node_modules/
