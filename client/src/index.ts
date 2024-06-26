@@ -22,6 +22,8 @@ import {
 import { AccountResponse, SessionResponse } from "simple-news-types";
 import { ResponseError } from "./error.js";
 
+export { ResponseError };
+
 export class Client {
 	#apiHost: string;
 	#sessionId: string | undefined;

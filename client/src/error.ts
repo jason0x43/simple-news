@@ -8,20 +8,19 @@ const defaultMessages: Record<number, string> = {
 
 export class ResponseError extends Error {
 	#status: number;
+	#details: string | undefined;
 
 	constructor(status: number, message?: string) {
-		const parts = [`[${status}]`];
-		if (message) {
-			parts.push(message)
-		} else if (defaultMessages[status]) {
-			parts.push(defaultMessages[status])
-		}
-
-		super(parts.join(" "));
+		super(defaultMessages[status] || "Internal Server Error");
+		this.#details = message;
 		this.#status = status;
 	}
 
 	get status(): number {
 		return this.#status;
+	}
+
+	get details(): string | undefined {
+		return this.#details;
 	}
 }
