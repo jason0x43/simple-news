@@ -5,16 +5,13 @@ import type { AccountId } from './Account';
 import type { ArticleId } from './Article';
 import type { ColumnType, Selectable, Insertable, Updateable } from 'kysely';
 
-/** Identifier type for public.account_article */
-export type AccountArticleId = string & { __brand: 'AccountArticleId' };
-
 /** Represents the table public.account_article */
 export default interface AccountArticleTable {
-  id: ColumnType<AccountArticleId, AccountArticleId, AccountArticleId>;
-
   account_id: ColumnType<AccountId, AccountId, AccountId>;
 
   article_id: ColumnType<ArticleId, ArticleId, ArticleId>;
+
+  _id: ColumnType<string | null, string | null, string | null>;
 
   read: ColumnType<boolean, boolean | undefined, boolean>;
 

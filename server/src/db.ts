@@ -9,10 +9,6 @@ import { createId } from "@paralleldrive/cuid2";
 import { AppError } from "./error.js";
 import { PasswordId } from "./schemas/public/Password.js";
 import { Article, ArticleId } from "./schemas/public/Article.js";
-import {
-	NewAccountArticle,
-	AccountArticleId,
-} from "./schemas/public/AccountArticle.js";
 import { FeedLog, FeedLogId } from "./schemas/public/FeedLog.js";
 import { Feed, FeedId } from "./schemas/public/Feed.js";
 import { downloadFeed } from "./feed.js";
@@ -218,47 +214,25 @@ export class Db {
 		account: Account,
 		articleIds: ArticleId[],
 		options?: { saved?: boolean; read?: boolean },
-	): Promise<number> {
-		return await this.#db.transaction().execute(async (tx) => {
-			let existing = await tx
-				.selectFrom("account_article")
-				.selectAll()
-				.where("account_id", "=", account.id)
-				.where((eb) => eb("article_id", "=", eb.fn.any(eb.val(articleIds))))
-				.execute();
-			for (const id of articleIds) {
-				const ua =
-					existing.find((e) => (e.article_id = id)) ??
-					({
-						id: createId() as AccountArticleId,
-						account_id: account.id,
-						article_id: id,
-						read: undefined,
-						saved: undefined,
-					} satisfies NewAccountArticle);
+	): Promise<void> {
+		const values = articleIds.map((id) => ({
+			account_id: account.id,
+			article_id: id,
+			read: options?.read,
+			saved: options?.saved,
+		}));
 
-				if (options?.saved !== undefined) {
-					ua.saved = options.saved;
-				}
+		await this.#db
+			.insertInto("account_article")
+			.values(values)
+			.onConflict((conflict) =>
+				conflict.columns(["article_id", "account_id"]).doUpdateSet({
+					read: options?.read,
+					saved: options?.saved,
+				}),
+			)
+			.execute();
 
-				if (options?.read !== undefined) {
-					ua.read = options.read;
-				}
-
-				await tx
-					.insertInto("account_article")
-					.values(ua)
-					.onConflict((oc) =>
-						oc.columns(["account_id", "article_id"]).doUpdateSet({
-							read: ua.read,
-							saved: ua.saved,
-						}),
-					)
-					.execute();
-			}
-
-			return articleIds.length;
-		});
 	}
 
 	async getFeedLogs(): Promise<FeedLog[]> {
