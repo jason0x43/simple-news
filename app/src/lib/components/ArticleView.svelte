@@ -127,6 +127,10 @@
 		@apply text-sm;
 	}
 
+	.content :global(h1),
+	.content :global(h2),
+	.content :global(h3),
+	.content :global(h4),
 	.content :global(p) {
 		@apply my-4;
 	}
