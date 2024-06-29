@@ -353,6 +353,12 @@ function getContent(entry: ParsedFeedItem): string | undefined {
 			$("a").each((_, a) => {
 				$(a).removeAttr("style");
 			});
+			$("img").each((_, img) => {
+				const src = $(img).attr("src");
+				if (src) {
+					$(img).attr("src", new URL(src, entry.link).href);
+				}
+			});
 			content = $("body").html() ?? "";
 		} catch (error) {
 			console.warn("Error processing document content");
