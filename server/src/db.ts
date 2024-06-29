@@ -232,7 +232,6 @@ export class Db {
 				}),
 			)
 			.execute();
-
 	}
 
 	async getFeedLogs(): Promise<FeedLog[]> {
@@ -405,14 +404,14 @@ export class Db {
 	async getFeedStat(userId: AccountId, feedId: FeedId): Promise<FeedStat> {
 		const { total } = await this.#db
 			.selectFrom("article")
-			.select((eb) => eb.fn.countAll<number>().as("total"))
+			.select((eb) => eb.fn.countAll().as("total"))
 			.where("feed_id", "=", feedId)
 			.executeTakeFirstOrThrow();
 
 		const { read } = await this.#db
 			.selectFrom("account_article")
 			.innerJoin("article", "article.id", "account_article.article_id")
-			.select((eb) => eb.fn.countAll<number>().as("read"))
+			.select((eb) => eb.fn.countAll().as("read"))
 			.where("account_article.account_id", "=", userId)
 			.where("account_article.read", "=", true)
 			.where("article.feed_id", "=", feedId)
@@ -421,13 +420,13 @@ export class Db {
 		const { saved } = await this.#db
 			.selectFrom("account_article")
 			.innerJoin("article", "article.id", "account_article.article_id")
-			.select((eb) => eb.fn.countAll<number>().as("saved"))
+			.select((eb) => eb.fn.countAll().as("saved"))
 			.where("account_article.account_id", "=", userId)
 			.where("account_article.saved", "=", true)
 			.where("article.feed_id", "=", feedId)
 			.executeTakeFirstOrThrow();
 
-		return { total, read, saved };
+		return { total: Number(total), read: Number(read), saved: Number(saved) };
 	}
 
 	async getFeedStats(userId: AccountId): Promise<FeedStats> {
