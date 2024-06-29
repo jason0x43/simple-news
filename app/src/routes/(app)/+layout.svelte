@@ -9,9 +9,9 @@
 	import { page } from "$app/stores";
 	import { cls } from "$lib/cls";
 	import { onMount } from "svelte";
-	import { goto } from "$app/navigation";
 	import { periodicInvalidate, minutes } from "$lib/util";
 	import { FeedGroupId, FeedId } from "simple-news-types";
+	import type { ArticleFilter } from "$lib/types";
 
 	export let data;
 
@@ -25,6 +25,9 @@
 
 	const updatedArticleIds = writable<Set<string>>(new Set());
 	setAppContext("updatedArticleIds", updatedArticleIds);
+
+	const articleFilter = writable("unread" as ArticleFilter)
+	setAppContext("articleFilter", articleFilter);
 
 	let selectedFeedIds: FeedId[] = [];
 	let selectedGroupId: FeedGroupId | undefined;
@@ -70,6 +73,10 @@
 
 	function handleTouchEnd() {
 		edgeTouch = false;
+	}
+
+	function updateArticleFilter(value: string) {
+		$articleFilter = value as ArticleFilter;
 	}
 
 	let ready = false;
@@ -283,7 +290,7 @@ X-Large:
 					feeds={data.feeds}
 					{selectedFeedIds}
 					{selectedGroupId}
-					articleFilter={data.articleFilter}
+					articleFilter={$articleFilter}
 					feedId={$page.data.feedId}
 					feedStats={data.feedStats}
 					feedGroups={data.feedGroups}
@@ -297,12 +304,8 @@ X-Large:
 
 					<Select
 						class="[text-align-last:center]"
-						value={data.articleFilter}
-						onChange={(value) => {
-							const query = new URLSearchParams($page.url.searchParams);
-							query.set("filter", value);
-							goto(`?${query}`);
-						}}
+						value={$articleFilter}
+						onChange={updateArticleFilter}
 					>
 						<option value="unread">Unread</option>
 						<option value="all">All</option>

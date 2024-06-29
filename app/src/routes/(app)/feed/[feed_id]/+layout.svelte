@@ -3,11 +3,14 @@
 	import { markArticles } from "$lib/api.js";
 	import { cls } from "$lib/cls";
 	import ArticlesList from "$lib/components/ArticlesList.svelte";
+	import { getAppContext } from "$lib/context.js";
 	import { periodicInvalidate, minutes } from "$lib/util.js";
 	import { onMount } from "svelte";
 	import { fade } from "svelte/transition";
 
 	export let data;
+
+	const articleFilter = getAppContext("articleFilter");
 
 	onMount(() => {
 		return periodicInvalidate("app:articles", minutes(1));
@@ -31,7 +34,7 @@
 		feedId={data.feedId}
 		feeds={data.feeds}
 		articles={data.articles}
-		articleFilter={data.articleFilter}
+		articleFilter={$articleFilter}
 		articleId={$page.data.articleId}
 		{markArticles}
 	/>

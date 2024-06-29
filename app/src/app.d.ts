@@ -6,7 +6,6 @@ import type {
 	FeedStats,
 	FeedGroupWithFeeds,
 } from "simple-news-types";
-import type { ArticleFilter } from "$lib/state";
 
 // for information about these interfaces
 declare global {
@@ -19,7 +18,6 @@ declare global {
 			feeds: Feed[];
 			feedStats: FeedStats;
 			feedGroups: FeedGroupWithFeeds[];
-			filter: ArticleFilter;
 			feedId?: string;
 			articleId?: string;
 			articleId?: string;
