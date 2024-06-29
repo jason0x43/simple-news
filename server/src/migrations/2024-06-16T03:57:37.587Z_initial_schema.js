@@ -58,9 +58,7 @@ export async function up(db) {
 		await db.schema
 			.createTable("articles")
 			.addColumn("id", "text", (col) => col.primaryKey())
-			.addColumn("article_id", "text", (col) =>
-				col.notNull().references("articles.id"),
-			)
+			.addColumn("article_id", "text", (col) => col.notNull())
 			.addColumn("feed_id", "text", (col) =>
 				col.notNull().references("feeds.id"),
 			)
