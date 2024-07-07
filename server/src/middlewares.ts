@@ -37,12 +37,18 @@ async function getSession(
 	}
 
 	const sessionId = authHeader.split(" ")[1];
-	const session = await response.app.locals.db.getSession(
-		sessionId as SessionId,
-	);
-	if (session.expires <= new Date()) {
-		throw new AppError("session is expired", 401);
-	}
+	try {
+		const session = await response.app.locals.db.getSession(
+			sessionId as SessionId,
+		);
 
-	return session;
+		if (session.expires <= new Date()) {
+			throw new AppError("session is expired", 401);
+		}
+
+		return session;
+	} catch (err) {
+		console.warn(`could not get session: `, err);
+		throw new AppError("not authorized", 401);
+	}
 }
