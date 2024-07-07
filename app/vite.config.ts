@@ -6,4 +6,7 @@ export default defineConfig({
 	build: {
 		sourcemap: "inline",
 	},
+	server: {
+		port: process.env.APP_PORT ? Number(process.env.APP_PORT) : 5173
+	}
 });
