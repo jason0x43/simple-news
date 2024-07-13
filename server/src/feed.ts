@@ -4,6 +4,7 @@ import { NewArticle } from "./schemas/public/Article.js";
 import { createHash } from "node:crypto";
 import * as cheerio from "cheerio";
 import { z } from "zod";
+import * as entities from "entities";
 
 type DownloadedArticle = Omit<NewArticle, "id" | "feed_id">;
 
@@ -52,6 +53,7 @@ const RssChannel = z.object({
 		z.object({
 			title: z.optional(TextNode),
 			description: z.optional(TextNode),
+			"content:encoded": z.optional(TextNode),
 			link: z.optional(TextNode),
 			guid: z.optional(
 				TextNode.extend({
@@ -166,7 +168,7 @@ export async function downloadFeed(feedUrl: string): Promise<DownloadedFeed> {
 		const articles: DownloadedArticle[] = parsedFeed.items.map((item) => ({
 			article_id: item.id,
 			content: getContent(item) ?? "",
-			title: item.title,
+			title: entities.decode(item.title),
 			link: item.link,
 			published: item.updated,
 		}));
@@ -174,7 +176,7 @@ export async function downloadFeed(feedUrl: string): Promise<DownloadedFeed> {
 		console.debug(`Processed feed ${feedUrl}`);
 
 		return {
-			title: parsedFeed.title,
+			title: entities.decode(parsedFeed.title),
 			link: parsedFeed.link,
 			icon,
 			articles,
@@ -242,7 +244,10 @@ function parseFeed(xml: string): ParsedFeed {
 			id:
 				item["$$rdf:about"] ??
 				item.link?.$text ??
-				hashStrings(item.title?.$text ?? "", item.description?.$text ?? ""),
+				hashStrings(
+					item.title?.$text ?? "",
+					item.description?.$text ?? "",
+				),
 			title: item.title?.$text ?? "",
 			link: item.link?.$text ?? "",
 			updated: new Date(item["dc:date"].$text),
@@ -257,11 +262,15 @@ function parseFeed(xml: string): ParsedFeed {
 			id:
 				item.guid?.$text ??
 				item.link?.$text ??
-				hashStrings(item.title?.$text ?? "", item.description?.$text ?? ""),
+				hashStrings(
+					item.title?.$text ?? "",
+					item.description?.$text ?? "",
+				),
 			title: item.title?.$text ?? "",
 			link: item.link?.$text ?? "",
 			updated: item.pubDate ? new Date(item.pubDate.$text) : new Date(),
-			content: item.description?.$text ?? "",
+			content:
+				item["content:encoded"]?.$text ?? item.description?.$text ?? "",
 		}));
 	}
 
