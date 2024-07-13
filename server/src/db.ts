@@ -97,7 +97,10 @@ export class Db {
 		});
 	}
 
-	async setAccountPassword(account: Account, password: string): Promise<void> {
+	async setAccountPassword(
+		account: Account,
+		password: string,
+	): Promise<void> {
 		const pw = hashPassword(password);
 		await this.#db
 			.insertInto("password")
@@ -145,7 +148,10 @@ export class Db {
 			})
 			.returningAll()
 			.executeTakeFirstOrThrow(
-				() => new AppError(`unable to create session for ${account.username}`),
+				() =>
+					new AppError(
+						`unable to create session for ${account.username}`,
+					),
 			);
 	}
 
@@ -162,7 +168,10 @@ export class Db {
 	}
 
 	async deleteSession(sessionId: SessionId): Promise<void> {
-		await this.#db.deleteFrom("session").where("id", "=", sessionId).execute();
+		await this.#db
+			.deleteFrom("session")
+			.where("id", "=", sessionId)
+			.execute();
 	}
 
 	async getArticles(
@@ -178,9 +187,17 @@ export class Db {
 			.innerJoin("feed_group_feed", (join) =>
 				join
 					.onRef("feed_group_feed.feed_id", "=", "feed.id")
-					.onRef("feed_group_feed.feed_group_id", "=", "feed_group.id"),
+					.onRef(
+						"feed_group_feed.feed_group_id",
+						"=",
+						"feed_group.id",
+					),
 			)
-			.leftJoin("account_article", "account_article.article_id", "article.id")
+			.leftJoin(
+				"account_article",
+				"account_article.article_id",
+				"article.id",
+			)
 			.select([
 				"article.id",
 				"article.article_id",
@@ -256,31 +273,44 @@ export class Db {
 			const downloadedFeed = await downloadFeed(feed.url);
 
 			if (downloadedFeed.icon) {
-				await this.#db
-					.updateTable("feed")
-					.set({ icon: downloadedFeed.icon })
-					.where("id", "=", feed.id)
-					.executeTakeFirst();
-				console.debug(`Updated icon for ${feed.title}`);
+				try {
+					await this.#db
+						.updateTable("feed")
+						.set({ icon: downloadedFeed.icon })
+						.where("id", "=", feed.id)
+						.executeTakeFirst();
+					console.debug(`Updated icon for ${feed.title}`);
+				} catch (error) {
+					console.warn(`Error updating icon for ${feed.title}: ${error}`);
+				}
 			}
 
 			for (const article of downloadedFeed.articles) {
-				await this.#db
-					.insertInto("article")
-					.values({
-						id: createId() as ArticleId,
-						feed_id: feed.id,
-						...article,
-					})
-					.onConflict((conflict) =>
-						conflict.columns(["article_id", "feed_id"]).doUpdateSet({
-							content: article.content,
-							title: article.title,
-							link: article.link,
-							published: article.published,
-						}),
-					)
-					.execute();
+				try {
+					await this.#db
+						.insertInto("article")
+						.values({
+							id: createId() as ArticleId,
+							feed_id: feed.id,
+							...article,
+						})
+						.onConflict((conflict) =>
+							conflict
+								.columns(["article_id", "feed_id"])
+								.doUpdateSet({
+									content: article.content,
+									title: article.title,
+									link: article.link,
+									published: article.published,
+								}),
+						)
+						.execute();
+					console.log(`Inserted article ${article.article_id}`);
+				} catch (error) {
+					console.warn(
+						`Error inserted article ${article.article_id}: ${error}`,
+					);
+				}
 			}
 
 			console.debug(`Processed feed ${feed.title}`);
@@ -324,7 +354,10 @@ export class Db {
 			activeFeeds.map(async (feed) => {
 				const lastUpdate = await this.getLastUpdate(feed.id);
 				console.debug(`Last update for ${feed.title}: ${lastUpdate}`);
-				if (!lastUpdate || now.getTime() - lastUpdate.getTime() >= minDelayMs) {
+				if (
+					!lastUpdate ||
+					now.getTime() - lastUpdate.getTime() >= minDelayMs
+				) {
 					return this.refreshFeed(feed);
 				}
 				console.debug(`Skipping feed ${feed.title}`);
@@ -381,7 +414,11 @@ export class Db {
 	async getFeedArticles(feedId: FeedId): Promise<ArticleSummary[]> {
 		const articles = await this.#db
 			.selectFrom("article")
-			.leftJoin("account_article", "account_article.article_id", "article.id")
+			.leftJoin(
+				"account_article",
+				"account_article.article_id",
+				"article.id",
+			)
 			.select([
 				"article.id",
 				"article.article_id",
@@ -426,7 +463,11 @@ export class Db {
 			.where("article.feed_id", "=", feedId)
 			.executeTakeFirstOrThrow();
 
-		return { total: Number(total), read: Number(read), saved: Number(saved) };
+		return {
+			total: Number(total),
+			read: Number(read),
+			saved: Number(saved),
+		};
 	}
 
 	async getFeedStats(userId: AccountId): Promise<FeedStats> {
@@ -435,7 +476,11 @@ export class Db {
 			.innerJoin("feed", "feed.id", "article.feed_id")
 			.innerJoin("feed_group_feed", "feed_group_feed.feed_id", "feed.id")
 			.innerJoin("feed_group", "feed_group.id", "feed_group_id")
-			.leftJoin("account_article", "account_article.article_id", "article.id")
+			.leftJoin(
+				"account_article",
+				"account_article.article_id",
+				"article.id",
+			)
 			.select((eb) => [
 				"feed.id as id",
 				"account_article.read as read",
@@ -443,7 +488,11 @@ export class Db {
 				eb.fn.countAll().as("count"),
 			])
 			.where("feed_group.account_id", "=", userId)
-			.groupBy(["feed.id", "account_article.read", "account_article.saved"])
+			.groupBy([
+				"feed.id",
+				"account_article.read",
+				"account_article.saved",
+			])
 			.execute();
 
 		const stats: FeedStats = {};
@@ -575,13 +624,21 @@ export class Db {
 					.where("feed_id", "=", data.feed_id as FeedId)
 					.where("account_id", "=", userId)
 					.where("feed_group_id", "<>", feedGroupId)
-					.whereRef("feed_group.id", "=", "feed_group_feed.feed_group_id")
+					.whereRef(
+						"feed_group.id",
+						"=",
+						"feed_group_feed.feed_group_id",
+					)
 					.execute();
 			}
 
 			const feedIdResults = await tx
 				.selectFrom("feed")
-				.innerJoin("feed_group_feed", "feed_group_feed.feed_id", "feed.id")
+				.innerJoin(
+					"feed_group_feed",
+					"feed_group_feed.feed_id",
+					"feed.id",
+				)
 				.select("id")
 				.where("feed_group_id", "=", feedGroupId)
 				.execute();
@@ -606,10 +663,18 @@ export class Db {
 			)
 			.innerJoin("feed_group", (join) =>
 				join
-					.onRef("feed_group.id", "=", "feed_group_feed.feed_group_id")
+					.onRef(
+						"feed_group.id",
+						"=",
+						"feed_group_feed.feed_group_id",
+					)
 					.on("feed_group.account_id", "=", userId),
 			)
-			.leftJoin("account_article", "account_article.article_id", "article.id")
+			.leftJoin(
+				"account_article",
+				"account_article.article_id",
+				"article.id",
+			)
 			.select([
 				"article.id",
 				"article.article_id",
