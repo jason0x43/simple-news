@@ -27,18 +27,19 @@ const hostCmd = program.command("host").description("Manage api hosts");
 
 hostCmd.command("list").action(async () => {
 	const config = Config.load();
+	const hosts: Record<string, string>[] = [];
 	for (const host of Object.keys(config.hosts)) {
-		if (host === config.activeHost) {
-			print(`*${host}`);
-		} else {
-			print(` ${host}`);
-		}
+		hosts.push({
+			host: host === config.activeHost ? `*${host}` : ` ${host}`,
+			address: config.hosts[host].address,
+		});
 	}
+	printTable(hosts);
 });
 
 hostCmd
 	.command("add")
-	.description("Add a new host")
+	.description("Add or update a host")
 	.argument("<name>", "Name of the host")
 	.argument("<address>", "Address of the host")
 	.action((name, address) => {
