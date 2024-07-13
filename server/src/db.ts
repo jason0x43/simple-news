@@ -430,6 +430,7 @@ export class Db {
 				"saved",
 			])
 			.where("feed_id", "=", feedId)
+			.orderBy("published", "asc")
 			.execute();
 
 		return articles.map((article) => ({
