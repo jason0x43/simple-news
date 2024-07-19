@@ -4,7 +4,7 @@
 </script>
 
 <div
-	class="list-item pl-9"
+	class="list-item border border-transparent pl-9"
 	class:selected
 	class:not-selected={!selected}
 	class:pl-9={nested}
@@ -15,7 +15,7 @@
 
 <style lang="postcss">
 	.selected {
-		@apply bg-hover-light dark:bg-hover-dark;
+		@apply border-gray-light bg-hover-light dark:border-gray-dark dark:bg-hover-dark;
 	}
 
 	.not-selected {
@@ -23,6 +23,6 @@
 	}
 
 	.list-item {
-		@apply mx-2 flex flex-row items-center pr-2 rounded-md;
+		@apply mx-2 flex flex-row items-center rounded-md pr-2;
 	}
 </style>

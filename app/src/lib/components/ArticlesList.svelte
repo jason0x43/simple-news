@@ -7,7 +7,7 @@
 	import type { ArticleFilter } from "$lib/types";
 	import { cls } from "$lib/cls";
 	import type {
-	ArticleId,
+		ArticleId,
 		ArticleSummary,
 		Feed,
 		MarkArticlesRequest,
@@ -198,6 +198,8 @@
 							flex-row
 							gap-2
 							rounded-md
+							border
+							border-transparent
 							p-2
 							${article.saved ? "bg-yellow/20" : ""}
 							${article.id === activeArticle?.id ? "bg-blue/20" : ""}
@@ -324,7 +326,7 @@
 
 <style lang="postcss">
 	.selected {
-		@apply bg-hover-light dark:bg-hover-dark;
+		@apply border-gray-light bg-hover-light dark:border-gray-dark dark:bg-hover-dark;
 	}
 
 	.not-selected {

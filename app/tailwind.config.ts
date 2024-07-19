@@ -46,11 +46,11 @@ export default {
 				},
 				hover: {
 					light: colors.neutral["100"],
-					dark: "#101010",
+					dark: colors.neutral["900"],
 				},
 				border: {
 					light: colors.neutral["200"],
-					dark: colors.neutral["900"],
+					dark: colors.neutral["800"],
 				},
 				text: {
 					light: colors.neutral["700"],
