@@ -24,6 +24,7 @@ export async function up(db) {
 	await db.schema
 		.alterTable('account_article')
 		.dropConstraint('user_articles_user_id_article_id_key')
+		.ifExists()
 		.execute();
 }
 
