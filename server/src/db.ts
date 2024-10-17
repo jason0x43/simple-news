@@ -21,7 +21,7 @@ import {
 	FeedStat,
 	FeedStats,
 	UpdateFeedRequest,
-} from "simple-news-types";
+} from "@jason0x43/simple-news-types";
 import { FeedGroup, FeedGroupId } from "./schemas/public/FeedGroup.js";
 
 export class Db {

@@ -1,5 +1,5 @@
 {
-  "name": "simple-news-types",
+  "name": "@jason0x43/simple-news-types",
   "version": "1.0.0",
   "description": "Types for simple-news packages",
   "main": "build/index.js",

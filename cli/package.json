@@ -1,5 +1,5 @@
 {
-	"name": "simple-news-cli",
+	"name": "@jason0x43/simple-news-cli",
 	"description": "CLI for managing the simple-news app",
 	"private": true,
 	"main": "build/index.js",
@@ -14,8 +14,8 @@
 	"dependencies": {
 		"@commander-js/extra-typings": "^12.1.0",
 		"commander": "^12.1.0",
-		"simple-news-types": "workspace:*",
-		"simple-news-client": "workspace:*",
+		"@jason0x43/simple-news-types": "workspace:*",
+		"@jason0x43/simple-news-client": "workspace:*",
 		"zod": "^3.23.8"
 	},
 	"devDependencies": {

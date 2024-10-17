@@ -11,7 +11,7 @@
 		ArticleSummary,
 		Feed,
 		MarkArticlesRequest,
-	} from "simple-news-types";
+	} from "@jason0x43/simple-news-types";
 
 	export let feedId: string;
 	export let feeds: Feed[];

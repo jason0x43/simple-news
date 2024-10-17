@@ -5,7 +5,7 @@ import type {
 	AddGroupFeedRequest,
 	MarkArticlesRequest,
 	UpdateFeedRequest,
-} from "simple-news-types";
+} from "@jason0x43/simple-news-types";
 
 export async function markArticles(data: MarkArticlesRequest): Promise<void> {
 	const resp = await fetch("/api/mark", {

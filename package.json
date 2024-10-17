@@ -1,10 +1,13 @@
 {
-	"name": "simple-news",
+	"name": "@jason0x43/simple-news",
 	"version": "0.1.0",
+	"private": true,
 	"author": "Jason Cheatham <jason@jasoncheatham.com>",
 	"license": "MIT",
 	"scripts": {
-		"dev": "pnpm run --parallel dev"
+		"dev": "pnpm run --parallel dev",
+		"build": "pnpm recursive run --filter=!./app --sort build",
+		"check": "pnpm run --parallel check"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.12.0",
@@ -12,6 +15,5 @@
 		"prettier": "^3.3.3",
 		"typescript": "^5.6.3",
 		"typescript-eslint": "^8.8.1"
-	},
-	"packageManager": "pnpm@9.4.0+sha256.b6fd0bfda555e7e584ad7e56b30c68b01d5a04f9ee93989f4b93ca8473c49c74"
+	}
 }

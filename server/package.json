@@ -1,5 +1,5 @@
 {
-	"name": "simple-news-server",
+	"name": "@jason0x43/simple-news-server",
 	"description": "Server for simple-news app",
 	"private": "true",
 	"main": "build/index.js",
@@ -19,7 +19,7 @@
 		"hyper-express": "^6.16.1",
 		"kysely": "^0.27.3",
 		"pg": "^8.11.5",
-		"simple-news-types": "workspace:*",
+		"@jason0x43/simple-news-types": "workspace:*",
 		"zod": "^3.23.8"
 	},
 	"devDependencies": {

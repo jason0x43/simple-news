@@ -1,5 +1,5 @@
 import { Api } from "$lib/api.server";
-import { AddFeedRequest } from "simple-news-types";
+import { AddFeedRequest } from "@jason0x43/simple-news-types";
 
 export async function POST({ request, fetch, locals }) {
 	const data = AddFeedRequest.parse(await request.json());

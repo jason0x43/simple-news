@@ -5,7 +5,7 @@ import type {
 	Feed,
 	FeedStats,
 	FeedGroupWithFeeds,
-} from "simple-news-types";
+} from "@jason0x43/simple-news-types";
 
 // for information about these interfaces
 declare global {

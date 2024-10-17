@@ -8,7 +8,7 @@ import {
 	PasswordLoginRequest,
 	SessionResponse,
 	UpdateFeedRequest,
-} from "simple-news-types";
+} from "@jason0x43/simple-news-types";
 import type { UserRouteHandler } from "./server.js";
 import { ArticleId } from "./schemas/public/Article.js";
 import { FeedId } from "./schemas/public/Feed.js";

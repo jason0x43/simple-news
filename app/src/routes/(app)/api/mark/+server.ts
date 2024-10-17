@@ -1,5 +1,5 @@
 import { Api } from "$lib/api.server";
-import { MarkArticlesRequest } from "simple-news-types";
+import { MarkArticlesRequest } from "@jason0x43/simple-news-types";
 
 export async function POST({ request, fetch, locals }) {
 	const data = MarkArticlesRequest.parse(await request.json());

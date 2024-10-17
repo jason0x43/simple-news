@@ -18,8 +18,8 @@ import {
 	MarkArticlesRequest,
 	PasswordLoginRequest,
 	UpdateFeedRequest,
-} from "simple-news-types";
-import { AccountResponse, SessionResponse } from "simple-news-types";
+} from "@jason0x43/simple-news-types";
+import { AccountResponse, SessionResponse } from "@jason0x43/simple-news-types";
 import { ResponseError } from "./error.js";
 
 export { ResponseError };

@@ -2,8 +2,8 @@ import { Command } from "@commander-js/extra-typings";
 import { Config } from "./config.js";
 import { Cache } from "./cache.js";
 import { promptPassword } from "./util.js";
-import { Client } from "simple-news-client";
-import { FeedId } from "simple-news-types";
+import { Client } from "@jason0x43/simple-news-client";
+import { FeedId } from "@jason0x43/simple-news-types";
 import { printJson, printTable, print, printError } from "./output.js";
 
 const program = new Command();

@@ -2,7 +2,7 @@
 	import { getAppContext } from "$lib/context";
 	import DoubleRight from "$lib/icons/DoubleRight.svelte";
 	import Star from "$lib/icons/Star.svelte";
-	import type { Feed, FeedGroupWithFeeds, FeedId, FeedStats } from "simple-news-types";
+	import type { Feed, FeedGroupWithFeeds, FeedId, FeedStats } from "@jason0x43/simple-news-types";
 	import {
 		allFeedsAreSelected,
 		getSavedCount,
