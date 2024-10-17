@@ -55,7 +55,7 @@ export function isValidUrl(url: string | undefined): boolean {
 	try {
 		const u = new URL(url);
 		return Boolean(u);
-	} catch (error) {
+	} catch {
 		return false;
 	}
 }

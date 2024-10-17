@@ -30,10 +30,10 @@
 	}
 
 	.good {
-		@apply bg-green border-green-dark text-white;
+		@apply border-green-dark bg-green text-white;
 	}
 
 	.bad {
-		@apply bg-red/50 border-red-dark/50 text-white;
+		@apply border-red-dark/50 bg-red/50 text-white;
 	}
 </style>

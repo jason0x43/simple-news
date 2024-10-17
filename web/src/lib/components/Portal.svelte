@@ -5,9 +5,9 @@
 	import { browser } from "$app/environment";
 
 	export let target: HTMLElement | null | undefined = undefined;
-	export let anchor: { x?: number; y?: number } | "modal" | undefined =
+	export let anchor: "modal" | { x?: number; y?: number } | undefined =
 		undefined;
-	export let duration: { in?: number; out?: number } | number | undefined =
+	export let duration: number | { in?: number; out?: number } | undefined =
 		undefined;
 	export let zIndex: number | undefined = undefined;
 

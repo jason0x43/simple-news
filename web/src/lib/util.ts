@@ -1,5 +1,9 @@
 import { invalidate } from "$app/navigation";
-import type { FeedGroupWithFeeds, FeedId, FeedStats } from "@jason0x43/reader-types";
+import type {
+	FeedGroupWithFeeds,
+	FeedId,
+	FeedStats,
+} from "@jason0x43/reader-types";
 
 /**
  * Return true if all feed IDs are in a given group
@@ -43,7 +47,7 @@ export function unescapeHtml(text: string): string {
  * Return the age of a timestamp in an abbreviated human readable format
  */
 export function getAge(
-	timestamp: Date | number | string | undefined | null,
+	timestamp: Date | number | string | null | undefined,
 ): string {
 	if (timestamp == null) {
 		return "?";

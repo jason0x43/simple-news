@@ -57,9 +57,9 @@ export function printTable<T extends object>(
 				columns
 					.map((col, i) => {
 						if (row[col].length <= columnWidths[i]) {
-							return ` ${row[col].padEnd(columnWidths[i])} `
+							return ` ${row[col].padEnd(columnWidths[i])} `;
 						}
-						return ` ${row[col].slice(0, columnWidths[i] - 3)}... `
+						return ` ${row[col].slice(0, columnWidths[i] - 3)}... `;
 					})
 					.join("│") +
 				"│\n",
@@ -71,20 +71,14 @@ export function printTable<T extends object>(
 	);
 }
 
-export function printJson(
-	data: object,
-) {
+export function printJson(data: object) {
 	console.log(JSON.stringify(data, null, 2));
 }
 
-export function print(
-	...args: unknown[]
-) {
+export function print(...args: unknown[]) {
 	console.log(...args);
 }
 
-export function printError(
-	...args: unknown[]
-) {
+export function printError(...args: unknown[]) {
 	console.error(...args);
 }

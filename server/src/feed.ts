@@ -244,10 +244,7 @@ function parseFeed(xml: string): ParsedFeed {
 			id:
 				item["$$rdf:about"] ??
 				item.link?.$text ??
-				hashStrings(
-					item.title?.$text ?? "",
-					item.description?.$text ?? "",
-				),
+				hashStrings(item.title?.$text ?? "", item.description?.$text ?? ""),
 			title: item.title?.$text ?? "",
 			link: item.link?.$text ?? "",
 			updated: new Date(item["dc:date"].$text),
@@ -262,15 +259,11 @@ function parseFeed(xml: string): ParsedFeed {
 			id:
 				item.guid?.$text ??
 				item.link?.$text ??
-				hashStrings(
-					item.title?.$text ?? "",
-					item.description?.$text ?? "",
-				),
+				hashStrings(item.title?.$text ?? "", item.description?.$text ?? ""),
 			title: item.title?.$text ?? "",
 			link: item.link?.$text ?? "",
 			updated: item.pubDate ? new Date(item.pubDate.$text) : new Date(),
-			content:
-				item["content:encoded"]?.$text ?? item.description?.$text ?? "",
+			content: item["content:encoded"]?.$text ?? item.description?.$text ?? "",
 		}));
 	}
 
@@ -369,7 +362,7 @@ function getContent(entry: ParsedFeedItem): string | undefined {
 				}
 			});
 			content = $("body").html() ?? "";
-		} catch (error) {
+		} catch {
 			console.warn("Error processing document content");
 		}
 	}

@@ -9,7 +9,8 @@
 	"type": "module",
 	"scripts": {
 		"build": "tsc",
-		"dev": "tsc-watch --preserveWatchOutput --onSuccess 'node ./build'"
+		"dev": "tsc-watch --preserveWatchOutput --onSuccess 'node ./build'",
+		"check": "tsc --noEmit && eslint ."
 	},
 	"dependencies": {
 		"@paralleldrive/cuid2": "^2.2.2",

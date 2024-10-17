@@ -58,13 +58,9 @@ dbCmd
 	.command("console")
 	.description("Open a database console")
 	.action(async () => {
-		spawnSync(
-			"docker",
-			["compose", "exec", "db", "psql", dbUrl],
-			{
-				stdio: "inherit",
-			},
-		);
+		spawnSync("docker", ["compose", "exec", "db", "psql", dbUrl], {
+			stdio: "inherit",
+		});
 	});
 
 const migrateCmd = dbCmd

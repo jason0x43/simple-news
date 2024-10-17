@@ -1,7 +1,7 @@
 import { writable } from "svelte/store";
 import { seconds } from "./util";
 
-type ToastType = "normal" | "good" | "bad";
+type ToastType = "bad" | "good" | "normal";
 
 export type ToastOptions = {
 	type?: ToastType;

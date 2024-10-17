@@ -9,7 +9,7 @@
 	import { page } from "$app/stores";
 	import { cls } from "$lib/cls";
 	import { onMount } from "svelte";
-	import { periodicInvalidate, minutes } from "$lib/util";
+	import { minutes, periodicInvalidate } from "$lib/util";
 	import { FeedGroupId, FeedId } from "@jason0x43/reader-types";
 	import type { ArticleFilter } from "$lib/types";
 
@@ -26,7 +26,7 @@
 	const updatedArticleIds = writable<Set<string>>(new Set());
 	setAppContext("updatedArticleIds", updatedArticleIds);
 
-	const articleFilter = writable("unread" as ArticleFilter)
+	const articleFilter = writable("unread" as ArticleFilter);
 	setAppContext("articleFilter", articleFilter);
 
 	let selectedFeedIds: FeedId[] = [];

@@ -1,6 +1,6 @@
 <script lang="ts">
 	export let size: number | undefined = undefined;
-	
+
 	let className = "";
 	export { className as class };
 </script>

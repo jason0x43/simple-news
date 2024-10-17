@@ -1,4 +1,7 @@
-import { Kysely } from 'kysely';
+/**
+ * @template T
+ * @typedef {import("kysely").Kysely<T>} Kysely
+ */
 
 /**
  * @param {Kysely<any>} db
@@ -6,24 +9,27 @@ import { Kysely } from 'kysely';
  */
 export async function up(db) {
 	await db.schema
-		.alterTable('account_article')
-		.dropConstraint('user_articles_pkey')
+		.alterTable("account_article")
+		.dropConstraint("user_articles_pkey")
 		.execute();
 	await db.schema
-		.alterTable('account_article')
-		.renameColumn('id', '_id')
+		.alterTable("account_article")
+		.renameColumn("id", "_id")
 		.execute();
 	await db.schema
-		.alterTable('account_article')
-		.alterColumn('_id', (col) => col.dropNotNull())
+		.alterTable("account_article")
+		.alterColumn("_id", (col) => col.dropNotNull())
 		.execute();
 	await db.schema
-		.alterTable('account_article')
-		.addPrimaryKeyConstraint('account_article_pkey', ['account_id', 'article_id'])
+		.alterTable("account_article")
+		.addPrimaryKeyConstraint("account_article_pkey", [
+			"account_id",
+			"article_id",
+		])
 		.execute();
 	await db.schema
-		.alterTable('account_article')
-		.dropConstraint('user_articles_user_id_article_id_key')
+		.alterTable("account_article")
+		.dropConstraint("user_articles_user_id_article_id_key")
 		.ifExists()
 		.execute();
 }
@@ -34,23 +40,26 @@ export async function up(db) {
  */
 export async function down(db) {
 	await db.schema
-		.alterTable('account_article')
-		.dropConstraint('account_article_pkey')
+		.alterTable("account_article")
+		.dropConstraint("account_article_pkey")
 		.execute();
 	await db.schema
-		.alterTable('account_article')
-		.renameColumn('_id', 'id')
+		.alterTable("account_article")
+		.renameColumn("_id", "id")
 		.execute();
 	await db.schema
-		.alterTable('account_article')
-		.alterColumn('id', (col) => col.setNotNull())
+		.alterTable("account_article")
+		.alterColumn("id", (col) => col.setNotNull())
 		.execute();
 	await db.schema
-		.alterTable('account_article')
-		.addPrimaryKeyConstraint('user_articles_pkey', ['id'])
+		.alterTable("account_article")
+		.addPrimaryKeyConstraint("user_articles_pkey", ["id"])
 		.execute();
 	await db.schema
-		.alterTable('account_article')
-		.addUniqueConstraint('user_articles_user_id_article_id_key', ['account_id', 'article_id'])
+		.alterTable("account_article")
+		.addUniqueConstraint("user_articles_user_id_article_id_key", [
+			"account_id",
+			"article_id",
+		])
 		.execute();
 }

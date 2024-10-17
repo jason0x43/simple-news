@@ -2,7 +2,12 @@
 	import { getAppContext } from "$lib/context";
 	import DoubleRight from "$lib/icons/DoubleRight.svelte";
 	import Star from "$lib/icons/Star.svelte";
-	import type { Feed, FeedGroupWithFeeds, FeedId, FeedStats } from "@jason0x43/reader-types";
+	import type {
+		Feed,
+		FeedGroupWithFeeds,
+		FeedId,
+		FeedStats,
+	} from "@jason0x43/reader-types";
 	import {
 		allFeedsAreSelected,
 		getSavedCount,
@@ -95,7 +100,7 @@
 							(unread, id) =>
 								unread +
 								(articleFilter === "all"
-									? feedStats?.[id]?.total ?? 0
+									? (feedStats?.[id]?.total ?? 0)
 									: (feedStats?.[id]?.total ?? 0) -
 										(feedStats?.[id]?.read ?? 0)),
 							0,
@@ -119,7 +124,7 @@
 							{#if feedStats}
 								<StatusValue
 									value={articleFilter === "all"
-										? feedStats[id]?.total ?? 0
+										? (feedStats[id]?.total ?? 0)
 										: (feedStats[id]?.total ?? 0) - (feedStats[id]?.read ?? 0)}
 								/>
 							{/if}

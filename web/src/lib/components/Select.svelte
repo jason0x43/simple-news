@@ -1,6 +1,6 @@
 <script lang="ts">
 	export let value: string;
-	export let variant: "normal" | "invisible" | "editable" = "normal";
+	export let variant: "editable" | "invisible" | "normal" = "normal";
 	export let disabled = false;
 	export let onChange: ((value: string) => void) | undefined = undefined;
 

@@ -2,7 +2,7 @@
 	export let ref: HTMLInputElement | undefined = undefined;
 	export let value: string = "";
 	export let disabled = false;
-	export let variant: "normal" | "invisible" | "editable" = "normal";
+	export let variant: "editable" | "invisible" | "normal" = "normal";
 
 	let className = "";
 	export { className as class };

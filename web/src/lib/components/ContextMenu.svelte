@@ -4,7 +4,7 @@
 
 	export let items: { label?: string; value: string }[];
 	export let anchor: { x: number; y: number };
-	export let onSelect: (value: string) => void | Promise<void>;
+	export let onSelect: (value: string) => Promise<void> | void;
 	export let onClose: () => void;
 
 	let ref: HTMLUListElement;

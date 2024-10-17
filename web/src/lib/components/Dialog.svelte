@@ -31,13 +31,13 @@
 				flex
 				items-center
 				justify-between
+				border-b
+				border-border-light
 				bg-hover-light
 				px-3
 				py-2
-				dark:bg-hover-dark
-				border-b
-				border-border-light
 				dark:border-border-dark
+				dark:bg-hover-dark
 			`}
 		>
 			<h4>{title}</h4>

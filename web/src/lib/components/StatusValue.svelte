@@ -1,5 +1,5 @@
 <script lang="ts">
-	export let value: string | number;
+	export let value: number | string;
 </script>
 
-<span class="text-xs text-disabled dark:text-disabled-dark">{value}</span>
+<span class="text-disabled text-xs dark:text-disabled-dark">{value}</span>

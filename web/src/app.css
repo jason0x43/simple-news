@@ -5,7 +5,7 @@
 
 @layer utilities {
 	.absolute-center {
-		@apply absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2;
+		@apply absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform;
 	}
 
 	/** Disable the iOS context menu */
@@ -46,5 +46,5 @@
 }
 
 #app {
-	@apply h-full w-full relative;
+	@apply relative h-full w-full;
 }

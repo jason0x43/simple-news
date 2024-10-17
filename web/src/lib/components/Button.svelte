@@ -1,5 +1,5 @@
 <script lang="ts">
-	export let variant: "normal" | "invisible" = "normal";
+	export let variant: "invisible" | "normal" = "normal";
 	export let disabled = false;
 	export let type: "button" | "submit" = "button";
 

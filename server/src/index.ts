@@ -13,11 +13,11 @@ console.log("Running database migrations...");
 await runMigrations(db.db);
 console.log("Database is up to date");
 
-console.log('Creating admin user...');
+console.log("Creating admin user...");
 try {
 	await db.getAccountByUsername(adminUser);
 	console.log(`Admin user ${adminUser} already exists`);
-} catch (error) {
+} catch {
 	await db.addAccount(adminUser, adminUser, getEnv("SN_ADMIN_PASSWORD"));
 	console.log(`Created admin user ${adminUser}`);
 }

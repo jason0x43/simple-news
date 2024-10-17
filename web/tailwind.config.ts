@@ -1,5 +1,5 @@
-import { Config } from "tailwindcss";
 import colors from "tailwindcss/colors";
+import { Config } from "tailwindcss";
 
 export default {
 	future: {

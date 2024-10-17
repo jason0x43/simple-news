@@ -1,6 +1,6 @@
 import { invalidate } from "$app/navigation";
 import type {
-    AddFeedGroupRequest,
+	AddFeedGroupRequest,
 	AddFeedRequest,
 	AddGroupFeedRequest,
 	MarkArticlesRequest,
@@ -50,9 +50,7 @@ export async function updateFeed(
 	await invalidate("app:feedGroups");
 }
 
-export async function addFeedGroup(
-	data: AddFeedGroupRequest,
-): Promise<void> {
+export async function addFeedGroup(data: AddFeedGroupRequest): Promise<void> {
 	const resp = await fetch("/api/feedgroups", {
 		method: "POST",
 		body: JSON.stringify(data),

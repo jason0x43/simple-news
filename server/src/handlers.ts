@@ -96,7 +96,7 @@ export default {
 		try {
 			const article = await db.getArticle(articleId);
 			res.json(article);
-		} catch (error) {
+		} catch {
 			throw new AppError(`Article ${articleId} not found`, 404);
 		}
 	},
@@ -260,5 +260,5 @@ export default {
 		const url = req.query_parameters.url;
 		const feed = await downloadFeed(url);
 		res.json(feed);
-	}
+	},
 } satisfies Record<string, Handler>;

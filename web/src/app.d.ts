@@ -3,8 +3,8 @@
 import type {
 	Article,
 	Feed,
-	FeedStats,
 	FeedGroupWithFeeds,
+	FeedStats,
 } from "@jason0x43/reader-types";
 
 // for information about these interfaces

@@ -1,4 +1,7 @@
-import { Kysely } from "kysely";
+/**
+ * @template T
+ * @typedef {import("kysely").Kysely<T>} Kysely
+ */
 
 /**
  * @param {Kysely<any>} db

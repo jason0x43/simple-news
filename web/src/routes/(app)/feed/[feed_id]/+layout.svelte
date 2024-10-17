@@ -4,7 +4,7 @@
 	import { cls } from "$lib/cls";
 	import ArticlesList from "$lib/components/ArticlesList.svelte";
 	import { getAppContext } from "$lib/context.js";
-	import { periodicInvalidate, minutes } from "$lib/util.js";
+	import { minutes, periodicInvalidate } from "$lib/util.js";
 	import { onMount } from "svelte";
 	import { fade } from "svelte/transition";
 

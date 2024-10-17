@@ -55,7 +55,11 @@
 	{#if visible && article && articleFeed}
 		<div class="z-10 mx-auto flex max-w-screen-md flex-col gap-4 py-5">
 			<div class="flex flex-col gap-4">
-				<a href={article.link ?? undefined} target="_blank">
+				<a
+					href={article.link ?? undefined}
+					target="_blank"
+					rel="noopener noreferrer"
+				>
 					<h1>{article.title}</h1>
 				</a>
 				<h2>{articleFeed.title}</h2>
@@ -140,7 +144,7 @@
 	}
 
 	.content :global(ul) {
-		@apply flex flex-col list-disc pl-8 gap-2;
+		@apply flex list-disc flex-col gap-2 pl-8;
 	}
 
 	.content :global(li) {
