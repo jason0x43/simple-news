@@ -2,7 +2,7 @@ export const ssr = false;
 
 import { Api } from "$lib/api.server.js";
 import { error, redirect } from "@sveltejs/kit";
-import { ResponseError } from "@jason0x43/simple-news-client";
+import { ResponseError } from "@jason0x43/reader-client";
 
 export async function load({ url, depends, locals, fetch }) {
 	if (!locals.sessionId) {

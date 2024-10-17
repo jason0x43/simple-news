@@ -1,6 +1,6 @@
 {
-	"name": "@jason0x43/simple-news-cli",
-	"description": "CLI for managing the simple-news app",
+	"name": "@jason0x43/reader-cli",
+	"description": "CLI for managing the reader app",
 	"private": true,
 	"main": "build/index.js",
 	"type": "module",
@@ -14,8 +14,8 @@
 	"dependencies": {
 		"@commander-js/extra-typings": "^12.1.0",
 		"commander": "^12.1.0",
-		"@jason0x43/simple-news-types": "workspace:*",
-		"@jason0x43/simple-news-client": "workspace:*",
+		"@jason0x43/reader-types": "workspace:*",
+		"@jason0x43/reader-client": "workspace:*",
 		"zod": "^3.23.8"
 	},
 	"devDependencies": {

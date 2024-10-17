@@ -1,5 +1,5 @@
 import { Api } from "$lib/api.server";
-import { UpdateFeedRequest } from "@jason0x43/simple-news-types";
+import { UpdateFeedRequest } from "@jason0x43/reader-types";
 
 export async function PATCH({ request, fetch, locals, params }) {
 	const { feedId } = params;

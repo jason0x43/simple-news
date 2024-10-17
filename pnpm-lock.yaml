@@ -26,14 +26,14 @@ importers:
 
   app:
     dependencies:
-      '@jason0x43/simple-news-client':
+      '@jason0x43/reader-client':
         specifier: workspace:*
         version: link:../client
       '@sveltejs/adapter-node':
         specifier: ^5.0.1
         version: 5.2.6(@sveltejs/kit@2.7.0(@sveltejs/vite-plugin-svelte@3.1.2(svelte@4.2.19)(vite@5.4.8(@types/node@20.16.11)))(svelte@4.2.19)(vite@5.4.8(@types/node@20.16.11)))
     devDependencies:
-      '@jason0x43/simple-news-types':
+      '@jason0x43/reader-types':
         specifier: workspace:*
         version: link:../types
       '@sveltejs/adapter-auto':
@@ -114,10 +114,10 @@ importers:
       '@commander-js/extra-typings':
         specifier: ^12.1.0
         version: 12.1.0(commander@12.1.0)
-      '@jason0x43/simple-news-client':
+      '@jason0x43/reader-client':
         specifier: workspace:*
         version: link:../client
-      '@jason0x43/simple-news-types':
+      '@jason0x43/reader-types':
         specifier: workspace:*
         version: link:../types
       commander:
@@ -133,20 +133,20 @@ importers:
 
   client:
     dependencies:
-      '@jason0x43/simple-news-types':
+      '@jason0x43/reader-types':
         specifier: workspace:*
         version: link:../types
       zod:
         specifier: ^3.23.8
         version: 3.23.8
     devDependencies:
-      '@jason0x43/simple-news-server':
+      '@jason0x43/reader-server':
         specifier: workspace:*
         version: link:../server
 
   server:
     dependencies:
-      '@jason0x43/simple-news-types':
+      '@jason0x43/reader-types':
         specifier: workspace:*
         version: link:../types
       '@paralleldrive/cuid2':

@@ -1,4 +1,4 @@
-name: simple-news
+name: reader
 
 services:
   db:
@@ -13,7 +13,7 @@ services:
       - ${POSTGRES_PORT:-5432}:5432
 
   server:
-    image: simple-news-server:latest
+    image: reader-server:latest
     build:
       context: server
       target: runner
@@ -31,7 +31,7 @@ services:
       RUST_LOG: simple_news=debug,tower_http=debug,info
 
   app:
-    image: simple-news-app:latest
+    image: reader-app:latest
     build:
       context: app
     ports:

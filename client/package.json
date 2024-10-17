@@ -1,5 +1,5 @@
 {
-	"name": "@jason0x43/simple-news-client",
+	"name": "@jason0x43/reader-client",
 	"description": "A client for interacting with the simple news server",
 	"private": true,
 	"main": "build/index.js",
@@ -9,10 +9,10 @@
 		"dev": "tsc --watch --preserveWatchOutput"
 	},
 	"dependencies": {
-		"@jason0x43/simple-news-types": "workspace:*",
+		"@jason0x43/reader-types": "workspace:*",
 		"zod": "^3.23.8"
 	},
 	"devDependencies": {
-		"@jason0x43/simple-news-server": "workspace:*"
+		"@jason0x43/reader-server": "workspace:*"
 	}
 }

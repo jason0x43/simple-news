@@ -1,5 +1,5 @@
 {
-	"name": "@jason0x43/simple-news-app",
+	"name": "@jason0x43/reader-app",
 	"description": "A simple RSS reader",
 	"private": true,
 	"main": "build/index.js",
@@ -33,7 +33,7 @@
 		"prettier": "^3.2.5",
 		"prettier-plugin-svelte": "^3.2.3",
 		"prettier-plugin-tailwindcss": "^0.5.14",
-		"@jason0x43/simple-news-types": "workspace:*",
+		"@jason0x43/reader-types": "workspace:*",
 		"svelte": "^4.2.15",
 		"svelte-check": "^3.6.9",
 		"tailwindcss": "^3.4.3",
@@ -45,6 +45,6 @@
 	"type": "module",
 	"dependencies": {
 		"@sveltejs/adapter-node": "^5.0.1",
-		"@jason0x43/simple-news-client": "workspace:*"
+		"@jason0x43/reader-client": "workspace:*"
 	}
 }

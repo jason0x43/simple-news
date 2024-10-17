@@ -1,7 +1,7 @@
 {
-  "name": "@jason0x43/simple-news-types",
+  "name": "@jason0x43/reader-types",
   "version": "1.0.0",
-  "description": "Types for simple-news packages",
+  "description": "Types for reader packages",
   "main": "build/index.js",
   "type": "module",
   "scripts": {

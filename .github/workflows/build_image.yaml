@@ -9,7 +9,7 @@ env:
   REGISTRY: ghcr.io
   APP_IMAGE_NAME: ${{ github.repository }}-app
   SERVER_IMAGE_NAME: ${{ github.repository }}-server
-  SERVICE_NAMES: simple-news-app simple-news-server
+  SERVICE_NAMES: reader-app reader-server
 
 jobs:
   build-app:

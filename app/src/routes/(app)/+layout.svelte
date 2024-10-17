@@ -10,7 +10,7 @@
 	import { cls } from "$lib/cls";
 	import { onMount } from "svelte";
 	import { periodicInvalidate, minutes } from "$lib/util";
-	import { FeedGroupId, FeedId } from "@jason0x43/simple-news-types";
+	import { FeedGroupId, FeedId } from "@jason0x43/reader-types";
 	import type { ArticleFilter } from "$lib/types";
 
 	export let data;

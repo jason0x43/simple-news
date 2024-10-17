@@ -1,6 +1,6 @@
 {
-	"name": "@jason0x43/simple-news-server",
-	"description": "Server for simple-news app",
+	"name": "@jason0x43/reader-server",
+	"description": "Server for reader app",
 	"private": "true",
 	"main": "build/index.js",
 	"files": [
@@ -19,7 +19,7 @@
 		"hyper-express": "^6.16.1",
 		"kysely": "^0.27.3",
 		"pg": "^8.11.5",
-		"@jason0x43/simple-news-types": "workspace:*",
+		"@jason0x43/reader-types": "workspace:*",
 		"zod": "^3.23.8"
 	},
 	"devDependencies": {

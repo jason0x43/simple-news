@@ -23,7 +23,7 @@
 		FeedGroupId,
 		FeedGroupWithFeeds,
 		FeedId,
-	} from "@jason0x43/simple-news-types";
+	} from "@jason0x43/reader-types";
 
 	export let feedGroups: FeedGroupWithFeeds[];
 	export let feeds: Feed[];

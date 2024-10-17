@@ -1,5 +1,5 @@
 import { Api } from "$lib/api.server";
-import type { AddGroupFeedRequest, FeedGroupId } from "@jason0x43/simple-news-types";
+import type { AddGroupFeedRequest, FeedGroupId } from "@jason0x43/reader-types";
 
 export async function POST({ request, fetch, locals, params }) {
 	const data: AddGroupFeedRequest = await request.json();
