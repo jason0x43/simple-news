@@ -176,7 +176,7 @@ articlesCmd
 	.description("List saved articles")
 	.action(async () => {
 		const client = getClient();
-		let articles = await client.getSavedArticles();
+		const articles = await client.getSavedArticles();
 		printJson(articles);
 	});
 

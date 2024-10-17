@@ -9,7 +9,8 @@
 	},
 	"scripts": {
 		"build": "tsc",
-		"dev": "tsc --watch --preserveWatchOutput"
+		"dev": "tsc --watch --preserveWatchOutput",
+		"check": "tsc --noEmit && eslint ."
 	},
 	"dependencies": {
 		"@commander-js/extra-typings": "^12.1.0",

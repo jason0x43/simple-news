@@ -46,7 +46,7 @@ export class Config {
 
 	#data: ConfigData;
 
-	private constructor(key: Symbol, data: ConfigData) {
+	private constructor(key: symbol, data: ConfigData) {
 		if (key !== constructorKey) {
 			throw new Error("use Config.load() to create a Config instance");
 		}

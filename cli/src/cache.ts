@@ -28,7 +28,7 @@ export class Cache {
 
 	#data: CacheData;
 
-	private constructor(key: Symbol, data: CacheData) {
+	private constructor(key: symbol, data: CacheData) {
 		if (key !== constructorKey) {
 			throw new Error("use Config.load() to create a Config instance");
 		}
