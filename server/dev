@@ -21,6 +21,13 @@ import kanelKysely from "kanel-kysely";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const dbUser = getEnv("POSTGRES_USER");
+const dbPassword = encodeURIComponent(getEnv("POSTGRES_PASSWORD"));
+const dbName = getEnv("POSTGRES_DB");
+const dbHost = getEnv("POSTGRES_HOST");
+const dbPort = getEnv("POSTGRES_PORT");
+const dbUrl = `postgres://${dbUser}:${dbPassword}@${dbHost}:${dbPort}/${dbName}`;
+
 const program = new Command();
 
 program.name("dev").description("Dev utilities").configureHelp({
@@ -53,7 +60,7 @@ dbCmd
 	.action(async () => {
 		spawnSync(
 			"docker",
-			["compose", "exec", "db", "psql", getEnv("DATABASE_URL")],
+			["compose", "exec", "db", "psql", dbUrl],
 			{
 				stdio: "inherit",
 			},
@@ -224,7 +231,7 @@ function getDb() {
 	return new Kysely({
 		dialect: new PostgresDialect({
 			pool: new Pg.Pool({
-				connectionString: getEnv("DATABASE_URL"),
+				connectionString: dbUrl,
 			}),
 		}),
 	});
@@ -296,7 +303,7 @@ async function doDb(callback) {
  */
 async function genDb() {
 	await kanel.processDatabase({
-		connection: getEnv("DATABASE_URL"),
+		connection: dbUrl,
 
 		preDeleteOutputFolder: true,
 		outputPath: "./src/schemas",

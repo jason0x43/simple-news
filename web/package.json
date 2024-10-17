@@ -1,5 +1,5 @@
 {
-	"name": "@jason0x43/reader-app",
+	"name": "@jason0x43/reader-web",
 	"description": "A simple RSS reader",
 	"private": true,
 	"main": "build/index.js",

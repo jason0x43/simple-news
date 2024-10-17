@@ -15,8 +15,8 @@ services:
   server:
     image: reader-server:latest
     build:
-      context: server
-      target: runner
+      context: .
+      target: server
     ports:
       - 3333:3333
     volumes:
@@ -25,17 +25,18 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PORT: 5432
       POSTGRES_HOST: db
       SN_ADMIN_USER: ${SN_ADMIN_USER}
       SN_ADMIN_PASSWORD: ${SN_ADMIN_PASSWORD}
-      RUST_LOG: simple_news=debug,tower_http=debug,info
 
-  app:
-    image: reader-app:latest
+  web:
+    image: reader-web:latest
     build:
-      context: app
+      context: .
+      target: web
     ports:
-      - 3000:3000
+      - 3030:3000
     environment:
       API_HOST: http://server:3333
 

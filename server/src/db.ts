@@ -28,10 +28,17 @@ export class Db {
 	#db: Kysely<Database>;
 
 	constructor() {
+		const dbUser = getEnv("POSTGRES_USER");
+		const dbPassword = encodeURIComponent(getEnv("POSTGRES_PASSWORD"));
+		const dbName = getEnv("POSTGRES_DB");
+		const dbHost = getEnv("POSTGRES_HOST");
+		const dbPort = getEnv("POSTGRES_PORT");
+		const dbUrl = `postgres://${dbUser}:${dbPassword}@${dbHost}:${dbPort}/${dbName}`;
+
 		this.#db = new Kysely({
 			dialect: new PostgresDialect({
 				pool: new Pg.Pool({
-					connectionString: getEnv("DATABASE_URL"),
+					connectionString: dbUrl,
 				}),
 			}),
 		});

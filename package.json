@@ -6,7 +6,7 @@
 	"license": "MIT",
 	"scripts": {
 		"dev": "pnpm run --parallel dev",
-		"build": "pnpm recursive run --filter=!./app --sort build",
+		"build": "pnpm recursive run --filter=!./web --sort build",
 		"check": "pnpm run --parallel check"
 	},
 	"devDependencies": {
