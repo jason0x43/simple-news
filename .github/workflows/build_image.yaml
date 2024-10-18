@@ -38,10 +38,10 @@ jobs:
             type=sha,
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build and push app image
+      - name: Build and push web image
         uses: docker/build-push-action@v5
         with:
-          target: app
+          target: web
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -109,7 +109,7 @@ jobs:
             StrictHostKeyChecking no
           END
 
-      - name: Deploy app
+      - name: Deploy web
         env:
           DOCKER_DIR: ${{ secrets.DOCKER_DIR }}
           TOKEN: ${{ secrets.DOCKER_REGISTRY_TOKEN }}
