@@ -13,22 +13,22 @@
 		"check": "tsc --noEmit && eslint ."
 	},
 	"dependencies": {
-		"@paralleldrive/cuid2": "^2.2.2",
-		"cheerio": "1.0.0-rc.12",
-		"entities": "^5.0.0",
-		"fast-xml-parser": "^4.4.0",
-		"hyper-express": "^6.16.1",
-		"kysely": "^0.27.3",
-		"pg": "^8.11.5",
 		"@jason0x43/reader-types": "workspace:*",
+		"@paralleldrive/cuid2": "^2.2.2",
+		"cheerio": "^1.0.0",
+		"entities": "^5.0.0",
+		"fast-xml-parser": "^4.5.0",
+		"hyper-express": "^6.17.2",
+		"kysely": "^0.27.4",
+		"pg": "^8.13.0",
 		"zod": "^3.23.8"
 	},
 	"devDependencies": {
 		"@commander-js/extra-typings": "^12.1.0",
-		"@types/pg": "^8.11.6",
+		"@types/pg": "^8.11.10",
 		"commander": "^12.1.0",
-		"kanel": "^3.8.9",
-		"kanel-kysely": "^0.4.0",
+		"kanel": "^3.10.1",
+		"kanel-kysely": "^0.5.0",
 		"tsc-watch": "^6.2.0"
 	}
 }

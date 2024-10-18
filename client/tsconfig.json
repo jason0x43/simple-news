@@ -1,16 +1,9 @@
 {
+	"extends": "../tsconfig.json",
 	"compilerOptions": {
-		"target": "es2022",
-		"module": "NodeNext",
-		"moduleResolution": "NodeNext",
 		"declaration": true,
-		"esModuleInterop": true,
-		"forceConsistentCasingInFileNames": true,
+		"lib": ["ES2022", "DOM"],
 		"outDir": "build",
-		"sourceMap": true,
-		"strict": true,
-		"allowJs": true,
-		"checkJs": true,
-		"skipLibCheck": true
+		"sourceMap": true
 	}
 }
