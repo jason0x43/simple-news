@@ -5,7 +5,7 @@
 	"main": "build/index.js",
 	"type": "module",
 	"bin": {
-		"sn": "./bin/sn.js"
+		"rdr": "./bin/rdr.js"
 	},
 	"scripts": {
 		"build": "tsc",
