@@ -13,6 +13,7 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && eslint --flag unstable_config_lookup_from_file ."
 	},
 	"devDependencies": {
+		"@jason0x43/reader-client": "workspace:*",
 		"@jason0x43/reader-types": "workspace:*",
 		"@sveltejs/adapter-auto": "^3.2.0",
 		"@sveltejs/adapter-static": "^3.0.1",
@@ -35,7 +36,6 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"@jason0x43/reader-client": "workspace:*",
 		"@sveltejs/adapter-node": "^5.0.1"
 	}
 }

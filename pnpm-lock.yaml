@@ -122,13 +122,13 @@ importers:
 
   web:
     dependencies:
-      '@jason0x43/reader-client':
-        specifier: workspace:*
-        version: link:../client
       '@sveltejs/adapter-node':
         specifier: ^5.0.1
         version: 5.2.7(@sveltejs/kit@2.7.1(@sveltejs/vite-plugin-svelte@3.1.2(svelte@4.2.19)(vite@5.4.9(@types/node@22.7.6)))(svelte@4.2.19)(vite@5.4.9(@types/node@22.7.6)))
     devDependencies:
+      '@jason0x43/reader-client':
+        specifier: workspace:*
+        version: link:../client
       '@jason0x43/reader-types':
         specifier: workspace:*
         version: link:../types
