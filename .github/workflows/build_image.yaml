@@ -7,12 +7,12 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  APP_IMAGE_NAME: ${{ github.repository }}-app
+  APP_IMAGE_NAME: ${{ github.repository }}-web
   SERVER_IMAGE_NAME: ${{ github.repository }}-server
-  SERVICE_NAMES: reader-app reader-server
+  SERVICE_NAMES: reader-web reader-server
 
 jobs:
-  build-app:
+  build-web:
     runs-on: ubuntu-latest
 
     steps:
@@ -85,7 +85,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   deploy:
-    needs: [build-app, build-server]
+    needs: [build-web, build-server]
 
     runs-on: ubuntu-latest
 
