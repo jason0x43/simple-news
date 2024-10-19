@@ -314,6 +314,6 @@ async function genDb() {
 
 		enumStyle: "type",
 
-		importsExtension: ".js"
+		importsExtension: ".js",
 	});
 }
