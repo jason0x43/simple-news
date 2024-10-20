@@ -1,117 +1,68 @@
 import { invalidate } from "$app/navigation";
+import { Client } from "@jason0x43/reader-client";
 import type {
 	AddFeedGroupRequest,
 	AddFeedRequest,
 	AddGroupFeedRequest,
+	FeedGroupId,
+	FeedId,
 	MarkArticlesRequest,
 	UpdateFeedRequest,
 } from "@jason0x43/reader-types";
 
 export async function markArticles(data: MarkArticlesRequest): Promise<void> {
-	const resp = await fetch("/api/mark", {
-		method: "POST",
-		body: JSON.stringify(data),
-	});
-
-	if (!resp.ok) {
-		throw new Error("Failed to mark articles");
-	}
-
+	const client = new Client("/api/");
+	await client.markArticles(data);
 	await invalidate("app:articles");
 	await invalidate("app:feedStats");
 }
 
 export async function addFeed(data: AddFeedRequest): Promise<void> {
-	const resp = await fetch("/api/feeds", {
-		method: "POST",
-		body: JSON.stringify(data),
-	});
-
-	if (!resp.ok) {
-		throw new Error("Failed to create group");
-	}
-
+	const client = new Client("/api/");
+	await client.createFeed(data);
 	await invalidate("app:feedGroups");
 }
 
 export async function updateFeed(
-	feedId: string,
+	feedId: FeedId,
 	data: UpdateFeedRequest,
 ): Promise<void> {
-	const resp = await fetch(`/api/feeds/${feedId}`, {
-		method: "PATCH",
-		body: JSON.stringify(data),
-	});
-
-	if (!resp.ok) {
-		throw new Error("Failed to create group");
-	}
-
-	await invalidate("app:feedGroups");
+	const client = new Client("/api/");
+	await client.updateFeed(feedId, data);
 }
 
 export async function addFeedGroup(data: AddFeedGroupRequest): Promise<void> {
-	const resp = await fetch("/api/feedgroups", {
-		method: "POST",
-		body: JSON.stringify(data),
-	});
-
-	if (!resp.ok) {
-		throw new Error("Failed to create group");
-	}
-
+	const client = new Client("/api/");
+	await client.createFeedGroup(data);
 	await invalidate("app:feedGroups");
 }
 
 export async function addGroupFeed(
-	groupId: string,
+	groupId: FeedGroupId,
 	data: AddGroupFeedRequest,
 ): Promise<void> {
-	const resp = await fetch(`/api/feedgroups/${groupId}`, {
-		method: "POST",
-		body: JSON.stringify(data),
-	});
-
-	if (!resp.ok) {
-		throw new Error("Failed to add feed to group");
-	}
-
+	const client = new Client("/api/");
+	await client.addGroupFeed(groupId, data);
 	await invalidate("app:feedGroups");
 }
 
 export async function removeGroupFeed(
-	groupId: string,
-	feedId: string,
+	groupId: FeedGroupId,
+	feedId: FeedId,
 ): Promise<void> {
-	const resp = await fetch(`/api/feedgroups/${groupId}/${feedId}`, {
-		method: "DELETE",
-	});
-
-	if (!resp.ok) {
-		throw new Error("Failed to remove feed from group");
-	}
-
+	const client = new Client("/api/");
+	await client.removeGroupFeed(groupId, feedId);
 	await invalidate("app:feedGroups");
 }
 
-export async function removeFeedFromAllGroups(feedId: string): Promise<void> {
-	const resp = await fetch(`/api/feedgroups/feed/${feedId}`, {
-		method: "DELETE",
-	});
-
-	if (!resp.ok) {
-		throw new Error("Failed to remove feed from group");
-	}
-
+export async function removeFeedFromAllGroups(feedId: FeedId): Promise<void> {
+	const client = new Client("/api/");
+	await client.removeFeedFromAllGroups(feedId);
 	await invalidate("app:feedGroups");
 }
 
-export async function refreshFeed(feedId: string): Promise<void> {
-	const resp = await fetch(`/api/feeds/${feedId}/refresh`);
-
-	if (!resp.ok) {
-		throw new Error("Failed to remove feed from group");
-	}
-
+export async function refreshFeed(feedId: FeedId): Promise<void> {
+	const client = new Client("/api/");
+	await client.refreshFeed(feedId);
 	await invalidate("app:feedStats");
 }

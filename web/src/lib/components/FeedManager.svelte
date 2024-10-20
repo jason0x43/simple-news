@@ -115,7 +115,8 @@
 		return -1;
 	});
 
-	let editing = "";
+	const emptyFeedId = "" as FeedId;
+	let editing = emptyFeedId;
 
 	async function handleSubmit(event: SubmitEvent) {
 		const form = event.target as HTMLFormElement;
@@ -123,7 +124,7 @@
 		const id = editing;
 		const title = value.get("title") as string;
 		const url = value.get("url") as string;
-		const groupId = value.get("group") as string;
+		const groupId = value.get("group") as FeedGroupId;
 
 		await busyOp(
 			() =>
@@ -137,7 +138,7 @@
 			"Feed updated",
 		);
 
-		editing = "";
+		editing = emptyFeedId;
 	}
 </script>
 
@@ -215,7 +216,7 @@
 											disabled={editing !== "" && editing !== feed.id}
 											on:click={() => {
 												if (editing === feed.id) {
-													editing = "";
+													editing = emptyFeedId;
 												} else {
 													editing = feed.id;
 												}

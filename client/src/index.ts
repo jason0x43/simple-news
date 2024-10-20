@@ -1,7 +1,9 @@
 import {
 	AddFeedGroupRequest,
 	AddFeedRequest,
+	AddGroupFeedRequest,
 	Article,
+	ArticleId,
 	ArticleSummary,
 	ArticlesResponse,
 	Feed,
@@ -15,6 +17,7 @@ import {
 	FeedsResponse,
 	MarkArticleRequest,
 	MarkArticlesRequest,
+	SessionId,
 	UpdateFeedRequest,
 } from "@jason0x43/reader-types";
 import { AccountResponse, SessionResponse } from "@jason0x43/reader-types";
@@ -29,7 +32,7 @@ export class Client {
 
 	constructor(
 		apiHost: string,
-		options?: { sessionId?: string; fetch?: typeof fetch },
+		options?: { sessionId?: SessionId; fetch?: typeof fetch },
 	) {
 		const headers: Record<string, string> = {};
 		if (options?.sessionId) {
@@ -130,7 +133,7 @@ export class Client {
 	/**
 	 * Update a feed's properties
 	 */
-	async updateFeed(id: string, data: UpdateFeedRequest): Promise<Feed> {
+	async updateFeed(id: FeedId, data: UpdateFeedRequest): Promise<Feed> {
 		const resp = await this.#client.feeds[":id"].$patch({
 			param: { id },
 			json: data,
@@ -149,7 +152,7 @@ export class Client {
 	/**
 	 * Get summaries for all articles in a given feed
 	 */
-	async getFeedArticles(feedId: string): Promise<ArticleSummary[]> {
+	async getFeedArticles(feedId: FeedId): Promise<ArticleSummary[]> {
 		const resp = await this.#client.feeds[":id"].articles.$get({
 			param: { id: feedId },
 		});
@@ -159,7 +162,9 @@ export class Client {
 	/**
 	 * Get summaries for all articles in a given feed group
 	 */
-	async getFeedGroupArticles(feedGroupId: string): Promise<ArticleSummary[]> {
+	async getFeedGroupArticles(
+		feedGroupId: FeedGroupId,
+	): Promise<ArticleSummary[]> {
 		const resp = await this.#client.feedgroups[":id"].articles.$get({
 			param: { id: feedGroupId },
 		});
@@ -177,7 +182,7 @@ export class Client {
 	/**
 	 * Get a complete article.
 	 */
-	async getArticle(id: string): Promise<Article> {
+	async getArticle(id: ArticleId): Promise<Article> {
 		const resp = await this.#client.articles[":id"].$get({ param: { id } });
 		return await resp.json();
 	}
@@ -185,7 +190,7 @@ export class Client {
 	/**
 	 * Mark an article as saved or read
 	 */
-	async markArticle(id: string, data: MarkArticleRequest): Promise<void> {
+	async markArticle(id: ArticleId, data: MarkArticleRequest): Promise<void> {
 		const resp = await this.#client.articles[":id"].$patch({
 			param: { id },
 			json: data,
@@ -204,21 +209,13 @@ export class Client {
 	/**
 	 * Add a feed to a feed group.
 	 */
-	async addGroupFeed({
-		feedId,
-		groupId,
-		moveFeed,
-	}: {
-		feedId: FeedId;
-		groupId: FeedGroupId;
-		moveFeed: boolean;
-	}): Promise<FeedGroup> {
+	async addGroupFeed(
+		groupId: FeedGroupId,
+		data: AddGroupFeedRequest,
+	): Promise<FeedGroup> {
 		const resp = await this.#client.feedgroups[":id"].$post({
 			param: { id: groupId },
-			json: {
-				feed_id: feedId,
-				move_feed: moveFeed ?? false,
-			},
+			json: data,
 		});
 		return await resp.json();
 	}
@@ -226,13 +223,10 @@ export class Client {
 	/**
 	 * Move a feed to a feed group.
 	 */
-	async moveGroupFeed({
-		feedId,
-		groupId,
-	}: {
-		feedId: FeedId;
-		groupId: string;
-	}): Promise<FeedGroup> {
+	async moveGroupFeed(
+		groupId: FeedGroupId,
+		feedId: FeedId,
+	): Promise<FeedGroup> {
 		const resp = await this.#client.feedgroups[":id"].$post({
 			param: { id: groupId },
 			json: { feed_id: feedId, move_feed: true },
@@ -243,13 +237,7 @@ export class Client {
 	/**
 	 * Remove a feed from a feed group.
 	 */
-	async removeGroupFeed({
-		feedId,
-		groupId,
-	}: {
-		feedId: string;
-		groupId: string;
-	}): Promise<void> {
+	async removeGroupFeed(groupId: FeedGroupId, feedId: FeedId): Promise<void> {
 		await this.#client.feedgroups[":id"][":feed_id"].$delete({
 			param: { id: groupId, feed_id: feedId },
 		});
@@ -258,7 +246,7 @@ export class Client {
 	/**
 	 * Remove a feed from all user feed groups.
 	 */
-	async removeFeedFromAllGroups(feedId: string): Promise<void> {
+	async removeFeedFromAllGroups(feedId: FeedId): Promise<void> {
 		await this.#client.feedgroups.feed[":id"].$delete({
 			param: { id: feedId },
 		});
@@ -269,7 +257,7 @@ export class Client {
 	 *
 	 * @param feedId - the ID of the feed to refresh
 	 */
-	async refreshFeed(feedId: string): Promise<FeedStat> {
+	async refreshFeed(feedId: FeedId): Promise<FeedStat> {
 		await this.#client.feeds[":id"].refresh.$get({ param: { id: feedId } });
 		const resp = await this.#client.feeds[":id"].stats.$get({
 			param: { id: feedId },

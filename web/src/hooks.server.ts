@@ -1,8 +1,10 @@
+import { Client } from "@jason0x43/reader-client";
+import type { SessionId } from "@jason0x43/reader-types";
 import { redirect } from "@sveltejs/kit";
 
 export async function handle({ event, resolve }) {
 	const cookies = event.cookies;
-	const sessionId = cookies.get("session");
+	const sessionId = cookies.get("session") as SessionId;
 
 	if (!sessionId && event.url.pathname !== "/login") {
 		throw redirect(301, "/login");
@@ -22,6 +24,7 @@ export async function handle({ event, resolve }) {
 		});
 
 		event.locals.sessionId = sessionId;
+		event.locals.client  = new Client("/api/");
 	}
 
 	return resolve(event);

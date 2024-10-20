@@ -5,14 +5,15 @@ import type {
 	Feed,
 	FeedGroupWithFeeds,
 	FeedStats,
+	SessionId,
 } from "@jason0x43/reader-types";
 
 // for information about these interfaces
 declare global {
 	namespace App {
-		// interface Error {}
 		interface Locals {
-			sessionId: string | undefined;
+			sessionId: SessionId | undefined;
+			client: Client | undefined;
 		}
 		interface PageData {
 			feeds: Feed[];
@@ -23,8 +24,6 @@ declare global {
 			articleId?: string;
 			article?: Article;
 		}
-		// interface PageState {}
-		// interface Platform {}
 	}
 }
 
