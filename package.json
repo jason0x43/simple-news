@@ -8,7 +8,8 @@
 	"scripts": {
 		"dev": "pnpm run --parallel dev",
 		"build": "pnpm recursive run --filter=!./web --sort build",
-		"check": "pnpm run --parallel check && prettier --check ."
+		"check": "pnpm run --parallel check && prettier --check .",
+		"format": "prettier --write ."
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.13.0",

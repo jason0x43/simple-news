@@ -1,5 +1,9 @@
 import { Api } from "$lib/api.server.js";
-import type { ArticleSummary, FeedGroupId, FeedId } from "@jason0x43/reader-types";
+import type {
+	ArticleSummary,
+	FeedGroupId,
+	FeedId,
+} from "@jason0x43/reader-types";
 
 export async function load({ params, fetch, depends, locals }) {
 	depends("app:articles");

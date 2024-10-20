@@ -60,6 +60,7 @@ export class Client {
 		const data = await resp.json();
 		return {
 			...data,
+			sessionId: data.sessionId as SessionId,
 			expires: new Date(data.expires),
 		};
 	}

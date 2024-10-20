@@ -1,3 +1,4 @@
+import { SessionId } from "@jason0x43/reader-types";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { z } from "zod";
 
@@ -5,7 +6,7 @@ const dataDir = `${process.env.HOME}/.config/reader-cli`;
 
 const Session = z.object({
 	username: z.string(),
-	sessionId: z.string(),
+	sessionId: SessionId,
 });
 
 type Session = z.infer<typeof Session>;

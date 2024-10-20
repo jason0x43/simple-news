@@ -9,7 +9,7 @@ import {
 } from "@jason0x43/reader-types";
 import { generateSessionToken } from "../util.js";
 import { deleteCookie } from "hono/cookie";
-import { Account } from "../schemas/public/Account.js";
+import { SessionId } from "../schemas/public/Session.js";
 
 const app = new Hono<AppEnv>();
 
@@ -24,7 +24,7 @@ export const accountRoutes = app
 		const session = await db.addSession(user, token);
 
 		return c.json({
-			sessionId: token,
+			sessionId: token as SessionId,
 			expires: session.expires,
 		} satisfies SessionResponse);
 	})

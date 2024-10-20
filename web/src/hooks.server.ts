@@ -24,7 +24,7 @@ export async function handle({ event, resolve }) {
 		});
 
 		event.locals.sessionId = sessionId;
-		event.locals.client  = new Client("/api/");
+		event.locals.client = new Client("/api/");
 	}
 
 	return resolve(event);
