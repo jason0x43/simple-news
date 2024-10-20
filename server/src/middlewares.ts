@@ -1,5 +1,4 @@
 import { HTTPException } from "hono/http-exception";
-import { AppError } from "./error.js";
 import { SessionId } from "./schemas/public/Session.js";
 import { AppEnv } from "./types.js";
 import { createMiddleware } from "hono/factory";
@@ -11,7 +10,7 @@ export const csrfCheck = createMiddleware<AppEnv>(async (c, next) => {
 		const origin = c.req.header("Origin");
 		// You can also compare it against the Host or X-Forwarded-Host header.
 		if (origin != null && origin !== baseUrl) {
-			throw new AppError("Invalid origin", 401);
+			throw new HTTPException(401, { message: "Invalid origin" });
 		}
 	}
 	await next();
@@ -40,13 +39,20 @@ export const accountRequired = createMiddleware<AppEnv>(async (c, next) => {
 	}
 
 	const sessionId = authHeader.split(" ")[1];
-	const result = await c.get("db").validateSessionToken(sessionId as SessionId);
-	if (!result.session) {
+	try {
+		const result = await c
+			.get("db")
+			.validateSessionToken(sessionId as SessionId);
+
+		if (!result.session) {
+			throw new HTTPException(401, { message: "invalid or expired session" });
+		}
+
+		c.set("sessionId", result.session.id);
+		c.set("account", result.account);
+	} catch {
 		throw new HTTPException(401, { message: "invalid or expired session" });
 	}
-
-	c.set("sessionId", result.session.id);
-	c.set("account", result.account);
 
 	await next();
 });
