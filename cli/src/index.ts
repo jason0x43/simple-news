@@ -57,11 +57,11 @@ sessionCmd
 	.action(async (username) => {
 		const password = await promptPassword("Password: ");
 		const client = getClient();
-		const sessionId = await client.login(username, password);
+		const session = await client.login(username, password);
 		const config = Config.load();
 		config.session = {
 			username,
-			sessionId,
+			sessionId: session.sessionId,
 		};
 		print(`Logged in to ${config.activeHost} as ${username}`);
 	});

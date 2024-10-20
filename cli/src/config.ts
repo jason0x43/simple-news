@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { z } from "zod";
 
-const dataDir = `${process.env.HOME}/.config/sn-cli`;
+const dataDir = `${process.env.HOME}/.config/reader-cli`;
 
 const Session = z.object({
 	username: z.string(),
@@ -140,6 +140,6 @@ export class Config {
 	}
 
 	toJSON() {
-		return JSON.stringify(this.#data, null, 2);
+		return JSON.parse(JSON.stringify(this.#data, null, 2));
 	}
 }
