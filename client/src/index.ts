@@ -57,6 +57,7 @@ export class Client {
 				password,
 			},
 		});
+		await checkResponse(resp);
 		const data = await resp.json();
 		return {
 			...data,
@@ -69,7 +70,8 @@ export class Client {
 	 * Logout of the site
 	 */
 	async logout(): Promise<void> {
-		await this.#client.logout.$post("logout");
+		const resp = await this.#client.logout.$post("logout");
+		await checkResponse(resp);
 	}
 
 	/**
@@ -77,6 +79,7 @@ export class Client {
 	 */
 	async getAccount(): Promise<AccountResponse> {
 		const resp = await this.#client.me.$get();
+		await checkResponse(resp);
 		const result = await resp.json();
 		return result.account;
 	}
@@ -86,6 +89,7 @@ export class Client {
 	 */
 	async getFeedGroups(): Promise<FeedGroupsResponse> {
 		const resp = await this.#client.feedgroups.$get();
+		await checkResponse(resp);
 		return await resp.json();
 	}
 
@@ -94,6 +98,7 @@ export class Client {
 	 */
 	async getFeedStats(): Promise<FeedStats> {
 		const resp = await this.#client.feedstats.$get();
+		await checkResponse(resp);
 		return await resp.json();
 	}
 
@@ -104,6 +109,7 @@ export class Client {
 		const resp = await this.#client.feeds[":id"].$get({
 			param: { id },
 		});
+		await checkResponse(resp);
 		return await resp.json();
 	}
 
@@ -112,6 +118,7 @@ export class Client {
 	 */
 	async getFeeds(): Promise<FeedsResponse> {
 		const resp = await this.#client.feeds.$get();
+		await checkResponse(resp);
 		return await resp.json();
 	}
 
@@ -120,6 +127,7 @@ export class Client {
 	 */
 	async createFeed(data: AddFeedRequest): Promise<Feed> {
 		const resp = await this.#client.feeds.$post({ json: data });
+		await checkResponse(resp);
 		return await resp.json();
 	}
 
@@ -128,6 +136,7 @@ export class Client {
 	 */
 	async createFeedGroup(data: AddFeedGroupRequest): Promise<FeedGroup> {
 		const resp = await this.#client.feedgroups.$post({ json: data });
+		await checkResponse(resp);
 		return await resp.json();
 	}
 
@@ -139,6 +148,7 @@ export class Client {
 			param: { id },
 			json: data,
 		});
+		await checkResponse(resp);
 		return await resp.json();
 	}
 
@@ -147,6 +157,7 @@ export class Client {
 	 */
 	async getArticles(): Promise<ArticlesResponse> {
 		const resp = await this.#client.articles.$get();
+		await checkResponse(resp);
 		return await resp.json();
 	}
 
@@ -157,6 +168,7 @@ export class Client {
 		const resp = await this.#client.feeds[":id"].articles.$get({
 			param: { id: feedId },
 		});
+		await checkResponse(resp);
 		return await resp.json();
 	}
 
@@ -169,6 +181,7 @@ export class Client {
 		const resp = await this.#client.feedgroups[":id"].articles.$get({
 			param: { id: feedGroupId },
 		});
+		await checkResponse(resp);
 		return await resp.json();
 	}
 
@@ -177,6 +190,7 @@ export class Client {
 	 */
 	async getSavedArticles(): Promise<ArticleSummary[]> {
 		const resp = await this.#client.articles.$get({ query: { saved: "true" } });
+		await checkResponse(resp);
 		return await resp.json();
 	}
 
@@ -185,6 +199,7 @@ export class Client {
 	 */
 	async getArticle(id: ArticleId): Promise<Article> {
 		const resp = await this.#client.articles[":id"].$get({ param: { id } });
+		await checkResponse(resp);
 		return await resp.json();
 	}
 
@@ -196,6 +211,7 @@ export class Client {
 			param: { id },
 			json: data,
 		});
+		await checkResponse(resp);
 		return await resp.json();
 	}
 
@@ -204,6 +220,7 @@ export class Client {
 	 */
 	async markArticles(data: MarkArticlesRequest): Promise<void> {
 		const resp = await this.#client.articles.$patch({ json: data });
+		await checkResponse(resp);
 		return await resp.json();
 	}
 
@@ -218,6 +235,7 @@ export class Client {
 			param: { id: groupId },
 			json: data,
 		});
+		await checkResponse(resp);
 		return await resp.json();
 	}
 
@@ -232,6 +250,7 @@ export class Client {
 			param: { id: groupId },
 			json: { feed_id: feedId, move_feed: true },
 		});
+		await checkResponse(resp);
 		return await resp.json();
 	}
 
@@ -239,18 +258,20 @@ export class Client {
 	 * Remove a feed from a feed group.
 	 */
 	async removeGroupFeed(groupId: FeedGroupId, feedId: FeedId): Promise<void> {
-		await this.#client.feedgroups[":id"][":feed_id"].$delete({
+		const resp = await this.#client.feedgroups[":id"][":feed_id"].$delete({
 			param: { id: groupId, feed_id: feedId },
 		});
+		await checkResponse(resp);
 	}
 
 	/**
 	 * Remove a feed from all user feed groups.
 	 */
 	async removeFeedFromAllGroups(feedId: FeedId): Promise<void> {
-		await this.#client.feedgroups.feed[":id"].$delete({
+		const resp = await this.#client.feedgroups.feed[":id"].$delete({
 			param: { id: feedId },
 		});
+		await checkResponse(resp);
 	}
 
 	/**
@@ -263,6 +284,7 @@ export class Client {
 		const resp = await this.#client.feeds[":id"].stats.$get({
 			param: { id: feedId },
 		});
+		await checkResponse(resp);
 		return await resp.json();
 	}
 
@@ -272,6 +294,7 @@ export class Client {
 	async refreshFeeds(): Promise<FeedStats> {
 		await this.#client.feeds.refresh.$get();
 		const resp = await this.#client.feedstats.$get();
+		await checkResponse(resp);
 		return await resp.json();
 	}
 
@@ -280,6 +303,7 @@ export class Client {
 	 */
 	async testFeedUrl(url: string): Promise<object> {
 		const resp = await this.#client.feed.$get({ query: { url } });
+		await checkResponse(resp);
 		return await resp.json();
 	}
 
@@ -291,10 +315,19 @@ export class Client {
 			const resp = await this.#client.feeds[":id"].log.$get({
 				param: { id: feedId },
 			});
+			await checkResponse(resp);
 			return await resp.json();
 		}
 
 		const resp = await this.#client.feeds.log.$get();
+		await checkResponse(resp);
 		return await resp.json();
+	}
+}
+
+async function checkResponse(resp: Response) {
+	if (resp.status >= 400) {
+		const text = await resp.text();
+		throw new ResponseError(resp.status, text);
 	}
 }
