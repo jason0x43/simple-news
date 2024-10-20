@@ -43,14 +43,13 @@ export class Client {
 	 *
 	 * Return the session ID
 	 */
-	async login(username: string, password: string): Promise<string> {
+	async login(username: string, password: string): Promise<SessionResponse> {
 		const body: PasswordLoginRequest = {
 			username,
 			password,
 		};
 		const resp = await this.#apiPost("login", body);
-		const session = SessionResponse.parse(await resp.json());
-		return session.sessionId;
+		return SessionResponse.parse(await resp.json());
 	}
 
 	/**

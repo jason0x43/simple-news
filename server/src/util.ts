@@ -1,3 +1,4 @@
+import { encodeBase32LowerCaseNoPadding } from "@oslojs/encoding";
 import crypto from "node:crypto";
 
 /**
@@ -58,4 +59,11 @@ export function isValidUrl(url: string | undefined): boolean {
 	} catch {
 		return false;
 	}
+}
+
+export function generateSessionToken() {
+	const bytes = new Uint8Array(20);
+	crypto.getRandomValues(bytes);
+	const token = encodeBase32LowerCaseNoPadding(bytes);
+	return token;
 }

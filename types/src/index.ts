@@ -112,7 +112,8 @@ export const PasswordLoginRequest = z.object({
 export type PasswordLoginRequest = z.infer<typeof PasswordLoginRequest>;
 
 export const SessionResponse = z.object({
-	sessionId: SessionId,
+	sessionId: z.string(),
+	expires: z.coerce.date(),
 });
 export type SessionResponse = z.infer<typeof SessionResponse>;
 

@@ -1,6 +1,19 @@
 import { AppError } from "./error.js";
+import { Account } from "./schemas/public/Account.js";
 import { Session, SessionId } from "./schemas/public/Session.js";
 import { Request, Response } from "./server.js";
+
+const baseUrl = process.env.BASE_URL ?? "http://localhost:5173";
+
+export function csrfCheck(req: Request) {
+	if (req.method !== "GET") {
+		const origin = req.header("Origin");
+		// You can also compare it against the Host or X-Forwarded-Host header.
+		if (origin != null && origin !== baseUrl) {
+			throw new AppError("Invalid origin", 401);
+		}
+	}
+}
 
 /**
  * Check for an admin user
@@ -14,9 +27,8 @@ export async function adminRequired(request: Request, response: Response) {
 export async function sessionRequired(request: Request, response: Response) {
 	try {
 		const session = await getSession(request, response);
-		request.locals.session = session;
-		const account = await response.app.locals.db.getAccount(session.account_id);
-		request.locals.account = account;
+		request.locals.session = session.session;
+		request.locals.account = session.account;
 	} catch (err) {
 		return err as Error;
 	}
@@ -25,7 +37,7 @@ export async function sessionRequired(request: Request, response: Response) {
 async function getSession(
 	request: Request,
 	response: Response,
-): Promise<Session> {
+): Promise<{ session: Session, account: Account }> {
 	const headers = request.headers;
 	const authHeader = headers["authorization"];
 	if (!authHeader) {
@@ -37,16 +49,17 @@ async function getSession(
 	}
 
 	const sessionId = authHeader.split(" ")[1];
+
 	try {
-		const session = await response.app.locals.db.getSession(
+		const result = await response.app.locals.db.validateSessionToken(
 			sessionId as SessionId,
 		);
 
-		if (session.expires <= new Date()) {
-			throw new AppError("session is expired", 401);
+		if (!result.session) {
+			throw new AppError(`invalid or expired session ${sessionId}`, 401);
 		}
 
-		return session;
+		return result;
 	} catch (err) {
 		console.warn(`could not get session: `, err);
 		throw new AppError("not authorized", 401);

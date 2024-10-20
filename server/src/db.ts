@@ -23,6 +23,7 @@ import {
 	UpdateFeedRequest,
 } from "@jason0x43/reader-types";
 import { FeedGroup, FeedGroupId } from "./schemas/public/FeedGroup.js";
+import { encodeHexLowerCase } from "@oslojs/encoding";
 
 export class Db {
 	#db: Kysely<Database>;
@@ -141,14 +142,21 @@ export class Db {
 		}
 	}
 
-	async addSession(account: Account): Promise<Session> {
+	async addSession(
+		account: Account,
+		token: string,
+		expires?: Date,
+	): Promise<Session> {
 		console.debug(`creating session for ${account.username}`);
+		expires = expires ?? new Date(Date.now() + 1000 * 60 * 60 * 24 * 30);
+		const sessionId = await tokenToSessionId(token);
+
 		return await this.#db
 			.insertInto("session")
 			.values({
-				id: createId() as SessionId,
+				id: sessionId as SessionId,
 				account_id: account.id,
-				expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+				expires,
 			})
 			.returningAll()
 			.executeTakeFirstOrThrow(
@@ -170,6 +178,58 @@ export class Db {
 
 	async deleteSession(sessionId: SessionId): Promise<void> {
 		await this.#db.deleteFrom("session").where("id", "=", sessionId).execute();
+	}
+
+	async extendSession(token: string): Promise<Session | null> {
+		const sessionId = await tokenToSessionId(token);
+		const session = await this.getSession(sessionId);
+
+		// If the session is expired, delete it
+		if (Date.now() >= session.expires.getTime()) {
+			this.#db.deleteFrom("session").where("id", "=", sessionId);
+			return null;
+		}
+
+		// Extend the token's lifetime
+		session.expires = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30);
+		await this.#db.updateTable("session").set(session).execute();
+
+		return session;
+	}
+
+	/**
+	 * Check that a session token points to a live session
+	 */
+	async validateSessionToken(token: string): Promise<SessionValidationResult> {
+		const sessionId = await tokenToSessionId(token);
+		const session = await this.getSession(sessionId);
+		const account = await this.getAccount(session.account_id);
+
+		// If the session is expired, remove it
+		if (Date.now() >= session.expires.getTime()) {
+			console.debug(`Removing expired session for ${token}`);
+			this.#db.deleteFrom("session").where("id", "=", sessionId);
+			return { session: null, account: null };
+		}
+
+		// If the session is old, refresh it
+		if (Date.now() >= session.expires.getTime() - 1000 * 60 * 60 * 24 * 15) {
+			console.debug(`Refreshing session for ${token}`);
+			await this.#db
+				.updateTable("session")
+				.set({
+					expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
+				})
+				.where("id", "=", sessionId)
+				.execute();
+		}
+
+		return { session, account: account };
+	}
+
+	async invalidateSession(token: string): Promise<void> {
+		const sessionId = await tokenToSessionId(token);
+		await this.deleteSession(sessionId);
 	}
 
 	async getArticles(
@@ -683,4 +743,16 @@ export class Db {
 
 		return lastUpdate?.time;
 	}
+}
+
+export type SessionValidationResult =
+	| { session: Session; account: Account }
+	| { session: null; account: null };
+
+async function tokenToSessionId(token: string): Promise<SessionId> {
+	const hashBuf = await crypto.subtle.digest(
+		"SHA-256",
+		new TextEncoder().encode(token),
+	);
+	return encodeHexLowerCase(new Uint8Array(hashBuf)) as SessionId;
 }

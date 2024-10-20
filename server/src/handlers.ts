@@ -15,6 +15,7 @@ import { FeedId } from "./schemas/public/Feed.js";
 import { AppError } from "./error.js";
 import { FeedGroupId } from "./schemas/public/FeedGroup.js";
 import { downloadFeed } from "./feed.js";
+import { generateSessionToken } from "./util.js";
 
 type Handler = UserRouteHandler;
 
@@ -45,20 +46,27 @@ export default {
 	 * Create a session for a account, logging them in.
 	 */
 	createSession: async (req, res) => {
-		const data = PasswordLoginRequest.parse(await req.json());
-		const { db } = res.app.locals;
-		const account = await db.getAccountByUsername(data.username);
-		await db.validatePassword(account, data.password);
-		const session = await db.addSession(account);
+		console.log("Creating session...");
+		try {
+			const { db } = req.app.locals;
 
-		res
-			.setCookie("session", session.id, {
-				path: "/",
-				maxAge: 36000,
-			})
-			.json({
-				sessionId: session.id,
-			} satisfies SessionResponse);
+			const data = PasswordLoginRequest.parse(await req.json());
+			const user = await db.getAccountByUsername(data.username);
+			await db.validatePassword(user, data.password);
+
+			const token = generateSessionToken();
+			const session = await db.addSession(user, token);
+
+			res.send(
+				JSON.stringify({
+					sessionId: token,
+					expires: session.expires,
+				} satisfies SessionResponse),
+			);
+		} catch (error) {
+			console.warn(`Error creating session: ${error}`);
+			res.status(401).send("Unauthorized");
+		}
 	},
 
 	/**

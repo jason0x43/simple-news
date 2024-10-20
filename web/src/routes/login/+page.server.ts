@@ -20,19 +20,13 @@ export const actions = {
 		const api = new Api({ fetch });
 
 		try {
-			const sessionId = await api.login(username, password);
-			cookies.set("session", sessionId, {
-				// send cookie for every page
+			const session = await api.login(username, password);
+			cookies.set("session", session.sessionId, {
 				path: "/",
-				// server side only cookie so you can't use `document.cookie`
 				httpOnly: true,
-				// only requests from same site can send cookies
-				// https://developer.mozilla.org/en-US/docs/Glossary/CSRF
-				sameSite: "strict",
-				// only sent over HTTPS in production
+				sameSite: "lax",
 				secure: process.env.NODE_ENV === "production",
-				// set cookie to expire after a month
-				maxAge: 60 * 60 * 24 * 30,
+				expires: session.expires,
 			});
 		} catch (error) {
 			console.log("returning error:", error);
