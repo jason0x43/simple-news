@@ -59,5 +59,5 @@ export const accountRoutes = app
 			await db.deleteSession(sessionId);
 			deleteCookie(c, "session");
 		}
-		c.text("", 204);
+		return c.json({}, 204);
 	});
