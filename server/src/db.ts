@@ -235,7 +235,12 @@ export class Db {
 	async getArticles(
 		account: Account,
 		options?: { saved?: boolean },
-	): Promise<Omit<Article, "content">[]> {
+	): Promise<
+		(Omit<Article, "content"> & {
+			read: boolean | null;
+			saved: boolean | null;
+		})[]
+	> {
 		let query = this.#db
 			.selectFrom("article")
 			.innerJoin("feed", "feed.id", "article.feed_id")

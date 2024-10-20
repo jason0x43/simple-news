@@ -1,67 +1,52 @@
+import { HTTPException } from "hono/http-exception";
 import { AppError } from "./error.js";
-import { Account } from "./schemas/public/Account.js";
-import { Session, SessionId } from "./schemas/public/Session.js";
-import { Request, Response } from "./server.js";
+import { SessionId } from "./schemas/public/Session.js";
+import { AppEnv } from "./types.js";
+import { createMiddleware } from "hono/factory";
 
 const baseUrl = process.env.BASE_URL ?? "http://localhost:5173";
 
-export function csrfCheck(req: Request) {
-	if (req.method !== "GET") {
-		const origin = req.header("Origin");
+export const csrfCheck = createMiddleware<AppEnv>(async (c, next) => {
+	if (c.req.method !== "GET") {
+		const origin = c.req.header("Origin");
 		// You can also compare it against the Host or X-Forwarded-Host header.
 		if (origin != null && origin !== baseUrl) {
 			throw new AppError("Invalid origin", 401);
 		}
 	}
-}
+	await next();
+});
 
 /**
  * Check for an admin user
  *
  * At the moment, this just checks for a user
  */
-export async function adminRequired(request: Request, response: Response) {
-	return sessionRequired(request, response);
-}
+export const adminRequired = createMiddleware<AppEnv>(async (c, next) => {
+	await accountRequired(c, next);
+});
 
-export async function sessionRequired(request: Request, response: Response) {
-	try {
-		const session = await getSession(request, response);
-		request.locals.session = session.session;
-		request.locals.account = session.account;
-	} catch (err) {
-		return err as Error;
-	}
-}
-
-async function getSession(
-	request: Request,
-	response: Response,
-): Promise<{ session: Session, account: Account }> {
-	const headers = request.headers;
-	const authHeader = headers["authorization"];
+/**
+ * Check for a valid session
+ */
+export const accountRequired = createMiddleware<AppEnv>(async (c, next) => {
+	const authHeader = c.req.header("authorization");
 	if (!authHeader) {
-		throw new AppError("not authorized", 401);
+		throw new HTTPException(401, { message: "not authorized" });
 	}
 
 	if (!/Bearer \S+/.test(authHeader)) {
-		throw new AppError("invalid authorization header", 401);
+		throw new HTTPException(401, { message: "invalid authorization header" });
 	}
 
 	const sessionId = authHeader.split(" ")[1];
-
-	try {
-		const result = await response.app.locals.db.validateSessionToken(
-			sessionId as SessionId,
-		);
-
-		if (!result.session) {
-			throw new AppError(`invalid or expired session ${sessionId}`, 401);
-		}
-
-		return result;
-	} catch (err) {
-		console.warn(`could not get session: `, err);
-		throw new AppError("not authorized", 401);
+	const result = await c.get("db").validateSessionToken(sessionId as SessionId);
+	if (!result.session) {
+		throw new HTTPException(401, { message: "invalid or expired session" });
 	}
-}
+
+	c.set("sessionId", result.session.id);
+	c.set("account", result.account);
+
+	await next();
+});

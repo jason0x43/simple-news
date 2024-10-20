@@ -1,9 +1,15 @@
-import handlers from "./handlers.js";
-import { createServer } from "./server.js";
+import { Hono } from "hono";
 import { Db } from "./db.js";
 import { getEnv } from "./util.js";
-import { adminRequired, sessionRequired } from "./middlewares.js";
+import { accountRequired } from "./middlewares.js";
 import { runMigrations } from "./migrate.js";
+import { AppEnv } from "./types.js";
+import { accountRoutes } from "./routes/account.js";
+import { articlesRoutes } from "./routes/articles.js";
+import { feedsRoutes } from "./routes/feeds.js";
+import { feedgroupsRoutes } from "./routes/feedgroups.js";
+import { downloadFeed } from "./feed.js";
+import { serve } from "@hono/node-server";
 
 const db = new Db();
 const adminUser = getEnv("SN_ADMIN_USER");
@@ -22,73 +28,47 @@ try {
 	console.log(`Created admin user ${adminUser}`);
 }
 
-const server = createServer({ db });
-const port = process.env.API_PORT ?? 3000;
+const app = new Hono<AppEnv>();
+const port = Number(process.env.API_PORT ?? 3000);
 
-server.set_error_handler((_request, response, error) => {
-	console.warn(error);
-	const status = "status" in error ? (error.status as number) : undefined;
-	return response.status(status || 500).send(error.message);
+// Add db to every request
+app.use("*", async (c, next) => {
+	c.set("db", db);
+	await next();
 });
 
-server.use(async (request, response) => {
-	response.once("finish", () => {
-		const { statusCode = 200 } = response;
-		const { method, path, path_query } = request;
-		console.debug(
-			`[${method}] ${path}${path_query ? "?" + path_query : ""} ${statusCode}`,
-		);
+// Request logger
+app.use(async (c, next) => {
+	await next();
+	const { status = 200 } = c.res;
+	const { method, path } = c.req;
+	const url = new URL(c.req.url);
+	const search = url.search;
+	console.debug(`[${method}] ${path}${search ?? ""} ${status}`);
+});
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const routes = app
+	.route("/", accountRoutes)
+	.route("/articles", articlesRoutes)
+	.route("/feeds", feedsRoutes)
+	.route("/feedgroups", feedgroupsRoutes)
+	.get("/feedstats", accountRequired, async (c) => {
+		const db = c.get("db");
+		const account = c.get("account")!;
+		const feedStats = await db.getFeedStats(account!.id);
+		return c.json(feedStats);
+	})
+	.get("/feed", accountRequired, async (c) => {
+		const url = c.req.query("url")!;
+		const feed = await downloadFeed(url);
+		return c.json(feed);
 	});
-});
 
-const userRoute = { middlewares: [sessionRequired] };
-const adminRoute = { middlewares: [adminRequired] };
-
-server.get("/me", userRoute, handlers.getSessionUser);
-server.post("/users", adminRoute, handlers.createUser);
-server.get("/users", adminRoute, handlers.getUsers);
-server.post("/login", {}, handlers.createSession);
-server.post("/logout", userRoute, handlers.deleteSession);
-
-server.get("/articles", userRoute, handlers.getArticles);
-server.patch("/articles", userRoute, handlers.markArticles);
-server.get("/articles/:id", userRoute, handlers.getArticle);
-server.patch("/articles/:id", userRoute, handlers.markArticle);
-
-server.get("/feeds", userRoute, handlers.getFeeds);
-server.post("/feeds", userRoute, handlers.addFeed);
-server.get("/feeds/log", userRoute, handlers.getFeedLogs);
-server.get("/feeds/refresh", userRoute, handlers.refreshFeeds);
-server.get("/feeds/:id/refresh", userRoute, handlers.refreshFeed);
-server.get("/feeds/:id/articles", userRoute, handlers.getFeedArticles);
-server.get("/feeds/:id/log", userRoute, handlers.getFeedLog);
-server.get("/feeds/:id/stats", userRoute, handlers.getFeedStat);
-server.get("/feeds/:id", userRoute, handlers.getFeed);
-server.delete("/feeds/:id", userRoute, handlers.deleteFeed);
-server.patch("/feeds/:id", userRoute, handlers.updateFeed);
-
-server.get("/feedgroups", userRoute, handlers.getFeedGroups);
-server.post("/feedgroups", userRoute, handlers.addFeedGroup);
-server.delete(
-	"/feedgroups/feed/:id",
-	userRoute,
-	handlers.removeFeedFromAllGroups,
-);
-server.get("/feedgroups/:id", userRoute, handlers.getFeedGroup);
-server.post("/feedgroups/:id", userRoute, handlers.addGroupFeed);
-server.get(
-	"/feedgroups/:id/articles",
-	userRoute,
-	handlers.getFeedGroupArticles,
-);
-server.delete("/feedgroups/:id/:feed_id", userRoute, handlers.deleteGroupFeed);
-
-server.get("/feedstats", userRoute, handlers.getFeedStats);
-
-server.get("/feed", userRoute, handlers.testFeedUrl);
+export type AppRoutes = typeof routes;
 
 try {
-	await server.listen(Number(port));
+	const server = serve({ fetch: app.fetch, port });
 	shutdownTasks.push(() => server.close());
 	console.log(`Listening on port ${port}`);
 } catch (error) {
