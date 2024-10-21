@@ -21,11 +21,12 @@ import {
 	UpdateFeedRequest,
 } from "@jason0x43/reader-types";
 import { AccountResponse, SessionResponse } from "@jason0x43/reader-types";
-import { ResponseError } from "./error.js";
 import { hc } from "hono/client";
 import { AppRoutes } from "@jason0x43/reader-server";
+import { HTTPException } from "hono/http-exception";
+import { StatusCode } from "hono/utils/http-status";
 
-export { ResponseError };
+export { HTTPException };
 
 export class Client {
 	#client: ReturnType<typeof hc<AppRoutes>>;
@@ -327,6 +328,6 @@ export class Client {
 async function checkResponse(resp: Response) {
 	if (resp.status >= 400) {
 		const text = await resp.text();
-		throw new ResponseError(resp.status, text);
+		throw new HTTPException(resp.status as StatusCode, { message: text });
 	}
 }

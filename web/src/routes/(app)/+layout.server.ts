@@ -2,7 +2,7 @@ export const ssr = false;
 
 import { Api } from "$lib/api.server.js";
 import { error, redirect } from "@sveltejs/kit";
-import { ResponseError } from "@jason0x43/reader-client";
+import { HTTPException } from "@jason0x43/reader-client";
 
 export async function load({ url, depends, locals, fetch }) {
 	if (!locals.sessionId) {
@@ -21,7 +21,7 @@ export async function load({ url, depends, locals, fetch }) {
 
 		return { feeds, feedGroups, feedStats };
 	} catch (err) {
-		if (err instanceof ResponseError) {
+		if (err instanceof HTTPException) {
 			if (err.status === 401) {
 				return redirect(303, `/login?next=${url.pathname}`);
 			}
