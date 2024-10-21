@@ -30,7 +30,7 @@ export const accountRoutes = app
 	})
 	.get("/me", accountRequired, async (c) => {
 		const account = c.get("account")!;
-		return c.json({ account });
+		return c.json(account);
 	})
 	.post(
 		"/users",

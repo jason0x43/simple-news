@@ -80,8 +80,7 @@ export class Client {
 	async getAccount(): Promise<AccountResponse> {
 		const resp = await this.#client.me.$get();
 		await checkResponse(resp);
-		const result = await resp.json();
-		return result.account;
+		return await resp.json();
 	}
 
 	/**
