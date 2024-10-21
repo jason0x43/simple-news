@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { csrf } from "hono/csrf";
 import { Db } from "./db.js";
 import { getEnv } from "./util.js";
 import { accountRequired } from "./middlewares.js";
@@ -31,8 +32,10 @@ try {
 const app = new Hono<AppEnv>();
 const port = Number(process.env.API_PORT ?? 3000);
 
+app.use(csrf());
+
 // Add db to every request
-app.use("*", async (c, next) => {
+app.use(async (c, next) => {
 	c.set("db", db);
 	await next();
 });

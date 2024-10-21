@@ -3,19 +3,6 @@ import { SessionId } from "./schemas/public/Session.js";
 import { AppEnv } from "./types.js";
 import { createMiddleware } from "hono/factory";
 
-const baseUrl = process.env.BASE_URL ?? "http://localhost:5173";
-
-export const csrfCheck = createMiddleware<AppEnv>(async (c, next) => {
-	if (c.req.method !== "GET") {
-		const origin = c.req.header("Origin");
-		// You can also compare it against the Host or X-Forwarded-Host header.
-		if (origin != null && origin !== baseUrl) {
-			throw new HTTPException(401, { message: "Invalid origin" });
-		}
-	}
-	await next();
-});
-
 /**
  * Check for an admin user
  *
