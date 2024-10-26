@@ -87,6 +87,7 @@
 					bg-transparent
 					text-transparent
 				`}
+			aria-label="Close article"
 			href={`/feed/${feedId}`}>&nbsp;</a
 		>
 	{/if}
