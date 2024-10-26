@@ -4,12 +4,12 @@
 	import { getAppContext } from "$lib/context.js";
 	import { fade } from "svelte/transition";
 
-	export let data;
+	let { data } = $props();
 
 	const updatedArticleIds = getAppContext("updatedArticleIds");
-	let renderedArticle: string | undefined;
+	let renderedArticle: string | undefined = $state();
 
-	$: {
+	$effect(() => {
 		if (renderedArticle !== data.article.id) {
 			renderedArticle = data.article.id;
 
@@ -26,7 +26,7 @@
 				);
 			});
 		}
-	}
+	});
 </script>
 
 <div

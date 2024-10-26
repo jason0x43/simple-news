@@ -17,17 +17,27 @@
 	import FeedsListItem from "./FeedsListItem.svelte";
 	import StatusValue from "./StatusValue.svelte";
 
-	export let articleFilter: "all" | "unread";
-	export let feeds: Feed[];
-	export let feedId: string | undefined;
-	export let feedGroups: FeedGroupWithFeeds[];
-	export let feedStats: FeedStats;
-	export let selectedFeedIds: FeedId[];
-	export let selectedGroupId: string | undefined;
+	let {
+		articleFilter,
+		feeds,
+		feedId,
+		feedGroups,
+		feedStats,
+		selectedFeedIds,
+		selectedGroupId,
+	}: {
+		articleFilter: "all" | "unread";
+		feeds: Feed[];
+		feedId: string | undefined;
+		feedGroups: FeedGroupWithFeeds[];
+		feedStats: FeedStats;
+		selectedFeedIds: FeedId[];
+		selectedGroupId: string | undefined;
+	} = $props();
 
 	const updatedArticleIds = getAppContext("updatedArticleIds");
 
-	let expanded: { [title: string]: boolean } = {};
+	let expanded: { [title: string]: boolean } = $state({});
 
 	type Expanded = typeof expanded;
 
@@ -74,7 +84,7 @@
 				<Button
 					variant="invisible"
 					class="flex flex-row !justify-start pl-[1px] pr-2"
-					on:click={() => {
+					onclick={() => {
 						expanded = toggleExpanded(expanded, group);
 					}}
 				>
@@ -88,7 +98,7 @@
 				<a
 					class="flex-auto truncate py-1"
 					href={`/feed/group-${group.id}`}
-					on:click={() => {
+					onclick={() => {
 						$updatedArticleIds = new Set();
 					}}
 				>

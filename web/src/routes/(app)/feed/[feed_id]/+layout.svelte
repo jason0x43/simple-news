@@ -1,14 +1,13 @@
 <script lang="ts">
 	import { page } from "$app/stores";
 	import { markArticles } from "$lib/api.js";
-	import { cls } from "$lib/cls";
 	import ArticlesList from "$lib/components/ArticlesList.svelte";
 	import { getAppContext } from "$lib/context.js";
 	import { minutes, periodicInvalidate } from "$lib/util.js";
 	import { onMount } from "svelte";
 	import { fade } from "svelte/transition";
 
-	export let data;
+	const { data, children } = $props();
 
 	const articleFilter = getAppContext("articleFilter");
 
@@ -18,7 +17,7 @@
 </script>
 
 <div
-	class={cls`
+	class="
 		flex
 		w-[33.3333%]
 		flex-shrink-0
@@ -26,7 +25,7 @@
 		sm:w-[300px]
 		sm:border-r
 		dark:border-border-dark
-	`}
+	"
 	out:fade={{ duration: 250 }}
 	in:fade={{ duration: 250 }}
 >
@@ -40,4 +39,4 @@
 	/>
 </div>
 
-<slot></slot>
+{@render children()}

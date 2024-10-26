@@ -1,6 +1,13 @@
 <script lang="ts">
-	export let selected = false;
-	export let nested = false;
+	let {
+		selected = false,
+		nested = false,
+		children,
+	}: {
+		selected?: boolean;
+		nested?: boolean;
+		children?: import("svelte").Snippet;
+	} = $props();
 </script>
 
 <div
@@ -10,7 +17,7 @@
 	class:pl-9={nested}
 	class:pl-2={!nested}
 >
-	<slot />
+	{@render children?.()}
 </div>
 
 <style lang="postcss">

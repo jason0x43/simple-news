@@ -3,13 +3,16 @@
 	import RssIcon from "../icons/Rss.svelte";
 	import UserIcon from "../icons/User.svelte";
 	import { goto } from "$app/navigation";
-	import { cls } from "$lib/cls";
 
-	export let articleId: string | undefined;
-	export let feedId: string | undefined;
-
-	let className = "";
-	export { className as class };
+	let {
+		articleId,
+		feedId,
+		class: className = "",
+	}: {
+		articleId: string | undefined;
+		feedId: string | undefined;
+		class?: string;
+	} = $props();
 
 	async function handleLogout() {
 		goto("/logout");
@@ -17,7 +20,7 @@
 </script>
 
 <header
-	class={cls`
+	class="
 		flex
 		h-full
 		w-full
@@ -25,13 +28,13 @@
 		justify-between
 		bg-hover-light
 		dark:bg-hover-dark
-		${className}
-	`}
+		{className}
+	"
 >
 	<Button
 		class="p-2"
 		variant="invisible"
-		on:click={() => {
+		onclick={() => {
 			if (articleId) {
 				goto(`/feed/${feedId}`);
 			} else if (feedId) {
@@ -41,7 +44,7 @@
 	>
 		<RssIcon size={22} />
 	</Button>
-	<Button class="p-2" variant="invisible" on:click={handleLogout}>
+	<Button class="p-2" variant="invisible" onclick={handleLogout}>
 		<UserIcon size={20} />
 	</Button>
 </header>

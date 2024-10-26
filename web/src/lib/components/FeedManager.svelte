@@ -25,17 +25,23 @@
 		FeedId,
 	} from "@jason0x43/reader-types";
 
-	export let feedGroups: FeedGroupWithFeeds[];
-	export let feeds: Feed[];
-	export let onClose: () => void;
+	let {
+		feedGroups,
+		feeds,
+		onClose,
+	}: {
+		feedGroups: FeedGroupWithFeeds[];
+		feeds: Feed[];
+		onClose: () => void;
+	} = $props();
 
-	let busy = false;
-	let addFeedData = { url: "", title: "" };
-	let addGroupData = { name: "" };
-	let renameGroupData = {
+	let busy = $state(false);
+	let addFeedData = $state({ url: "", title: "" });
+	let addGroupData = $state({ name: "" });
+	let renameGroupData = $state({
 		feedGroupId: feedGroups[0]?.id ?? "",
 		name: "",
-	};
+	});
 
 	async function busyOp(
 		callback: () => Promise<unknown>,
@@ -63,12 +69,15 @@
 	}
 
 	// Add a new feed
-	async function handleAddFeed() {
+	async function handleAddFeed(event: SubmitEvent) {
+		event.preventDefault();
 		busyOp(() => addFeed(addFeedData), "Unable to add feed", "Feed added");
 	}
 
 	// Add a new group
-	async function handleAddGroup() {
+	async function handleAddGroup(event: SubmitEvent) {
+		event.preventDefault();
+
 		if (!addGroupData.name) {
 			return;
 		}
@@ -84,7 +93,9 @@
 	}
 
 	// Rename an existing group
-	async function handleRenameGroup() {}
+	async function handleRenameGroup(event: SubmitEvent) {
+		event.preventDefault();
+	}
 
 	// Refresh a feed
 	async function handleRefreshFeed(feedId: FeedId) {
@@ -95,30 +106,36 @@
 		);
 	}
 
-	$: groups = feedGroups.reduce(
-		(acc, group) => {
-			for (const id of group.feed_ids) {
-				acc[id] = group.id;
-			}
-			return acc;
-		},
-		{} as Record<FeedId, FeedGroupId>,
+	let groups = $derived(
+		feedGroups.reduce(
+			(acc, group) => {
+				for (const id of group.feed_ids) {
+					acc[id] = group.id;
+				}
+				return acc;
+			},
+			{} as Record<FeedId, FeedGroupId>,
+		),
 	);
 
-	$: sortedFeeds = feeds.sort((a, b) => {
-		if (a.title.toLowerCase() === b.title.toLowerCase()) {
-			return 0;
-		}
-		if (a.title.toLowerCase() > b.title.toLowerCase()) {
-			return 1;
-		}
-		return -1;
-	});
+	let sortedFeeds = $derived(
+		feeds.sort((a, b) => {
+			if (a.title.toLowerCase() === b.title.toLowerCase()) {
+				return 0;
+			}
+			if (a.title.toLowerCase() > b.title.toLowerCase()) {
+				return 1;
+			}
+			return -1;
+		}),
+	);
 
 	const emptyFeedId = "" as FeedId;
-	let editing = emptyFeedId;
+	let editing = $state(emptyFeedId);
 
 	async function handleSubmit(event: SubmitEvent) {
+		event.preventDefault();
+
 		const form = event.target as HTMLFormElement;
 		const value = new FormData(form);
 		const id = editing;
@@ -148,7 +165,7 @@
 		<div class="feeds flex w-full">
 			<!-- scroller -->
 			<div
-				class={`
+				class="
 					grid
 					flex-1
 					grid-cols-1
@@ -158,26 +175,26 @@
 					md:divide-x
 					md:divide-border-light
 					md:dark:divide-border-dark
-				`}
+				"
 			>
 				<section class="flex flex-col pb-3 pt-2 md:overflow-auto md:pr-3">
 					<h4>Feeds</h4>
 					<ul
-						class={`
+						class="
 							flex
 							w-full
 							flex-col
 							divide-y
 							divide-border-light
 							dark:divide-border-dark
-						`}
+						"
 					>
 						{#each sortedFeeds as feed (feed.id)}
 							<!-- feed -->
 							<li class="flex flex-row gap-4 py-2">
 								<form
 									class="flex flex-grow flex-row gap-3 overflow-hidden"
-									on:submit|preventDefault={handleSubmit}
+									onsubmit={handleSubmit}
 								>
 									<div class="flex flex-grow flex-col gap-1">
 										<!-- feed title -->
@@ -214,7 +231,7 @@
 									<div class="flex flex-col gap-1">
 										<Button
 											disabled={editing !== "" && editing !== feed.id}
-											on:click={() => {
+											onclick={() => {
 												if (editing === feed.id) {
 													editing = emptyFeedId;
 												} else {
@@ -233,7 +250,7 @@
 										<Button
 											disabled={editing !== "" && editing !== feed.id}
 											type={editing === feed.id ? "submit" : "button"}
-											on:click={() => {
+											onclick={() => {
 												if (editing !== feed.id) {
 													handleRefreshFeed(feed.id);
 												}
@@ -255,10 +272,7 @@
 
 				<!-- update form -->
 				<section class="flex flex-col gap-2 pb-3 pt-2 md:overflow-auto md:pl-3">
-					<form
-						on:submit|preventDefault={handleAddFeed}
-						class="flex flex-col gap-1"
-					>
+					<form onsubmit={handleAddFeed} class="flex flex-col gap-1">
 						<h4>Add Feed</h4>
 						<div class="flex flex-row gap-2">
 							<Input
@@ -270,10 +284,7 @@
 						</div>
 					</form>
 
-					<form
-						on:submit|preventDefault={handleAddGroup}
-						class="flex flex-col gap-1"
-					>
+					<form onsubmit={handleAddGroup} class="flex flex-col gap-1">
 						<h4>Add Group</h4>
 						<div class="flex flex-row gap-2">
 							<Input
@@ -285,10 +296,7 @@
 						</div>
 					</form>
 
-					<form
-						on:submit|preventDefault={handleRenameGroup}
-						class="flex flex-col gap-1"
-					>
+					<form onsubmit={handleRenameGroup} class="flex flex-col gap-1">
 						<h4>Rename Group</h4>
 						<div class="flex flex-row gap-2">
 							<Select bind:value={renameGroupData.feedGroupId} class="flex-1">

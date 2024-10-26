@@ -2,15 +2,22 @@
 	import { isActionEvent } from "../util";
 	import Portal from "./Portal.svelte";
 
-	export let items: { label?: string; value: string }[];
-	export let anchor: { x: number; y: number };
-	export let onSelect: (value: string) => Promise<void> | void;
-	export let onClose: () => void;
+	let {
+		items,
+		anchor,
+		onSelect,
+		onClose,
+	}: {
+		items: { label?: string; value: string }[];
+		anchor: { x: number; y: number };
+		onSelect: (value: string) => Promise<void> | void;
+		onClose: () => void;
+	} = $props();
 
-	let ref: HTMLUListElement;
+	let ref: HTMLUListElement | undefined = $state();
 
 	function handleClick(event: MouseEvent) {
-		if (!event.target || !ref.contains(event.target as HTMLElement)) {
+		if (!event.target || !ref?.contains(event.target as HTMLElement)) {
 			onClose();
 		}
 	}
@@ -30,11 +37,11 @@
 	}
 </script>
 
-<svelte:body on:click|capture={handleClick} />
+<svelte:body onclickcapture={handleClick} />
 
 <Portal {anchor}>
 	<ul
-		class={`
+		class="
 			rounded-sm
 			border
 			border-black/20
@@ -44,17 +51,17 @@
 			dark:border-white/20
 			dark:bg-black
 			dark:text-white
-		`}
+		"
 		bind:this={ref}
 	>
 		{#each items as item}
 			<li
 				role="menuitem"
-				on:click={handleItemClick}
-				on:keypress={handleItemClick}
-				on:touchend={handleItemClick}
+				onclick={handleItemClick}
+				onkeypress={handleItemClick}
+				ontouchend={handleItemClick}
 				data-value={item.value}
-				class={`
+				class="
 					cursor-pointer
 					select-none
 					whitespace-nowrap
@@ -63,7 +70,7 @@
 					active:bg-gray-x-light
 					dark:hover:bg-gray-x-dark
 					dark:active:bg-gray-x-dark
-				`}
+				"
 			>
 				{item.label ?? item.value}
 			</li>

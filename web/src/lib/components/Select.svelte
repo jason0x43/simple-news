@@ -1,11 +1,21 @@
 <script lang="ts">
-	export let value: string;
-	export let variant: "editable" | "invisible" | "normal" = "normal";
-	export let disabled = false;
-	export let onChange: ((value: string) => void) | undefined = undefined;
-
-	let className = "";
-	export { className as class };
+	let {
+		value = $bindable(),
+		variant = "normal",
+		disabled = false,
+		onChange = undefined,
+		class: className = "",
+		name,
+		children,
+	}: {
+		value: string;
+		name?: string;
+		variant?: "editable" | "invisible" | "normal";
+		disabled?: boolean;
+		onChange?: ((value: string) => void) | undefined;
+		class?: string;
+		children?: import("svelte").Snippet;
+	} = $props();
 </script>
 
 <select
@@ -17,13 +27,13 @@
 		(variant === "editable" && !disabled)}
 	class:disabled-editable={variant === "editable" && disabled}
 	bind:value
-	on:change={(event) => {
+	onchange={(event) => {
 		onChange?.(event.currentTarget.value);
 	}}
 	{disabled}
-	{...$$restProps}
+	{name}
 >
-	<slot />
+	{@render children?.()}
 </select>
 
 <style lang="postcss">

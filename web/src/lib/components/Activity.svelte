@@ -1,5 +1,9 @@
 <script lang="ts">
-	export let size: number | undefined = undefined;
+	let {
+		size = undefined,
+	}: {
+		size?: number | undefined;
+	} = $props();
 </script>
 
 <div class="activity">

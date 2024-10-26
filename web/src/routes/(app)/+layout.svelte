@@ -7,15 +7,14 @@
 	import Button from "$lib/components/Button.svelte";
 	import Select from "$lib/components/Select.svelte";
 	import { page } from "$app/stores";
-	import { cls } from "$lib/cls";
 	import { onMount } from "svelte";
 	import { minutes, periodicInvalidate } from "$lib/util";
 	import { FeedGroupId, FeedId } from "@jason0x43/reader-types";
 	import type { ArticleFilter } from "$lib/types";
 
-	export let data;
+	let { data, children } = $props();
 
-	let rootRef: HTMLElement | undefined;
+	let rootRef: HTMLElement | undefined = $state();
 
 	const root = writable<HTMLElement>();
 	setAppContext("root", readonly(root));
@@ -29,34 +28,36 @@
 	const articleFilter = writable("unread" as ArticleFilter);
 	setAppContext("articleFilter", articleFilter);
 
-	let selectedFeedIds: FeedId[] = [];
-	let selectedGroupId: FeedGroupId | undefined;
-
-	$: {
+	let selectedGroupId = $derived.by(() => {
 		const feedId = $page.data.feedId;
-		selectedGroupId = undefined;
+		if (feedId && feedId !== "saved") {
+			const [type, id] = feedId.split("-");
+			if (type === "group") {
+				return FeedGroupId.parse(id);
+			}
+		}
+	});
 
+	let selectedFeedIds = $derived.by(() => {
+		const feedId = $page.data.feedId;
 		if (feedId && feedId !== "saved") {
 			const [type, id] = feedId.split("-");
 			if (type === "group") {
 				const group = data.feedGroups.find((g) => g.id === id);
-				selectedFeedIds = group?.feed_ids ?? [];
-				selectedGroupId = FeedGroupId.parse(id);
-			} else {
-				selectedFeedIds = [FeedId.parse(id)];
+				return group?.feed_ids ?? [];
 			}
-		} else {
-			selectedFeedIds = [];
+			return [FeedId.parse(id)];
 		}
-	}
+		return [];
+	});
 
-	$: {
+	$effect(() => {
 		if (rootRef) {
 			$root = rootRef;
 		}
-	}
+	});
 
-	let edgeTouch = false;
+	let edgeTouch = $state(false);
 
 	function handleTouchStart(event: TouchEvent) {
 		const touch = event.touches[0];
@@ -79,7 +80,7 @@
 		$articleFilter = value as ArticleFilter;
 	}
 
-	let ready = false;
+	let ready = $state(false);
 
 	onMount(() => {
 		setTimeout(() => {
@@ -212,7 +213,7 @@ X-Large:
 	bind:this={rootRef}
 >
 	<div
-		class={cls`
+		class="
 			fixed
 			left-0
 			top-0
@@ -226,7 +227,7 @@ X-Large:
 			sm:border-b-0
 			sm:border-r
 			dark:border-border-dark
-		`}
+		"
 	>
 		<Header
 			articleId={$page.data.articleId}
@@ -236,17 +237,17 @@ X-Large:
 	</div>
 
 	<div
-		class={cls`
+		class="
 		flex
 		h-full
 		flex-row
 		pt-9
 		sm:ml-9
 		sm:pt-0
-	`}
+	"
 	>
 		<div
-			class={cls`
+			class="
 				flex
 				min-w-[300%]
 				max-w-[300%]
@@ -262,19 +263,19 @@ X-Large:
 				xl:min-w-[calc(100%)]
 				xl:max-w-[calc(100%)]
 				dark:bg-black
-			`}
+			"
 			class:translate-x-[-33.3333%]={$page.data.feedId && !$page.data.articleId}
 			class:translate-x-[-66.6667%]={$page.data.articleId}
 			class:sm:translate-x-[0]={$page.data.feedId && !$page.data.articleId}
 			class:sm:translate-x-[-600px]={$page.data.articleId}
 			class:lg:translate-x-[-300px]={$page.data.articleId}
 			class:xl:translate-x-0={$page.data.articleId}
-			on:touchstart={handleTouchStart}
-			on:touchend={handleTouchEnd}
-			on:touchmove={handleTouchMove}
+			ontouchstart={handleTouchStart}
+			ontouchend={handleTouchEnd}
+			ontouchmove={handleTouchMove}
 		>
 			<div
-				class={cls`
+				class="
 					flex
 					w-[33.3333%]
 					flex-shrink-0
@@ -284,7 +285,7 @@ X-Large:
 					sm:w-[300px]
 					sm:border-r
 					dark:border-border-dark
-				`}
+				"
 			>
 				<FeedsList
 					feeds={data.feeds}
@@ -299,7 +300,7 @@ X-Large:
 				<div class="grid grid-cols-2 gap-3 p-3">
 					<Button
 						class="whitespace-nowrap"
-						on:click={() => ($managingFeeds = true)}>Manage Feeds</Button
+						onclick={() => ($managingFeeds = true)}>Manage Feeds</Button
 					>
 
 					<Select
@@ -313,7 +314,7 @@ X-Large:
 				</div>
 			</div>
 
-			<slot></slot>
+			{@render children()}
 		</div>
 
 		{#if $managingFeeds}

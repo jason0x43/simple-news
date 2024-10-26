@@ -1,42 +1,40 @@
 <script lang="ts">
-	export let variant: "invisible" | "normal" = "normal";
-	export let disabled = false;
-	export let type: "button" | "submit" = "button";
-
-	let className = "";
-	export { className as class };
+	let {
+		variant = "normal",
+		disabled = false,
+		type = "button",
+		class: className = "",
+		onclick,
+		children,
+	}: {
+		variant?: "invisible" | "normal";
+		disabled?: boolean;
+		type?: "button" | "submit";
+		class?: string;
+		children?: import("svelte").Snippet;
+		onclick?: () => void;
+		[key: string]: unknown;
+	} = $props();
 </script>
 
 <button
-	on:click
+	{onclick}
 	{type}
 	{disabled}
 	class={className}
 	class:disabled
 	class:normal={variant === "normal"}
-	{...$$restProps}
 >
-	<slot />
+	{@render children?.()}
 </button>
 
 <style lang="postcss">
 	button {
-		@apply flex
-			items-center
-			justify-center
-			rounded-md
-			text-xs;
+		@apply flex items-center justify-center rounded-md text-xs;
 	}
 
 	.normal {
-		@apply border
-			border-border-light
-			bg-hover-light
-			px-2
-			py-1
-			font-bold
-			dark:border-border-dark
-			dark:bg-hover-dark;
+		@apply border border-border-light bg-hover-light px-2 py-1 font-bold dark:border-border-dark dark:bg-hover-dark;
 	}
 
 	.disabled {

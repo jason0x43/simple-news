@@ -5,7 +5,6 @@
 	import { goto } from "$app/navigation";
 	import { getAppContext } from "$lib/context";
 	import type { ArticleFilter } from "$lib/types";
-	import { cls } from "$lib/cls";
 	import type {
 		ArticleId,
 		ArticleSummary,
@@ -13,63 +12,66 @@
 		MarkArticlesRequest,
 	} from "@jason0x43/reader-types";
 
-	export let feedId: string;
-	export let feeds: Feed[];
-	export let articleId: string | undefined;
-	export let articles: ArticleSummary[];
-	export let articleFilter: ArticleFilter;
-	export let markArticles: (data: MarkArticlesRequest) => Promise<void>;
-
 	const updatedArticleIds = getAppContext("updatedArticleIds");
 
-	let className = "";
-	export { className as class };
+	let {
+		feedId,
+		feeds,
+		articleId,
+		articles,
+		articleFilter,
+		markArticles,
+		class: className = "",
+	}: {
+		feedId: string;
+		feeds: Feed[];
+		articleId: string | undefined;
+		articles: ArticleSummary[];
+		articleFilter: ArticleFilter;
+		markArticles: (data: MarkArticlesRequest) => Promise<void>;
+		class?: string;
+	} = $props();
 
-	let visibleCount = 40;
-	let scrollBox: HTMLElement | undefined;
+	let visibleCount = $state(40);
+	let scrollBox: HTMLElement | undefined = $state();
 
-	$: {
+	$effect(() => {
 		if (feedId) {
 			// reset state when selected feed changes
 			visibleCount = 40;
 			scrollBox?.scrollTo(0, 0);
 		}
-	}
+	});
 
-	let menuAnchor: { x: number; y: number } | undefined;
-	let activeArticle: ArticleSummary | undefined;
-	let filteredArticles: ArticleSummary[] = [];
-	let renderedArticles: (ArticleSummary & {
-		feed: Feed | undefined;
-		isActive: boolean;
-		isSelected: boolean;
-	})[] = [];
+	let menuAnchor: { x: number; y: number } | undefined = $state();
+	let activeArticle: ArticleSummary | undefined = $state();
 
-	$: {
+	let filteredArticles = $derived.by(() => {
 		if (articles.length === 0) {
 			// there are no articles
-			filteredArticles = [];
-		} else if (feedId === "saved" || articleFilter === "all") {
-			// show all articles
-			filteredArticles = articles ?? [];
-		} else {
-			// show unread (and recently updated) articles
-			filteredArticles =
-				articles?.filter(
-					({ id, read }) =>
-						!read || $updatedArticleIds.has(id) || id === articleId,
-				) ?? [];
+			return [];
 		}
+		if (feedId === "saved" || articleFilter === "all") {
+			// show all articles
+			return articles ?? [];
+		}
+		// show unread (and recently updated) articles
+		return (
+			articles?.filter(
+				({ id, read }) =>
+					!read || $updatedArticleIds.has(id) || id === articleId,
+			) ?? []
+		);
+	});
 
-		renderedArticles = filteredArticles
-			.slice(0, visibleCount)
-			.map((article) => ({
-				...article,
-				feed: feeds.find(({ id }) => id === article.feed_id),
-				isActive: activeArticle?.id === article.id,
-				isSelected: articleId === article.id,
-			}));
-	}
+	let renderedArticles = $derived(
+		filteredArticles.slice(0, visibleCount).map((article) => ({
+			...article,
+			feed: feeds.find(({ id }) => id === article.feed_id),
+			isActive: activeArticle?.id === article.id,
+			isSelected: articleId === article.id,
+		})),
+	);
 
 	function handleContextMenu(event: {
 		target: EventTarget | null;
@@ -182,14 +184,15 @@
 
 <div
 	class="flex-auto select-none overflow-y-auto py-2 {className}"
-	on:scroll={handleListScroll}
+	onscroll={handleListScroll}
+	bind:this={scrollBox}
 >
 	{#if renderedArticles.length > 0}
-		<ul on:contextmenu={handleContextMenu}>
+		<ul oncontextmenu={handleContextMenu}>
 			{#each renderedArticles as article (article.id)}
 				<li>
 					<a
-						class={cls`
+						class="
 							no-callout
 							no-swipe
 							mx-2
@@ -201,19 +204,19 @@
 							border
 							border-transparent
 							p-2
-							${article.saved ? "bg-yellow/20" : ""}
-							${article.id === activeArticle?.id ? "bg-blue/20" : ""}
-						`}
+							{article.saved ? 'bg-yellow/20' : ''}
+							{article.id === activeArticle?.id ? 'bg-blue/20' : ''}
+						"
 						class:selected={article.isSelected}
 						class:not-selected={!article.isSelected}
 						data-id={article.id}
 						href="/feed/{feedId}/{article.id}"
-						on:touchstart={handleTouchStart}
-						on:touchend={handleTouchEnd}
-						on:touchmove={handleTouchMove}
+						ontouchstart={handleTouchStart}
+						ontouchend={handleTouchEnd}
+						ontouchmove={handleTouchMove}
 					>
 						<div
-							class={cls`
+							class="
 								relative
 								top-[2px]
 								flex
@@ -222,7 +225,7 @@
 								flex-shrink-0
 								flex-row
 								items-center
-							`}
+							"
 							class:opacity-50={article.read &&
 								!article.isSelected &&
 								!article.saved}
@@ -237,7 +240,7 @@
 							{/if}
 							{#if !article.feed?.icon}
 								<div
-									class={cls`
+									class="
 										flex
 										h-full
 										w-full
@@ -246,7 +249,7 @@
 										rounded-sm
 										bg-gray-x-dark
 										text-xs
-									`}
+									"
 									title={article.feed?.title}
 								>
 									{article.feed?.title[0]}
@@ -270,12 +273,12 @@
 								!article.saved}
 						>
 							<span
-								class={cls`
+								class="
 									text-disabled
 									whitespace-nowrap
 									text-xs
 									dark:text-disabled-dark
-								`}
+								"
 							>
 								{getAge(article.published ?? undefined)}
 							</span>
@@ -287,7 +290,7 @@
 
 		<div class="flex items-center justify-center p-6">
 			<Button
-				on:click={() => {
+				onclick={() => {
 					const ids = articles.map(({ id }) => id);
 					ids.forEach(
 						(id) => ($updatedArticleIds = $updatedArticleIds.add(id)),

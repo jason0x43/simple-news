@@ -1,15 +1,27 @@
 <script lang="ts">
-	export let ref: HTMLInputElement | undefined = undefined;
-	export let value: string = "";
-	export let disabled = false;
-	export let variant: "editable" | "invisible" | "normal" = "normal";
-
-	let className = "";
-	export { className as class };
+	let {
+		ref = $bindable(undefined),
+		value = $bindable(""),
+		disabled = false,
+		variant = "normal",
+		class: className = "",
+		name,
+		placeholder,
+		type,
+	}: {
+		name?: string;
+		placeholder?: string;
+		type?: string;
+		ref?: HTMLInputElement | undefined;
+		value?: string;
+		disabled?: boolean;
+		variant?: "editable" | "invisible" | "normal";
+		class?: string;
+	} = $props();
 </script>
 
 <input
-	class={`
+	class="
 		placeholder-disabled
 		appearance-none
 		overflow-ellipsis
@@ -17,8 +29,8 @@
 		border
 		font-normal
 		dark:placeholder-disabled-dark
-		${className}
-	`}
+		{className}
+	"
 	class:text-disabled={disabled && variant !== "editable"}
 	class:dark:text-disabled-dark={disabled && variant !== "editable"}
 	class:px-2={variant === "normal"}
@@ -37,5 +49,7 @@
 	bind:value
 	bind:this={ref}
 	{disabled}
-	{...$$restProps}
+	{name}
+	{placeholder}
+	{type}
 />

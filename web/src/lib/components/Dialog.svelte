@@ -3,13 +3,21 @@
 	import Activity from "./Activity.svelte";
 	import { fade } from "svelte/transition";
 
-	export let title: string | undefined = undefined;
-	export let onClose: (() => void) | undefined = undefined;
-	export let busy = false;
+	let {
+		title = undefined,
+		onClose = undefined,
+		busy = false,
+		children,
+	}: {
+		title?: string | undefined;
+		onClose?: (() => void) | undefined;
+		busy?: boolean;
+		children?: import("svelte").Snippet;
+	} = $props();
 </script>
 
 <div
-	class={`
+	class="
 		dialog
 		flex
 		h-full
@@ -22,12 +30,12 @@
 		md:rounded-md
 		md:shadow-md
 		dark:bg-black
-	`}
+	"
 >
 	{#if title || onClose}
 		<!-- title -->
 		<div
-			class={`
+			class="
 				flex
 				items-center
 				justify-between
@@ -38,13 +46,13 @@
 				py-2
 				dark:border-border-dark
 				dark:bg-hover-dark
-			`}
+			"
 		>
 			<h4>{title}</h4>
 			{#if onClose}
 				<button
 					class="rounded-md"
-					on:click={(event) => {
+					onclick={(event) => {
 						event.stopPropagation();
 						onClose?.();
 					}}
@@ -55,10 +63,10 @@
 		</div>
 	{/if}
 	<div class="content relative flex overflow-hidden">
-		<slot />
+		{@render children?.()}
 		{#if busy}
 			<div
-				class={`
+				class="
 					bg-background
 					absolute
 					bottom-0
@@ -70,7 +78,7 @@
 					items-center
 					justify-center
 					opacity-75
-				`}
+				"
 				in:fade={{ duration: 150 }}
 				out:fade={{ duration: 150 }}
 			>

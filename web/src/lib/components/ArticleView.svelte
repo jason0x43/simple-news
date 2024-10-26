@@ -2,27 +2,30 @@
 	import type { Article, Feed } from "@jason0x43/reader-types";
 	import { isActionEvent, verifyHashLinkTarget } from "../util";
 
-	export let article: Article;
-	export let feedId: string;
-	export let feeds: Feed[];
+	let {
+		article,
+		feedId,
+		feeds,
+		class: className = "",
+	}: {
+		article: Article;
+		feedId: string;
+		feeds: Feed[];
+		class?: string;
+	} = $props();
 
-	let className = "";
-	export { className as class };
+	let articleFeed = $derived(feeds.find((f) => f.id === article.feed_id));
+	let scrollBox: HTMLElement | undefined = $state();
+	let prevArticle = $state(article.id);
+	let contentDiv: HTMLDivElement | undefined = $state();
+	let visible = $derived(Boolean(article));
 
-	$: articleFeed = feeds.find((f) => f.id === article.feed_id);
-
-	let scrollBox: HTMLElement | undefined;
-	let prevArticle = article.id;
-	let contentDiv: HTMLDivElement | undefined;
-
-	$: visible = Boolean(article);
-
-	$: {
+	$effect(() => {
 		if (prevArticle !== article.id) {
 			scrollBox?.scrollTo({ top: 0 });
 			prevArticle = article.id;
 		}
-	}
+	});
 
 	function onLinkClick(event: Event) {
 		if (isActionEvent(event)) {
@@ -42,14 +45,14 @@
 </script>
 
 <div
-	class={`
+	class="
 		flex-auto
 		overflow-y-auto
 		bg-white
 		px-4
 		dark:bg-black
-		${className}
-	`}
+		{className}
+	"
 	bind:this={scrollBox}
 >
 	{#if visible && article && articleFeed}
@@ -64,36 +67,36 @@
 				</a>
 				<h2>{articleFeed.title}</h2>
 			</div>
-			<!-- svelte-ignore a11y-no-static-element-interactions -->
+			<!-- svelte-ignore a11y_no_static_element_interactions -->
 			<div
 				class="content pb-4"
 				bind:this={contentDiv}
-				on:click={onLinkClick}
-				on:keypress={onLinkClick}
+				onclick={onLinkClick}
+				onkeypress={onLinkClick}
 			>
 				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 				{@html article.content}
 			</div>
 		</div>
 		<a
-			class={`
-					fixed
-					bottom-0
-					right-0
-					z-10
-					block
-					h-20
-					w-20
-					bg-transparent
-					text-transparent
-				`}
+			class="
+				fixed
+				bottom-0
+				right-0
+				z-10
+				block
+				h-20
+				w-20
+				bg-transparent
+				text-transparent
+			"
 			aria-label="Close article"
 			href={`/feed/${feedId}`}>&nbsp;</a
 		>
 	{/if}
 </div>
 
-<!-- svelte-ignore css-unused-selector -->
+<!-- svelte-ignore css_unused_selector -->
 <style lang="postcss">
 	@import url("highlight.js/styles/default.css") screen and
 		(prefers-color-scheme: light);
@@ -198,27 +201,11 @@
 	}
 
 	.content :global(pre) {
-		@apply rounded-md
-			border
-			border-border-light
-			bg-hover-light
-			p-4
-			text-sm
-			dark:border-border-dark
-			dark:bg-hover-dark;
+		@apply rounded-md border border-border-light bg-hover-light p-4 text-sm dark:border-border-dark dark:bg-hover-dark;
 	}
 
 	.content :global(p) :global(code) {
-		@apply rounded-md
-			border
-			border-border-light
-			bg-hover-light
-			px-[0.1rem]
-			pb-[0.15rem]
-			pt-[0.05rem]
-			text-sm
-			dark:border-border-dark
-			dark:bg-hover-dark;
+		@apply rounded-md border border-border-light bg-hover-light px-[0.1rem] pb-[0.15rem] pt-[0.05rem] text-sm dark:border-border-dark dark:bg-hover-dark;
 	}
 
 	.content :global(.center-wrap) {

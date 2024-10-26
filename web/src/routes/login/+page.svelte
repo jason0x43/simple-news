@@ -6,19 +6,18 @@
 	import { showToast } from "$lib/toast";
 	import Toast from "$lib/components/Toast.svelte";
 	import { onMount } from "svelte";
-	import { cls } from "$lib/cls";
 	import { fade } from "svelte/transition";
 
-	let ready = false;
-	let username = "";
-	let password = "";
-	let inputRef: HTMLInputElement;
+	let ready = $state(false);
+	let username = $state("");
+	let password = $state("");
+	let input: HTMLInputElement | undefined = $state();
 
-	$: {
+	$effect(() => {
 		if ($page.form?.invalid) {
 			handleInvalid();
 		}
-	}
+	});
 
 	function handleInvalid() {
 		showToast("Invalid username and/or password", {
@@ -28,7 +27,7 @@
 		username = "";
 		password = "";
 
-		inputRef.focus();
+		input?.focus();
 	}
 
 	onMount(() => {
@@ -42,7 +41,7 @@
 	<div class="absolute-center" in:fade={{ duration: 250 }}>
 		<form
 			method="POST"
-			class={cls`
+			class="
 				flex
 				flex-col
 				items-center
@@ -52,14 +51,14 @@
 				border-border-light
 				p-4
 				dark:border-border-dark
-			`}
+			"
 			use:enhance
 		>
 			<div class="flex flex-col gap-2">
 				<Input
 					name="username"
 					placeholder="Username"
-					bind:ref={inputRef}
+					bind:ref={input}
 					bind:value={username}
 				/>
 				<Input
