@@ -1,22 +1,20 @@
 import parent from "../eslint.config.js";
-import eslintPluginSvelte from "eslint-plugin-svelte";
+import svelte from "eslint-plugin-svelte";
 import globals from "globals";
-import svelteParser from "svelte-eslint-parser";
-import tsEslint from "typescript-eslint";
+import ts from "typescript-eslint";
 
 export default [
 	...parent,
-	...eslintPluginSvelte.configs["flat/recommended"],
+	...svelte.configs["flat/recommended"],
 	{
 		ignores: [".svelte-kit"],
 	},
 	{
 		files: ["**/*.svelte"],
 		languageOptions: {
-			parser: svelteParser,
 			globals: { ...globals.node, ...globals.browser },
 			parserOptions: {
-				parser: tsEslint.parser,
+				parser: ts.parser,
 			},
 		},
 		rules: {
