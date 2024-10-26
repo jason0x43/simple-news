@@ -10,7 +10,7 @@
 	"scripts": {
 		"build": "tsc",
 		"dev": "tsc-watch --preserveWatchOutput --onSuccess 'node ./build'",
-		"check": "tsc --noEmit && eslint ."
+		"check": "tsc --noEmit"
 	},
 	"dependencies": {
 		"@hono/node-server": "^1.13.2",

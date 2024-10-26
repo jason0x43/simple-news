@@ -7,9 +7,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch --preserveWatchOutput",
-    "check": "tsc --noEmit && eslint ."
+    "check": "tsc --noEmit"
   },
-  "license": "ISC",
   "dependencies": {
     "zod": "^3.23.8"
   }

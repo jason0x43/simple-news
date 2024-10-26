@@ -7,7 +7,7 @@
 	"scripts": {
 		"build": "tsc",
 		"dev": "tsc --watch --preserveWatchOutput",
-		"check": "tsc --noEmit && eslint ."
+		"check": "tsc --noEmit"
 	},
 	"dependencies": {
 		"@jason0x43/reader-types": "workspace:*",
