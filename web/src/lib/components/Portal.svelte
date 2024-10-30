@@ -2,7 +2,6 @@
 	import { onMount } from "svelte";
 	import { fade } from "svelte/transition";
 	import { getAppContext } from "../context";
-	import { browser } from "$app/environment";
 
 	let {
 		target = undefined,
@@ -21,34 +20,32 @@
 	const root = getAppContext("root");
 
 	let ref: HTMLElement | undefined = $state();
-	let style: string[] = $state([]);
+	let style: string[] = $derived.by(() => {
+		let rect = ref?.getBoundingClientRect() ?? { height: 0, width: 0 };
+		let style = [];
 
-	$effect(() => {
-		if (browser) {
-			style = [];
-			let rect = ref?.getBoundingClientRect() ?? { height: 0, width: 0 };
+		if (anchor && typeof anchor === "object") {
+			let tx = "-50%";
+			let ty = "-50%";
 
-			if (anchor && typeof anchor === "object") {
-				let tx = "-50%";
-				let ty = "-50%";
-
-				if (typeof anchor.y === "number") {
-					let y = Math.min(anchor.y, window.innerHeight - rect.height);
-					style.push(`top:${y}px`);
-					ty = "0";
-				}
-				if (typeof anchor.x === "number") {
-					let x = Math.min(anchor.x, window.innerWidth - rect.width);
-					style.push(`left:${x}px`);
-					tx = "0";
-				}
-				style.push(`transform:translate(${tx},${ty})`);
+			if (typeof anchor.y === "number") {
+				let y = Math.min(anchor.y, window.innerHeight - rect.height);
+				style.push(`top:${y}px`);
+				ty = "0";
 			}
-
-			if (zIndex !== undefined) {
-				style.push(`z-index:${zIndex}`);
+			if (typeof anchor.x === "number") {
+				let x = Math.min(anchor.x, window.innerWidth - rect.width);
+				style.push(`left:${x}px`);
+				tx = "0";
 			}
+			style.push(`transform:translate(${tx},${ty})`);
 		}
+
+		if (zIndex !== undefined) {
+			style.push(`z-index:${zIndex}`);
+		}
+
+		return style;
 	});
 
 	let inDuration = $derived(
@@ -89,6 +86,14 @@
 		if (rect.bottom > window.innerHeight) {
 			ref!.style.top = `${window.innerHeight - rect.height}px`;
 		}
+	});
+
+	// Manually remove the portal because it isn't always removed in dev mode when
+	// when HMR is enabled.
+	$effect(() => {
+		return () => {
+			ref?.remove();
+		};
 	});
 </script>
 
