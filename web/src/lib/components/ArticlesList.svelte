@@ -15,7 +15,7 @@
 	const updatedArticleIds = getAppContext("updatedArticleIds");
 
 	let {
-		feedId,
+		feedId: feedIdProp,
 		feeds,
 		articleId,
 		articles,
@@ -34,6 +34,9 @@
 
 	let visibleCount = $state(40);
 	let scrollBox: HTMLElement | undefined = $state();
+
+	// Copy prop into state to avoid triggering effect on every load
+	let feedId = $state(feedIdProp);
 
 	$effect(() => {
 		if (feedId) {
