@@ -17,7 +17,7 @@
 	let {
 		feedId: feedIdProp,
 		feeds,
-		articleId,
+		articleId: articleIdProp,
 		articles,
 		articleFilter,
 		markArticles,
@@ -34,20 +34,14 @@
 
 	let visibleCount = $state(40);
 	let scrollBox: HTMLElement | undefined = $state();
-
-	// Copy prop into state to avoid triggering effect on every load
-	let feedId = $state(feedIdProp);
-
-	$effect(() => {
-		if (feedId) {
-			// reset state when selected feed changes
-			visibleCount = 40;
-			scrollBox?.scrollTo(0, 0);
-		}
-	});
-
+	let selectedArticle: HTMLElement | undefined = $state();
 	let menuAnchor: { x: number; y: number } | undefined = $state();
 	let activeArticle: ArticleSummary | undefined = $state();
+
+	// Derive new state from props to avoid triggering an effect on every load,
+	// even when the feedId hasn't changed
+	let feedId = $derived(feedIdProp);
+	let articleId = $derived(articleIdProp);
 
 	let filteredArticles = $derived.by(() => {
 		if (articles.length === 0) {
@@ -75,6 +69,21 @@
 			isSelected: articleId === article.id,
 		})),
 	);
+
+	// Reset state when selected feed changes
+	$effect(() => {
+		if (feedId) {
+			visibleCount = 40;
+			scrollBox?.scrollTo(0, 0);
+		}
+	});
+
+	// Scroll the selected article into view when the page loads
+	$effect(() => {
+		if (articleId && selectedArticle) {
+			selectedArticle.scrollIntoView({ behavior: "smooth" });
+		}
+	});
 
 	function handleContextMenu(event: {
 		target: EventTarget | null;
@@ -212,6 +221,7 @@
 						"
 						class:selected={article.isSelected}
 						class:not-selected={!article.isSelected}
+						bind:this={selectedArticle}
 						data-id={article.id}
 						href="/feed/{feedId}/{article.id}"
 						ontouchstart={handleTouchStart}
