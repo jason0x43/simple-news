@@ -9,7 +9,7 @@
 	"type": "module",
 	"scripts": {
 		"build": "tsc",
-		"dev": "tsc-watch --preserveWatchOutput --onSuccess 'node ./build'",
+		"dev": "tsc-watch --preserveWatchOutput --onSuccess 'node --enable-source-maps ./build'",
 		"check": "tsc --noEmit"
 	},
 	"dependencies": {
