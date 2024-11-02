@@ -11,6 +11,8 @@ import { feedsRoutes } from "./routes/feeds.js";
 import { feedgroupsRoutes } from "./routes/feedgroups.js";
 import { downloadFeed } from "./feed.js";
 import { serve } from "@hono/node-server";
+import { zValidator } from "@hono/zod-validator";
+import { z } from "zod";
 
 const db = new Db();
 const adminUser = getEnv("SN_ADMIN_USER");
@@ -62,11 +64,16 @@ const routes = app
 		const feedStats = await db.getFeedStats(account!.id);
 		return c.json(feedStats);
 	})
-	.get("/feed", accountRequired, async (c) => {
-		const url = c.req.query("url")!;
-		const feed = await downloadFeed(url);
-		return c.json(feed);
-	});
+	.get(
+		"/feed",
+		accountRequired,
+		zValidator("query", z.object({ url: z.string() })),
+		async (c) => {
+			const url = c.req.query("url")!;
+			const feed = await downloadFeed(url);
+			return c.json(feed);
+		},
+	);
 
 export type AppRoutes = typeof routes;
 

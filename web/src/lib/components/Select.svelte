@@ -46,11 +46,8 @@
 	.editable {
 		@apply border-transparent bg-transparent px-1 py-1;
 	}
-	.disabled {
-		@apply text-disabled-light dark:text-disabled-dark;
-	}
 	.disabled-editable {
-		@apply border-transparent bg-transparent;
+		@apply border-transparent bg-transparent bg-none;
 	}
 	.disabled-not-editable {
 		@apply text-disabled-light dark:text-disabled-dark;

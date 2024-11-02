@@ -33,6 +33,23 @@ export const AccountResponse = z.object({
 });
 export type AccountResponse = z.infer<typeof AccountResponse>;
 
+export const DownloadedArticle = z.object({
+	article_id: z.string(),
+	title: z.string(),
+	content: z.string(),
+	published: z.union([z.string(), z.date()]),
+	link: z.union([z.string(), z.null(), z.undefined()]).optional(),
+});
+export type DownloadedArticle = z.infer<typeof DownloadedArticle>;
+
+export const DownloadedFeed = z.object({
+	title: z.string(),
+	link: z.string(),
+	icon: z.string().optional(),
+	articles: z.array(DownloadedArticle),
+});
+export type DownloadedFeed = z.infer<typeof DownloadedFeed>;
+
 export const Feed = z.object({
 	id: FeedId,
 	title: z.string(),

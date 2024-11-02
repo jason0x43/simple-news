@@ -6,6 +6,7 @@ import {
 	ArticleId,
 	ArticleSummary,
 	ArticlesResponse,
+	DownloadedFeed,
 	Feed,
 	FeedGroup,
 	FeedGroupId,
@@ -301,7 +302,7 @@ export class Client {
 	/**
 	 * Test a feed URL
 	 */
-	async testFeedUrl(url: string): Promise<object> {
+	async testFeedUrl(url: string): Promise<DownloadedFeed> {
 		const resp = await this.#client.feed.$get({ query: { url } });
 		await checkResponse(resp);
 		return await resp.json();

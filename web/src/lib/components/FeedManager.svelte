@@ -36,7 +36,6 @@
 	} = $props();
 
 	let busy = $state(false);
-	let addFeedData = $state({ url: "", title: "" });
 	let addGroupData = $state({ name: "" });
 	let renameGroupData = $state({
 		feedGroupId: feedGroups[0]?.id ?? "",
@@ -47,12 +46,14 @@
 		callback: () => Promise<unknown>,
 		success: string,
 		failure: string,
-	) {
+	): Promise<boolean> {
 		busy = true;
 		let err: unknown | undefined;
+		let status = false;
 
 		try {
 			await callback();
+			status = true;
 		} catch (error) {
 			err = error;
 			console.warn(error);
@@ -66,12 +67,29 @@
 				showToast(success, { type: "good", duration: 2000 });
 			}
 		}, seconds(0.5));
+
+		return status;
 	}
 
 	// Add a new feed
 	async function handleAddFeed(event: SubmitEvent) {
 		event.preventDefault();
-		busyOp(() => addFeed(addFeedData), "Unable to add feed", "Feed added");
+		const form = event.currentTarget as HTMLFormElement;
+		const data = new FormData(form);
+		const url = data.get("url");
+		if (url) {
+			const status = await busyOp(
+				() => addFeed({
+					url: data.get("url") as string,
+					title: "",
+				}),
+				"Unable to add feed",
+				"Feed added",
+			);
+			if (status) {
+				form.reset();
+			}
+		}
 	}
 
 	// Add a new group
@@ -276,7 +294,7 @@
 						<h4>Add Feed</h4>
 						<div class="flex flex-row gap-2">
 							<Input
-								bind:value={addFeedData.url}
+								name="url"
 								placeholder="https://..."
 								class="flex-auto"
 							/>

@@ -19,7 +19,15 @@ export async function markArticles(data: MarkArticlesRequest): Promise<void> {
 
 export async function addFeed(data: AddFeedRequest): Promise<void> {
 	const client = new Client("/api/");
-	await client.createFeed(data);
+	let title = data.title;
+	if (!title) {
+		const feed = await client.testFeedUrl(data.url);
+		title = feed.title;
+	}
+	await client.createFeed({
+		...data,
+		title,
+	});
 	await invalidate("app:feedGroups");
 }
 
