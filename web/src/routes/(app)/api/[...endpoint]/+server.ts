@@ -22,6 +22,7 @@ async function request({ request, fetch, locals }: RequestEvent) {
 		new URL(request.url).pathname.replace(/^\/api\//, ""),
 		env.API_HOST,
 	);
+	url.search = new URL(request.url).search;
 
 	const init: RequestInit = {
 		method: request.method,
