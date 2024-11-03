@@ -2,7 +2,7 @@ import { XMLParser } from "fast-xml-parser";
 import { isValidUrl, quickFetch } from "./util.js";
 import { NewArticle } from "./schemas/public/Article.js";
 import { createHash } from "node:crypto";
-import * as cheerio from "cheerio";
+import * as cheerio from "cheerio/slim";
 import { z } from "zod";
 import * as entities from "entities";
 
@@ -351,7 +351,7 @@ function getContent(entry: ParsedFeedItem): string | undefined {
 
 	if (content) {
 		try {
-			const $ = cheerio.load(content);
+			const $ = cheerio.load(content, null, false);
 			$("a").each((_, a) => {
 				$(a).removeAttr("style");
 			});
@@ -361,7 +361,14 @@ function getContent(entry: ParsedFeedItem): string | undefined {
 					$(img).attr("src", new URL(src, entry.link).href);
 				}
 			});
-			content = $("body").html() ?? "";
+
+			// Remove unnecessary <br>s
+			$("ul > br").remove();
+			$("h1 + br, h2 + br, h3 + br").remove();
+			$("br:has(+ h1), br:has(+ h2), br:has(+ h3)").remove();
+			$("br:first-child, br:last-child").remove();
+
+			content = $.html() ?? "";
 		} catch {
 			console.warn("Error processing document content");
 		}
