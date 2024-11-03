@@ -11,6 +11,7 @@
 		Feed,
 		MarkArticlesRequest,
 	} from "@jason0x43/reader-types";
+	import scrollIntoView from "scroll-into-view-if-needed";
 
 	const updatedArticleIds = getAppContext("updatedArticleIds");
 
@@ -34,7 +35,7 @@
 
 	let visibleCount = $state(40);
 	let scrollBox: HTMLElement | undefined = $state();
-	let selectedArticle: HTMLElement | undefined = $state();
+	let articlesList: HTMLUListElement | undefined = $state();
 	let menuAnchor: { x: number; y: number } | undefined = $state();
 	let activeArticle: ArticleSummary | undefined = $state();
 
@@ -74,14 +75,22 @@
 	$effect(() => {
 		if (feedId) {
 			visibleCount = 40;
-			scrollBox?.scrollTo(0, 0);
+			scrollBox?.scrollTo({ left: 0, top: 0, behavior: "instant" });
 		}
 	});
 
 	// Scroll the selected article into view when the page loads
 	$effect(() => {
-		if (articleId && selectedArticle) {
-			selectedArticle.scrollIntoView({ behavior: "smooth" });
+		if (articleId && articlesList) {
+			const selectedArticle = articlesList.querySelector(
+				`[data-id=${articleId}]`,
+			);
+			if (selectedArticle) {
+				scrollIntoView(selectedArticle, {
+					scrollMode: "if-needed",
+					behavior: "smooth",
+				});
+			}
 		}
 	});
 
@@ -200,7 +209,7 @@
 	bind:this={scrollBox}
 >
 	{#if renderedArticles.length > 0}
-		<ul oncontextmenu={handleContextMenu}>
+		<ul oncontextmenu={handleContextMenu} bind:this={articlesList}>
 			{#each renderedArticles as article (article.id)}
 				<li>
 					<a
@@ -221,7 +230,6 @@
 						"
 						class:selected={article.isSelected}
 						class:not-selected={!article.isSelected}
-						bind:this={selectedArticle}
 						data-id={article.id}
 						href="/feed/{feedId}/{article.id}"
 						ontouchstart={handleTouchStart}
