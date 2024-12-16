@@ -22,7 +22,11 @@
 	let ref: HTMLElement | undefined = $state();
 	let style: string[] = $derived.by(() => {
 		let rect = ref?.getBoundingClientRect() ?? { height: 0, width: 0 };
-		let style = [];
+		let style: string[] = [];
+
+		if (typeof window === 'undefined') {
+			return style;
+		}
 
 		if (anchor && typeof anchor === "object") {
 			let tx = "-50%";
