@@ -13,25 +13,25 @@
 		"check": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@hono/node-server": "^1.13.2",
-		"@hono/zod-validator": "^0.4.1",
+		"@hono/node-server": "^1.13.7",
+		"@hono/zod-validator": "^0.4.2",
 		"@jason0x43/reader-types": "workspace:*",
 		"@oslojs/encoding": "^1.1.0",
 		"@paralleldrive/cuid2": "^2.2.2",
 		"cheerio": "^1.0.0",
 		"entities": "^5.0.0",
-		"fast-xml-parser": "^4.5.0",
-		"hono": "^4.6.5",
-		"kysely": "^0.27.4",
-		"pg": "^8.13.0",
-		"zod": "^3.23.8"
+		"fast-xml-parser": "^4.5.1",
+		"hono": "^4.6.14",
+		"kysely": "^0.27.5",
+		"pg": "^8.13.1",
+		"zod": "^3.24.1"
 	},
 	"devDependencies": {
 		"@commander-js/extra-typings": "^12.1.0",
 		"@types/pg": "^8.11.10",
 		"commander": "^12.1.0",
-		"kanel": "^3.10.1",
-		"kanel-kysely": "^0.5.0",
-		"tsc-watch": "^6.2.0"
+		"kanel": "^3.10.3",
+		"kanel-kysely": "^0.6.0",
+		"tsc-watch": "^6.2.1"
 	}
 }
