@@ -72,7 +72,9 @@ export class Client {
 	 * Logout of the site
 	 */
 	async logout(): Promise<void> {
-		const resp = await this.#client.logout.$post("logout");
+		// Post an empty JSON object so the client will set the content type to
+		// application/json which will bypass the CSRF check
+		const resp = await this.#client.logout.$post({ json: {} });
 		await checkResponse(resp);
 	}
 

@@ -34,8 +34,6 @@ try {
 const app = new Hono<AppEnv>();
 const port = Number(process.env.API_PORT ?? 3000);
 
-app.use(csrf());
-
 // Add db to every request
 app.use(async (c, next) => {
 	c.set("db", db);
@@ -44,13 +42,19 @@ app.use(async (c, next) => {
 
 // Request logger
 app.use(async (c, next) => {
-	await next();
-	const { status = 200 } = c.res;
 	const { method, path } = c.req;
 	const url = new URL(c.req.url);
 	const search = url.search;
+	const origin = c.req.header('origin');
+	console.debug(`[${method}] ${path}${search ?? ""} (origin=${origin})`);
+
+	await next();
+
+	const { status = 200 } = c.res;
 	console.debug(`[${method}] ${path}${search ?? ""} ${status}`);
 });
+
+app.use(csrf());
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const routes = app
