@@ -6,7 +6,7 @@
 	import FeedsList from "$lib/components/FeedsList.svelte";
 	import Button from "$lib/components/Button.svelte";
 	import Select from "$lib/components/Select.svelte";
-	import { page } from "$app/stores";
+	import { page } from "$app/state";
 	import { onMount } from "svelte";
 	import { minutes, periodicInvalidate } from "$lib/util";
 	import { FeedGroupId, FeedId } from "@jason0x43/reader-types";
@@ -29,7 +29,7 @@
 	setAppContext("articleFilter", articleFilter);
 
 	let selectedGroupId = $derived.by(() => {
-		const feedId = $page.data.feedId;
+		const feedId = page.data.feedId;
 		if (feedId && feedId !== "saved") {
 			const [type, id] = feedId.split("-");
 			if (type === "group") {
@@ -39,7 +39,7 @@
 	});
 
 	let selectedFeedIds = $derived.by(() => {
-		const feedId = $page.data.feedId;
+		const feedId = page.data.feedId;
 		if (feedId && feedId !== "saved") {
 			const [type, id] = feedId.split("-");
 			if (type === "group") {
@@ -230,8 +230,8 @@ X-Large:
 		"
 	>
 		<Header
-			articleId={$page.data.articleId}
-			feedId={$page.data.feedId}
+			articleId={page.data.articleId}
+			feedId={page.data.feedId}
 			class="sm:flex-col"
 		/>
 	</div>
@@ -264,12 +264,12 @@ X-Large:
 				xl:max-w-[calc(100%)]
 				dark:bg-black
 			"
-			class:translate-x-[-33.3333%]={$page.data.feedId && !$page.data.articleId}
-			class:translate-x-[-66.6667%]={$page.data.articleId}
-			class:sm:translate-x-[0]={$page.data.feedId && !$page.data.articleId}
-			class:sm:translate-x-[-600px]={$page.data.articleId}
-			class:lg:translate-x-[-300px]={$page.data.articleId}
-			class:xl:translate-x-0={$page.data.articleId}
+			class:translate-x-[-33.3333%]={page.data.feedId && !page.data.articleId}
+			class:translate-x-[-66.6667%]={page.data.articleId}
+			class:sm:translate-x-[0]={page.data.feedId && !page.data.articleId}
+			class:sm:translate-x-[-600px]={page.data.articleId}
+			class:lg:translate-x-[-300px]={page.data.articleId}
+			class:xl:translate-x-0={page.data.articleId}
 			ontouchstart={handleTouchStart}
 			ontouchend={handleTouchEnd}
 			ontouchmove={handleTouchMove}
@@ -292,7 +292,7 @@ X-Large:
 					{selectedFeedIds}
 					{selectedGroupId}
 					articleFilter={$articleFilter}
-					feedId={$page.data.feedId}
+					feedId={page.data.feedId}
 					feedStats={data.feedStats}
 					feedGroups={data.feedGroups}
 				/>
