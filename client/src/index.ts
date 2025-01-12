@@ -25,7 +25,10 @@ import { AccountResponse, SessionResponse } from "@jason0x43/reader-types";
 import { hc } from "hono/client";
 import { AppRoutes } from "@jason0x43/reader-server";
 import { HTTPException } from "hono/http-exception";
-import { StatusCode } from "hono/utils/http-status";
+import {
+	ClientErrorStatusCode,
+	ServerErrorStatusCode,
+} from "hono/utils/http-status";
 
 export { HTTPException };
 
@@ -329,8 +332,14 @@ export class Client {
 }
 
 async function checkResponse(resp: Response) {
-	if (resp.status >= 400) {
+	if (isErrorStatus(resp.status)) {
 		const text = await resp.text();
-		throw new HTTPException(resp.status as StatusCode, { message: text });
+		throw new HTTPException(resp.status, { message: text });
 	}
+}
+
+function isErrorStatus(
+	status: number,
+): status is ClientErrorStatusCode | ServerErrorStatusCode {
+	return status >= 400;
 }

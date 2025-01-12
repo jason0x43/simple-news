@@ -13,13 +13,13 @@
 		"check": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@commander-js/extra-typings": "^12.1.0",
+		"@commander-js/extra-typings": "^13.0.0",
 		"@jason0x43/reader-client": "workspace:*",
 		"@jason0x43/reader-types": "workspace:*",
-		"commander": "^12.1.0",
+		"commander": "^13.0.0",
 		"zod": "^3.24.1"
 	},
 	"devDependencies": {
-		"@types/node": "^20.17.10"
+		"@types/node": "^20.17.12"
 	}
 }
